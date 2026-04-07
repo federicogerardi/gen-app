@@ -89,6 +89,7 @@ export function useDeleteArtifact() {
     mutationFn: deleteArtifact,
     onSuccess: (_data, id) => {
       queryClient.removeQueries({ queryKey: ['artifact', id] });
+      queryClient.invalidateQueries({ queryKey: ['artifacts'] });
       queryClient.invalidateQueries({ queryKey: ['projects'] });
     },
   });

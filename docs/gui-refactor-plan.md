@@ -5,6 +5,13 @@ Data: 2026-04-08
 Input di partenza: [docs/ux-strategy.md](docs/ux-strategy.md)  
 Target utenti: SEO Specialist, MediaBuyer
 
+Stato avanzamento implementazione (2026-04-08):
+
+- Sprint 1: completato
+- Sprint 2: completato
+- Sprint 3: completato
+- Sprint 4: completato
+
 ---
 
 ## Obiettivo
@@ -192,6 +199,10 @@ DoD:
 - riuso artefatto possibile in meno click
 - copertura test UI minima sui flussi principali
 
+Stato corrente:
+
+- completato: compatibilita route legacy, lista artefatti con filtri (tipo, stato, progetto, periodo), quick actions (modifica, duplica input, elimina), dettaglio con editor e metadati, copertura test UI minima sui flussi principali
+
 ### Sprint 4: Hardening UX e Admin polish
 
 Deliverable:
@@ -205,6 +216,10 @@ DoD:
 - passaggio checklist accessibilità
 - nessun blocco critico nei flussi core
 - metriche baseline raccolte e confrontabili
+
+Stato corrente:
+
+- completato: ricerca utenti admin, indicatori quota/budget a semaforo, filtro timeline audit per stato e tipo, drawer gestione quota con supporto tastiera (Esc + focus trap), refinements accessibilita WCAG AA su pagine core (admin e artefatti), metriche baseline strutturate in dashboard admin
 
 ---
 
