@@ -1,11 +1,12 @@
+'use client';
+
 import Link from 'next/link';
-import { auth } from '@/lib/auth';
-import { signOut } from '@/lib/auth';
+import { signOut, useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
-export async function Navbar() {
-  const session = await auth();
+export function Navbar() {
+  const { data: session } = useSession();
 
   return (
     <nav className="border-b bg-background px-4 py-3 flex items-center justify-between">
@@ -22,9 +23,14 @@ export async function Navbar() {
       <div className="flex items-center gap-3">
         {session?.user?.role === 'admin' && <Badge variant="secondary">Admin</Badge>}
         <span className="text-sm text-muted-foreground">{session?.user?.email}</span>
-        <form action={async () => { 'use server'; await signOut({ redirectTo: '/' }); }}>
-          <Button variant="outline" size="sm" type="submit">Esci</Button>
-        </form>
+        <Button
+          variant="outline"
+          size="sm"
+          type="button"
+          onClick={() => signOut({ callbackUrl: '/' })}
+        >
+          Esci
+        </Button>
       </div>
     </nav>
   );

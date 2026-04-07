@@ -1,7 +1,7 @@
 # Implementation Plan: LLM Artifact Generation Hub
 
 **Version**: 1.0  
-**Status**: MOSTLY IMPLEMENTED - EXTERNAL INTEGRATIONS PENDING  
+**Status**: LOCALLY FUNCTIONAL - DEPLOYMENT & HARDENING PENDING  
 **Target Audience**: AI Development Agents  
 **Estimated Duration**: 6-8 weeks (part-time)  
 **Last Updated**: 2026-04-07
@@ -26,23 +26,25 @@ Implemented in the current codebase:
 - Next.js 16 app scaffold with App Router pages for login, dashboard, projects, artifacts and admin
 - NextAuth v5 beta with Google OAuth, Prisma adapter and route protection via `src/proxy.ts`
 - Prisma 7 configured with `@prisma/adapter-pg` and generated client output under `src/generated/prisma`
+- Local end-to-end auth path validated (Google callback -> DB session -> dashboard) with Neon + Upstash
 - LLM module with provider, agents, orchestrator and SSE streaming endpoint
 - API routes for artifacts, projects, user profile/quota, admin user quota management, audit and metrics, plus model listing
 - Frontend hooks for streaming, artifact list/detail/update and quota fetch
+- Dashboard/navbar client-server boundary fixed (`SessionProvider` + client-side `signOut`) and build verified
 - Admin dashboard with user quota editing, recent usage activity and metrics overview
 - Jest + Playwright scaffolding with passing local unit/integration/e2e smoke tests
 
 Still pending or partial:
-- production-ready env values and migrations against a real database
-- real OAuth / OpenRouter / Upstash / PostgreSQL credential wiring
 - deployment, monitoring and production hardening
+- expanded automated coverage and quality gates (>80% coverage target)
+- responsive/accessibility hardening and final UX polish
 
 ## Phase Status Summary
 
 | Phase | Status | Notes |
 |------|--------|-------|
-| **1. Foundation & Infrastructure** | Mostly complete | Local scaffold, schema and code structure are in place; Render setup and real migrations remain open |
-| **2. Authentication & Backend Infrastructure** | Partially complete | Auth, proxy protection and base API layer exist; real OAuth/Redis verification still pending |
+| **1. Foundation & Infrastructure** | Mostly complete | Local scaffold, schema and code structure are in place; Neon DB wiring is validated, Render setup remains open |
+| **2. Authentication & Backend Infrastructure** | Mostly complete | OAuth + Prisma sessions + Redis rate limiting are wired locally and working; production hardening remains |
 | **3. LLM Module Implementation** | Implemented | Provider, agents, orchestrator and model cost handling exist |
 | **4. Streaming & API Implementation** | Implemented | SSE generation and full planned artifact/project CRUD surface are in place |
 | **5. Frontend Components** | Mostly complete | Main pages and hooks exist; responsive/UX hardening is still open |
@@ -92,7 +94,7 @@ npx prisma init
 **Acceptance Criteria**:
 - [x] Prisma schema compiles
 - [x] All relationships are correct
-- [ ] Migrations run cleanly on a real database
+- [x] Database schema sync runs on a real database (`prisma db push` on Neon)
 - [ ] Shadow database works
 
 #### 1.3 Render.com Setup
@@ -103,7 +105,7 @@ npx prisma init
 
 **Acceptance Criteria**:
 - [ ] PostgreSQL running on Render
-- [ ] Can connect locally via a real `DATABASE_URL`
+- [x] Can connect locally via a real `DATABASE_URL`
 - [ ] GitHub Actions connected
 - [ ] Staging environment mirrors production
 
@@ -225,7 +227,7 @@ export const { GET, POST } = handlers;
 ```
 
 **Acceptance Criteria**:
-- [ ] Google OAuth flow works with real credentials
+- [x] Google OAuth flow works with real credentials
 - [x] Email whitelist enforced in code
 - [x] Sessions persist in database via Prisma adapter configuration
 - [x] Logout flow implemented
@@ -251,7 +253,7 @@ export async function rateLimit(userId: string) {
 ```
 
 **Acceptance Criteria**:
-- [ ] Rate limiting works with real Redis credentials
+- [x] Rate limiting works with real Redis credentials
 - [x] Quota resets monthly in code design
 - [x] Returns remaining count
 
@@ -796,22 +798,17 @@ export function useStreamGeneration() {
 
 To complete the plan from the current state, execute the remaining work in this order:
 
-1. **Real infrastructure wiring**
-  - Configure working PostgreSQL, Google OAuth, OpenRouter and Upstash credentials
-  - Run Prisma migrations against a real database
-  - Verify login and generation flows end-to-end
-
-2. **Expand automated coverage**
+1. **Expand automated coverage**
   - Add Jest + integration tests for API/auth/LLM utilities
   - Add Playwright for login, project creation, generation and admin quota flows
   - Reach the target coverage threshold
 
-3. **Deployment and operations**
+2. **Deployment and operations**
   - Configure Render deployment
   - Add monitoring/logging
   - Write runbook and smoke-test checklist
 
-4. **Product decisions outside core scaffold**
+3. **Product decisions outside core scaffold**
   - Decide whether admin user create/delete belongs in MVP
   - Decide whether system metrics need a dedicated page beyond the current overview
   - Validate mobile responsiveness and UX polish before production release
@@ -832,9 +829,9 @@ To complete the plan from the current state, execute the remaining work in this 
 
 ## Dependencies & Prerequisites
 
-- [ ] Google Cloud OAuth credentials ready
+- [x] Google Cloud OAuth credentials ready
 - [ ] Render.com account created
-- [ ] OpenRouter API key obtained and configured
+- [x] OpenRouter API key obtained and configured
 - [ ] Team has Node.js/TypeScript experience
 - [x] GitHub repository created
 
