@@ -3,7 +3,7 @@
 **Version**: 1.0  
 **Status**: ALIGNED TO CURRENT IMPLEMENTATION  
 **Format**: Mermaid.js diagrams  
-**Last Updated**: 2026-04-07
+**Last Updated**: 2026-04-08
 
 ---
 
@@ -13,7 +13,7 @@
 graph TB
     subgraph Browser["🌐 Browser (React 19 + shadcn/ui)"]
         Dashboard["Dashboard"]
-        FormUI["Artifact Form"]
+        FormUI["Tool Pages: Meta Ads / Funnel Pages"]
         StreamDisplay["Streaming Display"]
         AdminPanel["Admin Panel"]
     end
@@ -21,6 +21,7 @@ graph TB
     subgraph NextJS["⚙️ Next.js 16 Backend"]
         AuthAPI["Auth Routes<br/>/api/auth/*"]
         ArtifactAPI["Artifact Routes<br/>/api/artifacts/*"]
+        ToolAPI["Tool Routes<br/>/api/tools/*"]
         ProjectAPI["Project Routes<br/>/api/projects/*"]
         AdminAPI["Admin Routes<br/>/api/admin/*"]
         
@@ -50,6 +51,7 @@ graph TB
     Provider -->|API Call| OpenRouter
     AuthAPI -->|Token Validation| GoogleOAuth
     ArtifactAPI -->|Rate Limit Check| Redis
+    ToolAPI -->|Rate Limit Check| Redis
 
     style Browser fill:#e1f5ff
     style NextJS fill:#f3e5f5
@@ -207,14 +209,11 @@ graph TD
 
 ```mermaid
 graph TD
-    A["User Lands on Dashboard"] -->|Click Generate| B["Go to /artifacts/new"]
-    B -->|Choose Content| C["Page Form: Content Parameters"]
-    B -->|Choose SEO| D["Page Form: SEO Parameters"]
-    B -->|Choose Code| E["Page Form: Code Parameters"]
-    
-    C -->|Fill Topic + Tone| F["Select Model"]
-    D -->|Fill Context + Keywords| F
-    E -->|Fill Type + Language| F
+    A["User Lands on Dashboard"] -->|Apri Meta Ads| C["Page Form: Meta Ads Parameters"]
+    A -->|Apri Funnel Pages| D["Page Form: Funnel Briefing"]
+
+    C -->|Fill Product + Audience + Offer| F["Select Model"]
+    D -->|Fill Product + Audience + Promise| F
     
     F -->|Default: GPT-4| G["Confirm & Generate"]
     F -->|Advanced: Claude/Mistral| G

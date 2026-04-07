@@ -1,15 +1,15 @@
 # Blueprint: LLM Artifact Generation Hub
 
 **Version**: 1.0  
-**Status**: MVP SCAFFOLD IMPLEMENTED  
+**Status**: CORE MVP IMPLEMENTED + TOOL MODULARIZATION IN PROGRESS
 **Target Audience**: AI Development Agents  
-**Last Updated**: 2026-04-07
+**Last Updated**: 2026-04-08
 
 ---
 
 ## Executive Summary
 
-A modular web application that allows non-technical users (MediaBuyers, SEO Specialists) to generate professional artifacts (content, SEO analysis, code) using various LLM models via OpenRouter. 
+A modular web application that allows non-technical users (MediaBuyers, SEO Specialists) to generate professional artifacts through dedicated workflows (Meta Ads and Funnel Pages) using various LLM models via OpenRouter.
 
 **Key Characteristics**:
 - Full-stack TypeScript/Node.js
@@ -31,7 +31,7 @@ A modular web application that allows non-technical users (MediaBuyers, SEO Spec
 │  ┌──────────────────────────────────────────────────────┐   │
 │  │ shadcn/ui Components + Tailwind CSS                  │   │
 │  │ - Project Dashboard                                   │   │
-│  │ - Artifact Generator (type selector)                 │   │
+│  │ - Tool pages (Meta Ads, Funnel Pages)               │   │
 │  │ - Artifact Editor with Real-time Streaming           │   │
 │  │ - Admin CRUD (users, projects, artifacts)            │   │
 │  └────────────────────┬─────────────────────────────────┘   │
@@ -40,6 +40,8 @@ A modular web application that allows non-technical users (MediaBuyers, SEO Spec
         ┌───────────────▼────────────────┐
         │  Next.js 16 Route Handlers     │
         │  /api/artifacts/generate       │
+        │  /api/tools/meta-ads/generate  │
+        │  /api/tools/funnel-pages/generate │
         │  /api/projects/*               │
         │  /api/users/* (admin)          │
         │  /api/auth/*                   │
@@ -48,10 +50,11 @@ A modular web application that allows non-technical users (MediaBuyers, SEO Spec
         ┌───────────────▼────────────────────────────────┐
         │  Server-Side Components                        │
         │ ┌──────────────────────────────────────────┐   │
-        │ │ LLM Orchestrator                         │   │
+        │ │ LLM Orchestrator + Tool Prompt Layer    │   │
         │ │ - Route requests to agents               │   │
-        │ │ - Handle streaming/batch                 │   │
+        │ │ - Handle streaming responses             │   │
         │ │ - Rate limit & quota check               │   │
+        │ │ - Resolve markdown prompt templates      │   │
         │ └──────┬─────────────────────────────────┬─┘   │
         │        │                                 │      │
         │ ┌──────▼────────┬──────────┬────────┬───▼────┐  │
@@ -212,6 +215,12 @@ model QuotaHistory {
 - `CodeAgent`: Code generation, boilerplate
 - Custom agents can be added
 
+#### Tool Prompt Layer (Server-only)
+- `src/lib/tool-prompts/registry.ts`: registry centralizzato dei template
+- `src/lib/tool-prompts/loader.ts`: caricamento/caching dei prompt markdown
+- `src/lib/tool-prompts/meta-ads.ts`: builder prompt Meta Ads
+- `src/lib/tool-prompts/funnel-pages.ts`: builder prompt Funnel (`optin -> quiz -> vsl`)
+
 **Responsibility**: Tool-specific prompt engineering
 
 #### Provider (LLM Integration)
@@ -237,6 +246,9 @@ model QuotaHistory {
 ├── artifacts/
 │   ├── generate          [POST]    → Stream LLM response
 │   └── [id]              [GET|DELETE] → Fetch/delete artifact
+├── tools/
+│   ├── meta-ads/generate    [POST] → Stream Meta Ads dedicated workflow
+│   └── funnel-pages/generate [POST] → Stream Funnel step (`optin|quiz|vsl`)
 ├── projects/
 │   ├── route.ts          [GET|POST] → List/create user projects
 │   └── [id]              [GET|PUT|DELETE] → Project detail CRUD
@@ -266,9 +278,12 @@ model QuotaHistory {
 - Display: StreamingDisplay (real-time artifact display)
 
 #### Pages
-- `/` → Landing/Dashboard
+- `/` → Landing
+- `/dashboard` → Dashboard con CTA tool dedicate
+- `/tools/meta-ads` → Tool Meta Ads
+- `/tools/funnel-pages` → Tool Funnel Pages (processo multi-step)
 - `/artifacts` → Project artifacts list
-- `/artifacts/new` → Create new artifact
+- `/artifacts/new` → Generazione rapida legacy
 - `/artifacts/[id]` → Edit artifact
 - `/admin` → Admin panel (user/quota management)
 

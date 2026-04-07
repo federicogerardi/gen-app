@@ -11,7 +11,7 @@ Target utenti: SEO Specialist, MediaBuyer
 
 Rendere la GUI più veloce, chiara e orientata ai task quotidiani del team marketing:
 
-- generare artefatti con tool separati per tipo di lavoro (Content, SEO, Code)
+- generare artefatti con tool separati per workflow operativo (Meta Ads, Funnel Pages)
 - ridurre il tempo di esecuzione del flusso principale
 - aumentare qualità percepita e controllo dell output generato
 
@@ -53,9 +53,8 @@ Quando un SEO Specialist o MediaBuyer deve produrre rapidamente varianti di cont
 ### Navigazione primaria
 
 - Dashboard
-- Tool Content
-- Tool SEO
-- Tool Code
+- Tool Meta Ads
+- Tool Funnel Pages
 - Artefatti
 - Progetti
 - Admin (solo role admin)
@@ -63,13 +62,12 @@ Quando un SEO Specialist o MediaBuyer deve produrre rapidamente varianti di cont
 ### Routing target
 
 - Dashboard overview: /dashboard
-- Tool Content: /tools/content
-- Tool SEO: /tools/seo
-- Tool Code: /tools/code
+- Tool Meta Ads: /tools/meta-ads
+- Tool Funnel Pages: /tools/funnel-pages
 - Lista artefatti: /artifacts
 - Dettaglio artefatto: /artifacts/[id]
 
-Nota: in fase 1 è possibile mantenere /artifacts/new e usarlo come fallback fino al completamento dei tre tool dedicati.
+Nota: le route `/tools/content`, `/tools/seo` e `/tools/code` restano disponibili come redirect di compatibilità verso i nuovi tool.
 
 ---
 
@@ -81,7 +79,7 @@ Obiettivo: diventare un hub di scelta task e non una pagina generica.
 
 Interventi:
 
-- Hero con CTA separate: Crea Content, Crea SEO, Crea Code
+- Hero con CTA separate: Apri Meta Ads, Apri Funnel Pages
 - Sezione Progetti recenti con accesso rapido
 - Sezione Artefatti recenti con stato e azioni rapide
 - Widget quota e spesa visibile in alto
@@ -99,9 +97,8 @@ Interventi comuni:
 
 Interventi per tool:
 
-- Content: focus su tono, audience, lunghezza, obiettivo campagna
-- SEO: focus su keyword, search intent, formato SERP, meta output
-- Code: focus su framework, linguaggio, vincoli tecnici, output format
+- Meta Ads: focus su prodotto, audience, offerta, objective e creative angle
+- Funnel Pages: focus su briefing funnel e flusso sequenziale `optin -> quiz -> vsl`
 
 ### 3) Artefatti
 
@@ -167,13 +164,13 @@ DoD:
 - tutti i link principali funzionanti
 - layout mobile/tablet/desktop stabile
 
-### Sprint 2: Tool Content e Tool SEO
+### Sprint 2: Tool Meta Ads e Funnel Pages
 
 Deliverable:
 
-- nuove pagine /tools/content e /tools/seo
-- form dedicati con opzioni avanzate collapsible
-- integrazione con endpoint di generazione esistenti
+- pagina /tools/meta-ads con endpoint dedicato `/api/tools/meta-ads/generate`
+- pagina /tools/funnel-pages con endpoint dedicato `/api/tools/funnel-pages/generate`
+- gestione del processo multi-step funnel sul client (optin, quiz, vsl)
 
 DoD:
 
@@ -181,11 +178,11 @@ DoD:
 - salvataggio artefatto coerente con modello dati attuale
 - gestione errori quota e validazione chiara lato UI
 
-### Sprint 3: Tool Code e area Artefatti
+### Sprint 3: Consolidamento Tool + area Artefatti
 
 Deliverable:
 
-- pagina /tools/code
+- consolidamento navigazione e compatibilità route legacy tool
 - refactoring lista artefatti con filtri e quick actions
 - dettaglio artefatto con editor e metadati migliorati
 
@@ -249,7 +246,7 @@ Testing:
 - Task completion rate per generazione
 - Tempo medio da apertura tool a completamento artefatto
 - Numero medio di rigenerazioni per sessione
-- Adozione dei tool separati (Content vs SEO vs Code)
+- Adozione dei tool separati (Meta Ads vs Funnel Pages)
 - Error rate su validazione input e quota
 
 ---
@@ -257,6 +254,6 @@ Testing:
 ## Prossimi passi immediati
 
 1. Validare il piano con il team (SEO + MediaBuyer + admin)
-2. Definire wireframe low-fi per dashboard e tre tool
+2. Definire wireframe low-fi per dashboard e due tool core
 3. Aprire epic e task tecnici per Sprint 1
 4. Eseguire implementazione incrementale con rilasci settimanali
