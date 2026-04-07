@@ -333,14 +333,14 @@ export function formatArtifactContentForDisplay(input: PreviewInput): DisplayOut
   if (input.status === 'generating') {
     return {
       title: 'Output in elaborazione',
-      text: 'La generazione e in corso. Al completamento vedrai qui il contenuto finale in formato leggibile.',
+      text: 'La generazione è in corso. Al completamento vedrai qui il contenuto finale in formato leggibile.',
     };
   }
 
   if (input.status === 'failed') {
     return {
       title: 'Output non disponibile',
-      text: 'La generazione non e andata a buon fine. Riprova dal tool di origine o avvia una nuova generazione.',
+      text: 'La generazione non è andata a buon fine. Riprova dal tool di origine o avvia una nuova generazione.',
     };
   }
 

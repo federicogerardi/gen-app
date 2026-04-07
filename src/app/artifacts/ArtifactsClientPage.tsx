@@ -64,7 +64,7 @@ export function ArtifactsClientPage({ projects }: Props) {
   }, [listQuery.data?.items, period]);
 
   async function handleDelete(id: string) {
-    const confirmed = window.confirm('Eliminare questo artefatto? Questa azione non e reversibile.');
+    const confirmed = window.confirm('Eliminare questo artefatto? Questa azione non è reversibile.');
     if (!confirmed) return;
 
     await deleteMutation.mutateAsync(id);
