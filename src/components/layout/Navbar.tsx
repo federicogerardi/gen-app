@@ -8,9 +8,8 @@ import { Badge } from '@/components/ui/badge';
 
 const primaryLinks = [
   { href: '/dashboard', label: 'Dashboard' },
-  { href: '/tools/content', label: 'Tool Content' },
-  { href: '/tools/seo', label: 'Tool SEO' },
-  { href: '/tools/code', label: 'Tool Code' },
+  { href: '/tools/meta-ads', label: 'Meta Ads' },
+  { href: '/tools/funnel-pages', label: 'Funnel Pages' },
   { href: '/artifacts', label: 'Artefatti' },
 ];
 

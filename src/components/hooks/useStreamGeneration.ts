@@ -23,6 +23,10 @@ export interface StreamState {
   error: string | null;
 }
 
+interface GenerateOptions {
+  endpoint?: string;
+}
+
 export function useStreamGeneration() {
   const [state, setState] = useState<StreamState>({
     isStreaming: false,
@@ -32,14 +36,14 @@ export function useStreamGeneration() {
   });
   const abortRef = useRef<AbortController | null>(null);
 
-  const generate = useCallback(async (request: GenerateRequest) => {
+  const generate = useCallback(async (request: GenerateRequest | Record<string, unknown>, options?: GenerateOptions) => {
     abortRef.current?.abort();
     abortRef.current = new AbortController();
 
     setState({ isStreaming: true, content: '', artifactId: null, error: null });
 
     try {
-      const response = await fetch('/api/artifacts/generate', {
+      const response = await fetch(options?.endpoint ?? '/api/artifacts/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(request),

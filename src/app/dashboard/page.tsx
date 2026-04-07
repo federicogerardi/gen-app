@@ -9,21 +9,15 @@ import { Badge } from '@/components/ui/badge';
 
 const TOOL_ACTIONS = [
   {
-    title: 'Tool Content',
-    description: 'Copy ad, landing e testi di campagna con parametri guidati.',
-    href: '/tools/content',
+    title: 'Generatore Meta Ads',
+    description: 'Crea varianti ad copy Meta complete: hook, primary text, headline e CTA.',
+    href: '/tools/meta-ads',
     cta: 'Apri tool',
   },
   {
-    title: 'Tool SEO',
-    description: 'Brief, meta e output ottimizzati per keyword e search intent.',
-    href: '/tools/seo',
-    cta: 'Apri tool',
-  },
-  {
-    title: 'Tool Code',
-    description: 'Snippet e template tecnici per use case marketing e integrazioni.',
-    href: '/tools/code',
+    title: 'Generatore Funnel Pages',
+    description: 'Workflow multi-step: optin page, domande quiz e script VSL.',
+    href: '/tools/funnel-pages',
     cta: 'Apri tool',
   },
 ];
@@ -74,7 +68,7 @@ export default async function DashboardPage() {
           </div>
         </section>
 
-        <section className="grid gap-4 md:grid-cols-3 mb-8">
+        <section className="grid gap-4 md:grid-cols-2 mb-8">
           {TOOL_ACTIONS.map((tool) => (
             <Card key={tool.href}>
               <CardHeader>
