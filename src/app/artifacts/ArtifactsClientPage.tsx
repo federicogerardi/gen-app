@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { formatArtifactPreview } from '@/lib/artifact-preview';
 
 type ProjectOption = {
   id: string;
@@ -163,7 +164,14 @@ export function ArtifactsClientPage({ projects }: Props) {
           </Card>
         ) : (
           <div className="space-y-3" role="list" aria-label="Lista artefatti">
-            {artifacts.map((artifact) => (
+            {artifacts.map((artifact) => {
+              const preview = formatArtifactPreview({
+                type: artifact.type,
+                status: artifact.status,
+                content: artifact.content,
+              });
+
+              return (
               <Card key={artifact.id} className="hover:shadow-md transition-shadow" role="listitem">
                 <CardHeader className="pb-2">
                   <div className="flex flex-wrap items-center justify-between gap-3">
@@ -181,9 +189,12 @@ export function ArtifactsClientPage({ projects }: Props) {
                   <CardTitle className="text-base">{artifact.project?.name ?? 'Progetto non disponibile'}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <p className="text-sm text-muted-foreground line-clamp-2">
-                    {artifact.content || 'Nessun contenuto disponibile.'}
-                  </p>
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">{preview.label}</p>
+                    <p className="text-sm text-muted-foreground line-clamp-4" aria-label={`Anteprima artefatto ${artifact.id}`}>
+                      {preview.text}
+                    </p>
+                  </div>
                   <div className="flex flex-wrap gap-2">
                     <Button size="sm" variant="outline" onClick={() => router.push(`/artifacts/${artifact.id}`)} aria-label={`Modifica artefatto ${artifact.id}`}>
                       Modifica
@@ -203,7 +214,8 @@ export function ArtifactsClientPage({ projects }: Props) {
                   </div>
                 </CardContent>
               </Card>
-            ))}
+              );
+            })}
           </div>
         )}
       </main>

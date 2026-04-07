@@ -83,4 +83,31 @@ describe('ArtifactsClientPage', () => {
 
     confirmSpy.mockRestore();
   });
+
+  it('mostra preview semantica al posto del JSON raw', () => {
+    useArtifacts.mockReturnValue({
+      isLoading: false,
+      error: null,
+      data: {
+        items: [
+          {
+            ...baseArtifact,
+            content: JSON.stringify({
+              headline: 'Titolo persuasivo',
+              primaryText: 'Descrizione leggibile',
+              cta: 'Scopri di piu',
+            }),
+          },
+        ],
+        total: 1,
+        limit: 100,
+        offset: 0,
+      },
+    });
+
+    render(<ArtifactsClientPage projects={[{ id: 'proj_1', name: 'Project A' }]} />);
+
+    expect(screen.getByText('Titolo persuasivo - Descrizione leggibile - Scopri di piu')).toBeInTheDocument();
+    expect(screen.queryByText('{"headline":"Titolo persuasivo","primaryText":"Descrizione leggibile","cta":"Scopri di piu"}')).not.toBeInTheDocument();
+  });
 });

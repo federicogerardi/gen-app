@@ -32,7 +32,7 @@ KPI primari:
 
 ## Job To Be Done operativo
 
-Quando un SEO Specialist o MediaBuyer deve produrre rapidamente varianti di contenuto per campagne, vuole entrare in un tool specializzato per il task corrente, compilare pochi campi chiari e ottenere output modificabile in tempo reale, così da iterare rapidamente senza cambiare contesto.
+Quando un SEO Specialist o MediaBuyer deve produrre rapidamente varianti di contenuto per campagne, vuole entrare in un tool specializzato per il task corrente, compilare pochi campi chiari e ottenere output leggibile e subito riusabile, così da iterare rapidamente senza cambiare contesto.
 
 ---
 
@@ -50,8 +50,8 @@ Quando un SEO Specialist o MediaBuyer deve produrre rapidamente varianti di cont
 4. Decisioni rapide
 - Smart defaults per modello, tono, lunghezza e progetto recente.
 
-5. Editabilità immediata
-- Output modificabile subito dopo lo stream, con salvataggio chiaro.
+5. Leggibilita e riuso immediato
+- Output sempre human-readable, con passaggio rapido a nuova generazione quando serve una variante.
 
 ---
 
@@ -111,12 +111,78 @@ Interventi per tool:
 
 Obiettivo: consultazione e riuso più rapidi.
 
+Problema UX emerso post-implementazione:
+
+- nelle card lista artefatti l output puo apparire come JSON raw, riducendo leggibilita e velocita decisionale
+- il contenuto in preview non distingue chiaramente testo finale vs payload tecnico
+
 Interventi:
 
 - filtri fissi per tipo, stato, progetto, periodo
 - anteprima leggibile in lista
 - azioni rapide: duplica input, modifica, elimina
-- pagina dettaglio con editor migliorato e metadati in sidebar
+- pagina dettaglio read-only con output elaborato human-readable e metadati in sidebar
+
+### Refactoring visualizzazione output card (hotfix UX)
+
+Obiettivo specifico:
+
+- mostrare sempre una preview human-readable nelle card, evitando il rendering diretto di JSON raw
+
+Principi:
+
+1. Content-first rendering
+- la card privilegia testo utile all operatore marketing (headline, hook, body, CTA, sezioni principali)
+
+2. Safe fallback
+- se il parsing strutturato non e affidabile, mostrare una preview testuale pulita e troncata
+
+3. Progressive disclosure
+- payload tecnico non esposto nella UI primaria; dettaglio artefatto orientato a testo elaborato e metadati essenziali
+
+Spec di comportamento in lista artefatti:
+
+1. Pipeline preview lato client
+- Step A: tentare parse di `artifact.content` come JSON solo se stringa JSON valida
+- Step B: normalizzare in testo leggibile per tipo (`content`, `seo`, `code`)
+- Step C: estrarre prime sezioni significative (max 2 blocchi) e applicare clamp
+- Step D: fallback a testo plain ripulito se parse/normalizzazione falliscono
+
+2. Regole di estrazione preview
+- `content`: priorita a campi semantici (es. `headline`, `primaryText`, `cta`, `sections`)
+- `seo`: priorita a `title`, `metaDescription`, `keywords` (prime n)
+- `code`: mostrare summary tecnica breve (linguaggio + intent), non dump completo
+
+3. Regole visuali card
+- titolo progetto sempre visibile
+- badge tipo/modello/stato invariati
+- preview su 3-4 righe max con ellissi
+- micro-label "Anteprima" sopra il testo
+- stato `generating`: placeholder testuale dedicato
+- stato `failed`: messaggio errore sintetico non tecnico
+
+4. Accessibilita e semantica
+- preview con `aria-label` descrittiva per screen reader
+- messaggi loading/empty/error con ruoli ARIA coerenti (`status`/`alert`)
+- mantenere contrasto AA su testo secondario e badge di stato
+
+5. Non obiettivi
+- non introdurre nuovo schema DB
+- non esporre JSON tecnico nella lista come UI primaria
+
+Deliverable tecnici:
+
+- utility condivisa di formatting preview (es. `formatArtifactPreview`) con test unit
+- integrazione nella card lista artefatti con fallback robusto
+- rendering read-only human-readable nella pagina dettaglio artefatto (no editor inline, no JSON raw)
+- allineamento copy stato/errore orientato utente business
+
+DoD hotfix preview:
+
+- nessuna card mostra JSON raw come preview primaria
+- tempo medio scansione lista migliorato in test qualitativo interno
+- regressioni assenti su quick actions (modifica, duplica input, elimina)
+- copertura test: parsing JSON valido, JSON invalido, plain text, stato generating, stato failed
 
 ### 4) Admin UX
 
@@ -191,7 +257,7 @@ Deliverable:
 
 - consolidamento navigazione e compatibilità route legacy tool
 - refactoring lista artefatti con filtri e quick actions
-- dettaglio artefatto con editor e metadati migliorati
+- dettaglio artefatto read-only con output elaborato e metadati migliorati
 
 DoD:
 
@@ -201,7 +267,8 @@ DoD:
 
 Stato corrente:
 
-- completato: compatibilita route legacy, lista artefatti con filtri (tipo, stato, progetto, periodo), quick actions (modifica, duplica input, elimina), dettaglio con editor e metadati, copertura test UI minima sui flussi principali
+- completato: compatibilita route legacy, lista artefatti con filtri (tipo, stato, progetto, periodo), quick actions (modifica, duplica input, elimina), dettaglio read-only con output human-readable e metadati, copertura test UI minima sui flussi principali
+- aggiornamento post-sprint: hotfix UX preview card completato (rimozione JSON raw, formatting semantico, fallback sicuro, integrazione dashboard/progetti)
 
 ### Sprint 4: Hardening UX e Admin polish
 
@@ -230,6 +297,7 @@ Frontend:
 - nuove route App Router per i tool dedicati
 - refactor di componenti layout condivisi
 - revisione hook per supportare preset per tool
+- utilita di normalizzazione preview artefatti riusabile tra lista e widget dashboard
 
 Backend:
 
@@ -240,6 +308,7 @@ Testing:
 
 - aggiornamento test e2e per i nuovi entry point
 - test di regressione su autenticazione, generazione e salvataggio
+- test unit/integration su rendering preview artefatti (structured JSON + fallback)
 
 ---
 
@@ -268,7 +337,7 @@ Testing:
 
 ## Prossimi passi immediati
 
-1. Validare il piano con il team (SEO + MediaBuyer + admin)
-2. Definire wireframe low-fi per dashboard e due tool core
-3. Aprire epic e task tecnici per Sprint 1
-4. Eseguire implementazione incrementale con rilasci settimanali
+1. Validare il risultato con SEO + MediaBuyer su dataset reale
+2. Misurare qualitativamente il tempo di scansione lista prima/dopo hotfix
+3. Valutare estensione del formatter preview anche in export/report interni
+4. Consolidare linee guida copy preview nel design system

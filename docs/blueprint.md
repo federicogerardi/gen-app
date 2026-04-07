@@ -32,7 +32,7 @@ A modular web application that allows non-technical users (MediaBuyers, SEO Spec
 │  │ shadcn/ui Components + Tailwind CSS                  │   │
 │  │ - Project Dashboard                                   │   │
 │  │ - Tool pages (Meta Ads, Funnel Pages)               │   │
-│  │ - Artifact Editor with Real-time Streaming           │   │
+│  │ - Artifact Detail read-only con output elaborato    │   │
 │  │ - Admin CRUD (users, projects, artifacts)            │   │
 │  └────────────────────┬─────────────────────────────────┘   │
 └───────────────────────┼────────────────────────────────────┘

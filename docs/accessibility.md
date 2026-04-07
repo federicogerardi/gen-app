@@ -469,7 +469,7 @@ npm run test:a11y
 | Dashboard | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Generate Form | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Streaming Display | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Artifact Editor | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Artifact Detail (Read-only) | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Admin Panel | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 ---

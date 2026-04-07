@@ -6,6 +6,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { formatArtifactPreview } from '@/lib/artifact-preview';
 
 const TOOL_ACTIONS = [
   {
@@ -150,7 +151,14 @@ export default async function DashboardPage() {
           </Card>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {recentArtifacts.map((artifact) => (
+            {recentArtifacts.map((artifact) => {
+              const preview = formatArtifactPreview({
+                type: artifact.type,
+                status: artifact.status,
+                content: artifact.content,
+              });
+
+              return (
               <Link key={artifact.id} href={`/artifacts/${artifact.id}`}>
                 <Card className="hover:shadow-md transition-shadow h-full">
                   <CardHeader>
@@ -161,11 +169,15 @@ export default async function DashboardPage() {
                       </Badge>
                     </div>
                     <CardTitle className="text-base line-clamp-1">{artifact.project.name}</CardTitle>
-                    <CardDescription className="line-clamp-2">{artifact.content || 'Generazione in corso...'}</CardDescription>
+                    <CardDescription className="space-y-1">
+                      <span className="block text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{preview.label}</span>
+                      <span className="block line-clamp-3">{preview.text}</span>
+                    </CardDescription>
                   </CardHeader>
                 </Card>
               </Link>
-            ))}
+              );
+            })}
           </div>
         )}
       </main>
