@@ -89,6 +89,9 @@ export async function* createReadableStream(request: ArtifactRequest) {
 ```
 
 #### 2. Frontend Streaming Consumer (React)
+
+> Per endpoint `POST`, usare `fetch` + `ReadableStream` (non `EventSource`, che supporta solo `GET`).
+
 ```typescript
 // hooks/useStreamGeneration.ts
 import { useCallback, useState } from 'react';
@@ -118,8 +121,9 @@ export function useStreamGeneration() {
       if (!reader) throw new Error('No response body');
 
       const decoder = new TextDecoder();
-      
-      for (const { done, value } of await reader.read()) {
+
+      while (true) {
+        const { done, value } = await reader.read();
         if (done) break;
         
         const chunk = decoder.decode(value);
@@ -155,13 +159,17 @@ export async function persistStreamChunk(
   artifactId: string,
   chunk: StreamChunk
 ) {
-  // Append to artifact content in real-time
+  // Append safely to artifact content in real-time.
+  // Avoid numeric operators on string fields.
+  const artifact = await prisma.artifact.findUnique({
+    where: { id: artifactId },
+    select: { content: true },
+  });
+
   await prisma.artifact.update({
     where: { id: artifactId },
     data: {
-      content: {
-        increment: chunk.token,
-      },
+      content: `${artifact?.content ?? ''}${chunk.token}`,
       lastStreamedAt: new Date(),
     },
   });

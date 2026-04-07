@@ -346,8 +346,14 @@ Create content, SEO, and code agents with:
 #### 4.1 Streaming Response Handler
 ```typescript
 // src/app/api/artifacts/generate/route.ts
+import { auth } from '@/lib/auth';
+
 export async function POST(request: Request) {
-  const { artifactRequest, userId } = await request.json();
+  const session = await auth();
+  if (!session?.user?.id) return unauthorizedErrorResponse();
+
+  const { artifactRequest } = await request.json();
+  const userId = session.user.id;
   
   // Check rate limit
   const quota = await rateLimit(userId);
@@ -370,11 +376,14 @@ export async function POST(request: Request) {
       headers: {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
       },
     }
   );
 }
 ```
+
+> **Security note**: non leggere mai `userId` dal body. Usare sempre `session.user.id` lato server.
 
 **Acceptance Criteria**:
 - [ ] SSE connection established
@@ -463,7 +472,11 @@ Implement:
 Track spending per artifact:
 ```typescript
 export function calculateCost(model: string, tokens: number) {
-  const costs = { 'gpt-4-turbo': 0.03, 'claude-3-opus': 0.075 };
+  const costs = {
+    'openai/gpt-4-turbo': 0.03,
+    'anthropic/claude-3-opus': 0.075,
+    'mistralai/mistral-large': 0.024,
+  };
   return (tokens / 1000) * costs[model];
 }
 ```
@@ -516,8 +529,15 @@ export function useStreamGeneration() {
     
     const reader = response.body?.getReader();
     const decoder = new TextDecoder();
-    
-    for await (const { value } of reader.read()) {
+    if (!reader) {
+      setIsStreaming(false);
+      throw new Error('Stream not available');
+    }
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
       const chunk = decoder.decode(value);
       const lines = chunk.split('\\n');
       

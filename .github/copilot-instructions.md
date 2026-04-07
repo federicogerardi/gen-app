@@ -70,7 +70,7 @@ cd gen-app
 ### Dipendenze principali
 ```bash
 # Database & Auth
-npm install prisma @prisma/client @auth/prisma-adapter next-auth@beta
+npm install prisma @prisma/client @auth/prisma-adapter next-auth
 
 # Rate limiting
 npm install @upstash/ratelimit @upstash/redis
@@ -404,8 +404,9 @@ Aggiungere nuovi agent types: creare `src/lib/llm/agents/<name>.ts` estendendo `
 ## API Conventions
 
 - Tutti gli endpoint richiedono autenticazione — verificare la sessione con `auth()` di NextAuth
+- In browser, usare session cookie NextAuth; Bearer token solo per integrazioni server-to-server esplicite
 - Errori sempre nel formato `{ "error": { "code": "ERROR_CODE", "message": "..." } }`
-- Codici usati: `UNAUTHORIZED` (401), `FORBIDDEN` (403), `NOT_FOUND` (404), `VALIDATION_ERROR` (400), `RATE_LIMIT_EXCEEDED` (429), `PAYMENT_REQUIRED` (402), `INTERNAL_ERROR` (500)
+- Codici usati: `UNAUTHORIZED` (401), `FORBIDDEN` (403), `NOT_FOUND` (404), `VALIDATION_ERROR` (400), `RATE_LIMIT_EXCEEDED` (429), `PAYMENT_REQUIRED` (402), `SERVICE_UNAVAILABLE` (503), `INTERNAL_ERROR` (500)
 - Validare sempre l'input con Zod prima di interrogare il DB
 - Rate limit check con `rateLimit(userId)` prima di ogni chiamata a OpenRouter
 - Headers SSE obbligatori: `Content-Type: text/event-stream`, `Cache-Control: no-cache`, `Connection: keep-alive`

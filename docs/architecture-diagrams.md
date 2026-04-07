@@ -437,7 +437,7 @@ graph TB
 ```mermaid
 graph LR
     subgraph Client["Browser Client<br/>(React Hook)"]
-        EventSource["EventSource<br/>Connection"]
+        FetchStream["fetch POST +<br/>ReadableStream Reader"]
         TokenBuffer["Token Buffer"]
         Display["DOM Update"]
     end
@@ -457,7 +457,7 @@ graph LR
         PostgreSQL["PostgreSQL"]
     end
     
-    EventSource -->|Connect| Route
+    FetchStream -->|POST request| Route
     Route -->|Start Stream| Connection
     
     Connection -->|Open| Stream
@@ -465,8 +465,8 @@ graph LR
     
     loop Every Token
         TokenStream -->|Token| Stream
-        Stream -->|SSE Event| EventSource
-        EventSource -->|Parse JSON| TokenBuffer
+        Stream -->|SSE chunks| FetchStream
+        FetchStream -->|Parse JSON| TokenBuffer
         TokenBuffer -->|Update| Display
         
         Stream -->|Buffer| SaveQueue
@@ -474,8 +474,8 @@ graph LR
     end
     
     TokenStream -->|EOF| Stream
-    Stream -->|Complete Event| EventSource
-    EventSource -->|Close| Route
+    Stream -->|Complete Event| FetchStream
+    FetchStream -->|Close reader| Route
     
     style Client fill:#e1f5ff
     style Server fill:#f3e5f5

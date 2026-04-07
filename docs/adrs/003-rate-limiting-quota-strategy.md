@@ -28,8 +28,8 @@ Implement **three-tier rate limiting strategy**:
 │            User Quota System                         │
 ├─────────────────────────────────────────────────────┤
 │                                                     │
-│  Tier 1: IP/Global Rate Limit                      │
-│  └─ 1000 req/day per user                          │
+│  Tier 1: User Monthly Quota                        │
+│  └─ 1000 req/30 giorni per user                    │
 │                                                     │
 │  Tier 2: OpenRouter Rate Limit                     │
 │  └─ Pass-through (respect provider limits)         │
@@ -99,64 +99,27 @@ model Artifact {
 ```typescript
 // src/middleware/rate-limit.ts
 import { Redis } from '@upstash/redis';
+import { Ratelimit } from '@upstash/ratelimit';
 
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_URL,
-  token: process.env.UPSTASH_REDIS_TOKEN,
+// Usa UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN
+const redis = Redis.fromEnv();
+
+const ratelimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.fixedWindow(1000, '30 d'),
+  prefix: 'quota',
 });
 
 export async function rateLimitMiddleware(
-  request: Request,
   userId: string
 ): Promise<{ allowed: boolean; remaining: number; reset: Date }> {
-  const key = `quota:${userId}:${getMonthKey()}`;
-  const dailyKey = `daily:${userId}:${getDayKey()}`;
-  
-  // Check daily limit (sliding window)
-  const dailyCount = await redis.incr(dailyKey);
-  if (dailyCount === 1) {
-    await redis.expire(dailyKey, 86400); // 24 hours
-  }
-  
-  if (dailyCount > 100) { // 100 requests per day
-    return {
-      allowed: false,
-      remaining: 0,
-      reset: new Date(Date.now() + 86400000),
-    };
-  }
-  
-  // Check monthly limit
-  const monthlyCount = await redis.incr(key);
-  if (monthlyCount === 1) {
-    await redis.expire(key, 2592000); // 30 days
-  }
-  
-  const remaining = 1000 - monthlyCount; // 1000 /month
-  
-  if (remaining <= 0) {
-    return {
-      allowed: false,
-      remaining: 0,
-      reset: getMonthResetDate(),
-    };
-  }
-  
+  const { success, remaining, reset } = await ratelimit.limit(userId);
+
   return {
-    allowed: true,
+    allowed: success,
     remaining,
-    reset: getMonthResetDate(),
+    reset: new Date(reset),
   };
-}
-
-function getMonthKey() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-}
-
-function getDayKey() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 }
 ```
 
@@ -165,8 +128,8 @@ function getDayKey() {
 // src/lib/llm/cost-calculator.ts
 const MODEL_COSTS = {
   'openai/gpt-4-turbo': { input: 0.01, output: 0.03 }, // per 1K tokens
-  'claude-3-opus': { input: 0.015, output: 0.075 },
-  'mistral/mistral-large': { input: 0.008, output: 0.024 },
+  'anthropic/claude-3-opus': { input: 0.015, output: 0.075 },
+  'mistralai/mistral-large': { input: 0.008, output: 0.024 },
 };
 
 export function calculateCost(
@@ -231,17 +194,31 @@ export async function trackQuotaUsage(
 import { rateLimitMiddleware } from '@/middleware/rate-limit';
 
 export async function POST(request: Request) {
-  const { artifactRequest, userId } = await request.json();
+  const session = await auth();
+  if (!session?.user?.id) {
+    return Response.json(
+      { error: { code: 'UNAUTHORIZED', message: 'Authentication required' } },
+      { status: 401 }
+    );
+  }
+
+  const { artifactRequest } = await request.json();
+  const userId = session.user.id;
   
   // Check rate limit
-  const quotaCheck = await rateLimitMiddleware(request, userId);
+  const quotaCheck = await rateLimitMiddleware(userId);
   
   if (!quotaCheck.allowed) {
     return Response.json(
       {
-        error: 'Rate limit exceeded',
-        remaining: quotaCheck.remaining,
-        resetDate: quotaCheck.reset,
+        error: {
+          code: 'RATE_LIMIT_EXCEEDED',
+          message: 'Monthly quota exhausted',
+          details: {
+            remaining: quotaCheck.remaining,
+            resetDate: quotaCheck.reset,
+          },
+        },
       },
       { 
         status: 429,
@@ -259,9 +236,14 @@ export async function POST(request: Request) {
   if (user.monthlySpent + estimatedCost > user.monthlyBudget) {
     return Response.json(
       {
-        error: 'Monthly budget exceeded',
-        monthlySpent: user.monthlySpent,
-        monthlyBudget: user.monthlyBudget,
+        error: {
+          code: 'PAYMENT_REQUIRED',
+          message: 'Monthly budget exceeded',
+          details: {
+            monthlySpent: user.monthlySpent,
+            monthlyBudget: user.monthlyBudget,
+          },
+        },
       },
       { status: 402 } // Payment Required
     );

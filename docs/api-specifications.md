@@ -3,7 +3,7 @@
 **Version**: 1.0  
 **Status**: READY FOR IMPLEMENTATION  
 **Base URL**: `https://app.render.com/api` (staging/prod)  
-**Authentication**: Bearer token (NextAuth session)  
+**Authentication**: NextAuth session cookie (browser). Bearer tokens solo per integrazioni server-to-server esplicite.  
 **Content-Type**: `application/json`  
 **Last Updated**: 2026-04-07
 
@@ -31,6 +31,8 @@ All errors follow this format:
 - `NOT_FOUND` → 404 (resource doesn't exist)
 - `VALIDATION_ERROR` → 400 (invalid input)
 - `RATE_LIMIT_EXCEEDED` → 429 (quota exhausted)
+- `PAYMENT_REQUIRED` → 402 (monthly budget exceeded)
+- `SERVICE_UNAVAILABLE` → 503 (provider temporarily unavailable)
 - `INTERNAL_ERROR` → 500 (server error)
 
 ---
@@ -634,7 +636,7 @@ Returns complete response instead of streaming.
 
 ```bash
 curl -X POST https://app.render.com/api/artifacts/generate \
-  -H "Authorization: Bearer session_token" \
+  -H "Cookie: next-auth.session-token=<session_cookie>" \
   -H "Content-Type: application/json" \
   -d '{
     "projectId": "proj_123",
@@ -652,14 +654,14 @@ curl -X POST https://app.render.com/api/artifacts/generate \
 
 ```bash
 curl -X GET 'https://app.render.com/api/artifacts?projectId=proj_123&limit=10' \
-  -H "Authorization: Bearer session_token"
+  -H "Cookie: next-auth.session-token=<session_cookie>"
 ```
 
 ### Example 3: Admin - Update User Quota
 
 ```bash
 curl -X PUT https://app.render.com/api/admin/users/user_123/quota \
-  -H "Authorization: Bearer admin_token" \
+  -H "Cookie: next-auth.session-token=<admin_session_cookie>" \
   -H "Content-Type: application/json" \
   -d '{
     "monthlyQuota": 2000,

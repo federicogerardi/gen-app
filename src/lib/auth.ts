@@ -1,0 +1,32 @@
+import NextAuth from 'next-auth';
+import Google from 'next-auth/providers/google';
+import { PrismaAdapter } from '@auth/prisma-adapter';
+import { db } from '@/lib/db';
+
+export const { auth, handlers, signIn, signOut } = NextAuth({
+  adapter: PrismaAdapter(db),
+  providers: [
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
+  ],
+  session: { strategy: 'database' },
+  callbacks: {
+    async signIn({ user, account, profile }) {
+      if (account?.provider === 'google') {
+        return (
+          profile?.email_verified === true &&
+          (user.email?.endsWith('@company.com') ?? false)
+        );
+      }
+      return false;
+    },
+    async session({ session, user }) {
+      session.user.id = user.id;
+      session.user.role = (user as { role?: string }).role ?? 'user';
+      return session;
+    },
+  },
+  trustHost: true,
+});

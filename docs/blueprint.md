@@ -155,7 +155,7 @@ model Artifact {
   projectId: string             // Container
   
   type: string                  // 'content' | 'seo' | 'code' | custom...
-  model: string                 // 'gpt-4-turbo', 'claude-3-opus', etc.
+  model: string                 // 'openai/gpt-4-turbo', 'anthropic/claude-3-opus', etc.
   
   // Input/Output
   input: object                 // JSON input (context, parameters)
@@ -227,7 +227,7 @@ model QuotaHistory {
 - **NextAuth.js v5** handles sessions
 - **Google OAuth** enterprise login
 - **Email whitelist** enforcement (`email.endsWith('@company.com')`)
-- **JWT-based** sessions (24-hour refresh)
+- **Database sessions (Prisma adapter)** for server-side revocation and auditability
 - **CSRF protection** built-in
 
 ### 3. API Layer
@@ -285,7 +285,7 @@ model QuotaHistory {
 - Auto-migrations on deploy
 - Type-safe queries
 - Relationship management
-- Soft deletes for artifacts (optional)
+- Hard delete for artifacts/projects in v1 (with ownership checks + audit trail)
 
 ---
 
@@ -320,9 +320,14 @@ data: {"type":"complete","tokens":{"input":45,"output":120},"cost":0.012}
 
 ```json
 {
-  "error": "Rate limit exceeded",
-  "remaining": 0,
-  "resetDate": "2026-05-07T00:00:00Z"
+  "error": {
+    "code": "RATE_LIMIT_EXCEEDED",
+    "message": "Monthly quota exhausted",
+    "details": {
+      "remaining": 0,
+      "resetDate": "2026-05-07T00:00:00Z"
+    }
+  }
 }
 ```
 
