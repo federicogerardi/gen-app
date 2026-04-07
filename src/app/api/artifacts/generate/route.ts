@@ -22,6 +22,13 @@ export async function POST(request: Request) {
   }
 
   const userId = session.user.id;
+  const body = await request.json().catch(() => null);
+  const parsed = generateSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: { code: 'VALIDATION_ERROR', message: 'Invalid input', details: parsed.error.flatten() } }, { status: 400 });
+  }
+
+  const { projectId, type, model, input } = parsed.data;
 
   // Check quota
   const user = await db.user.findUnique({ where: { id: userId } });
@@ -30,28 +37,29 @@ export async function POST(request: Request) {
   }
 
   if (user.monthlyUsed >= user.monthlyQuota) {
+    await db.quotaHistory.create({
+      data: { userId, requestCount: 1, costUSD: 0, model, artifactType: type, status: 'rate_limited' },
+    });
     return NextResponse.json({ error: { code: 'RATE_LIMIT_EXCEEDED', message: 'Monthly quota exhausted' } }, { status: 429 });
   }
 
   const budgetNum = Number(user.monthlyBudget);
   const spentNum = Number(user.monthlySpent);
   if (spentNum >= budgetNum) {
+    await db.quotaHistory.create({
+      data: { userId, requestCount: 1, costUSD: 0, model, artifactType: type, status: 'rate_limited' },
+    });
     return NextResponse.json({ error: { code: 'PAYMENT_REQUIRED', message: 'Monthly budget exhausted' } }, { status: 402 });
   }
 
   // Redis rate limit
   const { allowed } = await rateLimit(userId);
   if (!allowed) {
+    await db.quotaHistory.create({
+      data: { userId, requestCount: 1, costUSD: 0, model, artifactType: type, status: 'rate_limited' },
+    });
     return NextResponse.json({ error: { code: 'RATE_LIMIT_EXCEEDED', message: 'Too many requests' } }, { status: 429 });
   }
-
-  const body = await request.json().catch(() => null);
-  const parsed = generateSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: { code: 'VALIDATION_ERROR', message: 'Invalid input', details: parsed.error.flatten() } }, { status: 400 });
-  }
-
-  const { projectId, type, model, input } = parsed.data;
 
   // Verify project ownership
   const project = await db.project.findUnique({ where: { id: projectId } });

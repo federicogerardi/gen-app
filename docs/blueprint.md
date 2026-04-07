@@ -1,7 +1,7 @@
 # Blueprint: LLM Artifact Generation Hub
 
 **Version**: 1.0  
-**Status**: READY FOR IMPLEMENTATION  
+**Status**: MVP SCAFFOLD IMPLEMENTED  
 **Target Audience**: AI Development Agents  
 **Last Updated**: 2026-04-07
 
@@ -38,7 +38,7 @@ A modular web application that allows non-technical users (MediaBuyers, SEO Spec
 └───────────────────────┼────────────────────────────────────┘
                         │ REST + SSE
         ┌───────────────▼────────────────┐
-        │  Next.js 15 API Routes         │
+        │  Next.js 16 Route Handlers     │
         │  /api/artifacts/generate       │
         │  /api/projects/*               │
         │  /api/users/* (admin)          │
@@ -89,9 +89,9 @@ A modular web application that allows non-technical users (MediaBuyers, SEO Spec
 | **Styling** | Tailwind CSS | Utility-first, rapid development, consistent |
 | **Forms** | React Hook Form + Zod | Type-safe validation, minimal re-renders |
 | **State Management** | TanStack Query (React Query) | Server state, caching, background sync |
-| **Backend** | Next.js 15 + TypeScript | Full-stack, edge functions, API routes |
+| **Backend** | Next.js 16 + TypeScript | App Router, Route Handlers, `proxy.ts` protection |
 | **Database** | PostgreSQL 16 | ACID compliance, JSON support, stable |
-| **ORM** | Prisma | Type-safe, auto-migration, great DX |
+| **ORM** | Prisma 7 + PrismaPg adapter | Type-safe queries with Prisma 7 driver adapter model |
 | **Auth** | NextAuth.js v5 + Google OAuth | Secure, session-based, enterprise OAuth |
 | **LLM Integration** | OpenRouter SDK | Multi-model, routing, fallbacks |
 | **Streaming** | Server-Sent Events (SSE) | Real-time, simple, HTTP/1.1 compatible |
@@ -235,29 +235,27 @@ model QuotaHistory {
 ```
 /api/
 ├── artifacts/
-│   ├── generate          [POST] → Stream LLM response
-│   ├── [id]              [GET]  → Fetch artifact
-│   ├── [id]              [PUT]  → Update artifact
-│   └── [id]              [DELETE] → Delete artifact
+│   ├── generate          [POST]    → Stream LLM response
+│   └── [id]              [GET|DELETE] → Fetch/delete artifact
 ├── projects/
-│   ├── index             [GET]  → List user projects
-│   ├── create            [POST]  → Create project
-│   ├── [id]              [GET]  → Get project + artifacts
-│   ├── [id]              [PUT]  → Update project
-│   └── [id]              [DELETE] → Delete project
+│   ├── route.ts          [GET|POST] → List/create user projects
+│   └── [id]              [GET|PUT|DELETE] → Project detail CRUD
 ├── users/
-│   ├── profile           [GET]  → Current user
-│   ├── quota             [GET]  → Current quota/spending
-│   └── admin/
-│       ├── users         [GET]  → List all users (admin)
-│       ├── users         [POST] → Create user
-│       ├── users/[id]    [PUT]  → Update quota/budget
-│       └── users/[id]    [DELETE] → Delete user
-└── auth/
-    ├── signin            [GET]  → OAuth flow
-    ├── callback          [GET]  → OAuth callback
-    └── signout           [POST] → Sign out
+│   ├── profile           [GET]     → Current user profile
+│   └── quota             [GET]     → Current quota/spending
+├── admin/
+│   └── users/
+│       ├── route.ts      [GET]     → List users (admin)
+│       └── [userId]/quota [PUT]    → Update quota/budget or reset usage
+├── models/route.ts       [GET]     → Supported LLM models
+└── auth/[...nextauth]    [GET|POST] → Auth.js handlers
 ```
+
+### Runtime Notes
+
+- `src/proxy.ts` protects routes and redirects unauthenticated users to `/`
+- `src/app/api/auth/[...nextauth]/route.ts` runs on `runtime = 'nodejs'`
+- Prisma 7 uses `prisma.config.ts` + `@prisma/adapter-pg`; the datasource URL is no longer kept in `schema.prisma`
 
 ### 4. Frontend Architecture
 

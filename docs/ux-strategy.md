@@ -76,11 +76,11 @@
    ↓
 4. Click "Generate Artifact"
    ↓
-5. Choose artifact type (Content/SEO/Code)
+5. Open dedicated page `/artifacts/new`
    ↓
-6. Select model (GPT-4 by default)
+6. Choose artifact type + model
    ↓
-7. Fill in input form (topic, tone, length, etc.)
+7. Fill in JSON input form (topic, tone, length, etc.)
    ↓
 8. Click "Generate"
    ↓
@@ -88,9 +88,9 @@
    ↓
 10. Content completes
    ↓
-11. Review & edit
+11. Review output or open artifact detail page
    ↓
-12. Save artifact
+12. Artifact already persisted server-side
    ↓
 13. (Optional) Copy/export
 ```
@@ -165,9 +165,9 @@ Dashboard
 ### Interaction Model
 
 **Primary CTA**: "Generate Artifact"
-- Always visible (sticky button or prominent placement)
-- Opens modal/drawer with tool selection
-- Context-aware (switch between tool types)
+- Prominent button from dashboard/project pages
+- Navigates to a dedicated generation page
+- Type/model selection happens inline in the form
 
 **Secondary CTA**: "Save Project"
 - Easy project creation inline
@@ -226,8 +226,8 @@ After completion:
 
 **Solution**:
 ```
-DEFAULT: GPT-4 Turbo (best quality/cost ratio)
-ALTERNATIVE: Show other models as "advanced"
+DEFAULT: GPT-4 Turbo
+ALTERNATIVE: Show other supported models in the same select input
 
 DEFAULT: Medium length (balanced)
 OPTION: Slider with "short/medium/long"
@@ -236,18 +236,17 @@ DEFAULT: Professional tone
 OPTION: Pre-defined options (casual, formal, technical)
 ```
 
-### Pattern 4: Quick Actions
+### Pattern 4: Current MVP Constraints
 
 **Problem**: Power users want shortcuts
 
 **Solution**:
 ```
-Right-click on artifact:
-├─ Copy to clipboard
-├─ Regenerate with new params
-├─ Edit locally
-├─ Share with team
-└─ Delete
+Current implementation favors simplicity:
+- open project details to browse artifacts
+- open artifact details to inspect full output
+- generate again from `/artifacts/new`
+- admin quota edit is inline on the admin page
 ```
 
 ---

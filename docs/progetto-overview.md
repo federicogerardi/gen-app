@@ -1,7 +1,7 @@
 # Progetto Overview: LLM Artifact Generation Hub
 
 **Versione**: 1.0  
-**Status**: PRONTO PER DEVELOPMENT  
+**Status**: MVP SCAFFOLD IMPLEMENTATO  
 **Data**: 2026-04-07  
 **Destinatario**: Stakeholder e Team di Progetto
 
@@ -71,7 +71,7 @@ Stiamo costruendo un **Hub di Generazione Artefatti con AI/LLM** che permette ai
 - **1000 generazioni/mese** per utente (default)
 - **$500/mese** budget LLM (tuning possibile)
 - **Salvataggio progetti**: Storage illimitato
-- **Artifact history**: Ultimi 90 giorni
+- **Artifact history**: Nessuna retention policy applicata nel MVP corrente
 
 ---
 
@@ -139,7 +139,8 @@ Stiamo costruendo un **Hub di Generazione Artefatti con AI/LLM** che permette ai
 - **TanStack Query** → Server state management, caching
 
 ### Backend
-- **Next.js 15** → Full-stack TypeScript, API routes, edge functions
+- **Next.js 16** → Full-stack TypeScript, App Router, Route Handlers, `proxy.ts`
+- **Prisma 7 + PrismaPg** → Prisma client generato in `src/generated/prisma`, compatibile con il nuovo modello a driver adapter
 - **PostgreSQL** → ACID compliance, stable, proven
 - **Prisma ORM** → Type-safe, auto-migrations, excellent DX
 - **NextAuth.js** → Secure auth, Google OAuth, session management

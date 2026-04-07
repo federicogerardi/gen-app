@@ -5,6 +5,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { ArtifactEditor } from './ArtifactEditor';
 
 export default async function ArtifactPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -46,11 +47,7 @@ export default async function ArtifactPage({ params }: { params: Promise<{ id: s
           <CardHeader><CardTitle className="text-base">Contenuto generato</CardTitle></CardHeader>
           <Separator />
           <CardContent className="pt-4">
-            {artifact.content ? (
-              <pre className="text-sm whitespace-pre-wrap break-words font-mono">{artifact.content}</pre>
-            ) : (
-              <p className="text-muted-foreground">Nessun contenuto disponibile.</p>
-            )}
+            <ArtifactEditor artifactId={artifact.id} initialContent={artifact.content} />
           </CardContent>
         </Card>
       </main>

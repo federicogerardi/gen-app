@@ -95,9 +95,9 @@ model Artifact {
 }
 ```
 
-#### 2. Rate Limiting Middleware
+#### 2. Rate Limiting Utility
 ```typescript
-// src/middleware/rate-limit.ts
+// src/lib/rate-limit.ts
 import { Redis } from '@upstash/redis';
 import { Ratelimit } from '@upstash/ratelimit';
 
@@ -110,16 +110,9 @@ const ratelimit = new Ratelimit({
   prefix: 'quota',
 });
 
-export async function rateLimitMiddleware(
-  userId: string
-): Promise<{ allowed: boolean; remaining: number; reset: Date }> {
-  const { success, remaining, reset } = await ratelimit.limit(userId);
-
-  return {
-    allowed: success,
-    remaining,
-    reset: new Date(reset),
-  };
+export async function rateLimit(userId: string) {
+  const { success, remaining } = await ratelimit.limit(userId);
+  return { allowed: success, remaining };
 }
 ```
 
@@ -191,7 +184,7 @@ export async function trackQuotaUsage(
 #### 4. API Endpoint with Rate Limiting
 ```typescript
 // src/app/api/artifacts/generate/route.ts
-import { rateLimitMiddleware } from '@/middleware/rate-limit';
+import { rateLimit } from '@/lib/rate-limit';
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -202,59 +195,58 @@ export async function POST(request: Request) {
     );
   }
 
-  const { artifactRequest } = await request.json();
+  const body = await request.json();
   const userId = session.user.id;
-  
-  // Check rate limit
-  const quotaCheck = await rateLimitMiddleware(userId);
-  
-  if (!quotaCheck.allowed) {
+
+  // First check persisted monthly usage / budget on User
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (user.monthlyUsed >= user.monthlyQuota) {
     return Response.json(
       {
         error: {
           code: 'RATE_LIMIT_EXCEEDED',
           message: 'Monthly quota exhausted',
-          details: {
-            remaining: quotaCheck.remaining,
-            resetDate: quotaCheck.reset,
-          },
         },
       },
-      { 
-        status: 429,
-        headers: {
-          'Retry-After': String(Math.ceil((quotaCheck.reset.getTime() - Date.now()) / 1000)),
-        },
-      }
+      { status: 429 }
     );
   }
-  
-  // Check budget
-  const user = await prisma.user.findUnique({ where: { id: userId } });
-  const estimatedCost = estimateCost(artifactRequest.model);
-  
-  if (user.monthlySpent + estimatedCost > user.monthlyBudget) {
+
+  if (user.monthlySpent >= user.monthlyBudget) {
     return Response.json(
       {
         error: {
           code: 'PAYMENT_REQUIRED',
           message: 'Monthly budget exceeded',
-          details: {
-            monthlySpent: user.monthlySpent,
-            monthlyBudget: user.monthlyBudget,
-          },
         },
       },
-      { status: 402 } // Payment Required
+      { status: 402 }
+    );
+  }
+
+  // Then check Redis-based per-user request limit
+  const quotaCheck = await rateLimit(userId);
+  if (!quotaCheck.allowed) {
+    return Response.json(
+      {
+        error: {
+          code: 'RATE_LIMIT_EXCEEDED',
+          message: 'Too many requests',
+        },
+      },
+      { status: 429 }
     );
   }
   
   // Proceed with generation...
   const artifact = await generateArtifact(artifactRequest);
   
-  return Response.json({
-    artifactId: artifact.id,
-    quotaRemaining: quotaCheck.remaining - 1,
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
+    },
   });
 }
 ```
@@ -325,7 +317,7 @@ async function QuotasPage() {
 
 ## Validation
 
-- ✅ AI agents can implement quota middleware
+- ✅ AI agents can implement quota utility + endpoint checks
 - ✅ JSON responses include quota info
 - ✅ Clear error codes for rate limit errors
 - ✅ Audit trail for billing audits

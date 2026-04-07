@@ -1,7 +1,7 @@
 # Architecture Diagrams: LLM Artifact Generation Hub
 
 **Version**: 1.0  
-**Status**: REFERENCE FOR UNDERSTANDING SYSTEM DESIGN  
+**Status**: ALIGNED TO CURRENT IMPLEMENTATION  
 **Format**: Mermaid.js diagrams  
 **Last Updated**: 2026-04-07
 
@@ -18,7 +18,7 @@ graph TB
         AdminPanel["Admin Panel"]
     end
 
-    subgraph NextJS["⚙️ Next.js 15 Backend"]
+    subgraph NextJS["⚙️ Next.js 16 Backend"]
         AuthAPI["Auth Routes<br/>/api/auth/*"]
         ArtifactAPI["Artifact Routes<br/>/api/artifacts/*"]
         ProjectAPI["Project Routes<br/>/api/projects/*"]
@@ -115,7 +115,7 @@ sequenceDiagram
         Orchestrator->>API: SSE Event: token
         API-->>User: SSE: token
         
-        Orchestrator->>DB: Save partial artifact (every 10 tokens)
+        Orchestrator->>DB: Save partial artifact (every 20 tokens)
         DB-->>Orchestrator: OK
     end
     
@@ -207,10 +207,10 @@ graph TD
 
 ```mermaid
 graph TD
-    A["User Lands on Dashboard"] -->|Click Generate| B["Modal: Select Tool"]
-    B -->|Choose Content| C["Form: Content Parameters"]
-    B -->|Choose SEO| D["Form: SEO Parameters"]
-    B -->|Choose Code| E["Form: Code Parameters"]
+    A["User Lands on Dashboard"] -->|Click Generate| B["Go to /artifacts/new"]
+    B -->|Choose Content| C["Page Form: Content Parameters"]
+    B -->|Choose SEO| D["Page Form: SEO Parameters"]
+    B -->|Choose Code| E["Page Form: Code Parameters"]
     
     C -->|Fill Topic + Tone| F["Select Model"]
     D -->|Fill Context + Keywords| F
@@ -332,10 +332,8 @@ graph LR
         UpdateProject["PUT /projects/:id"]
         DeleteProject["DELETE /projects/:id"]
         
-        ListArtifacts["GET /artifacts"]
         GenerateArtifact["POST /artifacts/generate"]
         GetArtifact["GET /artifacts/:id"]
-        UpdateArtifact["PUT /artifacts/:id"]
         DeleteArtifact["DELETE /artifacts/:id"]
         
         ListModels["GET /models"]
@@ -344,8 +342,6 @@ graph LR
     subgraph Admin["Admin Routes<br/>(Admin Only)"]
         ListUsers["GET /admin/users"]
         UpdateQuota["PUT /admin/users/:id/quota"]
-        GetAudit["GET /admin/users/:id/audit"]
-        GetMetrics["GET /admin/metrics"]
     end
     
     GoogleOAuth["Google OAuth<br/>Provider"]
@@ -357,7 +353,7 @@ graph LR
     
     GenerateArtifact -->|Create| DB["PostgreSQL<br/>Artifact"]
     UpdateProject -->|Update| DB
-    ListArtifacts -->|Query| DB
+    GetArtifact -->|Query| DB
     
     style Public fill:#e1f5ff
     style Protected fill:#f3e5f5
@@ -497,13 +493,13 @@ graph TD
     E -->|No| F["❌ Access Denied"]
     E -->|Yes| G["✓ Create Session"]
     
-    G -->|JWT Token| H["Store in Database"]
+    G -->|Database Session| H["Store in Database"]
     H -->|Cookie| I["Set Secure Cookie"]
     
     I -->|Redirect| J["Dashboard"]
     J -->|User Logged In| K["Can Access Protected Routes"]
     
-    K -->|Each Request| L["Validate Session<br/>middleware"]
+    K -->|Each Request| L["Validate Session<br/>proxy.ts"]
     L -->|Valid| M["Grant Access"]
     L -->|Invalid/Expired| N["Redirect to Login"]
     

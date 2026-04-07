@@ -1,6 +1,7 @@
 import { db } from '@/lib/db';
-import { LLMOrchestrator, calculateCost, type ArtifactRequest } from './orchestrator';
+import { LLMOrchestrator } from './orchestrator';
 import type { ArtifactType } from './agents/base';
+import { calculateCost } from './costs';
 
 const orchestrator = new LLMOrchestrator();
 
@@ -78,6 +79,17 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
           },
         });
 
+        await db.quotaHistory.create({
+          data: {
+            userId,
+            requestCount: 1,
+            costUSD: cost,
+            model,
+            artifactType: type,
+            status: 'success',
+          },
+        });
+
         controller.enqueue(encode({
           type: 'complete',
           tokens: { input: inputTokenCount, output: outputTokenCount },
@@ -89,6 +101,17 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
         await db.artifact.update({
           where: { id: artifact.id },
           data: { status: 'failed' },
+        });
+
+        await db.quotaHistory.create({
+          data: {
+            userId,
+            requestCount: 1,
+            costUSD: 0,
+            model,
+            artifactType: type,
+            status: 'error',
+          },
         });
 
         controller.enqueue(encode({ type: 'error', message }));

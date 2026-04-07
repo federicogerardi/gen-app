@@ -48,16 +48,19 @@ Fallback (errors/slow connections):
 #### 1. Streaming Endpoint (Server-Sent Events)
 ```typescript
 // src/app/api/artifacts/generate/route.ts
-import { createReadableStream } from '@/lib/llm/streaming';
+import { createArtifactStream } from '@/lib/llm/streaming';
 
 export async function POST(request: Request) {
   const body = await request.json();
-  
-  // Validate request and quota
-  validateUserQuota(body.userId);
-  
+
   return new Response(
-    createReadableStream(body),
+    await createArtifactStream({
+      userId: session.user.id,
+      projectId: body.projectId,
+      type: body.type,
+      model: body.model,
+      input: body.input,
+    }),
     {
       headers: {
         'Content-Type': 'text/event-stream',
@@ -69,22 +72,9 @@ export async function POST(request: Request) {
 }
 
 // src/lib/llm/streaming.ts
-export async function* createReadableStream(request: ArtifactRequest) {
-  const orchestrator = new LLMOrchestrator();
-  const agent = orchestrator.getAgent(request.type);
-  
-  try {
-    const stream = await orchestrator.generateStream(request);
-    
-    for await (const chunk of stream) {
-      yield `data: ${JSON.stringify(chunk)}\n\n`;
-      
-      // Persist in database periodically
-      await persistStreamChunk(request.artifactId, chunk);
-    }
-  } catch (error) {
-    yield `data: ${JSON.stringify({ error: error.message })}\n\n`;
-  }
+export async function createArtifactStream(request: ArtifactRequest): Promise<ReadableStream> {
+  // Creates the artifact first, emits `start`, then streams `token`, then `complete`
+  // Partial content is persisted every 20 tokens.
 }
 ```
 
@@ -101,7 +91,7 @@ export function useStreamGeneration() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const generateStream = useCallback(async (request: ArtifactRequest) => {
+  const generate = useCallback(async (request: ArtifactRequest) => {
     setIsStreaming(true);
     setTokens('');
     setError(null);
@@ -133,9 +123,9 @@ export function useStreamGeneration() {
           if (line.startsWith('data: ')) {
             const data = JSON.parse(line.slice(6));
             
-            if (data.error) {
-              setError(data.error);
-            } else if (data.token) {
+            if (data.type === 'error') {
+              setError(data.message ?? 'Unknown error');
+            } else if (data.type === 'token') {
               setTokens(prev => prev + data.token);
             }
           }
@@ -148,7 +138,7 @@ export function useStreamGeneration() {
     }
   }, []);
 
-  return { tokens, isStreaming, error, generateStream };
+  return { tokens, isStreaming, error, generate };
 }
 ```
 
@@ -159,20 +149,8 @@ export async function persistStreamChunk(
   artifactId: string,
   chunk: StreamChunk
 ) {
-  // Append safely to artifact content in real-time.
-  // Avoid numeric operators on string fields.
-  const artifact = await prisma.artifact.findUnique({
-    where: { id: artifactId },
-    select: { content: true },
-  });
-
-  await prisma.artifact.update({
-    where: { id: artifactId },
-    data: {
-      content: `${artifact?.content ?? ''}${chunk.token}`,
-      lastStreamedAt: new Date(),
-    },
-  });
+  // In the current implementation, content is accumulated in memory and flushed
+  // to the database every 20 tokens using `content: accumulated`.
 }
 ```
 

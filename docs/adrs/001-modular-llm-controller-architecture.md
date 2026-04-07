@@ -57,15 +57,15 @@ LLM Module Architecture:
 
 #### 1. Base Agent Interface (TypeScript)
 ```typescript
-// src/lib/llm/agents/types.ts
+// src/lib/llm/agents/base.ts
 import { z } from 'zod';
 
 export abstract class BaseAgent {
   abstract type: 'content' | 'seo' | 'code';
   
   abstract validateInput(input: unknown): Promise<void>;
-  abstract buildPrompt(context: any): string;
-  abstract parseResponse(response: string): Object;
+  abstract buildPrompt(context: unknown): string;
+  abstract parseResponse(response: string): unknown;
   
   async execute(input: any) {
     await this.validateInput(input);
@@ -77,15 +77,13 @@ export abstract class BaseAgent {
 
 #### 2. Provider Abstraction
 ```typescript
-// src/lib/llm/providers/base-provider.ts
+// src/lib/llm/providers/base.ts
 export interface LLMProvider {
   generateText(request: GenerateRequest): Promise<GenerateResponse>;
   generateStream(request: GenerateRequest): AsyncGenerator<StreamChunk>;
-  getAvailableModels(): Promise<Model[]>;
-  checkQuota(): Promise<QuotaStatus>;
 }
 
-// src/lib/llm/providers/openrouter-provider.ts
+// src/lib/llm/providers/openrouter.ts
 export class OpenRouterProvider implements LLMProvider {
   // Implementation handles OpenRouter-specific logic
 }

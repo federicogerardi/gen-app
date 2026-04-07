@@ -1,7 +1,7 @@
 # API Specifications: LLM Artifact Generation Hub
 
 **Version**: 1.0  
-**Status**: READY FOR IMPLEMENTATION  
+**Status**: IMPLEMENTED SUBSET + OPEN ITEMS  
 **Base URL**: `https://app.render.com/api` (staging/prod)  
 **Authentication**: NextAuth session cookie (browser). Bearer tokens solo per integrazioni server-to-server esplicite.  
 **Content-Type**: `application/json`  
@@ -39,9 +39,30 @@ All errors follow this format:
 
 ## Authentication
 
-### Get Session
+## Current Implementation Status
+
+Implemented routes in the current codebase:
+- `POST /artifacts/generate`
+- `GET /artifacts/{id}`
+- `DELETE /artifacts/{id}`
+- `GET /projects`
+- `POST /projects`
+- `GET /projects/{id}`
+- `PUT /projects/{id}`
+- `DELETE /projects/{id}`
+- `GET /users/profile`
+- `GET /users/quota`
+- `GET /admin/users`
+- `PUT /admin/users/{userId}/quota`
+- `GET /models`
+
+Documented but not yet implemented:
+- `GET /artifacts`
+- `PUT /artifacts/{id}`
+
+### Auth.js Session Endpoint
 ```
-GET /auth/session
+GET /api/auth/session
 ```
 
 **Response** (200 OK):
@@ -59,7 +80,7 @@ GET /auth/session
 
 ### Sign Out
 ```
-POST /auth/signout
+POST /api/auth/signout
 ```
 
 **Response** (200 OK):
@@ -93,9 +114,6 @@ POST /artifacts/generate
 }
 ```
 
-**Query Parameters**:
-- `batch=true` - (optional) Return full response instead of streaming
-
 **Response** (200 OK - streaming):
 ```
 HTTP/1.1 200 OK
@@ -106,7 +124,7 @@ Connection: keep-alive
 data: {"type":"start","artifactId":"art_456"}
 data: {"type":"token","token":"Great"}
 data: {"type":"token","token":" SaaS"}
-data: {"type":"complete","tokens":{"input":45,"output":987},"cost":0.031,"duration":12.5}
+data: {"type":"complete","tokens":{"input":45,"output":987},"cost":0.031}
 ```
 
 **Response Fields**:
@@ -114,14 +132,14 @@ data: {"type":"complete","tokens":{"input":45,"output":987},"cost":0.031,"durati
 - `token` - Individual token from LLM
 - `tokens` - Total token counts (input, output)
 - `cost` - USD amount for this generation
-- `duration` - Time in seconds
-
 **Error Responses**:
 
 | Status | Code | Message |
 |--------|------|---------|
-| 400 | VALIDATION_ERROR | Project not found or input invalid |
+| 400 | VALIDATION_ERROR | Input payload invalid |
 | 401 | UNAUTHORIZED | Not authenticated |
+| 403 | FORBIDDEN | Project belongs to another user |
+| 404 | NOT_FOUND | Project not found |
 | 429 | RATE_LIMIT_EXCEEDED | Monthly quota exhausted |
 | 402 | PAYMENT_REQUIRED | Monthly budget exceeded |
 | 503 | SERVICE_UNAVAILABLE | OpenRouter temporarily unavailable |
@@ -129,14 +147,14 @@ data: {"type":"complete","tokens":{"input":45,"output":987},"cost":0.031,"durati
 **Validation Schemas** (Zod):
 ```typescript
 const GenerateRequestSchema = z.object({
-  projectId: z.string().min(1),
+  projectId: z.string().cuid(),
   type: z.enum(['content', 'seo', 'code']),
   model: z.enum([
     'openai/gpt-4-turbo',
     'anthropic/claude-3-opus',
     'mistralai/mistral-large',
   ]),
-  input: z.record(z.any()), // Tool-specific input
+  input: z.record(z.string(), z.unknown()),
 });
 ```
 
@@ -152,28 +170,32 @@ GET /artifacts/{id}
 **Response** (200 OK):
 ```json
 {
-  "id": "art_456",
-  "projectId": "proj_123",
-  "userId": "user_123",
-  "type": "content",
-  "model": "openai/gpt-4-turbo",
-  "content": "Great SaaS onboarding...",
-  "input": {
-    "topic": "Best practices...",
-    "tone": "professional"
-  },
-  "status": "completed",
-  "inputTokens": 45,
-  "outputTokens": 987,
-  "costUSD": 0.031,
-  "createdAt": "2026-04-07T10:30:00Z",
-  "completedAt": "2026-04-07T10:30:12Z"
+  "artifact": {
+    "id": "art_456",
+    "projectId": "proj_123",
+    "userId": "user_123",
+    "type": "content",
+    "model": "openai/gpt-4-turbo",
+    "content": "Great SaaS onboarding...",
+    "input": {
+      "topic": "Best practices...",
+      "tone": "professional"
+    },
+    "status": "completed",
+    "inputTokens": 45,
+    "outputTokens": 987,
+    "costUSD": 0.031,
+    "createdAt": "2026-04-07T10:30:00Z",
+    "completedAt": "2026-04-07T10:30:12Z"
+  }
 }
 ```
 
 ---
 
 ### List Artifacts
+
+**Status**: Planned, not implemented in current codebase.
 
 **Endpoint**:
 ```
@@ -209,6 +231,8 @@ GET /artifacts?projectId={projectId}&limit=20&offset=0
 ---
 
 ### Update Artifact
+
+**Status**: Planned, not implemented in current codebase.
 
 **Endpoint**:
 ```
@@ -260,19 +284,16 @@ GET /projects?limit=20&offset=0
 **Response** (200 OK):
 ```json
 {
-  "items": [
+  "projects": [
     {
       "id": "proj_123",
       "name": "Marketing Campaign Q2",
       "description": "All assets for Q2...",
-      "artifactCount": 15,
+      "_count": { "artifacts": 15 },
       "createdAt": "2026-02-01T00:00:00Z",
       "updatedAt": "2026-04-07T10:00:00Z"
     }
-  ],
-  "total": 3,
-  "limit": 20,
-  "offset": 0
+  ]
 }
 ```
 
@@ -296,11 +317,13 @@ POST /projects
 **Response** (201 Created):
 ```json
 {
-  "id": "proj_new_789",
-  "name": "SEO Audit 2026",
-  "description": "Comprehensive SEO analysis...",
-  "userId": "user_123",
-  "createdAt": "2026-04-07T15:45:00Z"
+  "project": {
+    "id": "proj_new_789",
+    "name": "SEO Audit 2026",
+    "description": "Comprehensive SEO analysis...",
+    "userId": "user_123",
+    "createdAt": "2026-04-07T15:45:00Z"
+  }
 }
 ```
 
@@ -650,10 +673,10 @@ curl -X POST https://app.render.com/api/artifacts/generate \
   }'
 ```
 
-### Example 2: List User Artifacts
+### Example 2: List User Projects
 
 ```bash
-curl -X GET 'https://app.render.com/api/artifacts?projectId=proj_123&limit=10' \
+curl -X GET 'https://app.render.com/api/projects' \
   -H "Cookie: next-auth.session-token=<session_cookie>"
 ```
 
@@ -673,13 +696,7 @@ curl -X PUT https://app.render.com/api/admin/users/user_123/quota \
 
 ## Pagination
 
-All list endpoints support pagination:
-
-```
-GET /artifacts?limit=20&offset=40
-```
-
-Returns items 40-59 (0-indexed).
+Pagination is planned in the public API design, but the current codebase returns full result sets for implemented list endpoints such as `GET /projects` and `GET /admin/users`.
 
 ---
 
