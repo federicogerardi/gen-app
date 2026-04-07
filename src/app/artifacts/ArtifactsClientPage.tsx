@@ -34,7 +34,7 @@ function createDuplicateHref(artifact: Artifact): string {
     projectId: artifact.projectId,
     type: artifact.type,
     model: artifact.model,
-    input: encodeURIComponent(JSON.stringify(artifact.input, null, 2)),
+    input: JSON.stringify(artifact.input, null, 2),
   });
   return `/artifacts/new?${search.toString()}`;
 }

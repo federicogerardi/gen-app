@@ -8,6 +8,7 @@ interface FunnelBriefingInput {
   audience: string;
   offer: string;
   promise: string;
+  tone: 'professional' | 'casual' | 'formal' | 'technical';
   notes?: string;
 }
 
@@ -17,6 +18,7 @@ function buildBriefingText(input: FunnelBriefingInput): string {
     `Audience target: ${input.audience}`,
     `Offerta: ${input.offer}`,
     `Promessa principale: ${input.promise}`,
+    `Tono richiesto: ${input.tone}`,
     `Note aggiuntive: ${input.notes?.trim() || 'Nessuna'}`,
   ].join('\n');
 }

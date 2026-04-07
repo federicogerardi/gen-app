@@ -8,6 +8,7 @@ interface MetaAdsPromptInput {
   audience: string;
   offer: string;
   objective: string;
+  tone: 'professional' | 'casual' | 'formal' | 'technical';
   angle?: string;
 }
 
@@ -19,6 +20,7 @@ export async function buildMetaAdsPrompt(input: MetaAdsPromptInput): Promise<str
     `Audience: ${input.audience}`,
     `Offerta: ${input.offer}`,
     `Obiettivo campagna: ${input.objective}`,
+    `Tono richiesto: ${input.tone}`,
     `Creative angle: ${input.angle?.trim() || 'Non specificato'}`,
   ].join('\n');
 

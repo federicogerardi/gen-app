@@ -68,7 +68,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: { code: 'FORBIDDEN', message: 'Access denied' } }, { status: 403 });
   }
 
-  const prompt = await buildMetaAdsPrompt({ product, audience, offer, objective, angle });
+  const prompt = await buildMetaAdsPrompt({ product, audience, offer, objective, tone, angle });
 
   try {
     const stream = await createArtifactStream({

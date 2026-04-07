@@ -30,10 +30,19 @@ function NewArtifactForm() {
 
   let defaultInput = '';
   if (encodedInput) {
+    const direct = encodedInput;
     try {
-      defaultInput = decodeURIComponent(encodedInput);
+      JSON.parse(direct);
+      defaultInput = direct;
     } catch {
-      defaultInput = '';
+      // Backward compatibility for previously double-encoded links.
+      try {
+        const decoded = decodeURIComponent(encodedInput);
+        JSON.parse(decoded);
+        defaultInput = decoded;
+      } catch {
+        defaultInput = '';
+      }
     }
   }
 
