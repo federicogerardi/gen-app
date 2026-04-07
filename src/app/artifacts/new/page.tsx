@@ -22,9 +22,11 @@ function NewArtifactForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const defaultProjectId = searchParams.get('projectId') ?? '';
+  const typeFromQuery = searchParams.get('type');
+  const defaultType = typeFromQuery === 'seo' || typeFromQuery === 'code' ? typeFromQuery : 'content';
 
   const [projectId, setProjectId] = useState(defaultProjectId);
-  const [type, setType] = useState<'content' | 'seo' | 'code'>('content');
+  const [type, setType] = useState<'content' | 'seo' | 'code'>(defaultType);
   const [model, setModel] = useState('openai/gpt-4-turbo');
   const [inputJson, setInputJson] = useState('');
   const [parseError, setParseError] = useState<string | null>(null);
