@@ -38,7 +38,7 @@ export class LLMOrchestrator {
 
   constructor() {
     this.provider = new OpenRouterProvider();
-    this.agents = new Map([
+    this.agents = new Map<ArtifactType, BaseAgent>([
       ['content', new ContentAgent()],
       ['seo', new SeoAgent()],
       ['code', new CodeAgent()],

@@ -1,10 +1,11 @@
 import NextAuth from 'next-auth';
 import Google from 'next-auth/providers/google';
 import { PrismaAdapter } from '@auth/prisma-adapter';
+import type { Adapter } from 'next-auth/adapters';
 import { db } from '@/lib/db';
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
-  adapter: PrismaAdapter(db),
+  adapter: PrismaAdapter(db) as Adapter,
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -15,8 +16,9 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
   callbacks: {
     async signIn({ user, account, profile }) {
       if (account?.provider === 'google') {
+        const googleProfile = profile as { email_verified?: boolean } | undefined;
         return (
-          profile?.email_verified === true &&
+          googleProfile?.email_verified === true &&
           (user.email?.endsWith('@company.com') ?? false)
         );
       }

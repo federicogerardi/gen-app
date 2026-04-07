@@ -12,7 +12,7 @@ const generateSchema = z.object({
   projectId: z.string().cuid(),
   type: z.enum(ALLOWED_TYPES),
   model: z.string().refine((m) => ALLOWED_MODELS.includes(m), { message: 'Unsupported model' }),
-  input: z.record(z.unknown()),
+  input: z.record(z.string(), z.unknown()),
 });
 
 export async function POST(request: Request) {
