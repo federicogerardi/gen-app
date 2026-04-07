@@ -18,6 +18,21 @@ describe('formatArtifactPreview', () => {
     expect(preview.text).not.toContain('{');
   });
 
+  it('supporta campi snake_case nei payload tool', () => {
+    const preview = formatArtifactPreview({
+      type: 'content',
+      status: 'completed',
+      content: JSON.stringify({
+        headline: 'Nuova headline',
+        primary_text: 'Copy principale da Meta Ads',
+        cta: 'Scopri di piu',
+      }),
+    });
+
+    expect(preview.text).toContain('Nuova headline');
+    expect(preview.text).toContain('Copy principale da Meta Ads');
+  });
+
   it('usa fallback sicuro su JSON invalido', () => {
     const preview = formatArtifactPreview({
       type: 'content',

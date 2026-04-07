@@ -210,8 +210,10 @@ function formatContentJson(record: Record<string, unknown>): string | null {
     'headline',
     'hook',
     'primaryText',
+    'primary_text',
     'body',
     'cta',
+    'call_to_action',
     'sections',
     'title',
     'description',
@@ -224,7 +226,9 @@ function formatSeoJson(record: Record<string, unknown>): string | null {
   return pickFields(record, [
     'title',
     'metaTitle',
+    'meta_title',
     'metaDescription',
+    'meta_description',
     'description',
     'keywords',
     'summary',
@@ -287,8 +291,21 @@ function extractGenericRecordText(record: Record<string, unknown>, maxItems: num
 
 function extractDisplayLines(type: ArtifactType, record: Record<string, unknown>): string[] {
   const keysByType: Record<string, string[]> = {
-    content: ['headline', 'hook', 'primaryText', 'body', 'cta', 'sections', 'title', 'description', 'content', 'text'],
-    seo: ['title', 'metaTitle', 'metaDescription', 'description', 'keywords', 'summary', 'sections'],
+    content: [
+      'headline',
+      'hook',
+      'primaryText',
+      'primary_text',
+      'body',
+      'cta',
+      'call_to_action',
+      'sections',
+      'title',
+      'description',
+      'content',
+      'text',
+    ],
+    seo: ['title', 'metaTitle', 'meta_title', 'metaDescription', 'meta_description', 'description', 'keywords', 'summary', 'sections'],
     code: ['summary', 'description', 'intent', 'goal', 'language', 'framework', 'snippet', 'code'],
   };
 
@@ -316,14 +333,14 @@ export function formatArtifactContentForDisplay(input: PreviewInput): DisplayOut
   if (input.status === 'generating') {
     return {
       title: 'Output in elaborazione',
-      text: 'La generazione e ancora in corso. Quando sara completata, qui vedrai il contenuto finale in formato leggibile.',
+      text: 'La generazione e in corso. Al completamento vedrai qui il contenuto finale in formato leggibile.',
     };
   }
 
   if (input.status === 'failed') {
     return {
       title: 'Output non disponibile',
-      text: 'La generazione non e andata a buon fine. Riprova dal tool di origine o crea una nuova generazione.',
+      text: 'La generazione non e andata a buon fine. Riprova dal tool di origine o avvia una nuova generazione.',
     };
   }
 

@@ -77,11 +77,12 @@ export async function POST(request: Request) {
       type: 'content',
       workflowType: 'meta_ads',
       model,
+      promptOverride: prompt,
       input: {
         topic: prompt,
         tone,
         length: 1200,
-        outputFormat: 'markdown',
+        outputFormat: 'json',
         workflowType: 'meta_ads',
       },
     });

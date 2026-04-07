@@ -12,6 +12,7 @@ interface StreamParams {
   model: string;
   input: unknown;
   workflowType?: string | null;
+  promptOverride?: string;
 }
 
 function extractWorkflowType(input: unknown): string | null {
@@ -22,7 +23,7 @@ function extractWorkflowType(input: unknown): string | null {
 }
 
 export async function createArtifactStream(params: StreamParams): Promise<ReadableStream> {
-  const { userId, projectId, type, model, input } = params;
+  const { userId, projectId, type, model, input, promptOverride } = params;
   const workflowType = params.workflowType ?? extractWorkflowType(input);
 
   const artifact = await db.artifact.create({
@@ -51,7 +52,7 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
       let inputTokenCount = 0;
 
       try {
-        for await (const chunk of orchestrator.generateStream({ type, model, input })) {
+        for await (const chunk of orchestrator.generateStream({ type, model, input, promptOverride })) {
           accumulated += chunk.token;
           outputTokenCount++;
           controller.enqueue(encode({ type: 'token', token: chunk.token }));

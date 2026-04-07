@@ -167,7 +167,7 @@ export default function MetaAdsToolPage() {
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  {isStreaming ? outputDisplay.text : 'L\'output apparira qui dopo l\'avvio della generazione.'}
+                  {isStreaming ? outputDisplay.text : 'L\'output appare qui dopo l\'avvio della generazione.'}
                 </p>
               )}
               {error && <p className="text-sm text-destructive">{error}</p>}

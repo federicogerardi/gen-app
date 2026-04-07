@@ -10,6 +10,7 @@ export interface ArtifactRequest {
   type: ArtifactType;
   model: string;
   input: unknown;
+  promptOverride?: string;
   temperature?: number;
 }
 
@@ -41,10 +42,19 @@ export class LLMOrchestrator {
     return agent;
   }
 
-  async generate(request: ArtifactRequest): Promise<{ content: string; inputTokens: number; outputTokens: number; cost: number }> {
+  private async buildPrompt(request: ArtifactRequest): Promise<string> {
+    if (request.promptOverride && request.promptOverride.trim().length > 0) {
+      return request.promptOverride;
+    }
+
     const agent = this.getAgent(request.type);
     await agent.validateInput(request.input);
-    const prompt = agent.buildPrompt(request.input);
+    return agent.buildPrompt(request.input);
+  }
+
+  async generate(request: ArtifactRequest): Promise<{ content: string; inputTokens: number; outputTokens: number; cost: number }> {
+    const agent = this.getAgent(request.type);
+    const prompt = await this.buildPrompt(request);
 
     const response = await this.provider.generateText({
       model: request.model,
@@ -52,16 +62,14 @@ export class LLMOrchestrator {
       temperature: request.temperature,
     });
 
-    const content = agent.parseResponse(response.content) as string;
+    const content = request.promptOverride ? response.content.trim() : (agent.parseResponse(response.content) as string);
     const cost = calculateCost(request.model, response.inputTokens, response.outputTokens);
 
     return { content, inputTokens: response.inputTokens, outputTokens: response.outputTokens, cost };
   }
 
   async *generateStream(request: ArtifactRequest): AsyncGenerator<{ token: string }> {
-    const agent = this.getAgent(request.type);
-    await agent.validateInput(request.input);
-    const prompt = agent.buildPrompt(request.input);
+    const prompt = await this.buildPrompt(request);
 
     for await (const chunk of this.provider.generateStream({
       model: request.model,

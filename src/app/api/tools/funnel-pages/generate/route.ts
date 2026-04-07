@@ -104,11 +104,12 @@ export async function POST(request: Request) {
       type: 'content',
       workflowType: 'funnel_pages',
       model: payload.model,
+      promptOverride: prompt,
       input: {
         topic: prompt,
         tone: payload.tone,
         length: getLengthByStep(payload.step),
-        outputFormat: 'markdown',
+        outputFormat: payload.step === 'vsl' ? 'plain' : 'json',
         workflowType: 'funnel_pages',
       },
     });

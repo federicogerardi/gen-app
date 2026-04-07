@@ -202,8 +202,8 @@ export function ArtifactsClientPage({ projects }: Props) {
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <Button size="sm" variant="outline" onClick={() => router.push(`/artifacts/${artifact.id}`)} aria-label={`Modifica artefatto ${artifact.id}`}>
-                      Modifica
+                    <Button size="sm" variant="outline" onClick={() => router.push(`/artifacts/${artifact.id}`)} aria-label={`Apri dettaglio artefatto ${artifact.id}`}>
+                      Apri dettaglio
                     </Button>
                     <Button size="sm" variant="outline" asChild>
                       <Link href={createDuplicateHref(artifact)}>Duplica input</Link>

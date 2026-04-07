@@ -73,7 +73,7 @@ describe('ArtifactsClientPage', () => {
     render(<ArtifactsClientPage projects={[{ id: 'proj_1', name: 'Project A' }]} />);
 
     expect(screen.getByText('Output di test')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Modifica artefatto/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Apri dettaglio artefatto/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Duplica input' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /Elimina artefatto/i }));
