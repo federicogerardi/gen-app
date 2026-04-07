@@ -6,7 +6,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { formatArtifactPreview } from '@/lib/artifact-preview';
+import { formatArtifactPreview, getArtifactDisplayTypeLabel, getEffectiveArtifactWorkflowType } from '@/lib/artifact-preview';
 
 const TOOL_ACTIONS = [
   {
@@ -152,10 +152,16 @@ export default async function DashboardPage() {
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {recentArtifacts.map((artifact) => {
+              const workflowType = getEffectiveArtifactWorkflowType(artifact.workflowType, artifact.input);
               const preview = formatArtifactPreview({
                 type: artifact.type,
                 status: artifact.status,
                 content: artifact.content,
+                workflowType,
+              });
+              const typeLabel = getArtifactDisplayTypeLabel({
+                type: artifact.type,
+                workflowType,
               });
 
               return (
@@ -163,7 +169,7 @@ export default async function DashboardPage() {
                 <Card className="hover:shadow-md transition-shadow h-full">
                   <CardHeader>
                     <div className="flex items-center justify-between gap-2">
-                      <Badge>{artifact.type}</Badge>
+                      <Badge>{typeLabel}</Badge>
                       <Badge variant={artifact.status === 'completed' ? 'secondary' : artifact.status === 'failed' ? 'destructive' : 'outline'}>
                         {artifact.status}
                       </Badge>

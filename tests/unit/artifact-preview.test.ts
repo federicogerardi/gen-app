@@ -1,4 +1,4 @@
-import { formatArtifactPreview } from '@/lib/artifact-preview';
+import { formatArtifactContentForDisplay, formatArtifactPreview, getArtifactDisplayTypeLabel, getArtifactWorkflowType } from '@/lib/artifact-preview';
 
 describe('formatArtifactPreview', () => {
   it('estrare preview semantica da JSON content', () => {
@@ -25,7 +25,8 @@ describe('formatArtifactPreview', () => {
       content: '{"headline": "x",',
     });
 
-    expect(preview.text).toContain('Output strutturato disponibile');
+    expect(preview.text).toContain('headline: x');
+    expect(preview.text).not.toContain('Output strutturato disponibile');
   });
 
   it('mantiene plain text non JSON', () => {
@@ -56,5 +57,32 @@ describe('formatArtifactPreview', () => {
     });
 
     expect(preview.text).toContain('Generazione non completata');
+  });
+
+  it('formatta output detail leggibile anche da JSON generico', () => {
+    const display = formatArtifactContentForDisplay({
+      type: 'content',
+      status: 'completed',
+      content: JSON.stringify({
+        sectionOne: 'Introduzione al framework',
+        sectionTwo: 'Benefici principali e use-case',
+      }),
+    });
+
+    expect(display.title).toBe('Output elaborato');
+    expect(display.text).toContain('Introduzione al framework');
+    expect(display.text).not.toContain('Contenuto tecnico strutturato disponibile');
+  });
+
+  it('espone label workflow-specific per Meta Ads e Funnel Pages', () => {
+    expect(getArtifactDisplayTypeLabel({ type: 'content', workflowType: 'meta_ads' })).toBe('Meta Ads');
+    expect(getArtifactDisplayTypeLabel({ type: 'content', workflowType: 'funnel_pages' })).toBe('Funnel Pages');
+    expect(getArtifactDisplayTypeLabel({ type: 'seo' })).toBe('SEO');
+  });
+
+  it('estrae workflowType in modo sicuro da input JSON eterogeneo', () => {
+    expect(getArtifactWorkflowType({ workflowType: 'meta_ads' })).toBe('meta_ads');
+    expect(getArtifactWorkflowType({ foo: 'bar' })).toBeNull();
+    expect(getArtifactWorkflowType('plain')).toBeNull();
   });
 });

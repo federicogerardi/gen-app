@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { formatArtifactPreview, formatArtifactContentForDisplay } from '@/lib/artifact-preview';
+import { formatArtifactPreview, formatArtifactContentForDisplay, getArtifactDisplayTypeLabel, getEffectiveArtifactWorkflowType } from '@/lib/artifact-preview';
 
 export default async function ArtifactPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -28,15 +28,23 @@ export default async function ArtifactPage({ params }: { params: Promise<{ id: s
 
   if (!artifact || artifact.userId !== session.user.id) notFound();
 
+  const workflowType = getEffectiveArtifactWorkflowType(artifact.workflowType, artifact.input);
+
   const preview = formatArtifactPreview({
     type: artifact.type,
     status: artifact.status,
     content: artifact.content,
+    workflowType,
   });
   const readableOutput = formatArtifactContentForDisplay({
     type: artifact.type,
     status: artifact.status,
     content: artifact.content,
+    workflowType,
+  });
+  const typeLabel = getArtifactDisplayTypeLabel({
+    type: artifact.type,
+    workflowType,
   });
 
   return (
@@ -46,7 +54,7 @@ export default async function ArtifactPage({ params }: { params: Promise<{ id: s
         <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge>{artifact.type}</Badge>
+              <Badge>{typeLabel}</Badge>
               <Badge variant="outline">{artifact.model}</Badge>
               <Badge variant={artifact.status === 'completed' ? 'default' : artifact.status === 'failed' ? 'destructive' : 'secondary'}>
                 {artifact.status}

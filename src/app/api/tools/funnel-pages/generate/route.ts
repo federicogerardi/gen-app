@@ -102,12 +102,14 @@ export async function POST(request: Request) {
       userId,
       projectId: payload.projectId,
       type: 'content',
+      workflowType: 'funnel_pages',
       model: payload.model,
       input: {
         topic: prompt,
         tone: payload.tone,
         length: getLengthByStep(payload.step),
         outputFormat: 'markdown',
+        workflowType: 'funnel_pages',
       },
     });
 

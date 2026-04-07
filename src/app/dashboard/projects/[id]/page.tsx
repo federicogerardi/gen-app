@@ -6,7 +6,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { formatArtifactPreview } from '@/lib/artifact-preview';
+import { formatArtifactPreview, getArtifactDisplayTypeLabel, getEffectiveArtifactWorkflowType } from '@/lib/artifact-preview';
 
 export default async function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -49,10 +49,16 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
         ) : (
           <div className="space-y-3">
             {project.artifacts.map((a) => {
+              const workflowType = getEffectiveArtifactWorkflowType(a.workflowType, a.input);
               const preview = formatArtifactPreview({
                 type: a.type,
                 status: a.status,
                 content: a.content,
+                workflowType,
+              });
+              const typeLabel = getArtifactDisplayTypeLabel({
+                type: a.type,
+                workflowType,
               });
 
               return (
@@ -60,7 +66,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
                 <Card className="hover:shadow-md transition-shadow">
                   <CardHeader className="py-3 px-4 flex flex-row items-center justify-between gap-4">
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline">{a.type}</Badge>
+                      <Badge variant="outline">{typeLabel}</Badge>
                       <span className="text-sm text-muted-foreground">{a.model}</span>
                     </div>
                     <div className="flex items-center gap-2">

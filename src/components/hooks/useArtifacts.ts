@@ -5,6 +5,7 @@ export interface Artifact {
   projectId: string;
   project?: { id: string; name: string };
   type: string;
+  workflowType?: string | null;
   model: string;
   input: Record<string, unknown>;
   content: string;

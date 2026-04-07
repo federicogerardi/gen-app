@@ -5,6 +5,7 @@ type PreviewInput = {
   type: ArtifactType;
   status: ArtifactStatus;
   content: string | null | undefined;
+  workflowType?: string | null;
 };
 
 type PreviewOutput = {
@@ -17,7 +18,23 @@ type DisplayOutput = {
   text: string;
 };
 
+type DisplayLabelInput = {
+  type: ArtifactType;
+  workflowType?: string | null;
+};
+
 const MAX_PREVIEW_LENGTH = 260;
+
+const DEFAULT_TYPE_LABELS: Record<string, string> = {
+  content: 'Contenuto',
+  seo: 'SEO',
+  code: 'Code',
+};
+
+const WORKFLOW_TYPE_LABELS: Record<string, string> = {
+  meta_ads: 'Meta Ads',
+  funnel_pages: 'Funnel Pages',
+};
 
 function normalizeWhitespace(value: string): string {
   return value.replace(/\s+/g, ' ').trim();
@@ -26,6 +43,65 @@ function normalizeWhitespace(value: string): string {
 function truncate(value: string, maxLength = MAX_PREVIEW_LENGTH): string {
   if (value.length <= maxLength) return value;
   return `${value.slice(0, maxLength - 1).trimEnd()}...`;
+}
+
+function stripCodeFence(value: string): string {
+  const trimmed = value.trim();
+  const fencedMatch = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+  return fencedMatch ? fencedMatch[1].trim() : trimmed;
+}
+
+function prettifyKey(key: string): string {
+  const spaced = key
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/[_-]+/g, ' ')
+    .trim();
+  if (!spaced) return key;
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+}
+
+export function getArtifactDisplayTypeLabel(input: DisplayLabelInput): string {
+  if (input.workflowType && WORKFLOW_TYPE_LABELS[input.workflowType]) {
+    return WORKFLOW_TYPE_LABELS[input.workflowType];
+  }
+
+  return DEFAULT_TYPE_LABELS[input.type] ?? prettifyKey(input.type);
+}
+
+export function getArtifactWorkflowType(input: unknown): string | null {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return null;
+
+  const maybe = (input as Record<string, unknown>).workflowType;
+  return typeof maybe === 'string' ? maybe : null;
+}
+
+export function getEffectiveArtifactWorkflowType(workflowType: string | null | undefined, input: unknown): string | null {
+  return workflowType ?? getArtifactWorkflowType(input);
+}
+
+function normalizeJsonLikeText(raw: string): string {
+  const stripped = stripCodeFence(raw)
+    .replace(/"([a-zA-Z0-9_]+)"\s*:/g, '$1: ')
+    .replace(/[{}\[\]]/g, ' ')
+    .replace(/"/g, '')
+    .replace(/\s*,\s*/g, ' - ');
+
+  return normalizeWhitespace(stripped);
+}
+
+function parseWithRepair(candidate: string): unknown {
+  try {
+    return JSON.parse(candidate);
+  } catch {
+    // continue to repair mode
+  }
+
+  const repaired = candidate.replace(/,\s*([}\]])/g, '$1');
+  try {
+    return JSON.parse(repaired);
+  } catch {
+    return null;
+  }
 }
 
 function looksLikeJson(value: string): boolean {
@@ -40,24 +116,29 @@ function looksLikeJson(value: string): boolean {
 }
 
 function tryParseJson(raw: string): unknown {
-  const trimmed = raw.trim();
+  const trimmed = stripCodeFence(raw.trim());
 
   if (!trimmed) return null;
 
-  try {
-    return JSON.parse(trimmed);
-  } catch {
-    // continue to fenced parsing fallback
+  const direct = parseWithRepair(trimmed);
+  if (direct) return direct;
+
+  const objectStart = trimmed.indexOf('{');
+  const objectEnd = trimmed.lastIndexOf('}');
+  if (objectStart >= 0 && objectEnd > objectStart) {
+    const objectCandidate = trimmed.slice(objectStart, objectEnd + 1);
+    const objectParsed = parseWithRepair(objectCandidate);
+    if (objectParsed) return objectParsed;
   }
 
-  const fencedMatch = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
-  if (!fencedMatch) return null;
-
-  try {
-    return JSON.parse(fencedMatch[1]);
-  } catch {
-    return null;
+  const arrayStart = trimmed.indexOf('[');
+  const arrayEnd = trimmed.lastIndexOf(']');
+  if (arrayStart >= 0 && arrayEnd > arrayStart) {
+    const arrayCandidate = trimmed.slice(arrayStart, arrayEnd + 1);
+    return parseWithRepair(arrayCandidate);
   }
+
+  return null;
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -178,6 +259,32 @@ function formatParsedJson(type: ArtifactType, parsed: unknown): string | null {
   return formatContentJson(record);
 }
 
+function extractGenericRecordText(record: Record<string, unknown>, maxItems: number): string | null {
+  const lines: string[] = [];
+
+  for (const [key, value] of Object.entries(record)) {
+    const direct = firstString(value);
+    if (direct) {
+      lines.push(`${prettifyKey(key)}: ${direct}`);
+    } else {
+      const fromArray = extractFromArray(value);
+      if (fromArray) {
+        lines.push(`${prettifyKey(key)}: ${fromArray}`);
+      } else {
+        const nested = asRecord(value);
+        if (nested) {
+          const nestedSummary = pickFields(nested, ['title', 'headline', 'name', 'text', 'description', 'content', 'summary']);
+          if (nestedSummary) lines.push(`${prettifyKey(key)}: ${nestedSummary}`);
+        }
+      }
+    }
+
+    if (lines.length >= maxItems) break;
+  }
+
+  return lines.length > 0 ? lines.join(' - ') : null;
+}
+
 function extractDisplayLines(type: ArtifactType, record: Record<string, unknown>): string[] {
   const keysByType: Record<string, string[]> = {
     content: ['headline', 'hook', 'primaryText', 'body', 'cta', 'sections', 'title', 'description', 'content', 'text'],
@@ -239,6 +346,14 @@ export function formatArtifactContentForDisplay(input: PreviewInput): DisplayOut
         text: lines.join('\n\n'),
       };
     }
+
+    const generic = extractGenericRecordText(record, 8);
+    if (generic) {
+      return {
+        title: 'Output elaborato',
+        text: generic,
+      };
+    }
   }
 
   const parsedPreview = parsed ? formatParsedJson(input.type, parsed) : null;
@@ -250,9 +365,10 @@ export function formatArtifactContentForDisplay(input: PreviewInput): DisplayOut
   }
 
   if (looksLikeJson(raw)) {
+    const fallbackText = normalizeJsonLikeText(raw);
     return {
-      title: 'Output strutturato',
-      text: 'Contenuto tecnico strutturato disponibile. Genera una nuova variante dal tool per ottenere un output testuale ottimizzato alla lettura operativa.',
+      title: 'Output elaborato',
+      text: fallbackText || 'Contenuto disponibile ma non formattabile automaticamente.',
     };
   }
 
@@ -294,10 +410,22 @@ export function formatArtifactPreview(input: PreviewInput): PreviewOutput {
     };
   }
 
+  const parsedRecord = asRecord(parsed);
+  if (parsedRecord) {
+    const generic = extractGenericRecordText(parsedRecord, 3);
+    if (generic) {
+      return {
+        label: 'Anteprima',
+        text: truncate(generic),
+      };
+    }
+  }
+
   if (looksLikeJson(raw)) {
+    const fallbackText = normalizeJsonLikeText(raw);
     return {
       label: 'Anteprima',
-      text: 'Output strutturato disponibile. Apri il dettaglio per visualizzare tutti i campi.',
+      text: truncate(fallbackText || 'Contenuto disponibile ma non formattabile automaticamente.'),
     };
   }
 

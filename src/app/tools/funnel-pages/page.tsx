@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { formatArtifactContentForDisplay } from '@/lib/artifact-preview';
 
 type FunnelStepKey = 'optin' | 'quiz' | 'vsl';
 
@@ -285,36 +286,49 @@ export default function FunnelPagesToolPage() {
           </Card>
 
           <div className="space-y-4">
-            {steps.map((step) => (
-              <Card key={step.key}>
-                <CardHeader>
-                  <div className="flex items-center justify-between gap-3">
-                    <CardTitle className="text-base">{step.title}</CardTitle>
-                    <Badge variant={step.status === 'done' ? 'secondary' : step.status === 'error' ? 'destructive' : 'outline'}>
-                      {step.status}
-                    </Badge>
-                  </div>
-                  <CardDescription>
-                    {step.key === 'optin' && 'Landing page di acquisizione lead'}
-                    {step.key === 'quiz' && 'Questionario di qualificazione'}
-                    {step.key === 'vsl' && 'Script Video Sales Letter'}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {step.content ? (
-                    <pre className="text-sm whitespace-pre-wrap break-words font-mono max-h-64 overflow-y-auto">{step.content}</pre>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">Output non ancora generato.</p>
-                  )}
-                  {step.error && <p className="text-sm text-destructive">{step.error}</p>}
-                  {step.artifactId && (
-                    <Button variant="outline" size="sm" onClick={() => router.push(`/artifacts/${step.artifactId}`)}>
-                      Apri artefatto
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
+            {steps.map((step) => {
+              const stepDisplay = formatArtifactContentForDisplay({
+                type: 'content',
+                status: step.status === 'error' ? 'failed' : step.content ? 'completed' : step.status === 'running' ? 'generating' : 'completed',
+                content: step.content,
+                workflowType: 'funnel_pages',
+              });
+
+              return (
+                <Card key={step.key}>
+                  <CardHeader>
+                    <div className="flex items-center justify-between gap-3">
+                      <CardTitle className="text-base">{step.title}</CardTitle>
+                      <Badge variant={step.status === 'done' ? 'secondary' : step.status === 'error' ? 'destructive' : 'outline'}>
+                        {step.status}
+                      </Badge>
+                    </div>
+                    <CardDescription>
+                      {step.key === 'optin' && 'Landing page di acquisizione lead'}
+                      {step.key === 'quiz' && 'Questionario di qualificazione'}
+                      {step.key === 'vsl' && 'Script Video Sales Letter'}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {step.content ? (
+                      <div className="rounded-md border bg-muted/20 p-4 max-h-64 overflow-y-auto">
+                        <p className="text-sm leading-7 whitespace-pre-wrap break-words text-foreground">{stepDisplay.text}</p>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        {step.status === 'running' ? stepDisplay.text : 'Output non ancora generato.'}
+                      </p>
+                    )}
+                    {step.error && <p className="text-sm text-destructive">{step.error}</p>}
+                    {step.artifactId && (
+                      <Button variant="outline" size="sm" onClick={() => router.push(`/artifacts/${step.artifactId}`)}>
+                        Apri artefatto
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </div>
       </main>

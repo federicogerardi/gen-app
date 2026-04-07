@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { formatArtifactPreview } from '@/lib/artifact-preview';
+import { formatArtifactPreview, getArtifactDisplayTypeLabel, getEffectiveArtifactWorkflowType } from '@/lib/artifact-preview';
 
 type ProjectOption = {
   id: string;
@@ -165,10 +165,16 @@ export function ArtifactsClientPage({ projects }: Props) {
         ) : (
           <div className="space-y-3" role="list" aria-label="Lista artefatti">
             {artifacts.map((artifact) => {
+              const workflowType = getEffectiveArtifactWorkflowType(artifact.workflowType, artifact.input);
               const preview = formatArtifactPreview({
                 type: artifact.type,
                 status: artifact.status,
                 content: artifact.content,
+                workflowType,
+              });
+              const typeLabel = getArtifactDisplayTypeLabel({
+                type: artifact.type,
+                workflowType,
               });
 
               return (
@@ -176,7 +182,7 @@ export function ArtifactsClientPage({ projects }: Props) {
                 <CardHeader className="pb-2">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
-                      <Badge>{artifact.type}</Badge>
+                      <Badge>{typeLabel}</Badge>
                       <Badge variant="outline">{artifact.model}</Badge>
                       <Badge variant={artifact.status === 'completed' ? 'default' : artifact.status === 'failed' ? 'destructive' : 'secondary'}>
                         {artifact.status}

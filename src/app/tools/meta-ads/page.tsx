@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { formatArtifactContentForDisplay } from '@/lib/artifact-preview';
 
 const TONES = ['professional', 'casual', 'formal', 'technical'] as const;
 
@@ -43,6 +44,12 @@ export default function MetaAdsToolPage() {
   });
 
   const { isStreaming, content, artifactId, error, generate } = useStreamGeneration();
+  const outputDisplay = formatArtifactContentForDisplay({
+    type: 'content',
+    status: content ? 'completed' : isStreaming ? 'generating' : error ? 'failed' : 'completed',
+    content,
+    workflowType: 'meta_ads',
+  });
 
   function handleGenerate() {
     if (!projectId || !product || !audience || !offer) return;
@@ -155,9 +162,13 @@ export default function MetaAdsToolPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               {content ? (
-                <pre className="text-sm whitespace-pre-wrap break-words font-mono max-h-[560px] overflow-y-auto">{content}</pre>
+                <div className="rounded-md border bg-muted/20 p-4 max-h-[560px] overflow-y-auto">
+                  <p className="text-sm leading-7 whitespace-pre-wrap break-words text-foreground">{outputDisplay.text}</p>
+                </div>
               ) : (
-                <p className="text-sm text-muted-foreground">L&apos;output apparira qui dopo l&apos;avvio della generazione.</p>
+                <p className="text-sm text-muted-foreground">
+                  {isStreaming ? outputDisplay.text : 'L\'output apparira qui dopo l\'avvio della generazione.'}
+                </p>
               )}
               {error && <p className="text-sm text-destructive">{error}</p>}
               {artifactId && !isStreaming && (

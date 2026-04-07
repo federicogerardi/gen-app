@@ -75,12 +75,14 @@ export async function POST(request: Request) {
       userId,
       projectId,
       type: 'content',
+      workflowType: 'meta_ads',
       model,
       input: {
         topic: prompt,
         tone,
         length: 1200,
         outputFormat: 'markdown',
+        workflowType: 'meta_ads',
       },
     });
 
