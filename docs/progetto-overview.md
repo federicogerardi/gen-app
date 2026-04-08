@@ -1,8 +1,8 @@
 # Progetto Overview: LLM Artifact Generation Hub
 
 **Versione**: 1.0  
-**Status**: MVP SCAFFOLD IMPLEMENTATO  
-**Data**: 2026-04-07  
+**Status**: APP LOCALE FUNZIONANTE + TOOL MODULARI IN EVOLUZIONE  
+**Data**: 2026-04-08  
 **Destinatario**: Stakeholder e Team di Progetto
 
 ---
@@ -57,10 +57,13 @@ Stiamo costruendo un **Hub di Generazione Artefatti con AI/LLM** che permette ai
 - **Google OAuth** aziendale (email @company.com)
 - **Ruoli**: Basic user o Admin
 
-### Artifact Types (MVP)
-1. **Content**: Ad copy, blog posts, email templates
-2. **SEO**: Keyword analysis, meta descriptions
-3. **Code**: HTML templates, boilerplate
+### Tool Workflows Attivi (MVP)
+1. **Meta Ads**: varianti ad copy complete (hook, body, headline, CTA)
+2. **Funnel Pages**: processo multi-step (optin page, quiz questions, VSL script)
+
+### Evoluzione Tool
+- route legacy `/tools/content`, `/tools/seo`, `/tools/code` mantenute come redirect
+- roadmap: migrazione completa da redirect a flussi dedicati nativi
 
 ### Modelli LLM
 - GPT-4 Turbo (default, highest quality)
@@ -149,6 +152,7 @@ Stiamo costruendo un **Hub di Generazione Artefatti con AI/LLM** che permette ai
 - **OpenRouter SDK** → Multi-model support, easy switching
 - **Server-Sent Events** → Real-time streaming, progressive display
 - **Retry + fallback** → Reliability, graceful degradation
+- **Prompt modular layer** → registry + loader server-only in `src/lib/tool-prompts`
 
 ### DevOps
 - **Render.com** → Managed Node.js, simple scaling, reliable

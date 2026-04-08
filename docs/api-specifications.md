@@ -5,7 +5,7 @@
 **Base URL**: `https://app.render.com/api` (staging/prod)  
 **Authentication**: NextAuth session cookie (browser). Bearer tokens solo per integrazioni server-to-server esplicite.  
 **Content-Type**: `application/json`  
-**Last Updated**: 2026-04-07
+**Last Updated**: 2026-04-08
 
 ---
 
@@ -43,7 +43,10 @@ All errors follow this format:
 
 Implemented routes in the current codebase:
 - `POST /artifacts/generate`
+- `POST /tools/meta-ads/generate`
+- `POST /tools/funnel-pages/generate`
 - `GET /artifacts/{id}`
+- `PUT /artifacts/{id}`
 - `DELETE /artifacts/{id}`
 - `GET /projects`
 - `POST /projects`
@@ -54,11 +57,12 @@ Implemented routes in the current codebase:
 - `GET /users/quota`
 - `GET /admin/users`
 - `PUT /admin/users/{userId}/quota`
+- `GET /admin/users/{userId}/audit`
+- `GET /admin/metrics`
 - `GET /models`
 
 Documented but not yet implemented:
-- `GET /artifacts`
-- `PUT /artifacts/{id}`
+- `GET /artifacts` (lista con filtri avanzati server-side e paginazione)
 
 ### Auth.js Session Endpoint
 ```
@@ -91,6 +95,64 @@ POST /api/auth/signout
 ---
 
 ## Artifacts
+
+## Tool-Specific Generation
+
+### Generate Meta Ads (Streaming)
+
+**Endpoint**:
+```
+POST /tools/meta-ads/generate
+```
+
+**Request** (application/json):
+```json
+{
+  "projectId": "proj_123",
+  "model": "openai/gpt-4-turbo",
+  "tone": "professional",
+  "product": "Programma nutrizione 90 giorni",
+  "audience": "Donne 28-45 interessate a fitness",
+  "offer": "Call gratuita + piano personalizzato",
+  "objective": "lead generation",
+  "angle": "problem-solution con social proof"
+}
+```
+
+**Response**:
+- Stream SSE con eventi standard (`start`, `token`, `complete`, `error`)
+- Crea un artifact di tipo `content`
+
+### Generate Funnel Pages Step (Streaming)
+
+**Endpoint**:
+```
+POST /tools/funnel-pages/generate
+```
+
+**Request** (application/json):
+```json
+{
+  "projectId": "proj_123",
+  "model": "openai/gpt-4-turbo",
+  "tone": "professional",
+  "step": "optin",
+  "product": "Programma coaching performance",
+  "audience": "Founder e professionisti digitali 30-50",
+  "offer": "Sessione strategica gratuita + piano operativo",
+  "promise": "+30% lead qualificati in 45 giorni",
+  "notes": "Vincoli brand..."
+}
+```
+
+**Step-specific constraints**:
+- `step=optin`: nessun contesto precedente richiesto
+- `step=quiz`: richiede `optinOutput`
+- `step=vsl`: richiede `optinOutput` e `quizOutput`
+
+**Response**:
+- Stream SSE con eventi standard (`start`, `token`, `complete`, `error`)
+- Crea un artifact di tipo `content`
 
 ### Generate Artifact (Streaming)
 
@@ -631,25 +693,12 @@ async function streamArtifact(request: ArtifactRequest) {
   }
 }
 
-// In caso di errore di rete → fallback batch:
-async function fetchBatch(request: ArtifactRequest) {
-  const res = await fetch('/api/artifacts/generate?batch=true', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(request),
-  });
-  return res.json();
-}
+// Variante tool-specific:
+// /api/tools/meta-ads/generate
+// /api/tools/funnel-pages/generate
 ```
 
-### Fallback to Batch
-
-If streaming fails:
-```
-POST /artifacts/generate?batch=true
-```
-
-Returns complete response instead of streaming.
+Nota: al momento non esiste un endpoint `batch=true` dedicato; il fallback applicativo va gestito lato UI.
 
 ---
 

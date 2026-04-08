@@ -22,11 +22,34 @@ function NewArtifactForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const defaultProjectId = searchParams.get('projectId') ?? '';
+  const typeFromQuery = searchParams.get('type');
+  const defaultType = typeFromQuery === 'seo' || typeFromQuery === 'code' ? typeFromQuery : 'content';
+  const modelFromQuery = searchParams.get('model');
+  const defaultModel = modelFromQuery && modelFromQuery.length > 0 ? modelFromQuery : 'openai/gpt-4-turbo';
+  const encodedInput = searchParams.get('input');
+
+  let defaultInput = '';
+  if (encodedInput) {
+    const direct = encodedInput;
+    try {
+      JSON.parse(direct);
+      defaultInput = direct;
+    } catch {
+      // Backward compatibility for previously double-encoded links.
+      try {
+        const decoded = decodeURIComponent(encodedInput);
+        JSON.parse(decoded);
+        defaultInput = decoded;
+      } catch {
+        defaultInput = '';
+      }
+    }
+  }
 
   const [projectId, setProjectId] = useState(defaultProjectId);
-  const [type, setType] = useState<'content' | 'seo' | 'code'>('content');
-  const [model, setModel] = useState('openai/gpt-4-turbo');
-  const [inputJson, setInputJson] = useState('');
+  const [type, setType] = useState<'content' | 'seo' | 'code'>(defaultType);
+  const [model, setModel] = useState(defaultModel);
+  const [inputJson, setInputJson] = useState(defaultInput);
   const [parseError, setParseError] = useState<string | null>(null);
 
   const { data: projectsData } = useQuery({

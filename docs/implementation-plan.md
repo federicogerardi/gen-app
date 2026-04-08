@@ -4,7 +4,7 @@
 **Status**: LOCALLY FUNCTIONAL - DEPLOYMENT & HARDENING PENDING  
 **Target Audience**: AI Development Agents  
 **Estimated Duration**: 6-8 weeks (part-time)  
-**Last Updated**: 2026-04-07
+**Last Updated**: 2026-04-08
 
 ---
 
@@ -33,11 +33,15 @@ Implemented in the current codebase:
 - Dashboard/navbar client-server boundary fixed (`SessionProvider` + client-side `signOut`) and build verified
 - Admin dashboard with user quota editing, recent usage activity and metrics overview
 - Jest + Playwright scaffolding with passing local unit/integration/e2e smoke tests
+- Tool UI modulare con entrypoint dedicati per Meta Ads (`/tools/meta-ads`) e Funnel Pages (`/tools/funnel-pages`)
+- Endpoint tool-specific per generazione (`/api/tools/meta-ads/generate`, `/api/tools/funnel-pages/generate`)
+- Prompt architecture centralizzata sotto `src/lib/tool-prompts` con registry + loader e template markdown versionati nel codice applicativo
 
 Still pending or partial:
 - deployment, monitoring and production hardening
 - expanded automated coverage and quality gates (>80% coverage target)
 - responsive/accessibility hardening and final UX polish
+- migrazione completa dei tool legacy (`/tools/content`, `/tools/seo`, `/tools/code`) da redirect a flussi nativi
 
 ## Phase Status Summary
 

@@ -5,6 +5,7 @@ export interface Artifact {
   projectId: string;
   project?: { id: string; name: string };
   type: string;
+  workflowType?: string | null;
   model: string;
   input: Record<string, unknown>;
   content: string;
@@ -89,6 +90,7 @@ export function useDeleteArtifact() {
     mutationFn: deleteArtifact,
     onSuccess: (_data, id) => {
       queryClient.removeQueries({ queryKey: ['artifact', id] });
+      queryClient.invalidateQueries({ queryKey: ['artifacts'] });
       queryClient.invalidateQueries({ queryKey: ['projects'] });
     },
   });

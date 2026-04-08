@@ -1,16 +1,22 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { Navbar } from '@/components/layout/Navbar';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { AdminQuotaForm } from './AdminQuotaForm';
+import { AdminClientPage } from './AdminClientPage';
+import { Decimal } from '@/generated/prisma/runtime/client';
+
+function avg(values: number[]): number {
+  if (values.length === 0) return 0;
+  return values.reduce((acc, value) => acc + value, 0) / values.length;
+}
 
 export default async function AdminPage() {
   const session = await auth();
   if (!session?.user?.id || session.user.role !== 'admin') redirect('/dashboard');
 
-  const [users, totalArtifacts, completedArtifacts, recentActivity] = await Promise.all([
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  const [users, totalArtifacts, completedArtifacts, recentActivity, completedArtifactsSample, quotaHistory30d] = await Promise.all([
     db.user.findMany({
       orderBy: { createdAt: 'desc' },
       select: {
@@ -32,76 +38,94 @@ export default async function AdminPage() {
       take: 12,
       include: { user: { select: { email: true, name: true } } },
     }),
+    db.artifact.findMany({
+      where: {
+        status: 'completed',
+        completedAt: { not: null },
+      },
+      orderBy: { completedAt: 'desc' },
+      take: 500,
+      select: {
+        createdAt: true,
+        completedAt: true,
+      },
+    }),
+    db.quotaHistory.findMany({
+      where: {
+        createdAt: { gte: thirtyDaysAgo },
+      },
+      select: {
+        status: true,
+        requestCount: true,
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 1000,
+    }),
   ]);
 
+  const usersForClient = users.map((user: any) => ({
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    monthlyQuota: user.monthlyQuota,
+    monthlyUsed: user.monthlyUsed,
+    monthlyBudget: user.monthlyBudget instanceof Decimal ? user.monthlyBudget.toNumber() : Number(user.monthlyBudget),
+    monthlySpent: user.monthlySpent instanceof Decimal ? user.monthlySpent.toNumber() : Number(user.monthlySpent),
+    resetDate: user.resetDate,
+  }));
+
+  const recentActivityForClient = recentActivity.map((entry: any) => ({
+    id: entry.id,
+    artifactType: entry.artifactType,
+    model: entry.model,
+    status: entry.status,
+    costUSD: entry.costUSD instanceof Decimal ? entry.costUSD.toNumber() : Number(entry.costUSD),
+    createdAt: entry.createdAt,
+    user: {
+      email: entry.user?.email ?? '',
+      name: entry.user?.name ?? null,
+    },
+  }));
+
+  const completionDurations = completedArtifactsSample
+    .filter((artifact: { completedAt: Date | null }) => artifact.completedAt)
+    .map((artifact: { completedAt: Date | null; createdAt: Date }) => (artifact.completedAt!.getTime() - artifact.createdAt.getTime()) / 1000)
+    .filter((value: number) => Number.isFinite(value) && value >= 0);
+
+  const quotaRequestCount30d = quotaHistory30d.reduce((acc: number, entry: { requestCount: number }) => acc + entry.requestCount, 0);
+  const quotaSuccessCount30d = quotaHistory30d
+    .filter((entry: { status: string }) => entry.status === 'success')
+    .reduce((acc: number, entry: { requestCount: number }) => acc + entry.requestCount, 0);
+  const quotaErrorCount30d = quotaHistory30d
+    .filter((entry: { status: string }) => entry.status === 'error')
+    .reduce((acc: number, entry: { requestCount: number }) => acc + entry.requestCount, 0);
+  const quotaRateLimitedCount30d = quotaHistory30d
+    .filter((entry: { status: string }) => entry.status === 'rate_limited')
+    .reduce((acc: number, entry: { requestCount: number }) => acc + entry.requestCount, 0);
+
+  const baselineMetrics = {
+    generatedAt: new Date().toISOString(),
+    completionRate: totalArtifacts > 0 ? completedArtifacts / totalArtifacts : 0,
+    avgCompletionSeconds: avg(completionDurations),
+    p95CompletionSeconds:
+      completionDurations.length > 0
+        ? completionDurations.sort((a: number, b: number) => a - b)[Math.floor(completionDurations.length * 0.95)]
+        : 0,
+    requestSuccessRate30d: quotaRequestCount30d > 0 ? quotaSuccessCount30d / quotaRequestCount30d : 0,
+    requestErrorRate30d: quotaRequestCount30d > 0 ? quotaErrorCount30d / quotaRequestCount30d : 0,
+    requestRateLimitedRate30d: quotaRequestCount30d > 0 ? quotaRateLimitedCount30d / quotaRequestCount30d : 0,
+    sampleSizeArtifacts: completedArtifactsSample.length,
+    sampleSizeRequests30d: quotaRequestCount30d,
+  };
+
   return (
-    <>
-      <Navbar />
-      <main className="flex-1 p-6 max-w-5xl mx-auto w-full">
-        <h1 className="text-2xl font-semibold mb-6">Gestione utenti</h1>
-        <div className="grid gap-4 grid-cols-2 md:grid-cols-4 mb-8">
-          <Card>
-            <CardHeader className="pb-2"><CardTitle className="text-sm">Utenti</CardTitle></CardHeader>
-            <CardContent><p className="text-2xl font-bold">{users.length}</p></CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2"><CardTitle className="text-sm">Artefatti</CardTitle></CardHeader>
-            <CardContent><p className="text-2xl font-bold">{totalArtifacts}</p></CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2"><CardTitle className="text-sm">Completati</CardTitle></CardHeader>
-            <CardContent><p className="text-2xl font-bold">{completedArtifacts}</p></CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2"><CardTitle className="text-sm">Spesa mensile</CardTitle></CardHeader>
-            <CardContent><p className="text-2xl font-bold">${users.reduce((acc, user) => acc + Number(user.monthlySpent), 0).toFixed(2)}</p></CardContent>
-          </Card>
-        </div>
-
-        <div className="space-y-4">
-          {users.map((u) => (
-            <Card key={u.id}>
-              <CardHeader className="pb-2 flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle className="text-base">{u.name ?? u.email}</CardTitle>
-                  <p className="text-sm text-muted-foreground">{u.email}</p>
-                </div>
-                <Badge variant={u.role === 'admin' ? 'default' : 'secondary'}>{u.role}</Badge>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-4 gap-4 text-sm mb-4">
-                  <div><p className="text-muted-foreground">Quota</p><p className="font-medium">{u.monthlyUsed} / {u.monthlyQuota}</p></div>
-                  <div><p className="text-muted-foreground">Budget</p><p className="font-medium">${Number(u.monthlySpent).toFixed(2)} / ${Number(u.monthlyBudget).toFixed(2)}</p></div>
-                  <div><p className="text-muted-foreground">Reset</p><p className="font-medium">{new Date(u.resetDate).toLocaleDateString('it-IT')}</p></div>
-                </div>
-                <AdminQuotaForm userId={u.id} currentQuota={u.monthlyQuota} currentBudget={Number(u.monthlyBudget)} />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        <section className="mt-10">
-          <h2 className="text-lg font-medium mb-4">Attività recente</h2>
-          <Card>
-            <CardContent className="pt-4 space-y-3">
-              {recentActivity.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Nessun evento disponibile.</p>
-              ) : recentActivity.map((entry) => (
-                <div key={entry.id} className="flex flex-wrap items-center justify-between gap-3 border-b last:border-b-0 pb-3 last:pb-0">
-                  <div>
-                    <p className="text-sm font-medium">{entry.user.name ?? entry.user.email}</p>
-                    <p className="text-xs text-muted-foreground">{entry.artifactType} · {entry.model} · {entry.status}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium">${Number(entry.costUSD).toFixed(4)}</p>
-                    <p className="text-xs text-muted-foreground">{new Date(entry.createdAt).toLocaleString('it-IT')}</p>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </section>
-      </main>
-    </>
+    <AdminClientPage
+      users={usersForClient}
+      totalArtifacts={totalArtifacts}
+      completedArtifacts={completedArtifacts}
+      recentActivity={recentActivityForClient}
+      baselineMetrics={baselineMetrics}
+    />
   );
 }

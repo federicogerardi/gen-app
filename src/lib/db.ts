@@ -1,13 +1,11 @@
-
+type PrismaClientInstance = any;
 import { PrismaClient } from '@/generated/prisma';
 import { PrismaPg } from '@prisma/adapter-pg';
-
 
 function createPrismaClient(): PrismaClient {
   const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
   return new PrismaClient({ adapter });
 }
-
 
 interface GlobalPrisma {
   prisma?: PrismaClient;
