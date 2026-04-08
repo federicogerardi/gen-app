@@ -52,6 +52,12 @@ export default async function DashboardPage() {
 
   const quotaPercent = user ? Math.round((user.monthlyUsed / user.monthlyQuota) * 100) : 0;
 
+  // Patch: ensure description is always string | undefined (never null)
+  const projectsForClient = projects.map((p: any) => ({
+    ...p,
+    description: p.description === null ? undefined : p.description,
+  }));
+
   return (
     <>
       <Navbar />
@@ -114,7 +120,7 @@ export default async function DashboardPage() {
           <Button variant="outline" size="sm" asChild><Link href="/dashboard/projects/new">Nuovo progetto</Link></Button>
         </div>
 
-        {projects.length === 0 ? (
+        {projectsForClient.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center text-muted-foreground">
               Nessun progetto ancora. Creane uno per iniziare.
@@ -122,12 +128,7 @@ export default async function DashboardPage() {
           </Card>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {projects.map((p: {
-              id: string;
-              name: string;
-              description?: string;
-              _count: { artifacts: number };
-            }) => (
+            {projectsForClient.map((p) => (
               <Link key={p.id} href={`/dashboard/projects/${p.id}`}>
                 <Card className="hover:shadow-md transition-shadow h-full">
                   <CardHeader>
@@ -140,55 +141,6 @@ export default async function DashboardPage() {
                 </Card>
               </Link>
             ))}
-          </div>
-        )}
-
-        <div className="flex items-center justify-between mb-4 mt-10">
-          <h2 className="text-lg font-medium">Artefatti recenti</h2>
-          <Button variant="outline" size="sm" asChild><Link href="/artifacts">Vedi tutti</Link></Button>
-        </div>
-
-        {recentArtifacts.length === 0 ? (
-          <Card>
-            <CardContent className="py-10 text-center text-muted-foreground">
-              Nessun artefatto recente. Inizia da uno dei tool per creare il primo output.
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {recentArtifacts.map((artifact: any) => {
-              const workflowType = getEffectiveArtifactWorkflowType(artifact.workflowType, artifact.input);
-              const preview = formatArtifactPreview({
-                type: artifact.type,
-                status: artifact.status,
-                content: artifact.content,
-                workflowType,
-              });
-              const typeLabel = getArtifactDisplayTypeLabel({
-                type: artifact.type,
-                workflowType,
-              });
-
-              return (
-              <Link key={artifact.id} href={`/artifacts/${artifact.id}`}>
-                <Card className="hover:shadow-md transition-shadow h-full">
-                  <CardHeader>
-                    <div className="flex items-center justify-between gap-2">
-                      <Badge>{typeLabel}</Badge>
-                      <Badge variant={artifact.status === 'completed' ? 'secondary' : artifact.status === 'failed' ? 'destructive' : 'outline'}>
-                        {artifact.status}
-                      </Badge>
-                    </div>
-                    <CardTitle className="text-base line-clamp-1">{artifact.project.name}</CardTitle>
-                    <CardDescription className="space-y-1">
-                      <span className="block text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{preview.label}</span>
-                      <span className="block line-clamp-3">{preview.text}</span>
-                    </CardDescription>
-                  </CardHeader>
-                </Card>
-              </Link>
-              );
-            })}
           </div>
         )}
       </main>

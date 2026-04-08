@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { AdminClientPage } from './AdminClientPage';
+import { Decimal } from '@/generated/prisma/runtime/client';
 
 function avg(values: number[]): number {
   if (values.length === 0) return 0;
@@ -62,15 +63,29 @@ export default async function AdminPage() {
     }),
   ]);
 
-  const usersForClient = users.map((user: { monthlyBudget: number | string; monthlySpent: number | string } & Record<string, unknown>) => ({
-    ...user,
-    monthlyBudget: Number(user.monthlyBudget),
-    monthlySpent: Number(user.monthlySpent),
+  const usersForClient = users.map((user: any) => ({
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    monthlyQuota: user.monthlyQuota,
+    monthlyUsed: user.monthlyUsed,
+    monthlyBudget: user.monthlyBudget instanceof Decimal ? user.monthlyBudget.toNumber() : Number(user.monthlyBudget),
+    monthlySpent: user.monthlySpent instanceof Decimal ? user.monthlySpent.toNumber() : Number(user.monthlySpent),
+    resetDate: user.resetDate,
   }));
 
-  const recentActivityForClient = recentActivity.map((entry: { costUSD: number | string } & Record<string, unknown>) => ({
-    ...entry,
-    costUSD: Number(entry.costUSD),
+  const recentActivityForClient = recentActivity.map((entry: any) => ({
+    id: entry.id,
+    artifactType: entry.artifactType,
+    model: entry.model,
+    status: entry.status,
+    costUSD: entry.costUSD instanceof Decimal ? entry.costUSD.toNumber() : Number(entry.costUSD),
+    createdAt: entry.createdAt,
+    user: {
+      email: entry.user?.email ?? '',
+      name: entry.user?.name ?? null,
+    },
   }));
 
   const completionDurations = completedArtifactsSample
