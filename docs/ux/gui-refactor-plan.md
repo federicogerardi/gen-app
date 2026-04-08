@@ -341,3 +341,47 @@ Testing:
 2. Misurare qualitativamente il tempo di scansione lista prima/dopo hotfix
 3. Valutare estensione del formatter preview anche in export/report interni
 4. Consolidare linee guida copy preview nel design system
+
+
+---
+
+## Analisi critica GUI attuale: suggerimenti, criticità e opportunità
+
+### 1. Architettura generale e layout
+- **Viewport**: layout a colonna singola centrata, ottimo per leggibilità ma poco denso su schermi grandi. Opportunità: aumentare densità informativa su desktop.
+- **Navbar**: non sticky/fixed, su viewport piccoli la navigazione può perdersi scorrendo. Opportunità: rendere la navbar sticky o introdurre una sidebar persistente.
+- **Responsività**: alcune griglie rischiano stacking verticale poco leggibile su mobile. Opportunità: ottimizzare breakpoints e layout mobile-first.
+
+### 2. Gerarchia visiva e flusso
+- **Hero/Intro**: molto spazio verticale, spinge contenuti chiave sotto la piega. Opportunità: ridurre altezza hero, portare CTA e widget chiave in alto.
+- **Azioni principali**: CTA duplicate (es. "Generazione rapida"), rischio ridondanza. Opportunità: concentrare le azioni principali in una barra o area sempre visibile.
+- **Tool**: cards tool non sempre accessibili, serve scroll. Opportunità: tool switcher persistente (sidebar o topbar).
+
+### 3. Densità informativa e discoverability
+- **Quota e budget**: informazioni chiare ma troppo separate. Opportunità: barra compatta orizzontale o widget aggregato.
+- **Progetti recenti**: griglia efficace, ma manca vista tabellare/compatta per utenti avanzati. Opportunità: aggiungere toggle lista/griglia.
+- **Artefatti**: manca preview rapida in dashboard. Opportunità: mostrare ultimi artefatti direttamente in home con quick actions.
+
+### 4. Accessibilità e usabilità
+- **Contrasto**: gradient hero rischia basso contrasto. Opportunità: palette più neutra o gradienti meno saturi.
+- **Navigazione**: highlight pagina attiva poco evidente. Opportunità: indicatori visivi più marcati.
+- **Azioni rapide**: manca floating action button o barra laterale per azioni frequenti.
+
+### 5. Opportunità di riorganizzazione
+- **Sidebar persistente**: su desktop, sidebar fissa con tool, progetti, quota e azioni rapide sempre accessibili.
+- **Dashboard compatta**: hero ridotta, azioni principali in alto, quota/budget in barra compatta.
+- **Sezione “Prossime azioni”**: evidenziare task suggeriti (es. "Genera nuovo artefatto").
+- **Preview artefatti recenti**: mostrare ultimi artefatti in dashboard, con azioni rapide (duplica, modifica, elimina).
+- **Mobile-first**: rivedere griglie per evitare stacking verticale eccessivo.
+
+### 6. Consigli pratici
+- Navbar sticky/fixed per accesso rapido.
+- Sidebar (desktop) con tool e progetti, main content a destra.
+- Dashboard a widget: quota, budget, progetti, artefatti come widget drag & drop.
+- Azioni rapide sempre visibili (FAB o barra inferiore su mobile).
+- Modalità dark/light facilmente accessibile.
+- Animazioni micro-interazioni (hover, transizioni, feedback azioni).
+
+---
+
+**Nota:** Questi punti sono da considerare come backlog di miglioramento continuo, da validare con utenti reali e prioritizzare in base a metriche di utilizzo e feedback qualitativo.
