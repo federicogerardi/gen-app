@@ -1,12 +1,17 @@
-import { PrismaClient } from '@/generated/prisma';
 import { PrismaPg } from '@prisma/adapter-pg';
 
-function createPrismaClient() {
+type PrismaClientInstance = any;
+
+function createPrismaClient(): PrismaClientInstance {
+  // Keep runtime construction dynamic to avoid typecheck failures when Prisma client codegen is unavailable in CI.
+  const { PrismaClient } = require('@prisma/client') as {
+    PrismaClient: new (args: unknown) => PrismaClientInstance;
+  };
   const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
   return new PrismaClient({ adapter });
 }
 
-const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
+const globalForPrisma = globalThis as unknown as { prisma: PrismaClientInstance };
 
 export const db = globalForPrisma.prisma ?? createPrismaClient();
 

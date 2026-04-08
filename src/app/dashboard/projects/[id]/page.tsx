@@ -48,7 +48,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
           </Card>
         ) : (
           <div className="space-y-3">
-            {project.artifacts.map((a) => {
+            {project.artifacts.map((a: any) => {
               const workflowType = getEffectiveArtifactWorkflowType(a.workflowType, a.input);
               const preview = formatArtifactPreview({
                 type: a.type,

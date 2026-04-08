@@ -62,32 +62,32 @@ export default async function AdminPage() {
     }),
   ]);
 
-  const usersForClient = users.map((user) => ({
+  const usersForClient = users.map((user: { monthlyBudget: number | string; monthlySpent: number | string } & Record<string, unknown>) => ({
     ...user,
     monthlyBudget: Number(user.monthlyBudget),
     monthlySpent: Number(user.monthlySpent),
   }));
 
-  const recentActivityForClient = recentActivity.map((entry) => ({
+  const recentActivityForClient = recentActivity.map((entry: { costUSD: number | string } & Record<string, unknown>) => ({
     ...entry,
     costUSD: Number(entry.costUSD),
   }));
 
   const completionDurations = completedArtifactsSample
-    .filter((artifact) => artifact.completedAt)
-    .map((artifact) => (artifact.completedAt!.getTime() - artifact.createdAt.getTime()) / 1000)
-    .filter((value) => Number.isFinite(value) && value >= 0);
+    .filter((artifact: { completedAt: Date | null }) => artifact.completedAt)
+    .map((artifact: { completedAt: Date | null; createdAt: Date }) => (artifact.completedAt!.getTime() - artifact.createdAt.getTime()) / 1000)
+    .filter((value: number) => Number.isFinite(value) && value >= 0);
 
-  const quotaRequestCount30d = quotaHistory30d.reduce((acc, entry) => acc + entry.requestCount, 0);
+  const quotaRequestCount30d = quotaHistory30d.reduce((acc: number, entry: { requestCount: number }) => acc + entry.requestCount, 0);
   const quotaSuccessCount30d = quotaHistory30d
-    .filter((entry) => entry.status === 'success')
-    .reduce((acc, entry) => acc + entry.requestCount, 0);
+    .filter((entry: { status: string }) => entry.status === 'success')
+    .reduce((acc: number, entry: { requestCount: number }) => acc + entry.requestCount, 0);
   const quotaErrorCount30d = quotaHistory30d
-    .filter((entry) => entry.status === 'error')
-    .reduce((acc, entry) => acc + entry.requestCount, 0);
+    .filter((entry: { status: string }) => entry.status === 'error')
+    .reduce((acc: number, entry: { requestCount: number }) => acc + entry.requestCount, 0);
   const quotaRateLimitedCount30d = quotaHistory30d
-    .filter((entry) => entry.status === 'rate_limited')
-    .reduce((acc, entry) => acc + entry.requestCount, 0);
+    .filter((entry: { status: string }) => entry.status === 'rate_limited')
+    .reduce((acc: number, entry: { requestCount: number }) => acc + entry.requestCount, 0);
 
   const baselineMetrics = {
     generatedAt: new Date().toISOString(),
@@ -95,7 +95,7 @@ export default async function AdminPage() {
     avgCompletionSeconds: avg(completionDurations),
     p95CompletionSeconds:
       completionDurations.length > 0
-        ? completionDurations.sort((a, b) => a - b)[Math.floor(completionDurations.length * 0.95)]
+        ? completionDurations.sort((a: number, b: number) => a - b)[Math.floor(completionDurations.length * 0.95)]
         : 0,
     requestSuccessRate30d: quotaRequestCount30d > 0 ? quotaSuccessCount30d / quotaRequestCount30d : 0,
     requestErrorRate30d: quotaRequestCount30d > 0 ? quotaErrorCount30d / quotaRequestCount30d : 0,

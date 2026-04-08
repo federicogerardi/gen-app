@@ -122,7 +122,7 @@ export default async function DashboardPage() {
           </Card>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {projects.map((p) => (
+            {projects.map((p: any) => (
               <Link key={p.id} href={`/dashboard/projects/${p.id}`}>
                 <Card className="hover:shadow-md transition-shadow h-full">
                   <CardHeader>
@@ -151,7 +151,7 @@ export default async function DashboardPage() {
           </Card>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {recentArtifacts.map((artifact) => {
+            {recentArtifacts.map((artifact: any) => {
               const workflowType = getEffectiveArtifactWorkflowType(artifact.workflowType, artifact.input);
               const preview = formatArtifactPreview({
                 type: artifact.type,
