@@ -7,7 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 
-export default async function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
+interface ProjectPageParams {
+  id: string;
+}
+
+export default async function ProjectPage({ params }: { params: Promise<ProjectPageParams> }) {
   const session = await auth();
   if (!session?.user?.id) redirect('/');
 
@@ -47,7 +51,14 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
           </Card>
         ) : (
           <div className="space-y-3">
-            {project.artifacts.map((a) => (
+            {project.artifacts.map((a: {
+              id: string;
+              type: string;
+              model: string;
+              status: string;
+              createdAt: string | Date;
+              content?: string;
+            }) => (
               <Link key={a.id} href={`/artifacts/${a.id}`}>
                 <Card className="hover:shadow-md transition-shadow">
                   <CardHeader className="py-3 px-4 flex flex-row items-center justify-between gap-4">
