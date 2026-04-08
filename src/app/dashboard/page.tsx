@@ -128,7 +128,7 @@ export default async function DashboardPage() {
           </Card>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {projectsForClient.map((p) => (
+            {projectsForClient.map((p: typeof projectsForClient[number]) => (
               <Link key={p.id} href={`/dashboard/projects/${p.id}`}>
                 <Card className="hover:shadow-md transition-shadow h-full">
                   <CardHeader>
