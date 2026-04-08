@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { AdminClientPage } from './AdminClientPage';
-import { Decimal } from '@/generated/prisma/runtime/client';
+import { Decimal } from '@prisma/client-runtime-utils';
 
 function avg(values: number[]): number {
   if (values.length === 0) return 0;
@@ -63,7 +63,7 @@ export default async function AdminPage() {
     }),
   ]);
 
-  const usersForClient = users.map((user: any) => ({
+  const usersForClient = users.map((user: typeof users[number]) => ({
     id: user.id,
     name: user.name,
     email: user.email,
@@ -75,7 +75,7 @@ export default async function AdminPage() {
     resetDate: user.resetDate,
   }));
 
-  const recentActivityForClient = recentActivity.map((entry: any) => ({
+  const recentActivityForClient = recentActivity.map((entry: typeof recentActivity[number]) => ({
     id: entry.id,
     artifactType: entry.artifactType,
     model: entry.model,
@@ -89,20 +89,20 @@ export default async function AdminPage() {
   }));
 
   const completionDurations = completedArtifactsSample
-    .filter((artifact: { completedAt: Date | null }) => artifact.completedAt)
-    .map((artifact: { completedAt: Date | null; createdAt: Date }) => (artifact.completedAt!.getTime() - artifact.createdAt.getTime()) / 1000)
+    .filter((artifact: typeof completedArtifactsSample[number]) => artifact.completedAt)
+    .map((artifact: typeof completedArtifactsSample[number]) => (artifact.completedAt!.getTime() - artifact.createdAt.getTime()) / 1000)
     .filter((value: number) => Number.isFinite(value) && value >= 0);
 
-  const quotaRequestCount30d = quotaHistory30d.reduce((acc: number, entry: { requestCount: number }) => acc + entry.requestCount, 0);
+  const quotaRequestCount30d = quotaHistory30d.reduce((acc: number, entry: typeof quotaHistory30d[number]) => acc + entry.requestCount, 0);
   const quotaSuccessCount30d = quotaHistory30d
-    .filter((entry: { status: string }) => entry.status === 'success')
-    .reduce((acc: number, entry: { requestCount: number }) => acc + entry.requestCount, 0);
+    .filter((entry: typeof quotaHistory30d[number]) => entry.status === 'success')
+    .reduce((acc: number, entry: typeof quotaHistory30d[number]) => acc + entry.requestCount, 0);
   const quotaErrorCount30d = quotaHistory30d
-    .filter((entry: { status: string }) => entry.status === 'error')
-    .reduce((acc: number, entry: { requestCount: number }) => acc + entry.requestCount, 0);
+    .filter((entry: typeof quotaHistory30d[number]) => entry.status === 'error')
+    .reduce((acc: number, entry: typeof quotaHistory30d[number]) => acc + entry.requestCount, 0);
   const quotaRateLimitedCount30d = quotaHistory30d
-    .filter((entry: { status: string }) => entry.status === 'rate_limited')
-    .reduce((acc: number, entry: { requestCount: number }) => acc + entry.requestCount, 0);
+    .filter((entry: typeof quotaHistory30d[number]) => entry.status === 'rate_limited')
+    .reduce((acc: number, entry: typeof quotaHistory30d[number]) => acc + entry.requestCount, 0);
 
   const baselineMetrics = {
     generatedAt: new Date().toISOString(),
@@ -110,7 +110,7 @@ export default async function AdminPage() {
     avgCompletionSeconds: avg(completionDurations),
     p95CompletionSeconds:
       completionDurations.length > 0
-        ? completionDurations.sort((a: number, b: number) => a - b)[Math.floor(completionDurations.length * 0.95)]
+        ? [...completionDurations].sort((a: number, b: number) => a - b)[Math.floor(completionDurations.length * 0.95)]
         : 0,
     requestSuccessRate30d: quotaRequestCount30d > 0 ? quotaSuccessCount30d / quotaRequestCount30d : 0,
     requestErrorRate30d: quotaRequestCount30d > 0 ? quotaErrorCount30d / quotaRequestCount30d : 0,

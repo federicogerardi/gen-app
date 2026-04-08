@@ -1,7 +1,7 @@
-const { fontFamily } = require('tailwindcss/defaultTheme')
+import defaultTheme from 'tailwindcss/defaultTheme'
 
 /** @type {import('tailwindcss').Config} */
-module.exports = {
+const config = {
   content: [
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -9,10 +9,12 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['var(--font-geist-sans)', 'Geist', ...fontFamily.sans],
-        mono: ['var(--font-geist-mono)', 'Geist Mono', ...fontFamily.mono],
+        sans: ['var(--font-geist-sans)', 'Geist', ...defaultTheme.fontFamily.sans],
+        mono: ['var(--font-geist-mono)', 'Geist Mono', ...defaultTheme.fontFamily.mono],
       },
     },
   },
   plugins: [],
 }
+
+export default config

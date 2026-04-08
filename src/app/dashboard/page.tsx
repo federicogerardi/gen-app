@@ -6,7 +6,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { formatArtifactPreview, getArtifactDisplayTypeLabel, getEffectiveArtifactWorkflowType } from '@/lib/artifact-preview';
+
 
 const TOOL_ACTIONS = [
   {
@@ -27,7 +27,7 @@ export default async function DashboardPage() {
   const session = await auth();
   if (!session?.user?.id) redirect('/');
 
-  const [projects, recentArtifacts, user] = await Promise.all([
+  const [projects, , user] = await Promise.all([
     db.project.findMany({
       where: { userId: session.user.id },
       orderBy: { createdAt: 'desc' },
@@ -53,7 +53,7 @@ export default async function DashboardPage() {
   const quotaPercent = user ? Math.round((user.monthlyUsed / user.monthlyQuota) * 100) : 0;
 
   // Patch: ensure description is always string | undefined (never null)
-  const projectsForClient = projects.map((p: any) => ({
+  const projectsForClient = projects.map((p: typeof projects[number]) => ({
     ...p,
     description: p.description === null ? undefined : p.description,
   }));
@@ -128,7 +128,7 @@ export default async function DashboardPage() {
           </Card>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {projectsForClient.map((p) => (
+            {projectsForClient.map((p: typeof projectsForClient[number]) => (
               <Link key={p.id} href={`/dashboard/projects/${p.id}`}>
                 <Card className="hover:shadow-md transition-shadow h-full">
                   <CardHeader>
