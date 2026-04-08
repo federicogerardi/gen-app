@@ -53,7 +53,7 @@ export default async function DashboardPage() {
   const quotaPercent = user ? Math.round((user.monthlyUsed / user.monthlyQuota) * 100) : 0;
 
   // Patch: ensure description is always string | undefined (never null)
-  const projectsForClient = projects.map((p) => ({
+  const projectsForClient = projects.map((p: typeof projects[number]) => ({
     ...p,
     description: p.description === null ? undefined : p.description,
   }));
