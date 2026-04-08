@@ -63,7 +63,7 @@ export default async function AdminPage() {
     }),
   ]);
 
-  const usersForClient = users.map((user: any) => ({
+  const usersForClient = users.map((user) => ({
     id: user.id,
     name: user.name,
     email: user.email,
@@ -75,7 +75,7 @@ export default async function AdminPage() {
     resetDate: user.resetDate,
   }));
 
-  const recentActivityForClient = recentActivity.map((entry: any) => ({
+  const recentActivityForClient = recentActivity.map((entry) => ({
     id: entry.id,
     artifactType: entry.artifactType,
     model: entry.model,
@@ -89,14 +89,14 @@ export default async function AdminPage() {
   }));
 
   const completionDurations = completedArtifactsSample
-    .filter((artifact: { completedAt: Date | null }) => artifact.completedAt)
-    .map((artifact: { completedAt: Date | null; createdAt: Date }) => (artifact.completedAt!.getTime() - artifact.createdAt.getTime()) / 1000)
-    .filter((value: number) => Number.isFinite(value) && value >= 0);
+    .filter((artifact) => artifact.completedAt)
+    .map((artifact) => (artifact.completedAt!.getTime() - artifact.createdAt.getTime()) / 1000)
+    .filter((value) => Number.isFinite(value) && value >= 0);
 
-  const quotaRequestCount30d = quotaHistory30d.reduce((acc: number, entry: { requestCount: number }) => acc + entry.requestCount, 0);
+  const quotaRequestCount30d = quotaHistory30d.reduce((acc, entry) => acc + entry.requestCount, 0);
   const quotaSuccessCount30d = quotaHistory30d
-    .filter((entry: { status: string }) => entry.status === 'success')
-    .reduce((acc: number, entry: { requestCount: number }) => acc + entry.requestCount, 0);
+    .filter((entry) => entry.status === 'success')
+    .reduce((acc, entry) => acc + entry.requestCount, 0);
   const quotaErrorCount30d = quotaHistory30d
     .filter((entry: { status: string }) => entry.status === 'error')
     .reduce((acc: number, entry: { requestCount: number }) => acc + entry.requestCount, 0);
