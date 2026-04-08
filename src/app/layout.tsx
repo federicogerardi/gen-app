@@ -27,8 +27,12 @@ export default function RootLayout({
     <html
       lang="it"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      style={{ fontFamily: 'var(--font-geist-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif' }}
     >
-      <body className="min-h-full flex flex-col bg-background text-foreground">
+      <body 
+        className="min-h-full flex flex-col bg-background text-foreground"
+        style={{ fontFamily: 'inherit' }}
+      >
         <Providers>{children}</Providers>
       </body>
     </html>
