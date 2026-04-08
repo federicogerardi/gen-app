@@ -260,6 +260,99 @@ useInfiniteQuery({
 });
 ```
 
+### Prisma 7 — Breaking Changes & Setup
+Prisma 7 introduce un nuovo modello di driver adapter. **Differenze critiche**:
+
+1. **No URL in schema.prisma**: La URL del database va in `prisma.config.ts`, non in `schema.prisma`
+   ```prisma
+   // ❌ ERRATO in Prisma 7
+   datasource db {
+     provider = "postgresql"
+     url      = env("DATABASE_URL")
+   }
+   
+   // ✅ CORRETTO in Prisma 7
+   datasource db {
+     provider = "postgresql"
+   }
+   ```
+
+2. **Generator con output personalizzato**:
+   ```prisma
+   generator client {
+     provider = "prisma-client-js"
+     output   = "../src/generated/prisma"
+   }
+   ```
+
+3. **Import corretto del client**:
+   ```typescript
+   // ❌ ERRATO
+   import { PrismaClient } from '@prisma/client';
+   
+   // ✅ CORRETTO
+   import { PrismaClient } from '@/generated/prisma';
+   ```
+
+4. **Decimal import**:
+   ```typescript
+   // ✅ CORRETTO per Prisma 7
+   import { Decimal } from '@prisma/client-runtime-utils';
+   ```
+
+5. **Prisma generate richiede DATABASE_URL**:
+   ```bash
+   # In CI, assicurati che DATABASE_URL sia disponibile
+   export DATABASE_URL="postgresql://..."
+   npx prisma generate
+   ```
+
+6. **Adapter per PostgreSQL**:
+   ```typescript
+   import { PrismaClient } from '@/generated/prisma';
+   import { PrismaPg } from '@prisma/adapter-pg';
+   
+   const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
+   const db = new PrismaClient({ adapter });
+   ```
+
+### CI/CD — GitHub Actions Setup
+
+**Workflow Configuration** (`.github/workflows/ci.yml`):
+```yaml
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
+      UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate  # ⚠️ CRITICO: genera client prima di lint/typecheck
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test
+      - run: npm run build
+```
+
+**Punti Critici**:
+- **`npx prisma generate` deve eseguirsi prima di `npm run typecheck`**: Altrimenti TypeScript non trova `@/generated/prisma`
+- **Variabili d'ambiente nel build**: `OPENAI_API_KEY`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` sono richieste durante il build (Next.js esegue il codice server)
+- **Node.js 22**: Usa LTS stabile per compatibilità
+
 ---
 
 ## Database Schema — Prisma

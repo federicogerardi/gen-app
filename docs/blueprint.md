@@ -369,19 +369,42 @@ data: {"type":"complete","tokens":{"input":45,"output":120},"cost":0.012}
 
 ### CI/CD (GitHub Actions)
 
+**Workflow**: `.github/workflows/ci.yml`
+
 ```yaml
-on: [push]
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
 jobs:
-  test:
-    - lint
-    - type check
-    - unit tests
-    - integration tests
-  deploy:
-    - build Docker image
-    - push to Render
-    - smoke tests
+  quality:
+    runs-on: ubuntu-latest
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
+      UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate  # ⚠️ CRITICO: genera client prima di lint/typecheck
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test
+      - run: npm run build
 ```
+
+**Key Points**:
+- **`npx prisma generate`** must run before `npm run typecheck` (TypeScript needs `@/generated/prisma`)
+- **Environment variables** required during build: `OPENAI_API_KEY`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`
+- **Node.js 22 LTS** for stability and compatibility
+- **Runs on**: `push` to `main` and all `pull_request` events
 
 ---
 

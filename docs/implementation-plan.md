@@ -1,7 +1,7 @@
 # Implementation Plan: LLM Artifact Generation Hub
 
 **Version**: 1.0  
-**Status**: LOCALLY FUNCTIONAL - DEPLOYMENT & HARDENING PENDING  
+**Status**: LOCALLY FUNCTIONAL - CI/CD PASSING - DEPLOYMENT & HARDENING PENDING  
 **Target Audience**: AI Development Agents  
 **Estimated Duration**: 6-8 weeks (part-time)  
 **Last Updated**: 2026-04-08
@@ -38,10 +38,18 @@ Implemented in the current codebase:
 - Prompt architecture centralizzata sotto `src/lib/tool-prompts` con registry + loader e template markdown versionati nel codice applicativo
 
 Still pending or partial:
-- deployment, monitoring and production hardening
+- Render.com deployment and production hardening
+- monitoring and ops documentation
 - expanded automated coverage and quality gates (>80% coverage target)
 - responsive/accessibility hardening and final UX polish
 - migrazione completa dei tool legacy (`/tools/content`, `/tools/seo`, `/tools/code`) da redirect a flussi nativi
+
+Recently completed (2026-04-08):
+- ✅ CI/CD pipeline (GitHub Actions) with lint, typecheck, test, build
+- ✅ Prisma 7 setup with correct imports and type annotations
+- ✅ All lint errors resolved (6 errors → 0 errors)
+- ✅ All typecheck errors resolved
+- ✅ Build passing with environment variables configured
 
 ## Phase Status Summary
 
@@ -54,7 +62,7 @@ Still pending or partial:
 | **5. Frontend Components** | Mostly complete | Main pages and hooks exist; responsive/UX hardening is still open |
 | **6. Admin Panel & Advanced Features** | Mostly complete | Metrics and audit activity exist; full admin CRUD remains a product decision |
 | **7. Testing & Quality** | Partially complete | Jest and Playwright are configured and passing basic tests; coverage/perf/security remain open |
-| **8. Deployment & Monitoring** | Not started | Render deployment, monitoring and ops docs still to do |
+| **8. Deployment & Monitoring** | Partially complete | CI/CD pipeline (GitHub Actions) implemented and passing; Render deployment and monitoring docs still to do |
 
 ---
 
@@ -747,26 +755,53 @@ export function useStreamGeneration() {
 - Deploy to production
 - Setup monitoring
 - Documentation
+- CI/CD pipeline
 
 ### Deliverables
 
-#### 8.1 Production Deployment
-1. Build Docker image
+#### 8.1 CI/CD Pipeline (GitHub Actions)
+**Status**: ✅ IMPLEMENTED
+
+Workflow: `.github/workflows/ci.yml`
+- Runs on: `push` to `main` and all `pull_request` events
+- Steps:
+  1. Checkout code
+  2. Setup Node.js 22 LTS
+  3. Install dependencies (`npm ci`)
+  4. Generate Prisma client (`npx prisma generate`) ⚠️ CRITICAL
+  5. Lint (`npm run lint`)
+  6. Type check (`npm run typecheck`)
+  7. Unit tests (`npm run test`)
+  8. Build (`npm run build`)
+
+**Environment Variables** (required in CI):
+- `OPENAI_API_KEY` (from secrets)
+- `UPSTASH_REDIS_REST_URL` (from secrets)
+- `UPSTASH_REDIS_REST_TOKEN` (from secrets)
+
+**Key Points**:
+- `npx prisma generate` must run before typecheck (TypeScript needs `@/generated/prisma`)
+- All environment variables must be available during build (Next.js executes server code)
+- Node.js 22 LTS for stability
+
+#### 8.2 Production Deployment
+1. Build Docker image (via Render)
 2. Deploy to Render.com
 3. Run smoke tests
 4. Monitor for 24 hours
 
-#### 8.2 Monitoring Setup
+#### 8.3 Monitoring Setup
 - Sentry for error tracking
 - Render.com logs
 - Custom dashboards
 
-#### 8.3 Documentation
+#### 8.4 Documentation
 - Deployment guide
 - Runbook for common issues
 - API documentation
 
 **Acceptance Criteria**:
+- [x] CI/CD pipeline working (all tests passing)
 - [ ] App runs on Render.com
 - [ ] No errors in first 24 hours
 - [ ] Team trained on operations
