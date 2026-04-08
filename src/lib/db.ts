@@ -7,6 +7,7 @@ function createPrismaClient(): PrismaClientInstance {
   const { PrismaClient } = require('@prisma/client') as {
     PrismaClient: new (args: unknown) => PrismaClientInstance;
   };
+
   const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
   return new PrismaClient({ adapter });
 }
