@@ -7,7 +7,7 @@
 
 ## Context
 
-The application must support multiple AI generation tools (content, SEO, code artifacts). Each tool has different requirements but shares common infrastructure:
+The application must support multiple AI generation workflows (generic artifacts and tool-specific flows like Meta Ads/Funnel Pages). Each workflow has different requirements but shares common infrastructure:
 - OpenRouter API integration
 - Multi-model support (GPT-4, Claude 3, Mistral)
 - Request/response processing

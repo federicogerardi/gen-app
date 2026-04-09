@@ -50,7 +50,7 @@ export default async function ArtifactPage({ params }: { params: Promise<{ id: s
   return (
     <>
       <Navbar />
-      <main className="flex-1 p-6 max-w-6xl mx-auto w-full">
+      <main className="flex-1 p-6 max-w-6xl mx-auto w-full" id="main-content">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
@@ -65,12 +65,9 @@ export default async function ArtifactPage({ params }: { params: Promise<{ id: s
               Progetto: {artifact.project?.name ?? 'Progetto non disponibile'}
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" asChild>
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            <Button className="w-full sm:w-auto" variant="outline" asChild>
               <Link href="/artifacts">Torna alla lista</Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link href={`/artifacts/new?projectId=${artifact.projectId}`}>Nuova generazione</Link>
             </Button>
           </div>
         </div>

@@ -41,7 +41,7 @@ export default function NewProjectPage() {
   return (
     <>
       <Navbar />
-      <main className="flex-1 p-6 max-w-lg mx-auto w-full">
+      <main className="flex-1 p-6 max-w-lg mx-auto w-full" id="main-content">
         <Card>
           <CardHeader><CardTitle>Nuovo progetto</CardTitle></CardHeader>
           <CardContent>

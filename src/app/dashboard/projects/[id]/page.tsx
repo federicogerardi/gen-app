@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { Navbar } from '@/components/layout/Navbar';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { formatArtifactPreview, getArtifactDisplayTypeLabel, getEffectiveArtifactWorkflowType } from '@/lib/artifact-preview';
@@ -33,13 +32,12 @@ export default async function ProjectPage({ params }: { params: Promise<ProjectP
   return (
     <>
       <Navbar />
-      <main className="flex-1 p-6 max-w-4xl mx-auto w-full">
-        <div className="flex items-center justify-between mb-6">
+      <main className="flex-1 p-6 max-w-4xl mx-auto w-full" id="main-content">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
           <div>
             <h1 className="text-2xl font-semibold">{project.name}</h1>
             {project.description && <p className="text-muted-foreground mt-1">{project.description}</p>}
           </div>
-          <Button asChild><Link href={`/artifacts/new?projectId=${project.id}`}>Genera artefatto</Link></Button>
         </div>
 
         <h2 className="text-lg font-medium mb-4">Artefatti ({project.artifacts.length})</h2>

@@ -76,7 +76,7 @@
    ↓
 4. Click "Generate Artifact"
    ↓
-5. Open dedicated page `/artifacts/new`
+5. Avvia il workflow da uno dei tool attivi del workspace
    ↓
 6. Choose artifact type + model
    ↓
@@ -245,7 +245,7 @@ OPTION: Pre-defined options (casual, formal, technical)
 Current implementation favors simplicity:
 - open project details to browse artifacts
 - open artifact details to inspect full output
-- generate again from `/artifacts/new`
+- generate again from the active workspace tools
 - admin quota edit is inline on the admin page
 ```
 

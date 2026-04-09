@@ -72,6 +72,20 @@ function formatDuration(seconds: number): string {
   return `${minutes}m ${remainingSeconds}s`;
 }
 
+function getStatusBadgeVariant(status: string): 'default' | 'secondary' | 'destructive' | 'outline' {
+  if (status === 'success') return 'default';
+  if (status === 'error') return 'destructive';
+  if (status === 'rate_limited') return 'outline';
+  return 'secondary';
+}
+
+function getArtifactTypeLabel(type: string): string {
+  if (type === 'content') return 'Content';
+  if (type === 'seo') return 'SEO';
+  if (type === 'code') return 'Code';
+  return type;
+}
+
 export function AdminClientPage({ users, totalArtifacts, completedArtifacts, recentActivity, baselineMetrics }: Props) {
   const [query, setQuery] = useState('');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
@@ -156,7 +170,7 @@ export function AdminClientPage({ users, totalArtifacts, completedArtifacts, rec
   return (
     <>
       <Navbar />
-      <main className="flex-1 p-6 max-w-5xl mx-auto w-full">
+      <main className="flex-1 p-6 max-w-5xl mx-auto w-full" id="main-content">
         <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
           <h1 className="text-2xl font-semibold">Gestione utenti</h1>
           <div className="w-full sm:w-80">
@@ -172,7 +186,7 @@ export function AdminClientPage({ users, totalArtifacts, completedArtifacts, rec
           </div>
         </div>
 
-        <div className="grid gap-4 grid-cols-2 md:grid-cols-4 mb-8">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-4 mb-8">
           <Card>
             <CardHeader className="pb-2"><CardTitle className="text-sm">Utenti</CardTitle></CardHeader>
             <CardContent><p className="text-2xl font-bold">{users.length}</p></CardContent>
@@ -192,13 +206,14 @@ export function AdminClientPage({ users, totalArtifacts, completedArtifacts, rec
         </div>
 
         <div className="space-y-4">
+          <p className="sr-only" aria-live="polite">{filteredUsers.length} utenti mostrati con i filtri correnti.</p>
           {filteredUsers.map((u) => {
             const quotaRatio = u.monthlyQuota > 0 ? u.monthlyUsed / u.monthlyQuota : 1;
             const budgetRatio = Number(u.monthlyBudget) > 0 ? Number(u.monthlySpent) / Number(u.monthlyBudget) : 1;
 
             return (
               <Card key={u.id}>
-                <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                <CardHeader className="pb-2 flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <CardTitle className="text-base">{u.name ?? u.email}</CardTitle>
                     <p className="text-sm text-muted-foreground">{u.email}</p>
@@ -226,7 +241,7 @@ export function AdminClientPage({ users, totalArtifacts, completedArtifacts, rec
                       <p className="font-medium">{new Date(u.resetDate).toLocaleDateString('it-IT')}</p>
                     </div>
                   </div>
-                  <Button size="sm" variant="outline" onClick={() => setSelectedUserId(u.id)}>
+                  <Button className="w-full sm:w-auto" size="sm" variant="outline" onClick={() => setSelectedUserId(u.id)}>
                     Gestisci quota
                   </Button>
                 </CardContent>
@@ -321,13 +336,18 @@ export function AdminClientPage({ users, totalArtifacts, completedArtifacts, rec
           </div>
           <Card>
             <CardContent className="pt-4 space-y-3" aria-live="polite">
+              <p className="sr-only">{filteredActivity.length} eventi recenti mostrati con i filtri correnti.</p>
               {filteredActivity.length === 0 ? (
                 <p className="text-sm text-muted-foreground">Nessun evento disponibile.</p>
               ) : filteredActivity.map((entry) => (
-                <div key={entry.id} className="flex flex-wrap items-center justify-between gap-3 border-b last:border-b-0 pb-3 last:pb-0">
-                  <div>
+                <div key={entry.id} className="flex flex-wrap items-start justify-between gap-3 border-l-2 border-border pl-3 pb-3">
+                  <div className="space-y-1">
                     <p className="text-sm font-medium">{entry.user.name ?? entry.user.email}</p>
-                    <p className="text-xs text-muted-foreground">{entry.artifactType} - {entry.model} - {entry.status}</p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant="outline" className="text-[10px]">{getArtifactTypeLabel(entry.artifactType)}</Badge>
+                      <Badge variant="outline" className="text-[10px]">{entry.model}</Badge>
+                      <Badge variant={getStatusBadgeVariant(entry.status)} className="text-[10px]">{entry.status}</Badge>
+                    </div>
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-medium">${Number(entry.costUSD).toFixed(4)}</p>
@@ -372,6 +392,20 @@ export function AdminClientPage({ users, totalArtifacts, completedArtifacts, rec
               currentQuota={selectedUser.monthlyQuota}
               currentBudget={Number(selectedUser.monthlyBudget)}
             />
+
+            <div className="mt-6 rounded-md border p-3 text-sm">
+              <p className="text-xs text-muted-foreground">Stato attuale</p>
+              <div className="mt-2 grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-xs text-muted-foreground">Utilizzo quota</p>
+                  <p className="font-medium">{selectedUser.monthlyUsed} / {selectedUser.monthlyQuota}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Spesa budget</p>
+                  <p className="font-medium">${Number(selectedUser.monthlySpent).toFixed(2)} / ${Number(selectedUser.monthlyBudget).toFixed(2)}</p>
+                </div>
+              </div>
+            </div>
           </aside>
         </div>
       )}

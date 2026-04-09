@@ -39,6 +39,12 @@ export default function RootLayout({
         className="min-h-full flex flex-col bg-background text-foreground"
         style={{ fontFamily: 'inherit' }}
       >
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50 focus:rounded-md focus:bg-background focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:text-foreground focus:shadow-lg"
+        >
+          Salta al contenuto principale
+        </a>
         <Providers>{children}</Providers>
       </body>
     </html>

@@ -74,7 +74,7 @@ Quando un SEO Specialist o MediaBuyer deve produrre rapidamente varianti di cont
 - Lista artefatti: /artifacts
 - Dettaglio artefatto: /artifacts/[id]
 
-Nota: le route `/tools/content`, `/tools/seo` e `/tools/code` restano disponibili come redirect di compatibilità verso i nuovi tool.
+Nota: il perimetro tool attivo e supportato include solo `/tools/meta-ads` e `/tools/funnel-pages`.
 
 ---
 
@@ -255,7 +255,7 @@ DoD:
 
 Deliverable:
 
-- consolidamento navigazione e compatibilità route legacy tool
+- consolidamento navigazione del perimetro tool attivo
 - refactoring lista artefatti con filtri e quick actions
 - dettaglio artefatto read-only con output elaborato e metadati migliorati
 
@@ -354,7 +354,7 @@ Testing:
 
 ### 2. Gerarchia visiva e flusso
 - **Hero/Intro**: molto spazio verticale, spinge contenuti chiave sotto la piega. Opportunità: ridurre altezza hero, portare CTA e widget chiave in alto.
-- **Azioni principali**: CTA duplicate (es. "Generazione rapida"), rischio ridondanza. Opportunità: concentrare le azioni principali in una barra o area sempre visibile.
+- **Azioni principali**: evitare CTA ridondanti verso flussi non piu presenti nel perimetro MVP.
 - **Tool**: cards tool non sempre accessibili, serve scroll. Opportunità: tool switcher persistente (sidebar o topbar).
 
 ### 3. Densità informativa e discoverability
@@ -370,7 +370,7 @@ Testing:
 ### 5. Opportunità di riorganizzazione
 - **Sidebar persistente**: su desktop, sidebar fissa con tool, progetti, quota e azioni rapide sempre accessibili.
 - **Dashboard compatta**: hero ridotta, azioni principali in alto, quota/budget in barra compatta.
-- **Sezione “Prossime azioni”**: evidenziare task suggeriti (es. "Genera nuovo artefatto").
+- **Sezione “Prossime azioni”**: evidenziare task suggeriti coerenti con i tool attivi del workspace.
 - **Preview artefatti recenti**: mostrare ultimi artefatti in dashboard, con azioni rapide (duplica, modifica, elimina).
 - **Mobile-first**: rivedere griglie per evitare stacking verticale eccessivo.
 

@@ -99,7 +99,11 @@ describe('POST /api/artifacts/generate', () => {
   it('returns 400 for invalid payload (missing projectId)', async () => {
     mockedAuth.mockResolvedValue({ user: { id: 'user_1' } } as never);
 
-    const { projectId: _, ...bodyNoProject } = VALID_BODY;
+    const bodyNoProject = {
+      type: VALID_BODY.type,
+      model: VALID_BODY.model,
+      input: VALID_BODY.input,
+    };
     const res = await POST(makeRequest(bodyNoProject));
     const data = await res.json();
 
