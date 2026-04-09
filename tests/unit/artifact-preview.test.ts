@@ -1,7 +1,7 @@
 import { formatArtifactContentForDisplay, formatArtifactPreview, getArtifactDisplayTypeLabel, getArtifactWorkflowType } from '@/lib/artifact-preview';
 
 describe('formatArtifactPreview', () => {
-  it('estrare preview semantica da JSON content', () => {
+  it('estrae preview semantica da JSON content', () => {
     const preview = formatArtifactPreview({
       type: 'content',
       status: 'completed',
@@ -52,6 +52,33 @@ describe('formatArtifactPreview', () => {
     });
 
     expect(preview.text).toBe('Messaggio marketing pronto per revisione');
+  });
+
+  it('normalizza payload in code fence json senza mostrare sintassi raw', () => {
+    const preview = formatArtifactPreview({
+      type: 'seo',
+      status: 'completed',
+      content: '```json\n{"metaTitle":"Titolo SEO","metaDescription":"Descrizione ottimizzata"}\n```',
+    });
+
+    expect(preview.text).toContain('Titolo SEO');
+    expect(preview.text).toContain('Descrizione ottimizzata');
+    expect(preview.text).not.toContain('```');
+    expect(preview.text).not.toContain('{');
+  });
+
+  it('estrae testo semantico da array JSON eterogeneo', () => {
+    const preview = formatArtifactPreview({
+      type: 'content',
+      status: 'completed',
+      content: JSON.stringify([
+        { title: 'Hook principale' },
+        { description: 'Beneficio chiave per il pubblico' },
+      ]),
+    });
+
+    expect(preview.text).toContain('Hook principale');
+    expect(preview.text).toContain('Beneficio chiave per il pubblico');
   });
 
   it('usa placeholder dedicato per stato generating', () => {

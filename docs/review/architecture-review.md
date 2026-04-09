@@ -305,7 +305,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
 **Verifiche di Sicurezza:**
 - ✅ No hardcoded secrets
 - ✅ Environment variables per credentials
-- ✅ `trustHost: true` per Render.com
+- ✅ `trustHost: true` per hosting dietro proxy (Render/Vercel)
 - ✅ Middleware protection su route sensibili
 
 **Suggerimenti:**
@@ -655,7 +655,7 @@ export function AdminClientPage({ users, totalArtifacts, ... }: Props) {
 ### 10.1 Valutazione: ⭐⭐⭐⭐ (4/5)
 
 **Punti Forti:**
-- ✅ Render.com per hosting
+- ✅ Vercel per hosting
 - ✅ PostgreSQL managed
 - ✅ Environment variables configurati
 - ✅ CI/CD ready (GitHub Actions)
