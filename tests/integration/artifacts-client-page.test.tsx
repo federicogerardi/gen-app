@@ -74,7 +74,7 @@ describe('ArtifactsClientPage', () => {
 
     expect(screen.getByText('Output di test')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Apri dettaglio artefatto/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Duplica input' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Duplica input' })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /Elimina artefatto/i }));
 
