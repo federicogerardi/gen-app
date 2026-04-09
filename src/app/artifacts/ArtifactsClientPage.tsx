@@ -1,10 +1,9 @@
 'use client';
 
-import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/layout/Navbar';
-import { useArtifacts, useDeleteArtifact, type Artifact } from '@/components/hooks/useArtifacts';
+import { useArtifacts, useDeleteArtifact } from '@/components/hooks/useArtifacts';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,16 +26,6 @@ function getSinceDate(period: 'all' | '7d' | '30d' | '90d') {
   const days = period === '7d' ? 7 : period === '30d' ? 30 : 90;
   now.setDate(now.getDate() - days);
   return now;
-}
-
-function createDuplicateHref(artifact: Artifact): string {
-  const search = new URLSearchParams({
-    projectId: artifact.projectId,
-    type: artifact.type,
-    model: artifact.model,
-    input: JSON.stringify(artifact.input, null, 2),
-  });
-  return `/artifacts/new?${search.toString()}`;
 }
 
 export function ArtifactsClientPage({ projects }: Props) {
@@ -73,13 +62,12 @@ export function ArtifactsClientPage({ projects }: Props) {
   return (
     <>
       <Navbar />
-      <main className="flex-1 p-6 max-w-5xl mx-auto w-full">
+      <main className="flex-1 p-6 max-w-5xl mx-auto w-full" id="main-content">
         <div className="flex flex-wrap items-center justify-between mb-6 gap-4">
           <div>
             <h1 className="text-2xl font-semibold">Artefatti</h1>
             <p className="text-sm text-muted-foreground">Filtra, riusa e gestisci rapidamente gli output generati.</p>
           </div>
-          <Button asChild><Link href="/artifacts/new">Nuovo artefatto</Link></Button>
         </div>
 
         <Card className="mb-6">
@@ -202,13 +190,11 @@ export function ArtifactsClientPage({ projects }: Props) {
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <Button size="sm" variant="outline" onClick={() => router.push(`/artifacts/${artifact.id}`)} aria-label={`Apri dettaglio artefatto ${artifact.id}`}>
+                    <Button className="w-full sm:w-auto" size="sm" variant="outline" onClick={() => router.push(`/artifacts/${artifact.id}`)} aria-label={`Apri dettaglio artefatto ${artifact.id}`}>
                       Apri dettaglio
                     </Button>
-                    <Button size="sm" variant="outline" asChild>
-                      <Link href={createDuplicateHref(artifact)}>Duplica input</Link>
-                    </Button>
                     <Button
+                      className="w-full sm:w-auto"
                       size="sm"
                       variant="destructive"
                       onClick={() => handleDelete(artifact.id)}

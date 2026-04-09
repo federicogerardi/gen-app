@@ -199,7 +199,7 @@ export default function FunnelPagesToolPage() {
   return (
     <>
       <Navbar />
-      <main className="flex-1 p-6 max-w-6xl mx-auto w-full">
+      <main className="flex-1 p-6 max-w-6xl mx-auto w-full" id="main-content">
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold">Generatore Pagine del Funnel</h1>
@@ -218,9 +218,9 @@ export default function FunnelPagesToolPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-1.5">
-                <Label>Progetto</Label>
+                <Label htmlFor="funnel-project-select">Progetto</Label>
                 <Select value={projectId} onValueChange={setProjectId}>
-                  <SelectTrigger><SelectValue placeholder="Seleziona progetto" /></SelectTrigger>
+                  <SelectTrigger id="funnel-project-select" aria-label="Seleziona progetto"><SelectValue placeholder="Seleziona progetto" /></SelectTrigger>
                   <SelectContent>
                     {projectsData?.projects?.map((p: { id: string; name: string }) => (
                       <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
@@ -231,9 +231,9 @@ export default function FunnelPagesToolPage() {
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-1.5">
-                  <Label>Modello</Label>
+                  <Label htmlFor="funnel-model-select">Modello</Label>
                   <Select value={model} onValueChange={setModel}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger id="funnel-model-select" aria-label="Modello LLM"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {modelsData?.models?.map((m: { id: string; name: string }) => (
                         <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
@@ -242,9 +242,9 @@ export default function FunnelPagesToolPage() {
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Tono</Label>
+                  <Label htmlFor="funnel-tone-select">Tono</Label>
                   <Select value={tone} onValueChange={(value) => setTone(value as (typeof TONES)[number])}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger id="funnel-tone-select" aria-label="Tono di comunicazione"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {TONES.map((item) => (
                         <SelectItem key={item} value={item}>{item}</SelectItem>
@@ -255,28 +255,28 @@ export default function FunnelPagesToolPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label>Prodotto/Servizio</Label>
-                <Input value={product} onChange={(e) => setProduct(e.target.value)} placeholder="Es. Programma coaching performance" />
+                <Label htmlFor="funnel-product">Prodotto/Servizio</Label>
+                <Input id="funnel-product" value={product} onChange={(e) => setProduct(e.target.value)} placeholder="Es. Programma coaching performance" />
               </div>
 
               <div className="space-y-1.5">
-                <Label>Audience</Label>
-                <Input value={audience} onChange={(e) => setAudience(e.target.value)} placeholder="Es. Founder e professionisti digitali 30-50" />
+                <Label htmlFor="funnel-audience">Audience</Label>
+                <Input id="funnel-audience" value={audience} onChange={(e) => setAudience(e.target.value)} placeholder="Es. Founder e professionisti digitali 30-50" />
               </div>
 
               <div className="space-y-1.5">
-                <Label>Offerta</Label>
-                <Input value={offer} onChange={(e) => setOffer(e.target.value)} placeholder="Es. Sessione strategica gratuita + piano operativo" />
+                <Label htmlFor="funnel-offer">Offerta</Label>
+                <Input id="funnel-offer" value={offer} onChange={(e) => setOffer(e.target.value)} placeholder="Es. Sessione strategica gratuita + piano operativo" />
               </div>
 
               <div className="space-y-1.5">
-                <Label>Promessa principale</Label>
-                <Input value={promise} onChange={(e) => setPromise(e.target.value)} placeholder="Es. +30% lead qualificati in 45 giorni" />
+                <Label htmlFor="funnel-promise">Promessa principale</Label>
+                <Input id="funnel-promise" value={promise} onChange={(e) => setPromise(e.target.value)} placeholder="Es. +30% lead qualificati in 45 giorni" />
               </div>
 
               <div className="space-y-1.5">
-                <Label>Note opzionali</Label>
-                <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder="Vincoli brand, claim da evitare, dettagli settore..." />
+                <Label htmlFor="funnel-notes">Note opzionali</Label>
+                <Textarea id="funnel-notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder="Vincoli brand, claim da evitare, dettagli settore..." />
               </div>
 
               <Button onClick={handleRunProcess} disabled={running || !projectId || !product || !audience || !offer || !promise} className="w-full">
@@ -310,8 +310,9 @@ export default function FunnelPagesToolPage() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-3">
+                    <p className="sr-only" aria-live="polite">{step.status === 'running' ? `${step.title} in generazione` : `${step.title} aggiornato`}</p>
                     {step.content ? (
-                      <div className="rounded-md border bg-muted/20 p-4 max-h-64 overflow-y-auto">
+                      <div className="rounded-md border bg-muted/20 p-4 max-h-64 overflow-y-auto" aria-live="polite">
                         <p className="text-sm leading-7 whitespace-pre-wrap break-words text-foreground">{stepDisplay.text}</p>
                       </div>
                     ) : (
@@ -319,7 +320,7 @@ export default function FunnelPagesToolPage() {
                         {step.status === 'running' ? stepDisplay.text : 'Output non ancora generato.'}
                       </p>
                     )}
-                    {step.error && <p className="text-sm text-destructive">{step.error}</p>}
+                    {step.error && <p className="text-sm text-destructive" role="alert">{step.error}</p>}
                     {step.artifactId && (
                       <Button variant="outline" size="sm" onClick={() => router.push(`/artifacts/${step.artifactId}`)}>
                         Apri artefatto

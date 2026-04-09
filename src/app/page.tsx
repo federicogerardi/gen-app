@@ -8,7 +8,7 @@ export default async function HomePage() {
   if (session?.user?.id) redirect('/dashboard');
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-4">
+    <main className="flex min-h-screen items-center justify-center p-4" id="main-content">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Gen App</CardTitle>

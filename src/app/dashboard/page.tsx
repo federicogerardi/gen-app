@@ -7,19 +7,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
-
 const TOOL_ACTIONS = [
   {
     title: 'Generatore Meta Ads',
     description: 'Crea varianti ad copy Meta complete: hook, primary text, headline e CTA.',
     href: '/tools/meta-ads',
     cta: 'Apri tool',
+    tag: 'Campaign',
   },
   {
     title: 'Generatore Funnel Pages',
     description: 'Workflow multi-step: optin page, domande quiz e script VSL.',
     href: '/tools/funnel-pages',
     cta: 'Apri tool',
+    tag: 'Campaign',
   },
 ];
 
@@ -50,9 +51,11 @@ export default async function DashboardPage() {
     }),
   ]);
 
-  const quotaPercent = user ? Math.round((user.monthlyUsed / user.monthlyQuota) * 100) : 0;
+  const quotaPercent = user && user.monthlyQuota > 0 ? Math.round((user.monthlyUsed / user.monthlyQuota) * 100) : 0;
+  const budgetPercent = user && Number(user.monthlyBudget) > 0
+    ? Math.round((Number(user.monthlySpent) / Number(user.monthlyBudget)) * 100)
+    : 0;
 
-  // Patch: ensure description is always string | undefined (never null)
   const projectsForClient = projects.map((p: typeof projects[number]) => ({
     ...p,
     description: p.description === null ? undefined : p.description,
@@ -61,7 +64,7 @@ export default async function DashboardPage() {
   return (
     <>
       <Navbar />
-      <main className="flex-1 p-6 max-w-5xl mx-auto w-full">
+      <main className="flex-1 p-6 max-w-5xl mx-auto w-full" id="main-content">
         <section className="rounded-2xl border bg-gradient-to-r from-slate-950 to-slate-700 text-white p-6 mb-8">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
@@ -75,38 +78,60 @@ export default async function DashboardPage() {
           </div>
         </section>
 
-        <section className="grid gap-4 md:grid-cols-2 mb-8">
-          {TOOL_ACTIONS.map((tool) => (
-            <Card key={tool.href}>
-              <CardHeader>
-                <CardTitle className="text-base">{tool.title}</CardTitle>
-                <CardDescription>{tool.description}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button asChild className="w-full"><Link href={tool.href}>{tool.cta}</Link></Button>
-              </CardContent>
-            </Card>
-          ))}
+        <section className="mb-8">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-medium">Tool workspace</h2>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {TOOL_ACTIONS.map((tool) => (
+              <Card key={tool.href}>
+                <CardHeader>
+                  <div className="flex items-center justify-between gap-2">
+                    <CardTitle className="text-base">{tool.title}</CardTitle>
+                    <Badge variant="outline" className="text-[10px] uppercase tracking-wide">{tool.tag}</Badge>
+                  </div>
+                  <CardDescription>{tool.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button asChild className="w-full"><Link href={tool.href}>{tool.cta}</Link></Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </section>
 
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold">Panoramica account</h2>
-          <Button asChild variant="outline"><Link href="/artifacts/new">Generazione rapida</Link></Button>
         </div>
 
         {user && (
           <div className="grid gap-4 grid-cols-2 md:grid-cols-4 mb-8">
             <Card>
               <CardHeader className="pb-2"><CardDescription>Richieste usate</CardDescription></CardHeader>
-              <CardContent><p className="text-2xl font-bold">{user.monthlyUsed}</p><p className="text-xs text-muted-foreground">/ {user.monthlyQuota} mensili</p></CardContent>
+              <CardContent>
+                <p className="text-2xl font-bold">{user.monthlyUsed}</p>
+                <p className="text-xs text-muted-foreground">/ {user.monthlyQuota} mensili</p>
+              </CardContent>
             </Card>
             <Card>
               <CardHeader className="pb-2"><CardDescription>Quota residua</CardDescription></CardHeader>
-              <CardContent><p className="text-2xl font-bold">{100 - quotaPercent}%</p><p className="text-xs text-muted-foreground">{user.monthlyQuota - user.monthlyUsed} richieste</p></CardContent>
+              <CardContent>
+                <p className="text-2xl font-bold">{Math.max(0, 100 - quotaPercent)}%</p>
+                <p className="text-xs text-muted-foreground">{Math.max(0, user.monthlyQuota - user.monthlyUsed)} richieste</p>
+                <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden" aria-hidden="true">
+                  <div className="h-full bg-primary" style={{ width: `${Math.min(quotaPercent, 100)}%` }} />
+                </div>
+              </CardContent>
             </Card>
             <Card>
               <CardHeader className="pb-2"><CardDescription>Budget speso</CardDescription></CardHeader>
-              <CardContent><p className="text-2xl font-bold">${Number(user.monthlySpent).toFixed(2)}</p><p className="text-xs text-muted-foreground">/ ${Number(user.monthlyBudget).toFixed(2)}</p></CardContent>
+              <CardContent>
+                <p className="text-2xl font-bold">${Number(user.monthlySpent).toFixed(2)}</p>
+                <p className="text-xs text-muted-foreground">/ ${Number(user.monthlyBudget).toFixed(2)}</p>
+                <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden" aria-hidden="true">
+                  <div className="h-full bg-primary" style={{ width: `${Math.min(budgetPercent, 100)}%` }} />
+                </div>
+              </CardContent>
             </Card>
             <Card>
               <CardHeader className="pb-2"><CardDescription>Progetti</CardDescription></CardHeader>

@@ -217,7 +217,8 @@ model QuotaHistory {
 
 #### Tool Prompt Layer (Server-only)
 - `src/lib/tool-prompts/registry.ts`: registry centralizzato dei template
-- `src/lib/tool-prompts/loader.ts`: caricamento/caching dei prompt markdown
+- `src/lib/tool-prompts/loader.ts`: caricamento/caching da template runtime statici tipizzati
+- `src/lib/tool-prompts/templates.ts`: mappa tipizzata dei template runtime
 - `src/lib/tool-prompts/meta-ads.ts`: builder prompt Meta Ads
 - `src/lib/tool-prompts/funnel-pages.ts`: builder prompt Funnel (`optin -> quiz -> vsl`)
 
@@ -283,7 +284,6 @@ model QuotaHistory {
 - `/tools/meta-ads` → Tool Meta Ads
 - `/tools/funnel-pages` → Tool Funnel Pages (processo multi-step)
 - `/artifacts` → Project artifacts list
-- `/artifacts/new` → Generazione rapida legacy
 - `/artifacts/[id]` → Edit artifact
 - `/admin` → Admin panel (user/quota management)
 

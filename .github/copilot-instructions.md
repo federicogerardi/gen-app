@@ -1,6 +1,6 @@
 # Copilot Instructions — LLM Artifact Generation Hub
 
-Full-stack TypeScript app per generazione di artifact AI (content, SEO, code) via OpenRouter. ~50 utenti interni, Google OAuth, quota/budget mensile per utente.
+Full-stack TypeScript app per generazione di artifact AI via OpenRouter, con perimetro tool attivo su Meta Ads e Funnel Pages. ~50 utenti interni, Google OAuth, quota/budget mensile per utente.
 
 **Stack**: Next.js 16 · React 19 · TypeScript · PostgreSQL · Prisma 7 · NextAuth v5 · shadcn/ui · Tailwind v4 · TanStack Query v5 · Zod v4 · @upstash/ratelimit · OpenRouter · Vercel
 
@@ -36,9 +36,9 @@ src/
 │   ├── db.ts           # Prisma singleton (import da @/generated/prisma)
 │   └── llm/
 │       ├── orchestrator.ts   # Orchestrator → Agent → Provider
-│       ├── agents/           # BaseAgent + content/seo/code agents
+│       ├── agents/           # BaseAgent + specialized agents
 │       └── providers/        # OpenRouter (openai-compat SDK)
-├── lib/tool-prompts/   # Registry + template Markdown versionati per tool
+├── lib/tool-prompts/   # Registry + template statici tipizzati (sorgente Markdown versionata)
 └── components/hooks/   # useStreamGeneration, useArtifacts, useQuota
 ```
 
@@ -101,6 +101,14 @@ cat <<'EOF' | gh pr create --base dev --head <branch> --title "<titolo>" --body-
 - voce 2
 EOF
 ```
+
+### Tool prompts runtime — evitare file tracing ampio in build
+Il runtime prompt deve usare template statici tipizzati (`src/lib/tool-prompts/templates.ts`) e non letture filesystem dinamiche nel path di esecuzione delle route.
+
+Linea guida:
+- sorgente editabile prompt in `src/lib/tool-prompts/prompts/**/*.md`
+- runtime in `src/lib/tool-prompts/templates.ts` + `src/lib/tool-prompts/loader.ts`
+- evitare `fs.readFile` dinamico nelle route graph per non innescare warning Turbopack/NFT (tracing involontario dell'intero progetto)
 
 ---
 

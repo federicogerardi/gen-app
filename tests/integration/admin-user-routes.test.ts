@@ -107,7 +107,7 @@ describe('PUT /api/admin/users/[userId]/quota', () => {
     mockedAuth.mockResolvedValue(adminSession as never);
 
     const res = await PUT(makePutRequest({ resetUsage: true }), makeParams());
-    const data = await res.json();
+    await res.json();
 
     expect(res.status).toBe(200);
     expect(updateUser).toHaveBeenCalledWith(

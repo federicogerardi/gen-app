@@ -1,21 +1,15 @@
 import 'server-only';
 
-import { readFile } from 'node:fs/promises';
-import path from 'node:path';
-import { PROMPT_SOURCE_ROOT, type ToolPromptPath } from './registry';
+import type { ToolPromptPath } from './registry';
+import { PROMPT_TEMPLATES } from './templates';
 
 const cache = new Map<string, string>();
 
 export async function loadPromptSource(relativePath: ToolPromptPath): Promise<string> {
-  const normalized = relativePath.replace(/^\/+/, '');
-  if (normalized.includes('..')) {
-    throw new Error('Invalid prompt path');
-  }
-  if (cache.has(normalized)) return cache.get(normalized)!;
+  if (cache.has(relativePath)) return cache.get(relativePath)!;
 
-  const absolutePath = path.join(process.cwd(), ...PROMPT_SOURCE_ROOT, normalized);
-  const content = await readFile(absolutePath, 'utf8');
-  cache.set(normalized, content);
+  const content = PROMPT_TEMPLATES[relativePath];
+  cache.set(relativePath, content);
   return content;
 }
 

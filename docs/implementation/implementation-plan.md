@@ -4,7 +4,7 @@
 **Status**: LOCALLY FUNCTIONAL - CI/CD PASSING - DEPLOYED ON VERCEL (MAIN IN PRODUCTION, DEV FOR PR WORKFLOW) - HARDENING IN PROGRESS  
 **Target Audience**: AI Development Agents  
 **Estimated Duration**: 6-8 weeks (part-time)  
-**Last Updated**: 2026-04-08
+**Last Updated**: 2026-04-10
 
 ---
 
@@ -35,14 +35,14 @@ Implemented in the current codebase:
 - Jest + Playwright scaffolding with passing local unit/integration/e2e smoke tests
 - Tool UI modulare con entrypoint dedicati per Meta Ads (`/tools/meta-ads`) e Funnel Pages (`/tools/funnel-pages`)
 - Endpoint tool-specific per generazione (`/api/tools/meta-ads/generate`, `/api/tools/funnel-pages/generate`)
-- Prompt architecture centralizzata sotto `src/lib/tool-prompts` con registry + loader e template markdown versionati nel codice applicativo
+- Prompt architecture centralizzata sotto `src/lib/tool-prompts` con registry + loader e template runtime statici tipizzati (`templates.ts`), derivati da sorgenti markdown versionate
 
 Still pending or partial:
 - Post-deploy hardening on Vercel (monitoring/runbook/smoke checks)
 - monitoring and ops documentation
 - expanded automated coverage and quality gates (>80% coverage target)
 - responsive/accessibility hardening and final UX polish
-- migrazione completa dei tool legacy (`/tools/content`, `/tools/seo`, `/tools/code`) da redirect a flussi nativi
+- cleanup finale di refusi UX/documentali fuori perimetro MVP
 
 Recently completed (2026-04-08):
 - ✅ CI/CD pipeline (GitHub Actions) with lint, typecheck, test, build
@@ -643,7 +643,6 @@ export function useStreamGeneration() {
 #### 5.3 Pages
 - `/dashboard` - main interface
 - `/artifacts` - artifact list
-- `/artifacts/new` - create artifact
 - `/artifacts/[id]` - artifact detail
 - `/dashboard/projects/new` - create project
 - `/dashboard/projects/[id]` - project detail
@@ -852,6 +851,35 @@ To complete the plan from the current state, execute the remaining work in this 
   - Decide whether admin user create/delete belongs in MVP
   - Decide whether system metrics need a dedicated page beyond the current overview
   - Validate mobile responsiveness and UX polish before production release
+
+---
+
+## Frontend Improvement Sprint Sequence
+
+1. **Sprint 1 (completed)**
+  - Enforce human-readable artifact output in frontend preview surfaces.
+  - Remove direct raw JSON visualization in user-facing output areas.
+
+2. **Sprint 2 (in progress - core hardening completed)**
+  - Complete responsive validation on mobile/tablet/desktop.
+  - Accessibility hardening to consistent WCAG AA behavior.
+  - Current delta: core pages improved with label/input associations, live regions, error semantics, skip-link global, and consistent `main` landmarks.
+  - Mobile UX delta: key CTA/actions aligned to full-width behavior on small screens.
+  - Validation delta: lint pass completed (non-blocking warnings only in unrelated tests).
+  - Playwright delta: smoke/accessibility base/protected-route redirects validated (4/4 passing).
+
+3. **Sprint 3 (completed)**
+  - Remove obsolete legacy tool routes (`/tools/content`, `/tools/seo`, `/tools/code`) from the app surface.
+  - Outcome: buttons, routes and related obsolete code/tests removed to keep the MVP toolset aligned with Meta Ads and Funnel Pages only.
+
+4. **Sprint 4 (in progress - core polish completed)**
+  - Navigation/layout polish (navbar, sidebar, dashboard density) and admin UX refinements.
+  - Current delta: dashboard quick-actions expanded, navbar quick action added, admin quota/budget UX hardened, activity timeline readability improved.
+
+5. **Sprint 5 (in progress - guardrail core completed)**
+  - E2E UX regression guardrails on auth, generation, artifacts, and admin quota workflows.
+  - Current delta: Playwright smoke/accessibility redirect coverage expanded; integration guardrails added for AdminQuotaForm.
+  - Validation delta: dedicated Sprint 5 suites passing locally alongside 4/4 Playwright baseline.
 
 ---
 

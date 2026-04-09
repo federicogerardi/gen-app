@@ -1,37 +1,20 @@
 /** @jest-environment node */
 
-import { readFile } from 'node:fs/promises';
+import { TOOL_PROMPT_REGISTRY } from '@/lib/tool-prompts/registry';
+import { PROMPT_TEMPLATES } from '@/lib/tool-prompts/templates';
 import { loadPromptSource, injectTemplateValues } from '@/lib/tool-prompts/loader';
-
-jest.mock('node:fs/promises', () => ({
-  readFile: jest.fn(),
-}));
-
-const mockedReadFile = readFile as jest.MockedFunction<typeof readFile>;
 
 describe('loadPromptSource', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    // Reset module-level cache between tests by re-importing
     jest.resetModules();
   });
 
-  it('reads file from disk and returns content', async () => {
-    mockedReadFile.mockResolvedValue('# Prompt template\n{{topic}}' as never);
+  it('returns the static template content for a registered prompt path', async () => {
+    const path = TOOL_PROMPT_REGISTRY.metaAds.generation;
+    const content = await loadPromptSource(path);
 
-    const content = await loadPromptSource('tools/meta_ads/prompt_generation.md');
-
-    expect(content).toBe('# Prompt template\n{{topic}}');
-    expect(mockedReadFile).toHaveBeenCalledWith(
-      expect.stringContaining('prompt_generation.md'),
-      'utf8',
-    );
-  });
-
-  it('throws for path traversal attempt', async () => {
-    await expect(
-      loadPromptSource('../../../etc/passwd' as never),
-    ).rejects.toThrow('Invalid prompt path');
+    expect(content).toBe(PROMPT_TEMPLATES[path]);
+    expect(content).toContain('TASK: GENERA META ADS');
   });
 });
 

@@ -62,8 +62,8 @@ Stiamo costruendo un **Hub di Generazione Artefatti con AI/LLM** che permette ai
 2. **Funnel Pages**: processo multi-step (optin page, quiz questions, VSL script)
 
 ### Evoluzione Tool
-- route legacy `/tools/content`, `/tools/seo`, `/tools/code` mantenute come redirect
-- roadmap: migrazione completa da redirect a flussi dedicati nativi
+- il perimetro MVP attivo include solo `Meta Ads` e `Funnel Pages`
+- eventuali route/tool legacy fuori perimetro sono da considerare refusi e non fanno parte dell'applicazione pubblica
 
 ### Modelli LLM
 - GPT-4 Turbo (default, highest quality)
@@ -152,7 +152,7 @@ Stiamo costruendo un **Hub di Generazione Artefatti con AI/LLM** che permette ai
 - **OpenRouter SDK** → Multi-model support, easy switching
 - **Server-Sent Events** → Real-time streaming, progressive display
 - **Retry + fallback** → Reliability, graceful degradation
-- **Prompt modular layer** → registry + loader server-only in `src/lib/tool-prompts`
+- **Prompt modular layer** → registry + loader server-only in `src/lib/tool-prompts`, con template runtime statici tipizzati e sorgenti markdown versionate
 
 ### DevOps
 - **Vercel** -> Deployment produzione da `main`, preview workflow tramite PR su `dev`

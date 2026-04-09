@@ -565,7 +565,6 @@ graph TD
     App -->|Main| Main["Main Content"]
     
     Main -->|Route: /| Dashboard["Dashboard Page<br/>- Recent Projects<br/>- Recent Artifacts<br/>- Quick Stats"]
-    Main -->|Route: /artifacts/new| GenerateForm["Generate Form<br/>- Tool Selector<br/>- Input Form<br/>- Model Picker<br/>- Advanced Options"]
     Main -->|Route: /artifacts/:id| ArtifactView["Artifact View<br/>- Streaming Display<br/>- Edit Tools<br/>- Export Options"]
     Main -->|Route: /projects/:id| ProjectView["Project View<br/>- Artifact List<br/>- Filter Controls<br/>- Bulk Actions"]
     Main -->|Route: /admin| AdminDash["Admin Dashboard<br/>- User List<br/>- Quota Manager<br/>- Audit Log"]

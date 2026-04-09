@@ -2,7 +2,7 @@
 
 _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 
-## Stato avanzamento (aggiornato al 2026-04-09)
+## Stato avanzamento (aggiornato al 2026-04-10)
 
 - **Testing coverage >80%**: `COMPLETATO (scope corrente)`
   - Coverage Jest attuale: Statements `82.96%`, Branches `70.31%`, Functions `78.91%`, Lines `85.96%`.
@@ -100,6 +100,72 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 2. Structured logging & Sentry (`IN CORSO - baseline completata`)
 3. Refactoring preview artefatti (`IN CORSO`)
 4. Stabilizzazione post-deploy e validazione su Vercel
+
+---
+
+## Frontend Improvement Sprint Track
+
+### Sprint 1 — Preview human-readable end-to-end (`COMPLETATO`)
+- Scope:
+  - Uniformare la visualizzazione output per evitare JSON raw nelle schermate frontend principali.
+  - Applicare fallback leggibile durante streaming e a completamento output.
+- Risultato:
+  - Output della pagina di generazione artefatti allineato al formatter semantico condiviso.
+  - Nessuna visualizzazione diretta di payload JSON raw nello stream output utente.
+
+### Sprint 2 — Responsive & Accessibilità (`IN CORSO - hardening core completato`)
+- Obiettivi:
+  - Validazione completa mobile/tablet/desktop sulle pagine core.
+  - Hardening WCAG AA (focus management, contrasto, aria-label, keyboard flow).
+- Risultato corrente:
+  - Migliorata accessibilità semantica su Navbar, pagine artifacts e form tool core (`htmlFor/id`, `aria-current`, `aria-live`, `role="alert"`).
+  - Migliorata usabilità responsive top-level su navigazione e azioni card/page (`sticky nav`, wrapping e CTA full-width su mobile).
+  - Introdotto skip-link globale "Salta al contenuto principale" e target focus consistente su pagine core.
+  - Aggiunti landmark `main` consistenti nelle pagine core per navigazione assistiva.
+  - Validazione tecnica eseguita: lint workspace `PASS` (0 warning, 0 error).
+  - Validazione Playwright aggiornata: `PASS` su smoke+accessibilità base+redirect protetti (4/4 test).
+  - Resta pending la validazione cross-device completa con checklist finale Sprint 2.
+
+#### Checklist finale Sprint 2 (pending)
+- Verifica viewport `320px`, `375px`, `768px`, `1024px`, `1280px` su pagine autenticate: dashboard progetto, lista artefatti, dettaglio artefatto, Meta Ads, Funnel Pages, Admin.
+- Verifica keyboard flow completo (Tab/Shift+Tab/Enter/Escape) su pagine autenticate: filtri, CTA principali e drawer admin.
+- Verifica focus visible su controlli interattivi principali e nessuna trap non voluta fuori dal drawer.
+- Verifica contrasto testi/badge/stati in condizioni default e hover/focus.
+- Verifica messaggistica errori con annunci accessibili (`role="alert"`/`aria-live`) nei flussi di generazione.
+
+### Sprint 3 — Tool Legacy UX Native (`COMPLETATO`)
+- Obiettivi:
+  - Verifica e consolidamento delle route legacy tool emerse durante lo sviluppo.
+  - Rimozione dei refusi non inclusi nel perimetro MVP.
+- Risultato:
+  - Le route obsolete `/tools/content`, `/tools/seo` e `/tools/code` sono state rimosse dall'app.
+  - Rimossi anche i relativi pulsanti GUI e il codice/test collegato non piu coerente con il perimetro prodotto.
+
+### Sprint 4 — Layout & Admin UX Polish (`IN CORSO - core polish completato`)
+- Obiettivi:
+  - Navbar/sidebar/dashboard polish e azioni rapide.
+  - Miglioramento UX admin per quota/budget/audit timeline.
+- Risultato corrente:
+  - Dashboard resa piu densa e orientata alle azioni con workspace tool allineato al perimetro MVP effettivo.
+  - Panoramica account migliorata con indicatori visivi quota/budget e stato residuo.
+  - Navbar semplificata e riallineata al perimetro attivo (rimozione shortcut legacy verso route obsolete).
+  - Admin UX migliorata su form quota/budget (validazione input, feedback chiari, refresh dati post-save/reset).
+  - Timeline attivita resa piu leggibile con badge tipo/modello/stato e pannello riepilogo nel drawer.
+
+### Sprint 5 — E2E UX Regression Guardrails (`IN CORSO - guardrail core completati`)
+- Obiettivi:
+  - E2E su login reale, generazione end-to-end, quota/admin.
+  - Stabilizzazione suite anti-regressione UX come gate PR.
+- Risultato corrente:
+  - Playwright baseline estesa su smoke/accessibilità base/redirect protetti (`4/4 PASS`).
+  - Aggiunti test integration su `AdminQuotaForm` per salvataggio/reset/validazione UX.
+  - Suite guardrail Sprint 5 validata localmente sui test aggiunti e sulla baseline Playwright.
+
+### Build warning remediation (2026-04-10) (`COMPLETATO`)
+- Rimosso warning Sentry legato a opzione deprecata (`disableLogger`) in configurazione Next.js.
+- Aggiunto hook client richiesto per navigazioni (`onRouterTransitionStart`) in instrumentation client.
+- Eliminato warning Turbopack/NFT "Encountered unexpected file in NFT list" migrando il caricamento prompt runtime da filesystem a template statici tipizzati.
+- Verifica locale: `npm run build` `PASS` senza warning.
 
 ---
 

@@ -69,7 +69,7 @@ export default function MetaAdsToolPage() {
   return (
     <>
       <Navbar />
-      <main className="flex-1 p-6 max-w-6xl mx-auto w-full">
+      <main className="flex-1 p-6 max-w-6xl mx-auto w-full" id="main-content">
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold">Generatore Meta Ads</h1>
@@ -88,9 +88,9 @@ export default function MetaAdsToolPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-1.5">
-                <Label>Progetto</Label>
+                <Label htmlFor="meta-project-select">Progetto</Label>
                 <Select value={projectId} onValueChange={setProjectId}>
-                  <SelectTrigger><SelectValue placeholder="Seleziona progetto" /></SelectTrigger>
+                  <SelectTrigger id="meta-project-select" aria-label="Seleziona progetto"><SelectValue placeholder="Seleziona progetto" /></SelectTrigger>
                   <SelectContent>
                     {projectsData?.projects?.map((p: { id: string; name: string }) => (
                       <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
@@ -100,9 +100,9 @@ export default function MetaAdsToolPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label>Modello</Label>
+                <Label htmlFor="meta-model-select">Modello</Label>
                 <Select value={model} onValueChange={setModel}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger id="meta-model-select" aria-label="Modello LLM"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {modelsData?.models?.map((m: { id: string; name: string }) => (
                       <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
@@ -112,29 +112,29 @@ export default function MetaAdsToolPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label>Prodotto/Servizio</Label>
-                <Input value={product} onChange={(e) => setProduct(e.target.value)} placeholder="Es. Programma nutrizione 90 giorni" />
+                <Label htmlFor="meta-product">Prodotto/Servizio</Label>
+                <Input id="meta-product" value={product} onChange={(e) => setProduct(e.target.value)} placeholder="Es. Programma nutrizione 90 giorni" />
               </div>
 
               <div className="space-y-1.5">
-                <Label>Audience</Label>
-                <Input value={audience} onChange={(e) => setAudience(e.target.value)} placeholder="Es. Donne 28-45 interessate a fitness" />
+                <Label htmlFor="meta-audience">Audience</Label>
+                <Input id="meta-audience" value={audience} onChange={(e) => setAudience(e.target.value)} placeholder="Es. Donne 28-45 interessate a fitness" />
               </div>
 
               <div className="space-y-1.5">
-                <Label>Offerta</Label>
-                <Input value={offer} onChange={(e) => setOffer(e.target.value)} placeholder="Es. Call gratuita + piano personalizzato" />
+                <Label htmlFor="meta-offer">Offerta</Label>
+                <Input id="meta-offer" value={offer} onChange={(e) => setOffer(e.target.value)} placeholder="Es. Call gratuita + piano personalizzato" />
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-1.5">
-                  <Label>Obiettivo</Label>
-                  <Input value={objective} onChange={(e) => setObjective(e.target.value)} />
+                  <Label htmlFor="meta-objective">Obiettivo</Label>
+                  <Input id="meta-objective" value={objective} onChange={(e) => setObjective(e.target.value)} />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Tono</Label>
+                  <Label htmlFor="meta-tone-select">Tono</Label>
                   <Select value={tone} onValueChange={(value) => setTone(value as (typeof TONES)[number])}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger id="meta-tone-select" aria-label="Tono di comunicazione"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {TONES.map((item) => (
                         <SelectItem key={item} value={item}>{item}</SelectItem>
@@ -145,8 +145,8 @@ export default function MetaAdsToolPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label>Creative angle (opzionale)</Label>
-                <Textarea value={angle} onChange={(e) => setAngle(e.target.value)} rows={3} placeholder="Es. approccio problem-solution con social proof" />
+                <Label htmlFor="meta-angle">Creative angle (opzionale)</Label>
+                <Textarea id="meta-angle" value={angle} onChange={(e) => setAngle(e.target.value)} rows={3} placeholder="Es. approccio problem-solution con social proof" />
               </div>
 
               <Button onClick={handleGenerate} disabled={isStreaming || !projectId || !product || !audience || !offer} className="w-full">
@@ -161,8 +161,9 @@ export default function MetaAdsToolPage() {
               <CardDescription>Anteprima in streaming con salvataggio automatico artefatto.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
+              <p className="sr-only" aria-live="polite">{isStreaming ? 'Generazione Meta Ads in corso' : 'Output Meta Ads aggiornato'}</p>
               {content ? (
-                <div className="rounded-md border bg-muted/20 p-4 max-h-[560px] overflow-y-auto">
+                <div className="rounded-md border bg-muted/20 p-4 max-h-[560px] overflow-y-auto" aria-live="polite">
                   <p className="text-sm leading-7 whitespace-pre-wrap break-words text-foreground">{outputDisplay.text}</p>
                 </div>
               ) : (
@@ -170,7 +171,7 @@ export default function MetaAdsToolPage() {
                   {isStreaming ? outputDisplay.text : 'L\'output appare qui dopo l\'avvio della generazione.'}
                 </p>
               )}
-              {error && <p className="text-sm text-destructive">{error}</p>}
+              {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
               {artifactId && !isStreaming && (
                 <Button variant="outline" onClick={() => router.push(`/artifacts/${artifactId}`)}>
                   Apri artefatto completo

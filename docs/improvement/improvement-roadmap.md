@@ -183,7 +183,7 @@ test.describe('Artifact Generation Flow', () => {
     await page.click('button:has-text("Crea")');
 
     // Generate artifact
-    await page.click('text=Generazione rapida');
+    // aggiornare scenario rispetto alle CTA correnti del workspace tool
     await page.fill('textarea[name="input"]', 'Generate a blog post about AI');
     await page.click('button:has-text("Genera")');
 
