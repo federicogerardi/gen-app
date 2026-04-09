@@ -5,7 +5,7 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 ## Indice
 
 - [blueprint.md](blueprint.md): Blueprint architetturale e overview del progetto.
-- [progetto-overview.md](progetto-overview.md): Descrizione generale e obiettivi del progetto.
+- [progetto-overview.md](progetto-overview.md): Descrizione generale e obiettivi del progetto per Stakeholder e Team.
 
 ### accessibility/
 - [accessibility.md](accessibility/accessibility.md): Linee guida e strategie per l’accessibilità.
