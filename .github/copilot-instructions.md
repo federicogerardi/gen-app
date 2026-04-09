@@ -85,6 +85,23 @@ z.record(z.string(), z.unknown())  // ✅ — z.record(z.unknown()) ❌ in v4
 `npx prisma generate` deve precedere `npm run typecheck` e `npm run build`.
 Variabili d'ambiente richieste nel build: `OPENAI_API_KEY`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`.
 
+### GitHub CLI PR body — evitare warning shell
+Quando si crea una PR con testo multilinea/markdown, evitare `--body "..."` con backtick nel contenuto: in shell i backtick possono attivare command substitution e generare warning tipo `command not found`.
+
+Preferire una di queste modalita:
+- `--body-file <file.md>`
+- `--body-file -` con heredoc a delimitatore quotato singolarmente
+- `--editor` per scrivere titolo/body senza escaping shell
+
+Esempio robusto:
+```bash
+cat <<'EOF' | gh pr create --base dev --head <branch> --title "<titolo>" --body-file -
+## Summary
+- voce 1
+- voce 2
+EOF
+```
+
 ---
 
 ## Convenzioni API
