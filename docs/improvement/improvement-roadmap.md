@@ -11,6 +11,8 @@
 ### Obiettivo
 Stabilire base di testing con >80% coverage su critical paths.
 
+**Aggiornamento (2026-04-09)**: obiettivo coverage raggiunto su scope corrente (Statements 82.96%, Branches 70.31%, Functions 78.91%, Lines 85.96%). Restano da completare i flussi E2E completi e auth/db real-flow.
+
 ### Task 1.1: Unit Tests - Orchestrator & Agents
 **Effort**: 8 ore  
 **Owner**: Backend Team

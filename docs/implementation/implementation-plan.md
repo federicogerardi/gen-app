@@ -1,7 +1,7 @@
 # Implementation Plan: LLM Artifact Generation Hub
 
 **Version**: 1.0  
-**Status**: LOCALLY FUNCTIONAL - CI/CD PASSING - DEPLOYMENT & HARDENING PENDING  
+**Status**: LOCALLY FUNCTIONAL - CI/CD PASSING - DEPLOYED ON VERCEL (MAIN IN PRODUCTION, DEV FOR PR WORKFLOW) - HARDENING IN PROGRESS  
 **Target Audience**: AI Development Agents  
 **Estimated Duration**: 6-8 weeks (part-time)  
 **Last Updated**: 2026-04-08
@@ -38,7 +38,7 @@ Implemented in the current codebase:
 - Prompt architecture centralizzata sotto `src/lib/tool-prompts` con registry + loader e template markdown versionati nel codice applicativo
 
 Still pending or partial:
-- Render.com deployment and production hardening
+- Post-deploy hardening on Vercel (monitoring/runbook/smoke checks)
 - monitoring and ops documentation
 - expanded automated coverage and quality gates (>80% coverage target)
 - responsive/accessibility hardening and final UX polish
@@ -55,14 +55,14 @@ Recently completed (2026-04-08):
 
 | Phase | Status | Notes |
 |------|--------|-------|
-| **1. Foundation & Infrastructure** | Mostly complete | Local scaffold, schema and code structure are in place; Neon DB wiring is validated, Render setup remains open |
+| **1. Foundation & Infrastructure** | Mostly complete | Local scaffold, schema and code structure are in place; Neon DB wiring is validated, Vercel deployment baseline is active |
 | **2. Authentication & Backend Infrastructure** | Mostly complete | OAuth + Prisma sessions + Redis rate limiting are wired locally and working; production hardening remains |
 | **3. LLM Module Implementation** | Implemented | Provider, agents, orchestrator and model cost handling exist |
 | **4. Streaming & API Implementation** | Implemented | SSE generation and full planned artifact/project CRUD surface are in place |
 | **5. Frontend Components** | Mostly complete | Main pages and hooks exist; responsive/UX hardening is still open |
 | **6. Admin Panel & Advanced Features** | Mostly complete | Metrics and audit activity exist; full admin CRUD remains a product decision |
 | **7. Testing & Quality** | Partially complete | Jest and Playwright are configured and passing basic tests; coverage/perf/security remain open |
-| **8. Deployment & Monitoring** | Partially complete | CI/CD pipeline (GitHub Actions) implemented and passing; Render deployment and monitoring docs still to do |
+| **8. Deployment & Monitoring** | Partially complete | CI/CD pipeline (GitHub Actions) implemented and passing; Vercel deployment is active, monitoring/runbook hardening still to do |
 
 ---
 
@@ -70,7 +70,7 @@ Recently completed (2026-04-08):
 
 ### Goals
 - Setup development environment
-- Configure Render.com infrastructure
+- Configure Vercel infrastructure and environment promotion flow
 - Initialize codebase with Next.js + Prisma
 - Implement database schema
 
@@ -109,14 +109,14 @@ npx prisma init
 - [x] Database schema sync runs on a real database (`prisma db push` on Neon)
 - [ ] Shadow database works
 
-#### 1.3 Render.com Setup
-1. Create PostgreSQL database on Render
-2. Create Node.js service
-3. Configure environment variables
-4. Setup automatic deployments from GitHub
+#### 1.3 Vercel Setup
+1. Configure Vercel project and environments
+2. Configure environment variables
+3. Setup automatic production deployment from `main`
+4. Keep `dev` as development branch for PR workflow
 
 **Acceptance Criteria**:
-- [ ] PostgreSQL running on Render
+- [x] Hosting deployment active on Vercel (`main` production)
 - [x] Can connect locally via a real `DATABASE_URL`
 - [ ] GitHub Actions connected
 - [ ] Staging environment mirrors production
@@ -230,7 +230,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       return session;
     },
   },
-  trustHost: true, // necessario su Render.com
+  trustHost: true, // necessario su hosting dietro proxy (Render/Vercel)
 });
 
 // src/app/api/auth/[...nextauth]/route.ts
@@ -719,7 +719,7 @@ export function useStreamGeneration() {
 - Database operations
 - Auth flow
 
-**Status**: basic route integration coverage present; DB/auth flow coverage still to expand.
+**Status**: coverage target raggiunto su scope corrente (Statements 82.96%, Branches 70.31%, Functions 78.91%, Lines 85.96%); DB/auth real-flow ed E2E completi da espandere.
 
 #### 7.3 E2E Tests (Playwright)
 - Full artifact generation flow
@@ -740,6 +740,7 @@ export function useStreamGeneration() {
 
 **Acceptance Criteria**:
 - [ ] >80% test coverage
+- [x] >80% test coverage (scope corrente)
 - [ ] No security vulnerabilities
 - [ ] Performance meets targets
 
@@ -786,13 +787,13 @@ Workflow: `.github/workflows/ci.yml`
 
 #### 8.2 Production Deployment
 1. Build Docker image (via Render)
-2. Deploy to Render.com
+2. Deploy to Vercel production (`main`) and validate PR workflow on `dev`
 3. Run smoke tests
 4. Monitor for 24 hours
 
 #### 8.3 Monitoring Setup
 - Sentry for error tracking
-- Render.com logs
+- Vercel logs
 - Custom dashboards
 
 #### 8.4 Documentation
@@ -802,7 +803,7 @@ Workflow: `.github/workflows/ci.yml`
 
 **Acceptance Criteria**:
 - [x] CI/CD pipeline working (all tests passing)
-- [ ] App runs on Render.com
+- [x] App runs on Vercel production (`main`)
 - [ ] No errors in first 24 hours
 - [ ] Team trained on operations
 
@@ -843,7 +844,7 @@ To complete the plan from the current state, execute the remaining work in this 
   - Reach the target coverage threshold
 
 2. **Deployment and operations**
-  - Configure Render deployment
+  - Harden existing Vercel deployment
   - Add monitoring/logging
   - Write runbook and smoke-test checklist
 
@@ -869,7 +870,7 @@ To complete the plan from the current state, execute the remaining work in this 
 ## Dependencies & Prerequisites
 
 - [x] Google Cloud OAuth credentials ready
-- [ ] Render.com account created
+- [x] Vercel project configured
 - [x] OpenRouter API key obtained and configured
 - [ ] Team has Node.js/TypeScript experience
 - [x] GitHub repository created

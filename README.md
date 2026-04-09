@@ -49,7 +49,7 @@ A modular web application that lets internal users (MediaBuyers, SEO Specialists
 | **LLM** | OpenRouter (OpenAI-compatible SDK) |
 | **Rate Limiting** | `@upstash/ratelimit` · `@upstash/redis` |
 | **Testing** | Jest · Testing Library · Playwright |
-| **Deployment** | Render.com |
+| **Deployment** | Vercel |
 
 ---
 
@@ -224,7 +224,11 @@ Key test scenarios:
 
 ## Deployment
 
-The app is designed to deploy on [Render.com](https://render.com).
+The app is deployed on Vercel.
+
+Current branch strategy:
+- `main` -> production deployment
+- `dev` -> development branch for pull requests
 
 **Build command:**
 ```bash
@@ -236,4 +240,4 @@ npm run build
 npx prisma migrate deploy
 ```
 
-A GitHub Actions CI pipeline runs lint, typecheck, tests, and build on every push to `main` and on all pull requests. Successful builds on `main` trigger an automatic Render deploy via deploy hook.
+A GitHub Actions CI pipeline runs lint, typecheck, tests, and build on every push to `main` and on all pull requests. Vercel handles production deployment from `main` and preview/development workflows from PRs against `dev`.

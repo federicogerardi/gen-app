@@ -3,7 +3,7 @@
 **Version**: 1.0  
 **Status**: CORE MVP IMPLEMENTED + TOOL MODULARIZATION IN PROGRESS
 **Target Audience**: AI Development Agents  
-**Last Updated**: 2026-04-08
+**Last Updated**: 2026-04-09
 
 ---
 
@@ -17,7 +17,7 @@ A modular web application that allows non-technical users (MediaBuyers, SEO Spec
 - Modular tool architecture for extensibility
 - PostgreSQL + Prisma for type-safe database
 - React 19 + shadcn/ui + Tailwind for beautiful, accessible UI
-- Deployed on Render.com
+- Deployed on Vercel (`main` in production, `dev` for PR development flow)
 
 ---
 
@@ -99,8 +99,8 @@ A modular web application that allows non-technical users (MediaBuyers, SEO Spec
 | **LLM Integration** | OpenRouter SDK | Multi-model, routing, fallbacks |
 | **Streaming** | Server-Sent Events (SSE) | Real-time, simple, HTTP/1.1 compatible |
 | **Rate Limiting** | @upstash/ratelimit + Redis | Sliding/fixed window, serverless-ready |
-| **Deployment** | Render.com | Managed Node.js, PostgreSQL, simple scaling |
-| **Monitoring** | Sentry + Render logs | Error tracking, performance monitoring |
+| **Deployment** | Vercel | Managed Next.js hosting, preview deployments, production promotion from `main` |
+| **Monitoring** | Sentry + Vercel logs | Error tracking, performance monitoring |
 
 ---
 
@@ -348,7 +348,7 @@ data: {"type":"complete","tokens":{"input":45,"output":120},"cost":0.012}
 
 ## Deployment Architecture
 
-### Environment: Render.com
+### Environment: Vercel
 
 1. **Build**
    ```bash
@@ -357,10 +357,10 @@ data: {"type":"complete","tokens":{"input":45,"output":120},"cost":0.012}
    ```
 
 2. **Runtime**
-   - Node.js 22 LTS
-   - 512MB RAM starter plan
-   - PostgreSQL 16 starter (5GB)
-   - Environment variables for secrets
+  - Node.js runtime managed by Vercel (Next.js 16 compatible)
+  - PostgreSQL managed externally
+  - Environment variables for secrets
+  - Production branch: `main`; development branch for PR flow: `dev`
 
 3. **Scaling**
    - Auto-recovery on crash
@@ -411,7 +411,7 @@ jobs:
 ## Quality Attributes Verification
 
 ### ✅ Scalability
-- Single Render container sufficient for 50 users
+- Vercel deployment model is sufficient for 50 internal users
 - OpenRouter is infinitely scalable (paid model)
 - Redis caching for performance
 - Database query optimization through Prisma
