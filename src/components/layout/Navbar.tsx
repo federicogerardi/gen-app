@@ -1,8 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
+import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
@@ -23,14 +25,23 @@ function linkClass(pathname: string, href: string) {
 export function Navbar() {
   const { data: session } = useSession();
   const pathname = usePathname();
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const allLinks = [
+    ...primaryLinks,
+    ...(session?.user?.role === 'admin' ? [{ href: '/admin', label: 'Admin' }] : []),
+  ];
 
   return (
     <nav className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur px-4 py-3" aria-label="Navigazione principale">
-      <div className="max-w-6xl mx-auto flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-6">
+      <div className="max-w-6xl mx-auto">
+        {/* Top bar */}
+        <div className="flex items-center justify-between">
           <Link href="/dashboard" className="font-semibold text-lg" aria-label="Vai alla dashboard">Gen App</Link>
-          <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm" role="list" aria-label="Sezioni applicazione">
-            {primaryLinks.map((link) => (
+
+          {/* Desktop nav links */}
+          <div className="hidden md:flex items-center gap-6 text-sm" role="list" aria-label="Sezioni applicazione">
+            {allLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -40,30 +51,66 @@ export function Navbar() {
                 {link.label}
               </Link>
             ))}
-            {session?.user?.role === 'admin' && (
-              <Link
-                href="/admin"
-                className={linkClass(pathname, '/admin')}
-                aria-current={pathname === '/admin' || pathname.startsWith('/admin/') ? 'page' : undefined}
-              >
-                Admin
-              </Link>
-            )}
+          </div>
+
+          {/* Desktop user area */}
+          <div className="hidden md:flex items-center gap-3">
+            {session?.user?.role === 'admin' && <Badge variant="secondary">Admin</Badge>}
+            <span className="text-sm text-muted-foreground max-w-[20vw] truncate" title={session?.user?.email ?? undefined}>{session?.user?.email}</span>
+            <Button
+              variant="outline"
+              size="sm"
+              type="button"
+              onClick={() => signOut({ callbackUrl: '/' })}
+              aria-label="Esci dalla sessione"
+            >
+              Esci
+            </Button>
+          </div>
+
+          {/* Mobile: user actions + hamburger */}
+          <div className="flex md:hidden items-center gap-2">
+            {session?.user?.role === 'admin' && <Badge variant="secondary">Admin</Badge>}
+            <Button
+              variant="outline"
+              size="sm"
+              type="button"
+              onClick={() => signOut({ callbackUrl: '/' })}
+              aria-label="Esci dalla sessione"
+            >
+              Esci
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              type="button"
+              onClick={() => setMenuOpen((prev) => !prev)}
+              aria-expanded={menuOpen}
+              aria-controls="mobile-menu"
+              aria-label={menuOpen ? 'Chiudi menu' : 'Apri menu'}
+            >
+              {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </Button>
           </div>
         </div>
-        <div className="flex items-center gap-3 justify-between sm:justify-end">
-          {session?.user?.role === 'admin' && <Badge variant="secondary">Admin</Badge>}
-          <span className="text-sm text-muted-foreground max-w-[40vw] truncate hidden sm:inline" title={session?.user?.email ?? undefined}>{session?.user?.email}</span>
-          <Button
-            variant="outline"
-            size="sm"
-            type="button"
-            onClick={() => signOut({ callbackUrl: '/' })}
-            aria-label="Esci dalla sessione"
-          >
-            Esci
-          </Button>
-        </div>
+
+        {/* Mobile menu */}
+        {menuOpen && (
+          <div id="mobile-menu" className="md:hidden pt-3 pb-1 flex flex-col gap-2 text-sm border-t mt-3" role="list" aria-label="Sezioni applicazione">
+            {allLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`${linkClass(pathname, link.href)} py-1`}
+                aria-current={pathname === link.href || pathname.startsWith(`${link.href}/`) ? 'page' : undefined}
+                onClick={() => setMenuOpen(false)}
+              >
+                {link.label}
+              </Link>
+            ))}
+            <span className="text-xs text-muted-foreground truncate pt-1 border-t mt-1">{session?.user?.email}</span>
+          </div>
+        )}
       </div>
     </nav>
   );
