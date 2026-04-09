@@ -143,7 +143,7 @@ Single function handling all artifact types
 Different microservices per artifact type
 - ❌ Over-complexity for 50 internal users
 - ❌ High operational overhead
-- ❌ Render.com not ideal for multi-service
+- ❌ Overkill rispetto all'hosting target su Vercel per 50 utenti interni
 
 ## Validation
 

@@ -361,7 +361,7 @@ graph LR
 
 ---
 
-## 7. Deployment Architecture (Render.com)
+## 7. Deployment Architecture (Vercel)
 
 ```mermaid
 graph TB
@@ -378,12 +378,12 @@ graph TB
         Coverage["Coverage Report"]
     end
     
-    subgraph RenderStaging["Render.com (Staging)"]
+    subgraph VercelPreview["Vercel (Preview/Dev)"]
         StageNode["Node.js 22<br/>CPU: 0.25<br/>RAM: 512MB"]
         StageDB["PostgreSQL 16<br/>5GB Storage<br/>Backups"]
     end
     
-    subgraph RenderProd["Render.com (Production)"]
+    subgraph VercelProd["Vercel (Production)"]
         ProdNode["Node.js 22<br/>CPU: 0.5<br/>RAM: 1GB<br/>Auto-restart"]
         ProdDB["PostgreSQL 16<br/>5GB Storage<br/>Daily Backups"]
         Redis["Redis Cache"]
@@ -391,7 +391,7 @@ graph TB
     
     subgraph Monitoring["Monitoring & Logging"]
         Sentry["Sentry<br/>(Error Tracking)"]
-        RenderLogs["Render.com Logs"]
+        VercelLogs["Vercel Logs"]
         Metrics["Custom Metrics"]
     end
     
@@ -401,15 +401,15 @@ graph TB
     end
     
     GitHub -->|Push| CI
-    CI -->|Pass| RenderStaging
+    CI -->|Pass| VercelPreview
     CI -->|Fail| code
     
-    RenderStaging -->|Manual Approval| RenderProd
+    VercelPreview -->|Promote from `main`| VercelProd
     
-    RenderProd -->|API Calls| OpenRouter
-    RenderProd -->|Auth| GoogleOAuth
-    RenderProd -->|Error Reports| Sentry
-    RenderProd -->|Logs| RenderLogs
+    VercelProd -->|API Calls| OpenRouter
+    VercelProd -->|Auth| GoogleOAuth
+    VercelProd -->|Error Reports| Sentry
+    VercelProd -->|Logs| VercelLogs
     
     ProdNode -->|Read/Write| ProdDB
     ProdNode -->|Cache| Redis
@@ -420,8 +420,8 @@ graph TB
     workflows -->|Trigger| Security
     workflows -->|Trigger| Coverage
     
-    style RenderProd fill:#c8e6c9
-    style RenderStaging fill:#fff9c4
+    style VercelProd fill:#c8e6c9
+    style VercelPreview fill:#fff9c4
     style CI fill:#e1f5ff
 ```
 

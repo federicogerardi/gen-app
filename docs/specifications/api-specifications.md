@@ -2,10 +2,10 @@
 
 **Version**: 1.0  
 **Status**: IMPLEMENTED SUBSET + OPEN ITEMS  
-**Base URL**: `https://app.render.com/api` (staging/prod)  
+**Base URL**: `https://<your-vercel-domain>/api` (production from `main`; development/preview from PR flow on `dev`)  
 **Authentication**: NextAuth session cookie (browser). Bearer tokens solo per integrazioni server-to-server esplicite.  
 **Content-Type**: `application/json`  
-**Last Updated**: 2026-04-08
+**Last Updated**: 2026-04-09
 
 ---
 
@@ -707,7 +707,7 @@ Nota: al momento non esiste un endpoint `batch=true` dedicato; il fallback appli
 ### Example 1: Generate Content Artifact
 
 ```bash
-curl -X POST https://app.render.com/api/artifacts/generate \
+curl -X POST https://<your-vercel-domain>/api/artifacts/generate \
   -H "Cookie: next-auth.session-token=<session_cookie>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -725,14 +725,14 @@ curl -X POST https://app.render.com/api/artifacts/generate \
 ### Example 2: List User Projects
 
 ```bash
-curl -X GET 'https://app.render.com/api/projects' \
+curl -X GET 'https://<your-vercel-domain>/api/projects' \
   -H "Cookie: next-auth.session-token=<session_cookie>"
 ```
 
 ### Example 3: Admin - Update User Quota
 
 ```bash
-curl -X PUT https://app.render.com/api/admin/users/user_123/quota \
+curl -X PUT https://<your-vercel-domain>/api/admin/users/user_123/quota \
   -H "Cookie: next-auth.session-token=<admin_session_cookie>" \
   -H "Content-Type: application/json" \
   -d '{

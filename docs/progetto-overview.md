@@ -2,7 +2,7 @@
 
 **Versione**: 1.0  
 **Status**: APP LOCALE FUNZIONANTE + TOOL MODULARI IN EVOLUZIONE  
-**Data**: 2026-04-08  
+**Data**: 2026-04-09  
 **Destinatario**: Stakeholder e Team di Progetto
 
 ---
@@ -82,7 +82,7 @@ Stiamo costruendo un **Hub di Generazione Artefatti con AI/LLM** che permette ai
 
 ### Fase 1: Foundation (2 settimane)
 - Database + authentication
-- Infrastructure su Render.com
+- Infrastructure su Vercel
 - **Deliverable**: Ambiente dev/staging funzionante
 
 ### Fase 2-3: Core Features (3 settimane)
@@ -112,7 +112,7 @@ Stiamo costruendo un **Hub di Generazione Artefatti con AI/LLM** che permette ai
 ### Infrastructure (Mensile)
 | Componente | Costo | Note |
 |-----------|-------|------|
-| Render.com (compute) | $11 | Node.js container |
+| Vercel (hosting) | variabile | Hosting Next.js + preview environments |
 | PostgreSQL (5GB) | $15 | Database |
 | Redis (optional) | $15 | Caching |
 | **Total Infra** | **$41** | Scalable, low-cost |
@@ -155,7 +155,7 @@ Stiamo costruendo un **Hub di Generazione Artefatti con AI/LLM** che permette ai
 - **Prompt modular layer** → registry + loader server-only in `src/lib/tool-prompts`
 
 ### DevOps
-- **Render.com** → Managed Node.js, simple scaling, reliable
+- **Vercel** -> Deployment produzione da `main`, preview workflow tramite PR su `dev`
 - **GitHub Actions** → CI/CD automation, testing
 - **Sentry** → Error tracking, monitoring
 
@@ -303,7 +303,7 @@ Gli agenti potron leggere questi documenti e implementare il codice senza ambigu
 
 ### Immediato (Questa settimana)
 1. [ ] Review e approve documentation
-2. [ ] Setup Render.com infrastructure
+2. [x] Deploy Vercel configurato (`main` produzione, `dev` sviluppo PR)
 3. [ ] Configure Google OAuth credentials
 4. [ ] Create GitHub repository
 
