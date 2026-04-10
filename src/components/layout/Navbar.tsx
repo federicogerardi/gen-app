@@ -33,11 +33,11 @@ export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <nav className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur px-4 py-3" aria-label="Navigazione principale">
+    <nav className="sticky top-0 z-30 border-b border-black/10 bg-[#fbf8f2]/90 backdrop-blur px-4 py-3 app-copy" aria-label="Navigazione principale">
       <div className="max-w-6xl mx-auto">
         {/* Top bar */}
         <div className="flex items-center justify-between">
-          <Link href="/dashboard" className="font-semibold text-lg" aria-label="Vai alla dashboard">Gen App</Link>
+          <Link href="/dashboard" className="app-title text-xl font-semibold text-slate-900" aria-label="Vai alla dashboard">Gen App</Link>
 
           {/* Desktop nav links */}
           <div className="hidden md:flex items-center gap-6 text-sm" role="list" aria-label="Sezioni applicazione">
@@ -54,12 +54,12 @@ export function Navbar() {
                 Tools
                 <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
               </summary>
-              <div className="absolute left-0 top-full mt-2 w-48 rounded-md border bg-background p-1 shadow-md">
+              <div className="absolute left-0 top-full mt-2 w-48 rounded-xl border border-black/10 bg-white/95 p-1.5 shadow-[0_22px_48px_-34px_rgba(15,23,42,0.7)]">
                 {toolLinks.map((link) => (
                   <Link
                     key={link.href}
                     href={link.href}
-                    className={`block rounded px-2 py-1.5 ${linkClass(pathname, link.href)}`}
+                    className={`block rounded-lg px-2 py-1.5 ${linkClass(pathname, link.href)}`}
                     aria-current={pathname === link.href || pathname.startsWith(`${link.href}/`) ? 'page' : undefined}
                   >
                     {link.label}
@@ -97,6 +97,7 @@ export function Navbar() {
               type="button"
               onClick={() => signOut({ callbackUrl: '/' })}
               aria-label="Esci dalla sessione"
+              className="border-black/15 bg-white/80"
             >
               Esci
             </Button>
@@ -111,6 +112,7 @@ export function Navbar() {
               type="button"
               onClick={() => signOut({ callbackUrl: '/' })}
               aria-label="Esci dalla sessione"
+              className="border-black/15 bg-white/80"
             >
               Esci
             </Button>
@@ -130,7 +132,7 @@ export function Navbar() {
 
         {/* Mobile menu */}
         {menuOpen && (
-          <div id="mobile-menu" className="md:hidden pt-3 pb-1 flex flex-col gap-2 text-sm border-t mt-3" role="list" aria-label="Sezioni applicazione">
+          <div id="mobile-menu" className="md:hidden pt-3 pb-1 flex flex-col gap-2 text-sm border-t border-black/10 mt-3" role="list" aria-label="Sezioni applicazione">
             <Link
               href="/dashboard"
               className={`${linkClass(pathname, '/dashboard')} py-1`}

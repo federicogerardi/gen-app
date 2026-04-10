@@ -33,10 +33,15 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 
 ### specifications/
 - [api-specifications.md](specifications/api-specifications.md): Specifiche API e contratti.
+- [graphic-frameworking-spec.md](specifications/graphic-frameworking-spec.md): Specifica visual frameworking per interventi UI coerenti con shell grafica e template applicato.
 
 ### ux/
 - [gui-refactor-plan.md](ux/gui-refactor-plan.md): Piano di refactoring GUI.
 - [ux-strategy.md](ux/ux-strategy.md): Strategia UX e principi guida.
+
+### Aggiornamenti recenti
+- 2026-04-11: completato sprint di visual unification delle pagine interne con estensione del concept login.
+- 2026-04-11: introdotta specifica operativa di frameworking grafico per standardizzare i futuri interventi UI.
 
 ---
 

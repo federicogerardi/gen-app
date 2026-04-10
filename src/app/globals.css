@@ -81,6 +81,12 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  --app-layer-warm: rgba(245, 208, 116, 0.22);
+  --app-layer-cool: rgba(99, 102, 241, 0.18);
+  --app-grid-line: rgba(15, 23, 42, 0.045);
+  --app-surface: rgba(255, 255, 255, 0.78);
+  --app-border-soft: rgba(15, 23, 42, 0.12);
+  --app-shadow-soft: 0 24px 70px -38px rgba(15, 23, 42, 0.45);
 }
 
 .dark {
@@ -131,4 +137,72 @@
 
 #main-content {
   scroll-margin-top: 6rem;
+}
+
+@keyframes panel-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.app-shell {
+  min-height: calc(100vh - 4.25rem);
+  background-image:
+    radial-gradient(circle at 12% 14%, var(--app-layer-warm), transparent 36%),
+    radial-gradient(circle at 88% 6%, var(--app-layer-cool), transparent 34%),
+    linear-gradient(138deg, #f8f5ee 0%, #fffdf9 44%, #f3efe5 100%);
+}
+
+.app-grid-overlay {
+  background-image:
+    linear-gradient(var(--app-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--app-grid-line) 1px, transparent 1px);
+  background-size: 36px 36px;
+}
+
+.app-surface {
+  border: 1px solid var(--app-border-soft);
+  background: var(--app-surface);
+  box-shadow: var(--app-shadow-soft);
+  backdrop-filter: blur(7px);
+}
+
+.app-title {
+  font-family: var(--font-brand-display), Georgia, serif;
+  letter-spacing: -0.01em;
+}
+
+.app-copy {
+  font-family: var(--font-brand-body), "Segoe UI", sans-serif;
+}
+
+.app-rise {
+  animation: panel-rise 420ms ease both;
+}
+
+.app-control {
+  border-color: rgba(15, 23, 42, 0.15);
+  background: rgba(255, 255, 255, 0.86);
+  transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.app-control::placeholder {
+  color: rgba(71, 85, 105, 0.9);
+}
+
+.app-control:hover {
+  background: rgba(255, 255, 255, 0.94);
+  border-color: rgba(15, 23, 42, 0.2);
+}
+
+.app-control:focus-visible,
+.app-control[data-state='open'] {
+  background: rgba(255, 255, 255, 0.98);
+  border-color: rgba(37, 99, 235, 0.45);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
 }

@@ -3,7 +3,7 @@
 **Version**: 1.0  
 **Status**: READY FOR DESIGN & PROTOTYPING  
 **Target Audience**: AI Design/Frontend Agents  
-**Last Updated**: 2026-04-07
+**Last Updated**: 2026-04-11
 
 ---
 
@@ -258,6 +258,17 @@ Current implementation favors simplicity:
 - **Secondary**: Slate (UI chrome)
 - **Success**: Green (completed artifacts)
 - **Warning**: Amber (quota approaching)
+
+### Graphic Frameworking Baseline (2026-04-11)
+
+Direzione adottata per login + pagine interne:
+- editorial-tech caldo con layering atmosferico
+- superfici semitrasparenti controllate per card e pannelli
+- tipografia display/body coerente su tutto il workspace autenticato
+- controlli form non trasparenti su sfondi grafici
+
+Per futuri interventi UI usare come riferimento operativo:
+- `docs/specifications/graphic-frameworking-spec.md`
 - **Error**: Red (errors, rate limits)
 - **Neutral**: Gray (disabled, secondary)
 

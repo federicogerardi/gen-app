@@ -67,6 +67,12 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 ---
 
 ## Frontend/UX
+- **Visual unification pagine interne (estensione concept login)**: `COMPLETATO (2026-04-11)`
+  - Applicato framework visuale condiviso su dashboard, tools, artifacts, admin e project pages.
+  - Introdotte utility foundation (`app-shell`, `app-grid-overlay`, `app-surface`, `app-title`, `app-copy`) e classe controlli su sfondo grafico (`app-control`).
+  - Eseguito hardening contrasto su elementi sensibili (ricerca admin, filtri stato/tipo, card metriche, drawer quota).
+  - Specifica di riferimento per interventi futuri: `docs/specifications/graphic-frameworking-spec.md`.
+
 - **Refactoring preview artefatti**
   - Mostrare sempre preview human-readable, evitare JSON raw, fallback robusto.
   - Bloccante per usabilità.

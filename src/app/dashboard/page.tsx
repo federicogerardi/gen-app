@@ -64,12 +64,13 @@ export default async function DashboardPage() {
   return (
     <>
       <Navbar />
-      <main className="flex-1 p-6 max-w-5xl mx-auto w-full" id="main-content">
-        <section className="rounded-2xl border bg-gradient-to-r from-slate-950 to-slate-700 text-white p-6 mb-8">
+      <main className="app-shell app-copy flex-1 p-6 max-w-5xl mx-auto w-full relative overflow-hidden" id="main-content">
+        <div className="pointer-events-none absolute inset-0 app-grid-overlay" />
+        <section className="app-rise relative rounded-3xl border border-black/10 bg-gradient-to-r from-slate-950 via-slate-800 to-slate-700 text-white p-6 mb-8 shadow-[0_28px_70px_-45px_rgba(15,23,42,0.85)]">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-xs uppercase tracking-widest text-white/70 mb-2">Workspace Marketing AI</p>
-              <h1 className="text-2xl md:text-3xl font-semibold">Scegli il tool giusto e genera più velocemente</h1>
+              <h1 className="app-title text-2xl md:text-3xl font-semibold">Scegli il tool giusto e genera piu velocemente</h1>
               <p className="text-sm text-white/80 mt-2 max-w-2xl">
                 Flusso separato per SEO Specialist e MediaBuyer: meno attrito in input, più iterazioni utili per campagna.
               </p>
@@ -78,13 +79,13 @@ export default async function DashboardPage() {
           </div>
         </section>
 
-        <section className="mb-8">
+        <section className="app-rise relative mb-8" style={{ animationDelay: '90ms' }}>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-medium">Tool workspace</h2>
+            <h2 className="app-title text-xl font-medium">Tool workspace</h2>
           </div>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {TOOL_ACTIONS.map((tool) => (
-              <Card key={tool.href}>
+              <Card key={tool.href} className="app-surface rounded-2xl">
                 <CardHeader>
                   <div className="flex items-center justify-between gap-2">
                     <CardTitle className="text-base">{tool.title}</CardTitle>
@@ -101,19 +102,19 @@ export default async function DashboardPage() {
         </section>
 
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold">Panoramica account</h2>
+          <h2 className="app-title text-2xl font-semibold text-slate-900">Panoramica account</h2>
         </div>
 
         {user && (
-          <div className="grid gap-4 grid-cols-2 md:grid-cols-4 mb-8">
-            <Card>
+          <div className="app-rise grid gap-4 grid-cols-2 md:grid-cols-4 mb-8" style={{ animationDelay: '140ms' }}>
+            <Card className="app-surface rounded-2xl">
               <CardHeader className="pb-2"><CardDescription>Richieste usate</CardDescription></CardHeader>
               <CardContent>
                 <p className="text-2xl font-bold">{user.monthlyUsed}</p>
                 <p className="text-xs text-muted-foreground">/ {user.monthlyQuota} mensili</p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="app-surface rounded-2xl">
               <CardHeader className="pb-2"><CardDescription>Quota residua</CardDescription></CardHeader>
               <CardContent>
                 <p className="text-2xl font-bold">{Math.max(0, 100 - quotaPercent)}%</p>
@@ -123,7 +124,7 @@ export default async function DashboardPage() {
                 </div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="app-surface rounded-2xl">
               <CardHeader className="pb-2"><CardDescription>Budget speso</CardDescription></CardHeader>
               <CardContent>
                 <p className="text-2xl font-bold">${Number(user.monthlySpent).toFixed(2)}</p>
@@ -133,7 +134,7 @@ export default async function DashboardPage() {
                 </div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="app-surface rounded-2xl">
               <CardHeader className="pb-2"><CardDescription>Progetti</CardDescription></CardHeader>
               <CardContent><p className="text-2xl font-bold">{projects.length}</p></CardContent>
             </Card>
@@ -141,21 +142,21 @@ export default async function DashboardPage() {
         )}
 
         <div className="flex items-center justify-between mb-4 mt-10">
-          <h2 className="text-lg font-medium">Progetti recenti</h2>
+          <h2 className="app-title text-xl font-medium">Progetti recenti</h2>
           <Button variant="outline" size="sm" asChild><Link href="/dashboard/projects/new">Nuovo progetto</Link></Button>
         </div>
 
         {projectsForClient.length === 0 ? (
-          <Card>
+          <Card className="app-surface rounded-2xl">
             <CardContent className="py-12 text-center text-muted-foreground">
               Nessun progetto ancora. Creane uno per iniziare.
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="app-rise grid gap-4 md:grid-cols-2 lg:grid-cols-3" style={{ animationDelay: '190ms' }}>
             {projectsForClient.map((p: typeof projectsForClient[number]) => (
               <Link key={p.id} href={`/dashboard/projects/${p.id}`}>
-                <Card className="hover:shadow-md transition-shadow h-full">
+                <Card className="app-surface rounded-2xl hover:shadow-[0_26px_65px_-44px_rgba(15,23,42,0.75)] transition-shadow h-full">
                   <CardHeader>
                     <CardTitle className="text-base">{p.name}</CardTitle>
                     {p.description && <CardDescription className="line-clamp-2">{p.description}</CardDescription>}

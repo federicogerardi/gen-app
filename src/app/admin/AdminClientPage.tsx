@@ -170,9 +170,10 @@ export function AdminClientPage({ users, totalArtifacts, completedArtifacts, rec
   return (
     <>
       <Navbar />
-      <main className="flex-1 p-6 max-w-5xl mx-auto w-full" id="main-content">
+      <main className="app-shell app-copy flex-1 p-6 max-w-5xl mx-auto w-full relative overflow-hidden" id="main-content">
+        <div className="pointer-events-none absolute inset-0 app-grid-overlay" />
         <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
-          <h1 className="text-2xl font-semibold">Gestione utenti</h1>
+          <h1 className="app-title text-3xl font-semibold text-slate-900">Gestione utenti</h1>
           <div className="w-full sm:w-80">
             <Label htmlFor="admin-user-search" className="sr-only">Cerca utente</Label>
             <Input
@@ -180,6 +181,7 @@ export function AdminClientPage({ users, totalArtifacts, completedArtifacts, rec
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Cerca utente per nome o email"
+              className="app-control"
               aria-describedby="admin-user-search-help"
             />
             <p id="admin-user-search-help" className="sr-only">Filtra la lista utenti per nome o email.</p>
@@ -187,19 +189,19 @@ export function AdminClientPage({ users, totalArtifacts, completedArtifacts, rec
         </div>
 
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-4 mb-8">
-          <Card>
+          <Card className="app-surface rounded-2xl">
             <CardHeader className="pb-2"><CardTitle className="text-sm">Utenti</CardTitle></CardHeader>
             <CardContent><p className="text-2xl font-bold">{users.length}</p></CardContent>
           </Card>
-          <Card>
+          <Card className="app-surface rounded-2xl">
             <CardHeader className="pb-2"><CardTitle className="text-sm">Artefatti</CardTitle></CardHeader>
             <CardContent><p className="text-2xl font-bold">{totalArtifacts}</p></CardContent>
           </Card>
-          <Card>
+          <Card className="app-surface rounded-2xl">
             <CardHeader className="pb-2"><CardTitle className="text-sm">Completati</CardTitle></CardHeader>
             <CardContent><p className="text-2xl font-bold">{completedArtifacts}</p></CardContent>
           </Card>
-          <Card>
+          <Card className="app-surface rounded-2xl">
             <CardHeader className="pb-2"><CardTitle className="text-sm">Spesa mensile</CardTitle></CardHeader>
             <CardContent><p className="text-2xl font-bold">${totalSpent.toFixed(2)}</p></CardContent>
           </Card>
@@ -212,7 +214,7 @@ export function AdminClientPage({ users, totalArtifacts, completedArtifacts, rec
             const budgetRatio = Number(u.monthlyBudget) > 0 ? Number(u.monthlySpent) / Number(u.monthlyBudget) : 1;
 
             return (
-              <Card key={u.id}>
+              <Card key={u.id} className="app-surface rounded-2xl">
                 <CardHeader className="pb-2 flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <CardTitle className="text-base">{u.name ?? u.email}</CardTitle>
@@ -261,45 +263,45 @@ export function AdminClientPage({ users, totalArtifacts, completedArtifacts, rec
         <section className="mt-10">
           <div className="flex items-start justify-between gap-3 mb-4">
             <div>
-              <h2 className="text-lg font-medium">Metriche baseline (30 giorni)</h2>
+              <h2 className="app-title text-xl font-medium">Metriche baseline (30 giorni)</h2>
               <p className="text-sm text-muted-foreground">
                 Snapshot generato il {new Date(baselineMetrics.generatedAt).toLocaleString('it-IT')}.
               </p>
             </div>
           </div>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
-            <Card>
+            <Card className="app-surface rounded-2xl">
               <CardHeader className="pb-2"><CardTitle className="text-sm">Completion rate</CardTitle></CardHeader>
               <CardContent><p className="text-2xl font-bold">{formatPercent(baselineMetrics.completionRate)}</p></CardContent>
             </Card>
-            <Card>
+            <Card className="app-surface rounded-2xl">
               <CardHeader className="pb-2"><CardTitle className="text-sm">Tempo medio completamento</CardTitle></CardHeader>
               <CardContent><p className="text-2xl font-bold">{formatDuration(baselineMetrics.avgCompletionSeconds)}</p></CardContent>
             </Card>
-            <Card>
+            <Card className="app-surface rounded-2xl">
               <CardHeader className="pb-2"><CardTitle className="text-sm">P95 completamento</CardTitle></CardHeader>
               <CardContent><p className="text-2xl font-bold">{formatDuration(baselineMetrics.p95CompletionSeconds)}</p></CardContent>
             </Card>
-            <Card>
+            <Card className="app-surface rounded-2xl">
               <CardHeader className="pb-2"><CardTitle className="text-sm">Success rate richieste</CardTitle></CardHeader>
               <CardContent><p className="text-2xl font-bold">{formatPercent(baselineMetrics.requestSuccessRate30d)}</p></CardContent>
             </Card>
           </div>
 
           <dl className="grid gap-2 md:grid-cols-2 text-sm text-muted-foreground mb-8" aria-label="Dettaglio metriche baseline">
-            <div className="rounded-md border p-3">
+            <div className="rounded-md border border-black/10 bg-white/75 p-3">
               <dt className="font-medium text-foreground">Error rate richieste (30g)</dt>
               <dd>{formatPercent(baselineMetrics.requestErrorRate30d)}</dd>
             </div>
-            <div className="rounded-md border p-3">
+            <div className="rounded-md border border-black/10 bg-white/75 p-3">
               <dt className="font-medium text-foreground">Rate-limited rate richieste (30g)</dt>
               <dd>{formatPercent(baselineMetrics.requestRateLimitedRate30d)}</dd>
             </div>
-            <div className="rounded-md border p-3">
+            <div className="rounded-md border border-black/10 bg-white/75 p-3">
               <dt className="font-medium text-foreground">Campione artefatti</dt>
               <dd>{baselineMetrics.sampleSizeArtifacts}</dd>
             </div>
-            <div className="rounded-md border p-3">
+            <div className="rounded-md border border-black/10 bg-white/75 p-3">
               <dt className="font-medium text-foreground">Campione richieste (30g)</dt>
               <dd>{baselineMetrics.sampleSizeRequests30d}</dd>
             </div>
@@ -311,7 +313,7 @@ export function AdminClientPage({ users, totalArtifacts, completedArtifacts, rec
               <div className="space-y-1">
                 <Label htmlFor="activity-status-filter" className="text-xs">Stato</Label>
                 <Select value={activityStatus} onValueChange={(value) => setActivityStatus(value as typeof activityStatus)}>
-                  <SelectTrigger id="activity-status-filter" className="w-full sm:w-44"><SelectValue /></SelectTrigger>
+                  <SelectTrigger id="activity-status-filter" className="app-control w-full sm:w-44"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Tutti</SelectItem>
                     <SelectItem value="success">Success</SelectItem>
@@ -323,7 +325,7 @@ export function AdminClientPage({ users, totalArtifacts, completedArtifacts, rec
               <div className="space-y-1">
                 <Label htmlFor="activity-type-filter" className="text-xs">Tipo</Label>
                 <Select value={activityType} onValueChange={(value) => setActivityType(value as typeof activityType)}>
-                  <SelectTrigger id="activity-type-filter" className="w-full sm:w-44"><SelectValue /></SelectTrigger>
+                  <SelectTrigger id="activity-type-filter" className="app-control w-full sm:w-44"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Tutti</SelectItem>
                     <SelectItem value="content">Content</SelectItem>
@@ -334,7 +336,7 @@ export function AdminClientPage({ users, totalArtifacts, completedArtifacts, rec
               </div>
             </div>
           </div>
-          <Card>
+          <Card className="app-surface rounded-2xl">
             <CardContent className="pt-4 space-y-3" aria-live="polite">
               <p className="sr-only">{filteredActivity.length} eventi recenti mostrati con i filtri correnti.</p>
               {filteredActivity.length === 0 ? (
@@ -374,12 +376,12 @@ export function AdminClientPage({ users, totalArtifacts, completedArtifacts, rec
             aria-modal="true"
             aria-labelledby="drawer-title"
             aria-describedby="drawer-description"
-            className="absolute right-0 top-0 h-full w-full max-w-md bg-background border-l shadow-xl p-6 overflow-y-auto"
+            className="absolute right-0 top-0 h-full w-full max-w-md bg-[#f8f5ee] border-l border-black/10 shadow-xl p-6 overflow-y-auto app-copy"
             onKeyDown={handleDrawerKeyDown}
           >
             <div className="flex items-start justify-between gap-3 mb-6">
               <div>
-                <h3 id="drawer-title" className="text-lg font-semibold">Modifica quota e budget</h3>
+                <h3 id="drawer-title" className="app-title text-lg font-semibold">Modifica quota e budget</h3>
                 <p id="drawer-description" className="text-sm text-muted-foreground">{selectedUser.name ?? selectedUser.email}</p>
               </div>
               <Button size="icon-sm" variant="ghost" onClick={() => setSelectedUserId(null)} aria-label="Chiudi">
@@ -393,7 +395,7 @@ export function AdminClientPage({ users, totalArtifacts, completedArtifacts, rec
               currentBudget={Number(selectedUser.monthlyBudget)}
             />
 
-            <div className="mt-6 rounded-md border p-3 text-sm">
+            <div className="mt-6 rounded-md border border-black/10 bg-white/75 p-3 text-sm">
               <p className="text-xs text-muted-foreground">Stato attuale</p>
               <div className="mt-2 grid grid-cols-2 gap-3">
                 <div>

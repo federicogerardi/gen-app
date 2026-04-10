@@ -9,6 +9,7 @@ Stato avanzamento implementazione:
 
 - Questo documento contiene principi UX e linee guida operative.
 - Lo stato sprint aggiornato e centralizzato e in `docs/implement-index.md`.
+- Le specifiche vincolanti di frameworking grafico per nuove iterazioni visuali sono in `docs/specifications/graphic-frameworking-spec.md`.
 
 ---
 
@@ -193,6 +194,10 @@ Interventi:
 - drawer di modifica quota/budget
 - audit timeline con filtri minimi
 
+Aggiornamento esecuzione (2026-04-11):
+- ricerca, filtri stato/tipo e micro-card metriche su admin ora usano superfici esplicite su sfondo grafico
+- uniformati controlli sensibili con classe condivisa `app-control`
+
 ---
 
 ## Design System e componenti da consolidare
@@ -216,6 +221,7 @@ Regole UI:
 - gerarchia tipografica stabile su tutte le pagine
 - stati hover, focus, disabled uniformi
 - copy breve e orientata ad azione
+- su shell grafiche evitare controlli trasparenti: input/select/textarea devono usare una superficie opaca/semi-opaca conforme alla specifica
 
 ---
 

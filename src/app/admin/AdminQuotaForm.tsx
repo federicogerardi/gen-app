@@ -93,7 +93,7 @@ export function AdminQuotaForm({ userId, currentQuota, currentBudget, onSaved }:
           type="number"
           value={quota}
           onChange={(e) => setQuota(e.target.value)}
-          className="w-28 h-8 text-sm"
+          className="app-control w-28 h-8 text-sm"
           min={1}
           aria-invalid={isQuotaInvalid}
         />
@@ -105,7 +105,7 @@ export function AdminQuotaForm({ userId, currentQuota, currentBudget, onSaved }:
           type="number"
           value={budget}
           onChange={(e) => setBudget(e.target.value)}
-          className="w-28 h-8 text-sm"
+          className="app-control w-28 h-8 text-sm"
           min={0}
           step={0.01}
           aria-invalid={isBudgetInvalid}

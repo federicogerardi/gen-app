@@ -199,10 +199,11 @@ export default function FunnelPagesToolPage() {
   return (
     <>
       <Navbar />
-      <main className="flex-1 p-6 max-w-6xl mx-auto w-full" id="main-content">
+      <main className="app-shell app-copy flex-1 p-6 max-w-6xl mx-auto w-full relative overflow-hidden" id="main-content">
+        <div className="pointer-events-none absolute inset-0 app-grid-overlay" />
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold">Generatore Pagine del Funnel</h1>
+            <h1 className="app-title text-3xl font-semibold text-slate-900">Generatore Pagine del Funnel</h1>
             <p className="text-sm text-muted-foreground">Processo multi-step demo: optin page -&gt; domande quiz -&gt; script VSL.</p>
           </div>
           <Button variant="outline" asChild>
@@ -211,7 +212,7 @@ export default function FunnelPagesToolPage() {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
-          <Card>
+          <Card className="app-surface rounded-3xl app-rise">
             <CardHeader>
               <CardTitle className="text-base">Input funnel</CardTitle>
               <CardDescription>Prompt caricati da documentazione centralizzata e orchestrati step by step.</CardDescription>
@@ -220,7 +221,7 @@ export default function FunnelPagesToolPage() {
               <div className="space-y-1.5">
                 <Label htmlFor="funnel-project-select">Progetto</Label>
                 <Select value={projectId} onValueChange={setProjectId}>
-                  <SelectTrigger id="funnel-project-select" aria-label="Seleziona progetto"><SelectValue placeholder="Seleziona progetto" /></SelectTrigger>
+                  <SelectTrigger id="funnel-project-select" className="app-control" aria-label="Seleziona progetto"><SelectValue placeholder="Seleziona progetto" /></SelectTrigger>
                   <SelectContent>
                     {projectsData?.projects?.map((p: { id: string; name: string }) => (
                       <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
@@ -233,7 +234,7 @@ export default function FunnelPagesToolPage() {
                 <div className="space-y-1.5">
                   <Label htmlFor="funnel-model-select">Modello</Label>
                   <Select value={model} onValueChange={setModel}>
-                    <SelectTrigger id="funnel-model-select" aria-label="Modello LLM"><SelectValue /></SelectTrigger>
+                    <SelectTrigger id="funnel-model-select" className="app-control" aria-label="Modello LLM"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {modelsData?.models?.map((m: { id: string; name: string }) => (
                         <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
@@ -244,7 +245,7 @@ export default function FunnelPagesToolPage() {
                 <div className="space-y-1.5">
                   <Label htmlFor="funnel-tone-select">Tono</Label>
                   <Select value={tone} onValueChange={(value) => setTone(value as (typeof TONES)[number])}>
-                    <SelectTrigger id="funnel-tone-select" aria-label="Tono di comunicazione"><SelectValue /></SelectTrigger>
+                    <SelectTrigger id="funnel-tone-select" className="app-control" aria-label="Tono di comunicazione"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {TONES.map((item) => (
                         <SelectItem key={item} value={item}>{item}</SelectItem>
@@ -256,27 +257,27 @@ export default function FunnelPagesToolPage() {
 
               <div className="space-y-1.5">
                 <Label htmlFor="funnel-product">Prodotto/Servizio</Label>
-                <Input id="funnel-product" value={product} onChange={(e) => setProduct(e.target.value)} placeholder="Es. Programma coaching performance" />
+                <Input className="app-control" id="funnel-product" value={product} onChange={(e) => setProduct(e.target.value)} placeholder="Es. Programma coaching performance" />
               </div>
 
               <div className="space-y-1.5">
                 <Label htmlFor="funnel-audience">Audience</Label>
-                <Input id="funnel-audience" value={audience} onChange={(e) => setAudience(e.target.value)} placeholder="Es. Founder e professionisti digitali 30-50" />
+                <Input className="app-control" id="funnel-audience" value={audience} onChange={(e) => setAudience(e.target.value)} placeholder="Es. Founder e professionisti digitali 30-50" />
               </div>
 
               <div className="space-y-1.5">
                 <Label htmlFor="funnel-offer">Offerta</Label>
-                <Input id="funnel-offer" value={offer} onChange={(e) => setOffer(e.target.value)} placeholder="Es. Sessione strategica gratuita + piano operativo" />
+                <Input className="app-control" id="funnel-offer" value={offer} onChange={(e) => setOffer(e.target.value)} placeholder="Es. Sessione strategica gratuita + piano operativo" />
               </div>
 
               <div className="space-y-1.5">
                 <Label htmlFor="funnel-promise">Promessa principale</Label>
-                <Input id="funnel-promise" value={promise} onChange={(e) => setPromise(e.target.value)} placeholder="Es. +30% lead qualificati in 45 giorni" />
+                <Input className="app-control" id="funnel-promise" value={promise} onChange={(e) => setPromise(e.target.value)} placeholder="Es. +30% lead qualificati in 45 giorni" />
               </div>
 
               <div className="space-y-1.5">
                 <Label htmlFor="funnel-notes">Note opzionali</Label>
-                <Textarea id="funnel-notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder="Vincoli brand, claim da evitare, dettagli settore..." />
+                <Textarea className="app-control" id="funnel-notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder="Vincoli brand, claim da evitare, dettagli settore..." />
               </div>
 
               <Button onClick={handleRunProcess} disabled={running || !projectId || !product || !audience || !offer || !promise} className="w-full">
@@ -295,7 +296,7 @@ export default function FunnelPagesToolPage() {
               });
 
               return (
-                <Card key={step.key}>
+                <Card key={step.key} className="app-surface rounded-2xl app-rise">
                   <CardHeader>
                     <div className="flex items-center justify-between gap-3">
                       <CardTitle className="text-base">{step.title}</CardTitle>
@@ -312,7 +313,7 @@ export default function FunnelPagesToolPage() {
                   <CardContent className="space-y-3">
                     <p className="sr-only" aria-live="polite">{step.status === 'running' ? `${step.title} in generazione` : `${step.title} aggiornato`}</p>
                     {step.content ? (
-                      <div className="rounded-md border bg-muted/20 p-4 max-h-64 overflow-y-auto" aria-live="polite">
+                      <div className="rounded-xl border border-black/10 bg-white/70 p-4 max-h-64 overflow-y-auto" aria-live="polite">
                         <p className="text-sm leading-7 whitespace-pre-wrap break-words text-foreground">{stepDisplay.text}</p>
                       </div>
                     ) : (

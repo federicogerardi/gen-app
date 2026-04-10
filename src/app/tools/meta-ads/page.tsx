@@ -69,10 +69,11 @@ export default function MetaAdsToolPage() {
   return (
     <>
       <Navbar />
-      <main className="flex-1 p-6 max-w-6xl mx-auto w-full" id="main-content">
+      <main className="app-shell app-copy flex-1 p-6 max-w-6xl mx-auto w-full relative overflow-hidden" id="main-content">
+        <div className="pointer-events-none absolute inset-0 app-grid-overlay" />
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold">Generatore Meta Ads</h1>
+            <h1 className="app-title text-3xl font-semibold text-slate-900">Generatore Meta Ads</h1>
             <p className="text-sm text-muted-foreground">Tool dedicato per creare varianti ads Meta in modo modulare.</p>
           </div>
           <Button variant="outline" asChild>
@@ -81,7 +82,7 @@ export default function MetaAdsToolPage() {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
-          <Card>
+          <Card className="app-surface rounded-3xl app-rise">
             <CardHeader>
               <CardTitle className="text-base">Input campagna</CardTitle>
               <CardDescription>Compila i dati base, il prompt demo viene costruito automaticamente.</CardDescription>
@@ -90,7 +91,7 @@ export default function MetaAdsToolPage() {
               <div className="space-y-1.5">
                 <Label htmlFor="meta-project-select">Progetto</Label>
                 <Select value={projectId} onValueChange={setProjectId}>
-                  <SelectTrigger id="meta-project-select" aria-label="Seleziona progetto"><SelectValue placeholder="Seleziona progetto" /></SelectTrigger>
+                  <SelectTrigger id="meta-project-select" className="app-control" aria-label="Seleziona progetto"><SelectValue placeholder="Seleziona progetto" /></SelectTrigger>
                   <SelectContent>
                     {projectsData?.projects?.map((p: { id: string; name: string }) => (
                       <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
@@ -102,7 +103,7 @@ export default function MetaAdsToolPage() {
               <div className="space-y-1.5">
                 <Label htmlFor="meta-model-select">Modello</Label>
                 <Select value={model} onValueChange={setModel}>
-                  <SelectTrigger id="meta-model-select" aria-label="Modello LLM"><SelectValue /></SelectTrigger>
+                  <SelectTrigger id="meta-model-select" className="app-control" aria-label="Modello LLM"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {modelsData?.models?.map((m: { id: string; name: string }) => (
                       <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
@@ -113,28 +114,28 @@ export default function MetaAdsToolPage() {
 
               <div className="space-y-1.5">
                 <Label htmlFor="meta-product">Prodotto/Servizio</Label>
-                <Input id="meta-product" value={product} onChange={(e) => setProduct(e.target.value)} placeholder="Es. Programma nutrizione 90 giorni" />
+                <Input className="app-control" id="meta-product" value={product} onChange={(e) => setProduct(e.target.value)} placeholder="Es. Programma nutrizione 90 giorni" />
               </div>
 
               <div className="space-y-1.5">
                 <Label htmlFor="meta-audience">Audience</Label>
-                <Input id="meta-audience" value={audience} onChange={(e) => setAudience(e.target.value)} placeholder="Es. Donne 28-45 interessate a fitness" />
+                <Input className="app-control" id="meta-audience" value={audience} onChange={(e) => setAudience(e.target.value)} placeholder="Es. Donne 28-45 interessate a fitness" />
               </div>
 
               <div className="space-y-1.5">
                 <Label htmlFor="meta-offer">Offerta</Label>
-                <Input id="meta-offer" value={offer} onChange={(e) => setOffer(e.target.value)} placeholder="Es. Call gratuita + piano personalizzato" />
+                <Input className="app-control" id="meta-offer" value={offer} onChange={(e) => setOffer(e.target.value)} placeholder="Es. Call gratuita + piano personalizzato" />
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label htmlFor="meta-objective">Obiettivo</Label>
-                  <Input id="meta-objective" value={objective} onChange={(e) => setObjective(e.target.value)} />
+                  <Input className="app-control" id="meta-objective" value={objective} onChange={(e) => setObjective(e.target.value)} />
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="meta-tone-select">Tono</Label>
                   <Select value={tone} onValueChange={(value) => setTone(value as (typeof TONES)[number])}>
-                    <SelectTrigger id="meta-tone-select" aria-label="Tono di comunicazione"><SelectValue /></SelectTrigger>
+                    <SelectTrigger id="meta-tone-select" className="app-control" aria-label="Tono di comunicazione"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {TONES.map((item) => (
                         <SelectItem key={item} value={item}>{item}</SelectItem>
@@ -146,7 +147,7 @@ export default function MetaAdsToolPage() {
 
               <div className="space-y-1.5">
                 <Label htmlFor="meta-angle">Creative angle (opzionale)</Label>
-                <Textarea id="meta-angle" value={angle} onChange={(e) => setAngle(e.target.value)} rows={3} placeholder="Es. approccio problem-solution con social proof" />
+                <Textarea className="app-control" id="meta-angle" value={angle} onChange={(e) => setAngle(e.target.value)} rows={3} placeholder="Es. approccio problem-solution con social proof" />
               </div>
 
               <Button onClick={handleGenerate} disabled={isStreaming || !projectId || !product || !audience || !offer} className="w-full">
@@ -155,7 +156,7 @@ export default function MetaAdsToolPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="app-surface rounded-3xl app-rise" style={{ animationDelay: '90ms' }}>
             <CardHeader>
               <CardTitle className="text-base">Output</CardTitle>
               <CardDescription>Anteprima in streaming con salvataggio automatico artefatto.</CardDescription>
@@ -163,7 +164,7 @@ export default function MetaAdsToolPage() {
             <CardContent className="space-y-3">
               <p className="sr-only" aria-live="polite">{isStreaming ? 'Generazione Meta Ads in corso' : 'Output Meta Ads aggiornato'}</p>
               {content ? (
-                <div className="rounded-md border bg-muted/20 p-4 max-h-[560px] overflow-y-auto" aria-live="polite">
+                <div className="rounded-xl border border-black/10 bg-white/70 p-4 max-h-[560px] overflow-y-auto" aria-live="polite">
                   <p className="text-sm leading-7 whitespace-pre-wrap break-words text-foreground">{outputDisplay.text}</p>
                 </div>
               ) : (

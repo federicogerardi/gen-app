@@ -46,7 +46,8 @@ export default async function ArtifactPage({ params }: { params: Promise<{ id: s
   return (
     <>
       <Navbar />
-      <main className="flex-1 p-6 max-w-6xl mx-auto w-full" id="main-content">
+      <main className="app-shell app-copy flex-1 p-6 max-w-6xl mx-auto w-full relative overflow-hidden" id="main-content">
+        <div className="pointer-events-none absolute inset-0 app-grid-overlay" />
         <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
@@ -56,7 +57,7 @@ export default async function ArtifactPage({ params }: { params: Promise<{ id: s
                 {artifact.status}
               </Badge>
             </div>
-            <h1 className="text-2xl font-semibold">Dettaglio artefatto</h1>
+            <h1 className="app-title text-3xl font-semibold text-slate-900">Dettaglio artefatto</h1>
             <p className="text-sm text-muted-foreground">
               Progetto: {artifact.project?.name ?? 'Progetto non disponibile'}
             </p>
@@ -69,13 +70,13 @@ export default async function ArtifactPage({ params }: { params: Promise<{ id: s
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-          <Card>
+          <Card className="app-surface rounded-3xl app-rise">
             <CardHeader>
               <CardTitle className="text-base">{readableOutput.title}</CardTitle>
             </CardHeader>
             <Separator />
             <CardContent className="pt-4">
-              <div className="rounded-md border bg-muted/20 p-4">
+              <div className="rounded-xl border border-black/10 bg-white/70 p-4">
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   components={{
@@ -98,7 +99,7 @@ export default async function ArtifactPage({ params }: { params: Promise<{ id: s
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="app-surface rounded-3xl app-rise" style={{ animationDelay: '80ms' }}>
             <CardHeader>
               <CardTitle className="text-base">Metadati</CardTitle>
             </CardHeader>
