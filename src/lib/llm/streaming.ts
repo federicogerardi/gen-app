@@ -162,6 +162,7 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
         controller.enqueue(encode({
           type: 'complete',
           artifactId: artifact.id,
+          content: normalized.content,
           workflowType,
           format: normalized.format,
           tokens: { input: inputTokenCount, output: outputTokenCount },

@@ -98,6 +98,7 @@ describe('createArtifactStream SSE contract', () => {
 
     expect(complete).toEqual(expect.objectContaining({
       artifactId: 'art_123',
+      content: 'Normalized content',
       workflowType: 'meta_ads',
       format: 'markdown',
       tokens: { input: 5, output: 20 },

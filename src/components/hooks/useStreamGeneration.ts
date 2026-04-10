@@ -3,6 +3,7 @@ import { useState, useCallback, useRef } from 'react';
 export interface StreamEvent {
   type: 'start' | 'token' | 'progress' | 'complete' | 'error';
   artifactId?: string;
+  content?: string;
   token?: string;
   sequence?: number;
   workflowType?: string | null;
@@ -122,6 +123,7 @@ export function useStreamGeneration() {
               ...prev,
               isStreaming: false,
               artifactId: event.artifactId ?? prev.artifactId,
+              content: typeof event.content === 'string' ? event.content : prev.content,
               workflowType: event.workflowType ?? prev.workflowType,
               format: event.format ?? prev.format,
               estimatedCost: typeof event.cost === 'number' ? event.cost : prev.estimatedCost,
