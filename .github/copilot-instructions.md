@@ -47,6 +47,25 @@ src/
 - Schema DB: [`prisma/schema.prisma`](../prisma/schema.prisma)
 - Specifiche API: [`docs/specifications/api-specifications.md`](../docs/specifications/api-specifications.md)
 
+### Focus operativo corrente: ottimizzazione tool generation
+
+Per attivita su gestione tool e qualita dei generatori, considerare questi confini come default:
+- Route layer (`src/app/api/tools/**`): auth, ownership, rate limit, validazione Zod, mapping errori uniforme.
+- Tool prompt layer (`src/lib/tool-prompts/**`): sorgente markdown versionata + template runtime statici tipizzati.
+- LLM layer (`src/lib/llm/**`): orchestrazione, agent routing, streaming, cost accounting.
+
+Guardrail specifici:
+- Evitare letture filesystem runtime per prompt nelle route (`fs.readFile`): usare `templates.ts` + `loader.ts`.
+- Preservare il contratto API errori `{ error: { code, message } }` e codici standard.
+- Mantenere il check `rateLimit(userId)` prima di chiamate OpenRouter in ogni endpoint di generazione.
+- Allineare i test quando si toccano endpoint/tool prompt (`tests/integration/*-route.test.ts`, `tests/unit/tool-prompts.test.ts`).
+
+Documentazione da linkare (non duplicare):
+- Architettura LLM: [`docs/adrs/001-modular-llm-controller-architecture.md`](../docs/adrs/001-modular-llm-controller-architecture.md)
+- Streaming SSE: [`docs/adrs/002-streaming-vs-batch-responses.md`](../docs/adrs/002-streaming-vs-batch-responses.md)
+- Quota e rate limiting: [`docs/adrs/003-rate-limiting-quota-strategy.md`](../docs/adrs/003-rate-limiting-quota-strategy.md)
+- Priorita implementative correnti: [`docs/implement-index.md`](../docs/implement-index.md)
+
 ---
 
 ## Gotcha critici
@@ -83,7 +102,7 @@ z.record(z.string(), z.unknown())  // ✅ — z.record(z.unknown()) ❌ in v4
 
 ### CI/CD — ordine step critico
 `npx prisma generate` deve precedere `npm run typecheck` e `npm run build`.
-Variabili d'ambiente richieste nel build: `OPENAI_API_KEY`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`.
+Variabili d'ambiente richieste nel build: `OPENROUTER_API_KEY`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`.
 
 ### GitHub CLI PR body — evitare warning shell
 Quando si crea una PR con testo multilinea/markdown, evitare `--body "..."` con backtick nel contenuto: in shell i backtick possono attivare command substitution e generare warning tipo `command not found`.
