@@ -75,27 +75,25 @@ export default async function ArtifactPage({ params }: { params: Promise<{ id: s
               <CardTitle className="text-base">{readableOutput.title}</CardTitle>
             </CardHeader>
             <Separator />
-            <CardContent className="pt-4">
-              <div className="rounded-xl border border-black/10 bg-white/70 p-4">
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  components={{
-                    h1: ({ children }) => <h1 className="mb-3 text-xl font-semibold text-foreground">{children}</h1>,
-                    h2: ({ children }) => <h2 className="mb-2 text-lg font-semibold text-foreground">{children}</h2>,
-                    h3: ({ children }) => <h3 className="mb-2 text-base font-semibold text-foreground">{children}</h3>,
-                    p: ({ children }) => <p className="mb-3 text-sm leading-7 break-words text-foreground">{children}</p>,
-                    ul: ({ children }) => <ul className="mb-3 list-disc space-y-1 pl-5 text-sm text-foreground">{children}</ul>,
-                    ol: ({ children }) => <ol className="mb-3 list-decimal space-y-1 pl-5 text-sm text-foreground">{children}</ol>,
-                    li: ({ children }) => <li className="leading-7">{children}</li>,
-                    strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
-                    em: ({ children }) => <em className="italic">{children}</em>,
-                    blockquote: ({ children }) => <blockquote className="mb-3 border-l-2 pl-3 italic text-muted-foreground">{children}</blockquote>,
-                    code: ({ children }) => <code className="rounded bg-muted px-1 py-0.5 text-xs">{children}</code>,
-                  }}
-                >
-                  {readableOutput.text}
-                </ReactMarkdown>
-              </div>
+            <CardContent className="pt-5 px-6 pb-6 sm:px-7 sm:pb-7">
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  h1: ({ children }) => <h1 className="mb-3 text-xl font-semibold text-foreground">{children}</h1>,
+                  h2: ({ children }) => <h2 className="mb-2 text-lg font-semibold text-foreground">{children}</h2>,
+                  h3: ({ children }) => <h3 className="mb-2 text-base font-semibold text-foreground">{children}</h3>,
+                  p: ({ children }) => <p className="mb-3 text-sm leading-7 break-words text-foreground">{children}</p>,
+                  ul: ({ children }) => <ul className="mb-3 list-disc space-y-1 pl-5 text-sm text-foreground">{children}</ul>,
+                  ol: ({ children }) => <ol className="mb-3 list-decimal space-y-1 pl-5 text-sm text-foreground">{children}</ol>,
+                  li: ({ children }) => <li className="leading-7">{children}</li>,
+                  strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
+                  em: ({ children }) => <em className="italic">{children}</em>,
+                  blockquote: ({ children }) => <blockquote className="mb-3 border-l-2 pl-3 italic text-muted-foreground">{children}</blockquote>,
+                  code: ({ children }) => <code className="rounded bg-muted px-1 py-0.5 text-xs">{children}</code>,
+                }}
+              >
+                {readableOutput.text}
+              </ReactMarkdown>
             </CardContent>
           </Card>
 
