@@ -1,11 +1,18 @@
 import { useState, useCallback, useRef } from 'react';
 
 export interface StreamEvent {
-  type: 'start' | 'token' | 'complete' | 'error';
+  type: 'start' | 'token' | 'progress' | 'complete' | 'error';
   artifactId?: string;
+  content?: string;
   token?: string;
+  sequence?: number;
+  workflowType?: string | null;
+  format?: 'plain' | 'json' | 'markdown';
   tokens?: { input: number; output: number };
+  estimatedTokens?: { input: number; output: number };
+  costEstimate?: number;
   cost?: number;
+  code?: string;
   message?: string;
 }
 
@@ -21,6 +28,10 @@ export interface StreamState {
   content: string;
   artifactId: string | null;
   error: string | null;
+  workflowType: string | null;
+  format: 'plain' | 'json' | 'markdown' | null;
+  sequence: number;
+  estimatedCost: number | null;
 }
 
 interface GenerateOptions {
@@ -33,6 +44,10 @@ export function useStreamGeneration() {
     content: '',
     artifactId: null,
     error: null,
+    workflowType: null,
+    format: null,
+    sequence: 0,
+    estimatedCost: null,
   });
   const abortRef = useRef<AbortController | null>(null);
 
@@ -40,7 +55,16 @@ export function useStreamGeneration() {
     abortRef.current?.abort();
     abortRef.current = new AbortController();
 
-    setState({ isStreaming: true, content: '', artifactId: null, error: null });
+    setState({
+      isStreaming: true,
+      content: '',
+      artifactId: null,
+      error: null,
+      workflowType: null,
+      format: null,
+      sequence: 0,
+      estimatedCost: null,
+    });
 
     try {
       const response = await fetch(options?.endpoint ?? '/api/artifacts/generate', {
@@ -58,22 +82,52 @@ export function useStreamGeneration() {
 
       const reader = response.body!.getReader();
       const decoder = new TextDecoder();
+      let buffer = '';
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        const lines = decoder.decode(value, { stream: true }).split('\n');
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() ?? '';
+
         for (const line of lines) {
           if (!line.startsWith('data: ')) continue;
           const event: StreamEvent = JSON.parse(line.slice(6));
 
           if (event.type === 'start') {
-            setState((prev) => ({ ...prev, artifactId: event.artifactId ?? null }));
+            setState((prev) => ({
+              ...prev,
+              artifactId: event.artifactId ?? null,
+              workflowType: event.workflowType ?? prev.workflowType,
+              format: event.format ?? prev.format,
+            }));
           } else if (event.type === 'token') {
-            setState((prev) => ({ ...prev, content: prev.content + (event.token ?? '') }));
+            setState((prev) => ({
+              ...prev,
+              content: prev.content + (event.token ?? ''),
+              sequence: event.sequence ?? prev.sequence,
+              workflowType: event.workflowType ?? prev.workflowType,
+              format: event.format ?? prev.format,
+            }));
+          } else if (event.type === 'progress') {
+            setState((prev) => ({
+              ...prev,
+              estimatedCost: typeof event.costEstimate === 'number' ? event.costEstimate : prev.estimatedCost,
+              workflowType: event.workflowType ?? prev.workflowType,
+              format: event.format ?? prev.format,
+            }));
           } else if (event.type === 'complete') {
-            setState((prev) => ({ ...prev, isStreaming: false }));
+            setState((prev) => ({
+              ...prev,
+              isStreaming: false,
+              artifactId: event.artifactId ?? prev.artifactId,
+              content: typeof event.content === 'string' ? event.content : prev.content,
+              workflowType: event.workflowType ?? prev.workflowType,
+              format: event.format ?? prev.format,
+              estimatedCost: typeof event.cost === 'number' ? event.cost : prev.estimatedCost,
+            }));
           } else if (event.type === 'error') {
             setState((prev) => ({ ...prev, isStreaming: false, error: event.message ?? 'Unknown error' }));
           }

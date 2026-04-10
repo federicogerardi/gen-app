@@ -5,7 +5,7 @@
 **Base URL**: `https://<your-vercel-domain>/api` (production from `main`; development/preview from PR flow on `dev`)  
 **Authentication**: NextAuth session cookie (browser). Bearer tokens solo per integrazioni server-to-server esplicite.  
 **Content-Type**: `application/json`  
-**Last Updated**: 2026-04-09
+**Last Updated**: 2026-04-10
 
 ---
 
@@ -111,17 +111,23 @@ POST /tools/meta-ads/generate
   "projectId": "proj_123",
   "model": "openai/gpt-4-turbo",
   "tone": "professional",
-  "product": "Programma nutrizione 90 giorni",
-  "audience": "Donne 28-45 interessate a fitness",
-  "offer": "Call gratuita + piano personalizzato",
+  "customerContext": {
+    "product": "Programma nutrizione 90 giorni",
+    "audience": "Donne 28-45 interessate a fitness",
+    "offer": "Call gratuita + piano personalizzato"
+  },
   "objective": "lead generation",
   "angle": "problem-solution con social proof"
 }
 ```
 
+Nota compatibilita:
+- I campi legacy top-level (`product`, `audience`, `offer`) sono ancora accettati e normalizzati server-side in `customerContext`.
+
 **Response**:
-- Stream SSE con eventi standard (`start`, `token`, `complete`, `error`)
+- Stream SSE con eventi standard (`start`, `token`, `complete`, `error`) e metadata additive (`workflowType`, `format`, `sequence`, `progress`, `code`)
 - Crea un artifact di tipo `content`
+- Formato output workflow: `markdown`
 
 ### Generate Funnel Pages Step (Streaming)
 
@@ -137,13 +143,18 @@ POST /tools/funnel-pages/generate
   "model": "openai/gpt-4-turbo",
   "tone": "professional",
   "step": "optin",
-  "product": "Programma coaching performance",
-  "audience": "Founder e professionisti digitali 30-50",
-  "offer": "Sessione strategica gratuita + piano operativo",
+  "customerContext": {
+    "product": "Programma coaching performance",
+    "audience": "Founder e professionisti digitali 30-50",
+    "offer": "Sessione strategica gratuita + piano operativo"
+  },
   "promise": "+30% lead qualificati in 45 giorni",
   "notes": "Vincoli brand..."
 }
 ```
+
+Nota compatibilita:
+- I campi legacy top-level (`product`, `audience`, `offer`) sono ancora accettati e normalizzati server-side in `customerContext`.
 
 **Step-specific constraints**:
 - `step=optin`: nessun contesto precedente richiesto
@@ -151,8 +162,9 @@ POST /tools/funnel-pages/generate
 - `step=vsl`: richiede `optinOutput` e `quizOutput`
 
 **Response**:
-- Stream SSE con eventi standard (`start`, `token`, `complete`, `error`)
+- Stream SSE con eventi standard (`start`, `token`, `complete`, `error`) e metadata additive (`workflowType`, `format`, `sequence`, `progress`, `code`)
 - Crea un artifact di tipo `content`
+- Formato output workflow: `markdown` (per `optin`, `quiz`, `vsl`)
 
 ### Generate Artifact (Streaming)
 

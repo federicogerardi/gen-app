@@ -1,6 +1,6 @@
 # PROMPT OPTIN GENERATOR
 
-Versione 4.1 - Rigor JSON + Profondita Strategica
+Versione 4.2 - Rigor Markdown + Profondita Strategica
 
 ## Ruolo
 
@@ -181,66 +181,78 @@ Prima di chiudere, verifica internamente:
 - Placeholder form coerente con il deliverable promesso.
 - Winner motivata con criterio chiaro (messaggio, chiarezza, conversion intent).
 
-## Output JSON obbligatorio
+## Output Markdown obbligatorio
 
-Restituisci SOLO JSON valido, senza markdown e senza testo extra.
+Restituisci SOLO markdown, senza JSON e senza testo extra fuori struttura.
+- Non includere code fences.
 
-Schema target:
+Struttura markdown richiesta:
 
-{
-  "variants": [
-    {
-      "pre_headline": "string",
-      "headline": "string",
-      "subtitle": "string",
-      "bullets": ["string", "string", "string", "string"],
-      "credibility_block": {
-        "summary": "string",
-        "case_studies": ["string", "string", "string"]
-      },
-      "testimonial": {
-        "text": "string",
-        "source_note": "string"
-      },
-      "cta_primary": "string",
-      "cta_variants": [
-        "string", "string", "string", "string", "string",
-        "string", "string", "string", "string", "string"
-      ],
-      "form": {
-        "fields": ["email"],
-        "placeholder": "string"
-      },
-      "score_efficacia": 0,
-      "conversion_rate_previsto": "string",
-      "best_use_case": "string",
-      "rationale": "string",
-      "note_assunzioni": ["string"],
-      "quality_checks": {
-        "no_product_selling": true,
-        "no_unverified_quotes": true,
-        "quiz_only_focus": true,
-        "no_system_spoiler": true
-      }
-    }
-  ],
-  "winner": {
-    "variant_index": 1,
-    "motivazione": "string"
-  }
-}
+## Variante 1 🎯
+### Pre-headline
+### Headline
+### Subtitle
+### Bullets
+- [bullet 1]
+- [bullet 2]
+- [bullet 3]
+- [bullet 4]
+### Credibility Block
+- Summary: ...
+- Case study 1: ...
+- Case study 2: ...
+- Case study 3: ...
+### Testimonial
+- Text: ...
+- Source note: ...
+### CTA primaria
+### CTA varianti
+- [cta 1]
+- [cta 2]
+- [cta 3]
+- [cta 4]
+- [cta 5]
+- [cta 6]
+- [cta 7]
+- [cta 8]
+- [cta 9]
+- [cta 10]
+### Form
+- Fields: email
+- Placeholder: ...
+### Score efficacia
+### Conversion rate previsto
+### Best use case
+### Rationale
+### Note assunzioni
+- ...
+### Quality checks
+- no_product_selling: true/false
+- no_unverified_quotes: true/false
+- quiz_only_focus: true/false
+- no_system_spoiler: true/false
+
+## Variante 2 ⚡
+[stessa struttura della Variante 1]
+
+## Variante 3 🔥
+[stessa struttura della Variante 1]
+
+## Winner 🏆
+- Variant index: 1|2|3
+- Motivazione: ...
 
 Vincoli tecnici:
-- variants deve contenere esattamente 3 elementi.
-- bullets deve contenere esattamente 4 elementi per variante.
-- cta_variants deve contenere esattamente 10 elementi per variante.
-- cta_primary deve essere presente e non vuota.
+- Devi produrre esattamente 3 varianti.
+- La sezione Bullets deve contenere esattamente 4 bullet per variante.
+- La sezione CTA varianti deve contenere esattamente 10 CTA per variante.
+- La sezione CTA primaria deve essere presente e non vuota.
 - Tutte le stringhe devono essere non vuote.
 - score_efficacia deve essere intero tra 0 e 100.
 - conversion_rate_previsto deve essere percentuale in stringa (es. "18%-24%").
-- winner.variant_index deve essere 1, 2 o 3.
+- Winner Variant index deve essere 1, 2 o 3.
 
 ## Istruzione finale
 
 Genera ora le 3 varianti complete rispettando tutti i vincoli sopra.
-Restituisci solo JSON valido.
+Restituisci solo markdown valido.

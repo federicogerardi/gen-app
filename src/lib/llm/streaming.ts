@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 import { LLMOrchestrator } from './orchestrator';
 import type { ArtifactType } from './agents/base';
 import { calculateCost } from './costs';
@@ -15,6 +16,8 @@ interface StreamParams {
   promptOverride?: string;
 }
 
+type OutputFormat = 'plain' | 'json' | 'markdown';
+
 function extractWorkflowType(input: unknown): string | null {
   if (!input || typeof input !== 'object' || Array.isArray(input)) return null;
 
@@ -22,9 +25,19 @@ function extractWorkflowType(input: unknown): string | null {
   return typeof maybe === 'string' ? maybe : null;
 }
 
+function extractOutputFormat(input: unknown): OutputFormat {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return 'plain';
+
+  const maybe = (input as Record<string, unknown>).outputFormat;
+  if (maybe === 'markdown') return 'markdown';
+  if (maybe === 'json') return 'json';
+  return 'plain';
+}
+
 export async function createArtifactStream(params: StreamParams): Promise<ReadableStream> {
   const { userId, projectId, type, model, input, promptOverride } = params;
   const workflowType = params.workflowType ?? extractWorkflowType(input);
+  const outputFormat = extractOutputFormat(input);
 
   const artifact = await db.artifact.create({
     data: {
@@ -45,17 +58,46 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
         return new TextEncoder().encode(line);
       };
 
-      controller.enqueue(encode({ type: 'start', artifactId: artifact.id }));
+      controller.enqueue(encode({
+        type: 'start',
+        artifactId: artifact.id,
+        workflowType,
+        format: outputFormat,
+      }));
 
       let accumulated = '';
       let outputTokenCount = 0;
       let inputTokenCount = 0;
+      let tokenSequence = 0;
 
       try {
         for await (const chunk of orchestrator.generateStream({ type, model, input, promptOverride })) {
           accumulated += chunk.token;
           outputTokenCount++;
-          controller.enqueue(encode({ type: 'token', token: chunk.token }));
+          tokenSequence++;
+          const estimatedInputTokens = Math.ceil(accumulated.length / 4);
+          const costEstimate = calculateCost(model, estimatedInputTokens, outputTokenCount);
+
+          controller.enqueue(encode({
+            type: 'token',
+            token: chunk.token,
+            sequence: tokenSequence,
+            workflowType,
+            format: outputFormat,
+          }));
+
+          if (tokenSequence % 20 === 0) {
+            controller.enqueue(encode({
+              type: 'progress',
+              workflowType,
+              format: outputFormat,
+              estimatedTokens: {
+                input: estimatedInputTokens,
+                output: outputTokenCount,
+              },
+              costEstimate,
+            }));
+          }
 
           // Persist every 20 tokens to avoid losing progress on crash
           if (outputTokenCount % 20 === 0) {
@@ -69,11 +111,27 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
         // Estimate input tokens (rough: 1 token ≈ 4 chars of prompt)
         inputTokenCount = Math.ceil(accumulated.length / 4);
         const cost = calculateCost(model, inputTokenCount, outputTokenCount);
+        const normalized = orchestrator.normalizeOutput({
+          rawContent: accumulated,
+          type,
+          workflowType,
+        });
+
+        if (normalized.warning) {
+          logger.warn(
+            {
+              artifactId: artifact.id,
+              workflowType,
+              warning: normalized.warning,
+            },
+            'Artifact output normalization fallback applied',
+          );
+        }
 
         await db.artifact.update({
           where: { id: artifact.id },
           data: {
-            content: accumulated,
+            content: normalized.content,
             status: 'completed',
             inputTokens: inputTokenCount,
             outputTokens: outputTokenCount,
@@ -103,6 +161,10 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
 
         controller.enqueue(encode({
           type: 'complete',
+          artifactId: artifact.id,
+          content: normalized.content,
+          workflowType,
+          format: normalized.format,
           tokens: { input: inputTokenCount, output: outputTokenCount },
           cost,
         }));
@@ -125,7 +187,13 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
           },
         });
 
-        controller.enqueue(encode({ type: 'error', message }));
+        controller.enqueue(encode({
+          type: 'error',
+          code: 'INTERNAL_ERROR',
+          message,
+          workflowType,
+          format: outputFormat,
+        }));
       } finally {
         controller.close();
       }

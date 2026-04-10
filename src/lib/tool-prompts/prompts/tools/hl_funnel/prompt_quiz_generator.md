@@ -1,6 +1,6 @@
 # PROMPT QUIZ GENERATOR
 
-Versione 4.1 - Rigor JSON + Profondita Strategica
+Versione 4.2 - Rigor Markdown + Profondita Strategica
 
 ## Ruolo
 
@@ -151,90 +151,76 @@ Esempi lessicali:
 - Pattern interrupt.
 - Social proof implicita.
 
-## Output JSON obbligatorio (compatibile con funnel_hls)
+## Output Markdown obbligatorio (compatibile con funnel_hls)
 
-Restituisci SOLO JSON valido, senza markdown e senza testo extra.
+Restituisci SOLO markdown, senza JSON e senza testo extra fuori struttura.
+- Non includere code fences.
 
-Schema target:
+Struttura markdown richiesta:
 
-{
-  "business_context": {
-    "business_type": "B2B|B2C",
-    "email_already_collected": true,
-    "delivery_model": "string"
-  },
-  "questions": [
-    {
-      "id": "q1",
-      "category": "attraction|disqualification|false_belief_vehicle|false_belief_internal|false_belief_external|segmentation|urgency|qualitative_open|contact",
-      "question_type": "single_choice|open_text|contact",
-      "required": true,
-      "question": "string",
-      "options": [
-        {
-          "text": "string",
-          "score": 4,
-          "qualifies": true,
-          "cluster_tag": "segmento-a"
-        }
-      ]
-    }
-  ],
-  "segments": [
-    {
-      "name": "segmento-a",
-      "description": "string",
-      "criteria": "string"
-    }
-  ],
-  "disqualification_map": [
-    {
-      "trigger": "string",
-      "redirect_message": "string",
-      "redirect_offer": "string"
-    }
-  ],
-  "results_copy": {
-    "segmento-a": {
-      "headline": "string",
-      "hook": "string",
-      "cta": "string"
-    }
-  },
-  "false_belief_breakdown": {
-    "vehicle": ["string"],
-    "internal": ["string"],
-    "external": ["string"],
-    "priority": ["string"]
-  },
-  "lead_magnet_strategy": [
-    {
-      "segment": "segmento-a",
-      "title": "string",
-      "format": "VSL|PDF|Case Study|Demo",
-      "next_step": "string"
-    }
-  ],
-  "insights": {
-    "angles": ["string"],
-    "pain_points": ["string"],
-    "follow_up_notes": ["string"]
-  },
-  "analytics": {
-    "kpis": ["string"],
-    "drop_off_risks": ["string"],
-    "ab_tests": ["string"],
-    "success_metrics": ["string"]
-  },
-  "note_assunzioni": ["string"],
-  "quality_checks": {
-    "email_conditional_respected": true,
-    "operational_capacity_question_present": true,
-    "open_question_present": true,
-    "contact_questions_final": true,
-    "max_20_questions_respected": true
-  }
-}
+## Business Context 🧭
+- Business type: B2B|B2C
+- Email already collected: true|false
+- Delivery model: ...
+
+## Questions ❓
+Per ogni domanda usa questo formato:
+### Q1
+- Category: attraction|disqualification|false_belief_vehicle|false_belief_internal|false_belief_external|segmentation|urgency|qualitative_open|contact
+- Question type: single_choice|open_text|contact
+- Required: true|false
+- Question: ...
+- Options:
+  - text: ... | score: ... | qualifies: true|false | cluster_tag: ...
+
+## Segments 🧩
+- Segment name: ...
+- Description: ...
+- Criteria: ...
+
+## Disqualification Map 🚧
+- Trigger: ...
+- Redirect message: ...
+- Redirect offer: ...
+
+## Results Copy ✍️
+- Segment: ...
+- Headline: ...
+- Hook: ...
+- CTA: ...
+
+## False Belief Breakdown 🧠
+- Vehicle: ...
+- Internal: ...
+- External: ...
+- Priority: ...
+
+## Lead Magnet Strategy 🎁
+- Segment: ...
+- Title: ...
+- Format: VSL|PDF|Case Study|Demo
+- Next step: ...
+
+## Insights 🔍
+- Angles: ...
+- Pain points: ...
+- Follow-up notes: ...
+
+## Analytics 📊
+- KPIs: ...
+- Drop-off risks: ...
+- A/B tests: ...
+- Success metrics: ...
+
+## Note Assunzioni 📝
+- ...
+
+## Quality Checks ✅
+- email_conditional_respected: true|false
+- operational_capacity_question_present: true|false
+- open_question_present: true|false
+- contact_questions_final: true|false
+- max_20_questions_respected: true|false
 
 Vincoli tecnici obbligatori:
 - questions tra 5 e 20 elementi.
@@ -244,7 +230,7 @@ Vincoli tecnici obbligatori:
 - Almeno 1 domanda open_text o contact.
 - Almeno 1 domanda category=qualitative_open oppure question_type=open_text.
 - Domande anagrafiche finali con question_type=contact.
-- Nessun testo extra fuori JSON.
+- Nessun testo extra fuori markdown.
 
 ## Requisiti contenutistici minimi
 
@@ -267,4 +253,4 @@ Se rischi di superare 20 domande, riduci prima:
 ## Istruzione finale
 
 Genera ora il quiz completo rispettando rigorosamente schema e vincoli.
-Restituisci solo JSON valido.
+Restituisci solo markdown valido.

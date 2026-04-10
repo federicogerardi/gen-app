@@ -19,6 +19,12 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
   - Rafforzato fallback human-readable con nuovi test unit.
   - Da completare la convergenza UX completa su tutte le viste/workflow.
 
+- **Tooling generation optimization (Meta Ads + Funnel Pages)**: `COMPLETATO (PR-1..PR-6)`
+  - Completati schema unificato input, prompt/runtime parity, normalizzazione output, SSE metadata additive, consolidamento route/error mapping e hardening finale.
+  - Standard output workflow tool allineato a `outputFormat: markdown` (Meta Ads + Funnel Pages).
+  - Validazione finale locale: `npm run lint`, `npm run typecheck`, `npm run test` (28/28 suite), `npm run build` tutti `PASS`.
+  - File: docs/implementation/tooling-generation-refactor-plan.md
+
 - **Deploy Vercel**: `COMPLETATO (baseline)`
   - Branch `main` in produzione.
   - Branch `dev` come ramo di sviluppo per PR.
@@ -36,6 +42,11 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 ---
 
 ## Backend/LLM
+- **Tooling generation refactor framework (core app)**
+  - Prioritario per allineare processo Orchestrator -> Agent -> Provider, contratto input/output e consistenza streaming.
+  - Esecuzione prevista in PR incrementali (PR-1..PR-6) nel branch dedicato `feat/tooling-generation-optimization`.
+  - File: docs/implementation/tooling-generation-refactor-plan.md, docs/adrs/001-modular-llm-controller-architecture.md, docs/specifications/api-specifications.md
+
 - **Structured logging & observability**
   - Implementare logging strutturato (Pino), Sentry, performance metrics.
   - Bloccante per debugging/monitoraggio.
@@ -100,6 +111,8 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 2. Structured logging & Sentry (`IN CORSO - baseline completata`)
 3. Refactoring preview artefatti (`IN CORSO`)
 4. Stabilizzazione post-deploy e validazione su Vercel
+
+Nota operativa: il track tooling generation e chiuso (`PR-1..PR-6` completate). Per dettaglio storico fasi/rollback: `docs/implementation/tooling-generation-refactor-plan.md`.
 
 ---
 
@@ -170,6 +183,8 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 ---
 
 **Prossimi step consigliati:**
+- Mantenere monitoraggio runtime su stream/error-rate dei tool Meta Ads e Funnel Pages dopo il refactor completato.
+- Estendere test E2E sui flussi reali auth/db per consolidare il gate di regressione end-to-end.
 - Mantenere coverage >80% sul perimetro attuale e introdurre guardrail anti-regressione nei PR check.
 - Estendere coverage su flussi E2E critici (login reale, generazione completa, gestione quota/admin).
 - Estendere observability (Sentry + logging) alle route non ancora coperte e aggiungere metriche performance.

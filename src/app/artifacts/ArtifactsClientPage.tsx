@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { formatArtifactPreview, getArtifactDisplayTypeLabel, getEffectiveArtifactWorkflowType } from '@/lib/artifact-preview';
+import { getArtifactDisplayTypeLabel, getEffectiveArtifactWorkflowType } from '@/lib/artifact-preview';
 
 type ProjectOption = {
   id: string;
@@ -154,12 +154,6 @@ export function ArtifactsClientPage({ projects }: Props) {
           <div className="space-y-3" role="list" aria-label="Lista artefatti">
             {artifacts.map((artifact) => {
               const workflowType = getEffectiveArtifactWorkflowType(artifact.workflowType, artifact.input);
-              const preview = formatArtifactPreview({
-                type: artifact.type,
-                status: artifact.status,
-                content: artifact.content,
-                workflowType,
-              });
               const typeLabel = getArtifactDisplayTypeLabel({
                 type: artifact.type,
                 workflowType,
@@ -183,12 +177,6 @@ export function ArtifactsClientPage({ projects }: Props) {
                   <CardTitle className="text-base">{artifact.project?.name ?? 'Progetto non disponibile'}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div>
-                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">{preview.label}</p>
-                    <p className="text-sm text-muted-foreground line-clamp-4" aria-label={`Anteprima artefatto ${artifact.id}`}>
-                      {preview.text}
-                    </p>
-                  </div>
                   <div className="flex flex-wrap gap-2">
                     <Button className="w-full sm:w-auto" size="sm" variant="outline" onClick={() => router.push(`/artifacts/${artifact.id}`)} aria-label={`Apri dettaglio artefatto ${artifact.id}`}>
                       Apri dettaglio
