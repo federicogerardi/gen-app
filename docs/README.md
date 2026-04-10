@@ -21,8 +21,8 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 ### implementation/
 - [implementation-plan.md](implementation/implementation-plan.md): Implementation plan dettagliato.
 
-### improvement/
-- [improvement-roadmap.md](improvement/improvement-roadmap.md): Roadmap di miglioramento e refactoring.
+### archive/
+- Documenti storici e snapshot superseded (review, roadmap, follow-up PR).
 
 ### prompts/
 - [README.md](prompts/README.md): Indice e linee guida per i prompt.
@@ -30,10 +30,6 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 - [meta_ads/](prompts/meta_ads/): Prompt e strumenti per Meta Ads.
 - [tools/hl_funnel/](prompts/tools/hl_funnel/): Prompt generator specifici HL Funnel.
 - [tools/meta_ads/](prompts/tools/meta_ads/): Prompt generator specifici Meta Ads.
-
-### review/
-- [architecture-review.md](review/architecture-review.md): Review architetturale.
-- [copilot-review-followups.md](review/copilot-review-followups.md): Follow-up e azioni da review Copilot.
 
 ### specifications/
 - [api-specifications.md](specifications/api-specifications.md): Specifiche API e contratti.

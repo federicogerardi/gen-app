@@ -1,7 +1,7 @@
 # Blueprint: LLM Artifact Generation Hub
 
 **Version**: 1.0  
-**Status**: CORE MVP IMPLEMENTED + TOOL MODULARIZATION IN PROGRESS
+**Status**: CORE MVP IMPLEMENTED + ACTIVE TOOL WORKFLOWS OPERATIONAL
 **Target Audience**: AI Development Agents  
 **Last Updated**: 2026-04-09
 
@@ -54,13 +54,13 @@ A modular web application that allows non-technical users (MediaBuyers, SEO Spec
         │ │ - Route requests to agents               │   │
         │ │ - Handle streaming responses             │   │
         │ │ - Rate limit & quota check               │   │
-        │ │ - Resolve markdown prompt templates      │   │
+        │ │ - Resolve static typed prompt templates  │   │
         │ └──────┬─────────────────────────────────┬─┘   │
         │        │                                 │      │
-        │ ┌──────▼────────┬──────────┬────────┬───▼────┐  │
-        │ │ Content Agent │ SEO Agent│CodeGen│Custom  │  │
-        │ │               │ Agent    │Agent  │Agents  │  │
-        │ └──────┬────────┴──────────┴────────┴───┬────┘  │
+        │ ┌──────▼───────────┬───────────────┬────▼────┐  │
+        │ │ Meta Ads Workflow│ Funnel Workflow│ Generic │  │
+        │ │ Agent/Prompt     │ Agent/Prompt   │ Agents  │  │
+        │ └──────┬───────────┴───────────────┴────┬────┘  │
         │        │                                 │      │
         │ ┌──────▼─────────────────────────────────▼────┐  │
         │ │ OpenRouter Provider                         │  │
@@ -157,7 +157,7 @@ model Artifact {
   userId: string                // Creator
   projectId: string             // Container
   
-  type: string                  // 'content' | 'seo' | 'code' | custom...
+  type: string                  // artifact category (currently 'content' in active tool flows)
   model: string                 // 'openai/gpt-4-turbo', 'anthropic/claude-3-opus', etc.
   
   // Input/Output
@@ -210,10 +210,9 @@ model QuotaHistory {
 **Responsibility**: Coordination, not business logic
 
 #### Agents (Pluggable Tools)
-- `ContentAgent`: Marketing copy, blog posts
-- `SEOAgent`: Keyword analysis, meta descriptions
-- `CodeAgent`: Code generation, boilerplate
-- Custom agents can be added
+- Active workflow perimeter: Meta Ads + Funnel Pages
+- Generic agent layer remains available for extensibility and legacy artifact generation paths
+- New tool workflows should be integrated via dedicated prompt builders + orchestrator/provider chain
 
 #### Tool Prompt Layer (Server-only)
 - `src/lib/tool-prompts/registry.ts`: registry centralizzato dei template

@@ -5,12 +5,10 @@ Data: 2026-04-08
 Input di partenza: [docs/ux-strategy.md](docs/ux-strategy.md)  
 Target utenti: SEO Specialist, MediaBuyer
 
-Stato avanzamento implementazione (2026-04-08):
+Stato avanzamento implementazione:
 
-- Sprint 1: completato
-- Sprint 2: completato
-- Sprint 3: completato
-- Sprint 4: completato
+- Questo documento contiene principi UX e linee guida operative.
+- Lo stato sprint aggiornato e centralizzato e in `docs/implement-index.md`.
 
 ---
 

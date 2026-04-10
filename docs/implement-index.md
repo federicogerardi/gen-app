@@ -31,7 +31,7 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
   - Consolidare e mantenere il livello raggiunto nelle prossime PR.
 - **Espansione test E2E e flussi reali auth/db**: `IN CORSO`
   - Estendere i test su login reale, generazione end-to-end, quota/admin e regression UX preview.
-  - File: docs/improvement/improvement-roadmap.md, docs/review/architecture-review.md, docs/ux/gui-refactor-plan.md
+  - File: docs/archive/improvement-roadmap.md, docs/archive/architecture-review.md, docs/ux/gui-refactor-plan.md
 
 ---
 
@@ -39,19 +39,19 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 - **Structured logging & observability**
   - Implementare logging strutturato (Pino), Sentry, performance metrics.
   - Bloccante per debugging/monitoraggio.
-  - File: docs/improvement/improvement-roadmap.md
+  - File: docs/archive/improvement-roadmap.md
 
 - **Error handling avanzato**
   - Retry logic, circuit breaker, error boundaries custom, fallback provider.
-  - File: docs/improvement/improvement-roadmap.md, docs/review/architecture-review.md
+  - File: docs/archive/improvement-roadmap.md, docs/archive/architecture-review.md
 
 - **Database optimization**
   - Indici, constraints, soft deletes.
-  - File: docs/improvement/improvement-roadmap.md
+  - File: docs/archive/improvement-roadmap.md
 
 - **Quota management**
   - Automatizzare reset mensile, warning 80%, endpoint admin quota, email alert.
-  - File: docs/improvement/improvement-roadmap.md, docs/review/architecture-review.md
+  - File: docs/archive/improvement-roadmap.md, docs/archive/architecture-review.md
 
 ---
 
@@ -79,14 +79,14 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 - **Vercel post-deployment hardening & monitoring**
   - Consolidare health checks, monitoring, runbook e smoke validation.
   - Prioritario per stabilizzazione post go-live.
-  - File: docs/improvement/improvement-roadmap.md, docs/implementation/implementation-plan.md
+  - File: docs/archive/improvement-roadmap.md, docs/implementation/implementation-plan.md
 
 ---
 
 ## Documentazione
 - **Allineamento documentazione vs codice**
   - Aggiornare api-specifications.md, blueprint.md, docstring, runbook.
-  - File: docs/review/copilot-review-followups.md, docs/review/architecture-review.md
+  - File: docs/archive/copilot-review-followups.md, docs/archive/architecture-review.md
 
 ---
 

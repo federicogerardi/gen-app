@@ -4,7 +4,7 @@ Full-stack TypeScript app per generazione di artifact AI via OpenRouter, con per
 
 **Stack**: Next.js 16 · React 19 · TypeScript · PostgreSQL · Prisma 7 · NextAuth v5 · shadcn/ui · Tailwind v4 · TanStack Query v5 · Zod v4 · @upstash/ratelimit · OpenRouter · Vercel
 
-**Stato progetto**: Funzionale in locale, CI/CD passing. Coverage Jest attuale su scope corrente: Statements 82.96%, Branches 70.31%, Functions 78.91%, Lines 85.96%. Deploy eseguito su Vercel: branch `main` in produzione, branch `dev` come ramo sviluppo per PR. Pending: consolidamento E2E/auth-db coverage, logging strutturato completo, UX polish.
+**Stato progetto**: Funzionale in locale, CI/CD passing. Deploy eseguito su Vercel: branch `main` in produzione, branch `dev` come ramo sviluppo per PR. Per metriche di coverage e backlog corrente fare riferimento a `docs/implement-index.md`.
 Vedi [`docs/implement-index.md`](../docs/implement-index.md) per le priorità correnti.
 
 ---
@@ -123,12 +123,10 @@ Linea guida:
 
 ---
 
-## Priorità correnti (da `implement-index.md`)
+## Priorità correnti
 
-1. **Stabilizzazione test E2E e auth/db real-flow** — bloccante per produzione
-2. **Logging strutturato + Sentry** — bloccante per debugging in produzione
-3. **Refactoring preview artifact** — nessun JSON raw esposto in UI
-4. **Hardening post-deploy Vercel** — con health checks, monitoring e runbook
+Le priorità operative sono mantenute in modo centralizzato in `docs/implement-index.md`.
+Evitare di duplicare in questo file liste temporanee o snapshot di backlog.
 
 ---
 
