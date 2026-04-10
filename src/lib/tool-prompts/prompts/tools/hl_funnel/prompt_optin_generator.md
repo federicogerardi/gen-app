@@ -167,6 +167,39 @@ Ogni variante deve includere:
 - Credibilita: esperienza, volume gestito, prove sociali.
 - Promessa optin: risultato specifico ottenibile dopo il quiz.
 
+## Benchmark di qualita
+
+Usa questi esempi come calibratore del livello di specificita e persuasivita attesi. Il copy che generi deve essere almeno allo stesso livello.
+
+### Headline alta qualita
+
+"Questi Lead Fanno Schifo": Scopri Perche i Tuoi Lead Non Si Convertono
+E Gli Errori Gravi Che Probabilmente Stai Commettendo (Test Gratuito 4 Minuti)
+
+Alternativa: Il Problema Non Sono I Lead. Non Sono I Venditori. Non Sei Tu.
+E' Qualcosa Nel Tuo Sistema. Scopri Cosa. (Test 4 Minuti)
+
+### Bullets alta qualita
+
+- Scopri perche il 50-70% delle tue chiamate finisce con "ci devo pensare" o "mandami preventivo"
+- Identifica gli errori gravi nel tuo processo di acquisizione che fanno perdere tempo ai venditori
+- Ricevi video personalizzato gratuito che ti mostra cosa non sta funzionando (senza svelare il sistema)
+- Scopri se il problema e il tuo sistema o veramente i lead
+
+### Blocco credibilita alta qualita
+
+Aziende con venditori frustrati e lead freddi hanno scoperto gli errori nel loro sistema e:
+- +177% vendite evitando 3.600 chiamate inutili
+- -54% costo cliente, 1.467 chiamate evitate
+- Fatturato triplicato in un anno
+Non hanno cambiato venditori. Non hanno cambiato prodotto. Hanno cambiato IL SISTEMA.
+
+### Pre-headline alta qualita
+
+"Se i tuoi venditori passano piu di 3 ore al giorno su chiamate che finiscono a vuoto..."
+
+Nota di calibrazione: ogni elemento deve essere SPECIFICO (numeri concreti dove disponibili), CURIOSO (apre un gap senza chiuderlo), ADERENTE al problema reale del target — mai generico o filler.
+
 ## Checklist interna obbligatoria
 
 Prima di chiudere, verifica internamente:

@@ -396,8 +396,8 @@ Restituisci SOLO markdown, con script VSL completo e recitabile.
 Vincoli output rigidi:
 - Niente JSON
 - Niente code fences
-- Niente note meta, disclaimer o spiegazioni fuori script
 - Usa heading markdown per i 10 elementi
+- Niente commenti meta o spiegazioni fuori script, ad eccezione di una sezione finale ## Note Assunzioni per documentare i dati mancanti compilati con assunzioni conservative
 - Usa emoji leggere nei titoli se utili
 - Zero metafrasi tipo "[PAUSA]" – incorpora pause nel ritmo naturale
 - Mantieni testo pronto per telecamera, senza blocchi tecnici

@@ -107,6 +107,18 @@ Esempi lessicali:
      - Se done-for-you: distinguere chi vuole delegare vs chi vuole fare da solo.
      - Se fai-da-te/corso: distinguere timore tecnico vs motivazione ad apprendere.
 
+   Esempi opzioni per done-for-you:
+   - "'Preferisco imparare a farlo da solo, così ho il controllo totale'" → score 0 (squalifica: non cercano delega)
+   - "'Non ho tempo né voglia di imparare, voglio qualcuno che faccia tutto per me'" → score 3 (profilo ideale)
+   - "'Ho paura di affidarmi a qualcun altro, ma so di non avere le competenze'" → score 2 (ideale con obiezione da gestire)
+   - "'Vorrei capire il metodo prima di delegarlo completamente'" → score 1 (marginale, da educare)
+
+   Esempi opzioni per fai-da-te/corso:
+   - "'Ho paura di non essere abbastanza tecnico per implementarlo'" → score 2 (da rassicurare con supporto)
+   - "'Sono motivato a imparare, anche se richiede impegno e disciplina'" → score 3 (profilo ideale)
+   - "'Ho già provato cose simili e non ho mai finito'" → score 1 (marginale, richiede qualificazione)
+   - "'Non ho tempo per un corso, voglio risultati immediati'" → score 0 (squalifica: aspettativa incompatibile)
+
 6. False belief esterne (2-3).
    - Ostacoli esterni percepiti: mercato, timing, concorrenza.
 
@@ -177,11 +189,15 @@ Per ogni domanda usa questo formato:
 - Segment name: ...
 - Description: ...
 - Criteria: ...
+- Psychographic profile: ... (motivazioni dominanti, paure primarie, livello di sofisticazione, auto-percezione)
+- Overlap management: ... (criterio di tie-break in caso di punteggio uguale con un altro segmento)
 
 ## Disqualification Map 🚧
 - Trigger: ...
-- Redirect message: ...
+- Disqualification type: budget_low|role_mismatch|capacity_gap|sector_mismatch|wrong_stage
+- Redirect message: ... (empatico, specifico per tipo di squalifica — non generico)
 - Redirect offer: ...
+- Estimated disqualified %: ...
 
 ## Results Copy ✍️
 - Segment: ...
@@ -199,6 +215,8 @@ Per ogni domanda usa questo formato:
 - Segment: ...
 - Title: ...
 - Format: VSL|PDF|Case Study|Demo
+- Hook: ... (angolo emozionale o gap di curiosità che apre il lead magnet per questo cluster)
+- Messaging: ... (promessa specifica e linguaggio adatto a questo cluster)
 - Next step: ...
 
 ## Insights 🔍
