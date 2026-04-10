@@ -10,28 +10,46 @@ Crea 3 varianti di Facebook/Instagram Ads:
 
 Vincoli obbligatori:
 - Produci esattamente 3 varianti distinte, persuasive e pronte all'uso.
-- Restituisci solo JSON object valido.
-- Per ogni variante includi i campi: headline, primary_text, description, cta.
+- Restituisci solo markdown, senza JSON e senza testo fuori struttura.
+- Per ogni variante includi: headline, primary_text, description, cta.
 - headline: titolo breve e d'impatto (max 40 caratteri).
 - primary_text: corpo dell'annuncio (lunghezza coerente con la variante).
 - description: testo descrittivo secondario visibile sotto il link/immagine (max 30 parole).
 - cta: testo del pulsante call-to-action (es. Scopri di più, Prenota ora, Inizia gratis).
-- Evita placeholder e testo extra fuori dal JSON.
+- Evita placeholder.
+- Non includere code fences.
 
-Formato atteso:
+Formato markdown atteso:
 
-```json
-{
-  "variants": [
-    {
-      "headline": "string",
-      "primary_text": "string",
-      "description": "string",
-      "cta": "string"
-    }
-  ]
-}
-```
+## Variante 1 - Long Form 🎯
+### Headline
+[testo]
+### Primary Text
+[testo]
+### Description
+[testo]
+### CTA
+[testo]
+
+## Variante 2 - Medium ⚡
+### Headline
+[testo]
+### Primary Text
+[testo]
+### Description
+[testo]
+### CTA
+[testo]
+
+## Variante 3 - Short 🔥
+### Headline
+[testo]
+### Primary Text
+[testo]
+### Description
+[testo]
+### CTA
+[testo]
 
 Contesto del brand/offerta:
 

@@ -1,101 +1,77 @@
-import { NextResponse } from 'next/server';
-import { z } from 'zod';
-import { auth } from '@/lib/auth';
-import { db } from '@/lib/db';
-import { rateLimit } from '@/lib/rate-limit';
 import { createArtifactStream } from '@/lib/llm/streaming';
 import {
   buildFunnelOptinPrompt,
   buildFunnelQuizPrompt,
   buildFunnelVslPrompt,
 } from '@/lib/tool-prompts/funnel-pages';
+import {
+  enforceUsageGuards,
+  parseAndValidateRequest,
+  requireAuthenticatedUser,
+  requireOwnedProject,
+} from '@/lib/tool-routes/guards';
+import { serviceUnavailableError, sseResponse } from '@/lib/tool-routes/responses';
+import { funnelPagesRequestSchema, getLengthByFunnelStep } from '@/lib/tool-routes/schemas';
 
-const ALLOWED_MODELS = ['openai/gpt-4-turbo', 'anthropic/claude-3-opus', 'mistralai/mistral-large'];
+async function buildFunnelPrompt(payload: {
+  step: 'optin' | 'quiz' | 'vsl';
+  customerContext: { product: string; audience: string; offer: string };
+  promise: string;
+  tone: 'professional' | 'casual' | 'formal' | 'technical';
+  notes?: string;
+  optinOutput?: string;
+  quizOutput?: string;
+}) {
+  const briefing = {
+    product: payload.customerContext.product,
+    audience: payload.customerContext.audience,
+    offer: payload.customerContext.offer,
+    promise: payload.promise,
+    tone: payload.tone,
+    notes: payload.notes,
+  };
 
-const schema = z.object({
-  projectId: z.string().cuid(),
-  model: z.string().refine((m) => ALLOWED_MODELS.includes(m), { message: 'Unsupported model' }),
-  tone: z.enum(['professional', 'casual', 'formal', 'technical']),
-  step: z.enum(['optin', 'quiz', 'vsl']),
-  product: z.string().min(3),
-  audience: z.string().min(3),
-  offer: z.string().min(3),
-  promise: z.string().min(3),
-  notes: z.string().optional(),
-  optinOutput: z.string().optional(),
-  quizOutput: z.string().optional(),
-});
+  if (payload.step === 'optin') {
+    return buildFunnelOptinPrompt(briefing);
+  }
 
-function getLengthByStep(step: 'optin' | 'quiz' | 'vsl') {
-  if (step === 'optin') return 1200;
-  if (step === 'quiz') return 1400;
-  return 3200;
+  if (payload.step === 'quiz') {
+    return buildFunnelQuizPrompt({ ...briefing, optinOutput: payload.optinOutput! });
+  }
+
+  return buildFunnelVslPrompt({
+    ...briefing,
+    optinOutput: payload.optinOutput!,
+    quizOutput: payload.quizOutput!,
+  });
 }
 
 export async function POST(request: Request) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: { code: 'UNAUTHORIZED', message: 'Authentication required' } }, { status: 401 });
+  const authResult = await requireAuthenticatedUser();
+  if (!authResult.ok) {
+    return authResult.response;
   }
 
-  const userId = session.user.id;
-  const body = await request.json().catch(() => null);
-  const parsed = schema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: { code: 'VALIDATION_ERROR', message: 'Invalid input', details: parsed.error.flatten() } }, { status: 400 });
+  const userId = authResult.data.userId;
+
+  const parsed = await parseAndValidateRequest(request, funnelPagesRequestSchema);
+  if (!parsed.ok) {
+    return parsed.response;
   }
 
   const payload = parsed.data;
 
-  if (payload.step === 'quiz' && !payload.optinOutput) {
-    return NextResponse.json({ error: { code: 'VALIDATION_ERROR', message: 'optinOutput is required for quiz step' } }, { status: 400 });
-  }
-  if (payload.step === 'vsl' && (!payload.optinOutput || !payload.quizOutput)) {
-    return NextResponse.json({ error: { code: 'VALIDATION_ERROR', message: 'optinOutput and quizOutput are required for vsl step' } }, { status: 400 });
+  const usageResult = await enforceUsageGuards(userId, payload.model);
+  if (!usageResult.ok) {
+    return usageResult.response;
   }
 
-  const user = await db.user.findUnique({ where: { id: userId } });
-  if (!user) {
-    return NextResponse.json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } }, { status: 401 });
-  }
-  if (user.monthlyUsed >= user.monthlyQuota) {
-    await db.quotaHistory.create({
-      data: { userId, requestCount: 1, costUSD: 0, model: payload.model, artifactType: 'content', status: 'rate_limited' },
-    });
-    return NextResponse.json({ error: { code: 'RATE_LIMIT_EXCEEDED', message: 'Monthly quota exhausted' } }, { status: 429 });
+  const ownershipResult = await requireOwnedProject(payload.projectId, userId);
+  if (!ownershipResult.ok) {
+    return ownershipResult.response;
   }
 
-  if (Number(user.monthlySpent) >= Number(user.monthlyBudget)) {
-    await db.quotaHistory.create({
-      data: { userId, requestCount: 1, costUSD: 0, model: payload.model, artifactType: 'content', status: 'rate_limited' },
-    });
-    return NextResponse.json({ error: { code: 'PAYMENT_REQUIRED', message: 'Monthly budget exhausted' } }, { status: 402 });
-  }
-
-  const { allowed } = await rateLimit(userId);
-  if (!allowed) {
-    await db.quotaHistory.create({
-      data: { userId, requestCount: 1, costUSD: 0, model: payload.model, artifactType: 'content', status: 'rate_limited' },
-    });
-    return NextResponse.json({ error: { code: 'RATE_LIMIT_EXCEEDED', message: 'Too many requests' } }, { status: 429 });
-  }
-
-  const project = await db.project.findUnique({ where: { id: payload.projectId } });
-  if (!project) {
-    return NextResponse.json({ error: { code: 'NOT_FOUND', message: 'Project not found' } }, { status: 404 });
-  }
-  if (project.userId !== userId) {
-    return NextResponse.json({ error: { code: 'FORBIDDEN', message: 'Access denied' } }, { status: 403 });
-  }
-
-  let prompt = '';
-  if (payload.step === 'optin') {
-    prompt = await buildFunnelOptinPrompt(payload);
-  } else if (payload.step === 'quiz') {
-    prompt = await buildFunnelQuizPrompt({ ...payload, optinOutput: payload.optinOutput! });
-  } else {
-    prompt = await buildFunnelVslPrompt({ ...payload, optinOutput: payload.optinOutput!, quizOutput: payload.quizOutput! });
-  }
+  const prompt = await buildFunnelPrompt(payload);
 
   try {
     const stream = await createArtifactStream({
@@ -108,20 +84,14 @@ export async function POST(request: Request) {
       input: {
         topic: prompt,
         tone: payload.tone,
-        length: getLengthByStep(payload.step),
-        outputFormat: payload.step === 'vsl' ? 'plain' : 'json',
+        length: getLengthByFunnelStep(payload.step),
+        outputFormat: 'markdown',
         workflowType: 'funnel_pages',
       },
     });
 
-    return new Response(stream, {
-      headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-      },
-    });
+    return sseResponse(stream);
   } catch {
-    return NextResponse.json({ error: { code: 'SERVICE_UNAVAILABLE', message: 'LLM service unavailable' } }, { status: 503 });
+    return serviceUnavailableError();
   }
 }

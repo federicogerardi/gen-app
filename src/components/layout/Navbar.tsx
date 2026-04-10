@@ -8,11 +8,6 @@ import { ChevronDown, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
-const primaryLinks = [
-  { href: '/dashboard', label: 'Dashboard' },
-  { href: '/artifacts', label: 'Artefatti' },
-];
-
 const toolLinks = [
   { href: '/tools/meta-ads', label: 'Meta Ads' },
   { href: '/tools/funnel-pages', label: 'Funnel Pages' },
@@ -36,11 +31,6 @@ export function Navbar() {
   const { data: session } = useSession();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
-
-  const topLevelLinks = [
-    ...primaryLinks,
-    ...(session?.user?.role === 'admin' ? [{ href: '/admin', label: 'Admin' }] : []),
-  ];
 
   return (
     <nav className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur px-4 py-3" aria-label="Navigazione principale">

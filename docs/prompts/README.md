@@ -13,5 +13,10 @@ Uso consigliato:
 - mantenere allineato `src/lib/tool-prompts/templates.ts` ai prompt markdown
 - mantenere questa cartella allineata come riferimento documentale
 
+Standard output workflow tool (Meta Ads + Funnel Pages):
+- output format unico: `markdown`
+- non usare output JSON raw nei prompt runtime
+- mantenere heading/sezioni coerenti con il contratto usato dalla UI
+
 
 
