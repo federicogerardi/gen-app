@@ -181,3 +181,47 @@ export const FUNNEL_EXTRACTION_FIELD_MAP = {
 } satisfies FieldMap;
 
 export type FunnelExtractionFieldMap = typeof FUNNEL_EXTRACTION_FIELD_MAP;
+
+export const EXTRACTION_SECTION_KEYS = [
+  'business_context',
+  'offer_context',
+  'qualification_context',
+  'optin_context',
+  'segmentation_context',
+  'belief_context',
+  'funnel_goals',
+  'proof_context',
+  'generated_context',
+  'assumptions_and_constraints',
+] as const;
+
+export function normalizeExtractedFields(value: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = { ...value };
+  const wrappers = ['fields', 'data', 'result'];
+
+  for (const wrapper of wrappers) {
+    const candidate = result[wrapper];
+    if (typeof candidate === 'object' && candidate !== null && !Array.isArray(candidate)) {
+      Object.assign(result, candidate as Record<string, unknown>);
+    }
+  }
+
+  for (const key of EXTRACTION_SECTION_KEYS) {
+    const section = result[key];
+    if (typeof section !== 'object' || section === null || Array.isArray(section)) {
+      continue;
+    }
+
+    for (const [nestedKey, nestedValue] of Object.entries(section)) {
+      if (nestedValue === null || nestedValue === undefined || nestedValue === '') {
+        continue;
+      }
+
+      if (!(nestedKey in result) || result[nestedKey] === '' || result[nestedKey] === null || result[nestedKey] === undefined) {
+        result[nestedKey] = nestedValue;
+      }
+    }
+  }
+
+  return result;
+}
