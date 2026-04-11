@@ -1,4 +1,5 @@
-import { calculateCost, calculateCostAccurate, MODEL_COSTS } from '@/lib/llm/costs';
+import { calculateCost, calculateCostAccurate } from '@/lib/llm/costs';
+import { MODEL_COSTS } from '@/lib/llm/models';
 
 describe('calculateCostAccurate', () => {
   it('applies separate input and output rates for openai/gpt-4-turbo', () => {

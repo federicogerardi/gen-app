@@ -12,7 +12,7 @@ const ALLOWED_TYPES = ['content', 'seo', 'code'] as const;
 const generateSchema = z.object({
   projectId: z.string().cuid(),
   type: z.enum(ALLOWED_TYPES),
-  model: z.string().refine((m) => ALLOWED_MODELS.includes(m), { message: 'Unsupported model' }),
+  model: z.string().refine((m) => ALLOWED_MODELS.includes(m as never), { message: 'Unsupported model' }),
   input: z.record(z.string(), z.unknown()),
 });
 
