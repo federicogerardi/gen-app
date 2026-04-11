@@ -2,7 +2,7 @@
 
 _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 
-## Stato avanzamento (aggiornato al 2026-04-10)
+## Stato avanzamento (aggiornato al 2026-04-11)
 
 - **Testing coverage >80%**: `COMPLETATO (scope corrente)`
   - Coverage Jest attuale: Statements `82.96%`, Branches `70.31%`, Functions `78.91%`, Lines `85.96%`.
@@ -22,8 +22,9 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 - **Tooling generation optimization (Meta Ads + Funnel Pages)**: `COMPLETATO (PR-1..PR-6)`
   - Completati schema unificato input, prompt/runtime parity, normalizzazione output, SSE metadata additive, consolidamento route/error mapping e hardening finale.
   - Standard output workflow tool allineato a `outputFormat: markdown` (Meta Ads + Funnel Pages).
-  - Validazione finale locale: `npm run lint`, `npm run typecheck`, `npm run test` (28/28 suite), `npm run build` tutti `PASS`.
-  - File: docs/implementation/tooling-generation-refactor-plan.md
+  - Esteso il flow Funnel Pages a pipeline upload-first: upload documento inline -> extraction fields -> generazione sequenziale `optin -> quiz -> vsl`.
+  - Validazione finale locale aggiornata: `npm run lint`, `npm run typecheck`, `npm run test` (30/30 suite), `npm run build` tutti `PASS`.
+  - File: docs/archive/tooling-generation-refactor-plan.md
 
 - **Deploy Vercel**: `COMPLETATO (baseline)`
   - Branch `main` in produzione.
@@ -45,7 +46,7 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 - **Tooling generation refactor framework (core app)**
   - Prioritario per allineare processo Orchestrator -> Agent -> Provider, contratto input/output e consistenza streaming.
   - Esecuzione prevista in PR incrementali (PR-1..PR-6) nel branch dedicato `feat/tooling-generation-optimization`.
-  - File: docs/implementation/tooling-generation-refactor-plan.md, docs/adrs/001-modular-llm-controller-architecture.md, docs/specifications/api-specifications.md
+  - File: docs/archive/tooling-generation-refactor-plan.md, docs/adrs/001-modular-llm-controller-architecture.md, docs/specifications/api-specifications.md
 
 - **Structured logging & observability**
   - Implementare logging strutturato (Pino), Sentry, performance metrics.
@@ -118,7 +119,7 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 3. Refactoring preview artefatti (`IN CORSO`)
 4. Stabilizzazione post-deploy e validazione su Vercel
 
-Nota operativa: il track tooling generation e chiuso (`PR-1..PR-6` completate). Per dettaglio storico fasi/rollback: `docs/implementation/tooling-generation-refactor-plan.md`.
+Nota operativa: il track tooling generation e chiuso (`PR-1..PR-6` completate). Per dettaglio storico fasi/rollback: `docs/archive/tooling-generation-refactor-plan.md`.
 
 ---
 

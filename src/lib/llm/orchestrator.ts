@@ -2,6 +2,7 @@ import { type ArtifactType, BaseAgent } from './agents/base';
 import { ContentAgent } from './agents/content';
 import { SeoAgent } from './agents/seo';
 import { CodeAgent } from './agents/code';
+import { ExtractionAgent } from './agents/extraction';
 import { calculateCost } from './costs';
 import { OpenRouterProvider } from './providers/openrouter';
 import type { LLMProvider } from './providers/base';
@@ -250,6 +251,42 @@ function formatFunnelQuizOutput(parsed: unknown): string | null {
   return lines.join('\n');
 }
 
+function formatExtractionOutput(parsed: unknown): string | null {
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+
+  const record = parsed as Record<string, unknown>;
+  const fields = record.fields && typeof record.fields === 'object' && !Array.isArray(record.fields)
+    ? (record.fields as Record<string, unknown>)
+    : record;
+
+  const lines: string[] = ['## Campi Estratti'];
+
+  for (const [field, value] of Object.entries(fields)) {
+    const normalizedValue = value === null || value === undefined
+      ? 'null'
+      : typeof value === 'string'
+        ? value
+        : JSON.stringify(value);
+
+    lines.push(`### ${field}`);
+    lines.push(`- Valore: ${normalizedValue}`);
+  }
+
+  const missingFields = Array.isArray(record.missingFields)
+    ? record.missingFields.filter((field): field is string => typeof field === 'string')
+    : [];
+
+  if (missingFields.length > 0) {
+    lines.push('');
+    lines.push('## Campi Mancanti');
+    for (const field of missingFields) {
+      lines.push(`- ${field}`);
+    }
+  }
+
+  return lines.join('\n');
+}
+
 function extractWorkflowTypeFromInput(input: unknown): string | null {
   if (!input || typeof input !== 'object' || Array.isArray(input)) return null;
 
@@ -267,6 +304,7 @@ export class LLMOrchestrator {
       ['content', new ContentAgent()],
       ['seo', new SeoAgent()],
       ['code', new CodeAgent()],
+      ['extraction', new ExtractionAgent()],
     ]);
   }
 
@@ -362,6 +400,29 @@ export class LLMOrchestrator {
           content: normalizeMarkdownWhitespace(stripCodeFence(raw)),
           format: 'markdown',
           warning: 'FUNNEL_JSON_UNMAPPED_FALLBACK',
+        };
+      }
+
+      return {
+        content: normalizeMarkdownWhitespace(stripCodeFence(raw)),
+        format: 'markdown',
+      };
+    }
+
+    if (workflowType === 'extraction') {
+      const parsed = tryParseJson(raw);
+      if (parsed) {
+        const formatted = formatExtractionOutput(parsed) ?? toReadableJsonFallback(parsed);
+        if (formatted) {
+          return { content: formatted, format: 'markdown' };
+        }
+      }
+
+      if (looksLikeJson(raw)) {
+        return {
+          content: normalizeMarkdownWhitespace(stripCodeFence(raw)),
+          format: 'markdown',
+          warning: 'EXTRACTION_JSON_PARSE_FAILED',
         };
       }
 

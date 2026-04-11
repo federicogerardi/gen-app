@@ -1,4 +1,5 @@
 import { buildMetaAdsPrompt } from '@/lib/tool-prompts/meta-ads';
+import { buildExtractionPrompt } from '@/lib/tool-prompts/extraction';
 import {
   buildFunnelOptinPrompt,
   buildFunnelQuizPrompt,
@@ -48,6 +49,32 @@ describe('buildMetaAdsPrompt', () => {
   });
 });
 
+describe('buildExtractionPrompt', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockedLoadPromptSource.mockResolvedValue('Extraction template: {{context}}');
+  });
+
+  it('composes extraction prompt context from field map and raw content', async () => {
+    const prompt = await buildExtractionPrompt({
+      tone: 'professional',
+      rawContent: 'Testo sorgente con dati business e target.',
+      fieldMap: {
+        business_type: {
+          type: 'select',
+          required: true,
+          description: 'Tipo business',
+        },
+      },
+      notes: 'Nessuna nota',
+    });
+
+    expect(prompt).toContain('Extraction template:');
+    expect(prompt).toContain('business_type');
+    expect(prompt).toContain('Testo sorgente con dati business e target.');
+  });
+});
+
 describe('funnel prompt builders', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -91,5 +118,65 @@ describe('funnel prompt builders', () => {
     expect(prompt).toContain('## CONTESTO OPTIN PAGE GIA GENERATA');
     expect(prompt).toContain('## CONTESTO QUIZ GIA GENERATO');
     expect(prompt).toContain('QUIZ OUTPUT');
+  });
+
+  it('buildFunnelOptinPrompt supports unified V2 briefing payload', async () => {
+    const prompt = await buildFunnelOptinPrompt({
+      tone: 'professional',
+      briefing: {
+        business_context: {
+          business_type: 'B2B',
+          sector_niche: 'Consulenza commerciale',
+          offer_price_range: '3000-10000 EUR',
+          target_profile: 'PMI con team sales interno',
+        },
+        offer_context: {
+          core_problem: 'Pipeline poco prevedibile',
+          new_opportunity: 'Funnel diagnostico segmentato',
+          old_method: 'Campagne broad e qualificazione manuale',
+          delivery_model: 'done-for-you',
+        },
+        qualification_context: {
+          must_have_criteria: 'Decision maker coinvolto',
+          disqualification_criteria: 'No budget o no urgenza',
+          minimum_operational_capabilities: 'CRM e processo vendite minimo',
+        },
+        optin_context: {
+          optin_title_promise: 'Diagnosi rapida',
+          promised_benefit: 'Capire dove perdi opportunita',
+          promised_result_format: 'video',
+          email_already_collected: true,
+        },
+        segmentation_context: {
+          primary_segmentation_basis: 'Maturita funnel',
+          desired_cluster_count: 3,
+          cluster_profiles: [],
+          lead_magnets_by_cluster: [],
+        },
+        belief_context: {
+          false_belief_vehicle: 'Basta aumentare il budget',
+          false_belief_internal: 'Non ho tempo per strutturare il funnel',
+          false_belief_external: 'Nel mio mercato non funziona',
+        },
+        funnel_goals: {
+          funnel_primary_goal: 'Piu call qualificate',
+          success_metrics: 'Show rate e close rate',
+          next_customer_journey_step: 'Call strategica',
+        },
+        proof_context: {
+          case_studies: [],
+          testimonials_sources: [],
+          visual_proof_assets: [],
+        },
+        generated_context: {},
+        assumptions_and_constraints: {
+          assumptions_allowed: true,
+        },
+      },
+    });
+
+    expect(prompt).toContain('### Business Context');
+    expect(prompt).toContain('Tipo business: B2B');
+    expect(prompt).toContain('Segmentazione primaria: Maturita funnel');
   });
 });

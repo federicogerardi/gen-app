@@ -102,4 +102,24 @@ describe('LLMOrchestrator.normalizeOutput', () => {
     expect(result.content).toBe('Script VSL pronto per la telecamera.');
     expect(result.warning).toBeUndefined();
   });
+
+  it('normalizes extraction JSON payload into markdown sections', () => {
+    const result = orchestrator.normalizeOutput({
+      type: 'extraction',
+      workflowType: 'extraction',
+      rawContent: JSON.stringify({
+        fields: {
+          business_type: 'B2B',
+          desired_cluster_count: 3,
+        },
+        missingFields: ['case_studies'],
+      }),
+    });
+
+    expect(result.format).toBe('markdown');
+    expect(result.content).toContain('## Campi Estratti');
+    expect(result.content).toContain('### business_type');
+    expect(result.content).toContain('## Campi Mancanti');
+    expect(result.content).toContain('case_studies');
+  });
 });

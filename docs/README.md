@@ -42,6 +42,7 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 ### Aggiornamenti recenti
 - 2026-04-11: completato sprint di visual unification delle pagine interne con estensione del concept login.
 - 2026-04-11: introdotta specifica operativa di frameworking grafico per standardizzare i futuri interventi UI.
+- 2026-04-11: allineata documentazione tool al refactoring Funnel upload-first (upload -> extraction -> generate) e aggiornata parity prompt/runtime.
 
 ---
 
