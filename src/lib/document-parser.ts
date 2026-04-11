@@ -4,6 +4,8 @@
  * No external storage; everything is processed in-memory.
  */
 
+import { fileURLToPath } from 'url';
+
 export type SupportedMimeType =
   | 'application/pdf'
   | 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
@@ -55,7 +57,20 @@ async function extractPdfText(buffer: Buffer): Promise<string> {
     };
   }
 
+  // Resolve worker path and configure pdfjs before loading the module.
+  // This is critical on Vercel where the bundle path doesn't match node_modules.
+  const workerUrl = await import.meta.resolve('pdfjs-dist/legacy/build/pdf.worker.mjs');
+  const workerPath = fileURLToPath(workerUrl);
+
   const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
+  
+  // Set the resolved worker path for pdfjs. Even with disableWorker: true, pdfjs
+  // attempts to configure the worker internals, and an explicit path prevents fallback errors.
+  if (pdfjs.GlobalWorkerOptions && typeof pdfjs.GlobalWorkerOptions === 'object') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (pdfjs.GlobalWorkerOptions as any).workerSrc = workerPath;
+  }
+
   const loadingTask = pdfjs.getDocument({
     data: new Uint8Array(buffer),
     disableWorker: true,
