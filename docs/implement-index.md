@@ -15,6 +15,10 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
   - Integrata baseline Sentry in Next.js (server, edge, client, global error boundary, trace metadata).
   - Da completare: metriche performance e rollout su tutte le route chiave.
 
+- **Quality & security audit resolution**: `PIANIFICATO (decomposizione pronta)`
+  - L'audit globale è stato formalizzato come track esecutivo in 4 fasi e 14 workstream PR-sized, separando documento sorgente, piano operativo e tracker.
+  - File: docs/implement-quality-audit.md, docs/implementation/feature-quality-audit-resolution-1.md, docs/implementation/feature-quality-audit-resolution-tracker-1.md
+
 - **Refactoring preview artefatti**: `IN CORSO`
   - Rafforzato fallback human-readable con nuovi test unit.
   - Da completare la convergenza UX completa su tutte le viste/workflow.
@@ -52,6 +56,11 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
   - Implementare logging strutturato (Pino), Sentry, performance metrics.
   - Bloccante per debugging/monitoraggio.
   - File: docs/archive/improvement-roadmap.md
+
+- **Quality & security audit resolution track**
+  - Esecuzione incrementale dei finding di correttezza, consistenza, scalabilita e hardening emersi dall'audit globale.
+  - Piano operativo e tracker dedicati allineati al flusso PR incrementali su `dev`.
+  - File: docs/implement-quality-audit.md, docs/implementation/feature-quality-audit-resolution-1.md, docs/implementation/feature-quality-audit-resolution-tracker-1.md
 
 - **Error handling avanzato**
   - Retry logic, circuit breaker, error boundaries custom, fallback provider.
@@ -116,8 +125,9 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 ### Azioni più critiche/bloccanti
 1. Stabilizzazione E2E e flussi auth/db (`IN CORSO`)
 2. Structured logging & Sentry (`IN CORSO - baseline completata`)
-3. Refactoring preview artefatti (`IN CORSO`)
-4. Stabilizzazione post-deploy e validazione su Vercel
+3. Decomposizione audit qualita/sicurezza in workstream esecutivi (`PIANIFICATO`)
+4. Refactoring preview artefatti (`IN CORSO`)
+5. Stabilizzazione post-deploy e validazione su Vercel
 
 Nota operativa: il track tooling generation e chiuso (`PR-1..PR-6` completate). Per dettaglio storico fasi/rollback: `docs/archive/tooling-generation-refactor-plan.md`.
 

@@ -42,6 +42,7 @@ Still pending or partial:
 - monitoring and ops documentation
 - expanded automated coverage and quality gates (>80% coverage target)
 - responsive/accessibility hardening and final UX polish
+- decomposed quality and security audit execution track (correctness, consistency, scalability, hardening)
 - cleanup finale di refusi UX/documentali fuori perimetro MVP
 
 Recently completed (2026-04-08):
@@ -69,6 +70,19 @@ Recently completed (2026-04-11):
 | **6. Admin Panel & Advanced Features** | Mostly complete | Metrics and audit activity exist; full admin CRUD remains a product decision |
 | **7. Testing & Quality** | Partially complete | Jest and Playwright are configured and passing basic tests; coverage/perf/security remain open |
 | **8. Deployment & Monitoring** | Partially complete | CI/CD pipeline (GitHub Actions) implemented and passing; Vercel deployment is active, monitoring/runbook hardening still to do |
+
+---
+
+## Focused Execution Tracks
+
+- Deterministic Prisma deploy migrations
+  - Execution plan: docs/implementation/feature-prisma-deploy-migrations-1.md
+  - Tracker: docs/implementation/feature-prisma-deploy-migrations-tracker-1.md
+
+- Quality and security audit resolution
+  - Source roadmap: docs/implement-quality-audit.md
+  - Execution plan: docs/implementation/feature-quality-audit-resolution-1.md
+  - Tracker: docs/implementation/feature-quality-audit-resolution-tracker-1.md
 
 ---
 
