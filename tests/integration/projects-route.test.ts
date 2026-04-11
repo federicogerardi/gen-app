@@ -6,14 +6,7 @@ import { db } from '@/lib/db';
 
 jest.mock('@/lib/auth', () => ({ auth: jest.fn() }));
 
-jest.mock('@/lib/db', () => ({
-  db: {
-    project: {
-      findMany: jest.fn(),
-      create: jest.fn(),
-    },
-  },
-}));
+jest.mock('@/lib/db', () => jest.requireActual('./db-mock').createDbMock());
 
 const mockedAuth = auth as jest.MockedFunction<typeof auth>;
 const findMany = db.project.findMany as jest.Mock;

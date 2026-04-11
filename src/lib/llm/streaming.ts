@@ -67,7 +67,7 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
 
       let accumulated = '';
       let outputTokenCount = 0;
-      let inputTokenCount = 0;
+      const inputTokenCount = Math.ceil((promptOverride ?? JSON.stringify(input)).length / 4);
       let tokenSequence = 0;
 
       try {
@@ -75,7 +75,7 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
           accumulated += chunk.token;
           outputTokenCount++;
           tokenSequence++;
-          const estimatedInputTokens = Math.ceil(accumulated.length / 4);
+          const estimatedInputTokens = inputTokenCount;
           const costEstimate = calculateCost(model, estimatedInputTokens, outputTokenCount);
 
           controller.enqueue(encode({
@@ -108,8 +108,6 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
           }
         }
 
-        // Estimate input tokens (rough: 1 token ≈ 4 chars of prompt)
-        inputTokenCount = Math.ceil(accumulated.length / 4);
         const cost = calculateCost(model, inputTokenCount, outputTokenCount);
         const normalized = orchestrator.normalizeOutput({
           rawContent: accumulated,
@@ -128,22 +126,34 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
           );
         }
 
+        // Invariant: completed artifacts must have positive token counts.
+        // Clamp to 1 rather than persisting zeros that would corrupt cost accounting.
+        const safeInputTokens = Math.max(inputTokenCount, 1);
+        const safeOutputTokens = Math.max(outputTokenCount, 1);
+        if (inputTokenCount < 1 || outputTokenCount < 1) {
+          logger.warn(
+            { artifactId: artifact.id, inputTokenCount, outputTokenCount },
+            'Token count invariant violation: clamping to 1 before completed persist',
+          );
+        }
+
         await db.artifact.update({
           where: { id: artifact.id },
           data: {
             content: normalized.content,
             status: 'completed',
-            inputTokens: inputTokenCount,
-            outputTokens: outputTokenCount,
+            inputTokens: safeInputTokens,
+            outputTokens: safeOutputTokens,
             costUSD: cost,
             completedAt: new Date(),
           },
         });
 
+        // Note: monthlyUsed increment now happens atomically inside enforceUsageGuards (guards.ts)
+        // Only update monthlySpent here (already persisted in artifact, cost already calculated)
         await db.user.update({
           where: { id: userId },
           data: {
-            monthlyUsed: { increment: 1 },
             monthlySpent: { increment: cost },
           },
         });
@@ -197,6 +207,21 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
       } finally {
         controller.close();
       }
+    },
+    cancel() {
+      // S1-06: Handle client disconnect by marking artifact as failed
+      db.artifact.update({
+        where: { id: artifact.id },
+        data: {
+          status: 'failed',
+          failureReason: 'client_disconnect',
+        },
+      }).catch((err) => {
+        logger.error(
+          { artifactId: artifact.id, err },
+          'Failed to mark artifact as failed on stream cancel',
+        );
+      });
     },
   });
 

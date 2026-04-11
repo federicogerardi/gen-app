@@ -75,24 +75,25 @@ model Project {
 }
 
 model Artifact {
-  id           String    @id @default(cuid())
-  userId       String
-  user         User      @relation(fields: [userId], references: [id])
-  projectId    String
-  project      Project   @relation(fields: [projectId], references: [id])
-  type         String    // 'content' | 'seo' | 'code'
-  workflowType String?   // 'meta_ads' | 'funnel_pages' | null
-  model        String
-  input        Json
-  content      String    @default("")
-  status       String    @default("generating") // 'generating' | 'completed' | 'failed'
-  inputTokens  Int       @default(0)
-  outputTokens Int       @default(0)
-  costUSD      Decimal   @default(0)
-  streamedAt   DateTime?
-  completedAt  DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id             String    @id @default(cuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id])
+  projectId      String
+  project        Project   @relation(fields: [projectId], references: [id])
+  type           String    // 'content' | 'seo' | 'code'
+  workflowType   String?   // 'meta_ads' | 'funnel_pages' | null
+  model          String
+  input          Json
+  content        String    @default("")
+  status         String    @default("generating") // 'generating' | 'completed' | 'failed'
+  failureReason  String?   // 'client_disconnect' | 'timeout' | 'error' | 'stale'
+  inputTokens    Int       @default(0)
+  outputTokens   Int       @default(0)
+  costUSD        Decimal   @default(0)
+  streamedAt     DateTime?
+  completedAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 }
 
 model QuotaHistory {
