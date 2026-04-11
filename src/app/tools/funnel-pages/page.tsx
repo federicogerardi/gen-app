@@ -47,13 +47,12 @@ const initialSteps: FunnelStepState[] = [
 const TONES = ['professional', 'casual', 'formal', 'technical'] as const;
 
 const ALLOWED_MIME_TYPES = [
-  'application/pdf',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   'text/plain',
   'text/markdown',
 ] as const;
 
-const ALLOWED_EXTENSIONS = ['.pdf', '.docx', '.txt', '.md'] as const;
+const ALLOWED_EXTENSIONS = ['.docx', '.txt', '.md'] as const;
 
 function FieldLabel({ htmlFor, required = true, children }: FieldLabelProps) {
   return (
@@ -411,12 +410,12 @@ export default function FunnelPagesToolPage() {
 
               <div className="space-y-2">
                 <FieldLabel htmlFor="funnel-file-input">Documento di briefing</FieldLabel>
-                <p className="text-xs text-muted-foreground">Formati supportati: PDF, DOCX, TXT, Markdown. Dimensione massima: 10 MB.</p>
+                <p className="text-xs text-muted-foreground">Formati supportati: DOCX, TXT, Markdown. Dimensione massima: 10 MB.</p>
                 <input
                   ref={fileInputRef}
                   id="funnel-file-input"
                   type="file"
-                  accept=".pdf,.docx,.txt,.md,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown"
+                  accept=".docx,.txt,.md,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown"
                   className="block w-full cursor-pointer rounded-xl border border-black/10 bg-white/60 px-3 py-2 text-sm text-foreground file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1 file:text-xs file:font-medium"
                   onChange={handleFileChange}
                   disabled={phase === 'uploading' || phase === 'extracting' || running || !projectId}

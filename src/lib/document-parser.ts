@@ -1,17 +1,15 @@
 /**
  * Inline document parser — extracts raw text from uploaded file buffers.
- * Supports: PDF, DOCX, TXT, MD.
+ * Supports: DOCX, TXT, MD.
  * No external storage; everything is processed in-memory.
  */
 
 export type SupportedMimeType =
-  | 'application/pdf'
   | 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
   | 'text/plain'
   | 'text/markdown';
 
 export const ALLOWED_MIME_TYPES: SupportedMimeType[] = [
-  'application/pdf',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   'text/plain',
   'text/markdown',
@@ -37,48 +35,6 @@ export type DocumentParseResult =
 
 export function isSupportedMimeType(mimeType: string): mimeType is SupportedMimeType {
   return (ALLOWED_MIME_TYPES as string[]).includes(mimeType);
-}
-
-function ensurePdfNodePolyfills(): void {
-  if (typeof globalThis.DOMMatrix !== 'undefined') {
-    return;
-  }
-
-  class NodeDOMMatrix {
-    a = 1;
-    b = 0;
-    c = 0;
-    d = 1;
-    e = 0;
-    f = 0;
-
-    constructor(_init?: string | number[]) {}
-
-    multiplySelf(): this { return this; }
-    preMultiplySelf(): this { return this; }
-    invertSelf(): this { return this; }
-    translateSelf(): this { return this; }
-    scaleSelf(): this { return this; }
-  }
-
-  // pdfjs evaluates DOMMatrix at module load on Node runtimes that do not provide it.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (globalThis as any).DOMMatrix = NodeDOMMatrix;
-}
-
-async function extractPdfText(buffer: Buffer): Promise<string> {
-  // Use a Node-first parser that does not rely on browser/worker globals.
-  // This avoids Vercel runtime failures when pdfjs worker chunks are not resolved.
-  ensurePdfNodePolyfills();
-  const { PDFParse } = await import('pdf-parse');
-  const parser = new PDFParse({ data: buffer });
-
-  try {
-    const parsed = await parser.getText();
-    return typeof parsed.text === 'string' ? parsed.text : '';
-  } finally {
-    await parser.destroy();
-  }
 }
 
 async function extractDocxText(buffer: Buffer): Promise<string> {
@@ -123,7 +79,7 @@ export async function parseDocument(
       ok: false,
       error: {
         code: 'UNSUPPORTED_TYPE',
-        message: `File type "${mimeType}" not supported. Accepted formats: PDF, DOCX, TXT, Markdown.`,
+        message: `File type "${mimeType}" not supported. Accepted formats: DOCX, TXT, Markdown.`,
       },
     };
   }
@@ -141,9 +97,7 @@ export async function parseDocument(
   try {
     let text: string;
 
-    if (mimeType === 'application/pdf') {
-      text = await extractPdfText(buffer);
-    } else if (mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+    if (mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
       text = await extractDocxText(buffer);
     } else {
       // text/plain or text/markdown
