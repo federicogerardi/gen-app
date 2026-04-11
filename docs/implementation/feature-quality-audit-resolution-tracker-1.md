@@ -4,7 +4,7 @@ version: 1.0
 date_created: 2026-04-11
 last_updated: 2026-04-11
 owner: Platform Team
-status: Phase 1 Complete ✅ | Phase 2-4 Pending
+status: Phase 1 Complete ✅ | Phase 2 Complete ✅ | Phase 3-4 Pending
 sprint_progress: S1-01-S1-08 Done / S2-01 Pending
 tags: [process, tracker, quality, security, audit]
 ---
@@ -65,12 +65,14 @@ Evidence log:
 
 | Task | Description | Completed | Date |
 | -------- | ----------- | --------- | ---- |
-| TASK-TRK-005 | Centralize usage guards in artifact generation flows. |  |  |
-| TASK-TRK-006 | Consolidate allowed model definitions and pricing metadata. |  |  |
-| TASK-TRK-007 | Parameterize artifact type in guard and audit writes. |  |  |
+| TASK-TRK-005 | Centralize usage guards in artifact generation flows. | ✅ Done | 2026-04-11 |
+| TASK-TRK-006 | Consolidate allowed model definitions and pricing metadata. | ✅ Done | 2026-04-11 |
+| TASK-TRK-007 | Parameterize artifact type in guard and audit writes. | ✅ Done | 2026-04-11 |
 
 Evidence log:
-- Pending.
+- S2-01 (2026-04-11): `enforceUsageGuards` parameterized to accept `artifactType` (default 'content' for backward compat). All three generation routes (meta-ads, extraction, funnel-pages) updated to pass correct type on guard call. Quota history now reflects actual workflow type instead of hardcoded 'content'. Files: `src/lib/tool-routes/guards.ts`, `src/app/api/tools/meta-ads/generate/route.ts`, `src/app/api/tools/extraction/generate/route.ts`, `src/app/api/tools/funnel-pages/generate/route.ts`. Validation: `npm run lint && npm run typecheck && npm test` → ✅ 275/275 tests pass, no regressions. Commit: 16c67fc.
+- S2-02 (2026-04-11): Created `src/lib/llm/models.ts` as single source of truth for SUPPORTED_MODELS, MODEL_COSTS, MODEL_METADATA, DEFAULT_MODEL. Added type-safe helpers: `isSupportedModel()`, `getModelPricing()`, `getModelMetadata()`. Updated imports in `src/lib/llm/costs.ts`, `src/lib/tool-routes/schemas.ts`, `src/app/api/models/route.ts`, `tests/unit/costs.test.ts`. Removed duplicated hardcoded model lists from multiple files. Re-exported ALLOWED_MODELS from schemas.ts for backward compatibility. Validation: `npm run lint && npm run typecheck && npm test` → ✅ 275/275 tests pass, no regressions. Commit: af2b2e0.
+- S2-03 (2026-04-11): **Type consistency audit + centralization**. Identified 5 critical inconsistencies: (1) ArtifactType defined in 2 locations with different scopes; (2) ALLOWED_TYPES in artifact generate route excluded 'extraction'; (3) tool naming hyphen vs underscore (meta-ads vs meta_ads); (4) QuotaHistory.status untyped (String); (5) workflowType vs artifactType ambiguity in guards. **Fixes applied**: Created `src/lib/types/artifact.ts` as centralized single source for ArtifactType, ArtifactStatus, ArtifactFailureReason, ToolWorkflow, QuotaEventStatus, OutputFormat with type guards (isArtifactType, isArtifactStatus, etc.). Created `src/lib/tool-routes/artifact-type-map.ts` with TOOL_TO_ARTIFACT_TYPE mapper (meta_ads→content, funnel_pages→content, extraction→extraction) and normalizeArtifactType() for tool identifier resolution. Updated `src/lib/tool-routes/guards.ts` to use normalizeArtifactType() for resolving tool workflows to artifact types, ensuring quotaHistory always reflects canonical artifact type. Updated all 3 tool routes to pass tool workflow identifiers (meta_ads, funnel_pages, extraction) that resolve through mapper. Updated `src/lib/llm/agents/base.ts`, `src/lib/llm/streaming.ts`, `src/lib/artifact-preview.ts` to import types from centralized location instead of local definitions. Added type guards in artifact-rendering components (pages, dashboards) to safely cast DB String values to literal union types. Added Prisma enum `QuotaEventStatus` with safe zero-downtime migration using temp column + CAST. Regenerated Prisma client. Files: `src/lib/types/artifact.ts` (new), `src/lib/tool-routes/artifact-type-map.ts` (new), `src/lib/tool-routes/guards.ts` (updated), `src/lib/llm/agents/base.ts` (updated), `src/lib/llm/streaming.ts` (updated), `src/lib/artifact-preview.ts` (updated), `src/app/api/artifacts/generate/route.ts` (updated), `src/app/api/tools/meta-ads/generate/route.ts` (updated), `src/app/api/tools/funnel-pages/generate/route.ts` (updated), `src/app/artifacts/[id]/page.tsx` (updated), `src/app/artifacts/ArtifactsClientPage.tsx` (updated), `src/app/dashboard/projects/[id]/page.tsx` (updated), plus Prisma schema & migration. Validation: `npm run typecheck` ✅, `npm run lint` ✅, `npm test` → ✅ 275/275 tests pass, zero regressions. Commit: 41ad8f6.
 
 ### Implementation Phase 3
 

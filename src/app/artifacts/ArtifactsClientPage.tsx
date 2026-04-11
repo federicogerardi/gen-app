@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getArtifactDisplayTypeLabel, getEffectiveArtifactWorkflowType } from '@/lib/artifact-preview';
+import { isArtifactType } from '@/lib/types/artifact';
 
 type ProjectOption = {
   id: string;
@@ -155,8 +156,10 @@ export function ArtifactsClientPage({ projects }: Props) {
           <div className="space-y-3" role="list" aria-label="Lista artefatti">
             {artifacts.map((artifact) => {
               const workflowType = getEffectiveArtifactWorkflowType(artifact.workflowType, artifact.input);
+              // Type-guard artifact type from API response (String) to literal union
+              const typedArtifactType = isArtifactType(artifact.type) ? artifact.type : 'content';
               const typeLabel = getArtifactDisplayTypeLabel({
-                type: artifact.type,
+                type: typedArtifactType,
                 workflowType,
               });
 

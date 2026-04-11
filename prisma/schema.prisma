@@ -97,13 +97,19 @@ model Artifact {
 }
 
 model QuotaHistory {
-  id           String   @id @default(cuid())
+  id           String                @id @default(cuid())
   userId       String
-  user         User     @relation(fields: [userId], references: [id])
+  user         User                  @relation(fields: [userId], references: [id])
   requestCount Int
   costUSD      Decimal
   model        String
   artifactType String
-  status       String   // 'success' | 'error' | 'rate_limited'
-  createdAt    DateTime @default(now())
+  status       QuotaEventStatus
+  createdAt    DateTime              @default(now())
+}
+
+enum QuotaEventStatus {
+  success
+  error
+  rate_limited
 }
