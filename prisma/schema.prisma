@@ -13,7 +13,7 @@ model User {
   name          String?
   image         String?
   emailVerified DateTime?
-  role          String         @default("user") // 'user' | 'admin'
+  role          Role           @default(user)
   monthlyQuota  Int            @default(1000)
   monthlyUsed   Int            @default(0)
   resetDate     DateTime       @default(now())
@@ -112,4 +112,9 @@ enum QuotaEventStatus {
   success
   error
   rate_limited
+}
+
+enum Role {
+  user
+  admin
 }

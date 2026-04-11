@@ -1,4 +1,5 @@
 import { createArtifactStream } from '@/lib/llm/streaming';
+import { getRequestLogger } from '@/lib/logger';
 import {
   buildFunnelOptinPrompt,
   buildFunnelQuizPrompt,
@@ -267,6 +268,13 @@ export async function POST(request: Request) {
   }
 
   const userId = authResult.data.userId;
+  const requestId = request.headers.get('x-request-id') ?? crypto.randomUUID();
+  const log = getRequestLogger({
+    requestId,
+    route: '/api/tools/funnel-pages/generate',
+    method: 'POST',
+    userId,
+  });
 
   const parsed = await parseAndValidateRequest(request, funnelPagesRequestSchema);
   if (!parsed.ok) {
@@ -274,6 +282,17 @@ export async function POST(request: Request) {
   }
 
   const payload = parsed.data;
+  const startedAt = Date.now();
+
+  log.info(
+    {
+      workflowType: 'funnel_pages',
+      projectId: payload.projectId,
+      model: payload.model,
+      step: payload.step,
+    },
+    'Tool generation started',
+  );
 
   const usageResult = await enforceUsageGuards(userId, payload.model, 'funnel_pages');
   if (!usageResult.ok) {
@@ -309,8 +328,35 @@ export async function POST(request: Request) {
       },
     });
 
+    log.info(
+      {
+        workflowType: 'funnel_pages',
+        projectId: payload.projectId,
+        model: payload.model,
+        step: payload.step,
+        duration_ms: Date.now() - startedAt,
+      },
+      'Tool generation stream initialized',
+    );
+
     return sseResponse(stream);
-  } catch {
+  } catch (error) {
+    const err = error instanceof Error
+      ? { name: error.name, message: error.message }
+      : { message: String(error) };
+
+    log.error(
+      {
+        workflowType: 'funnel_pages',
+        projectId: payload.projectId,
+        model: payload.model,
+        step: payload.step,
+        duration_ms: Date.now() - startedAt,
+        err,
+      },
+      'Tool generation failed',
+    );
+
     return serviceUnavailableError();
   }
 }

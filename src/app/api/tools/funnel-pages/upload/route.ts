@@ -1,6 +1,7 @@
 import { auth } from '@/lib/auth';
 import { parseDocument, ALLOWED_MIME_TYPES, MAX_FILE_SIZE_BYTES } from '@/lib/document-parser';
 import { db } from '@/lib/db';
+import { detectFileTypeFromBuffer } from '@/lib/file-signature';
 import { rateLimit } from '@/lib/rate-limit';
 import { apiError } from '@/lib/tool-routes/responses';
 import { z } from 'zod';
@@ -8,6 +9,40 @@ import { z } from 'zod';
 const uploadQuerySchema = z.object({
   projectId: z.string().cuid(),
 });
+
+function isLikelyTextBuffer(buffer: Buffer): boolean {
+  const sample = buffer.subarray(0, Math.min(buffer.length, 4096));
+  if (sample.length === 0) return true;
+
+  for (const byte of sample) {
+    if (byte === 0) return false;
+  }
+
+  let printableAsciiCount = 0;
+  for (const byte of sample) {
+    if ((byte >= 9 && byte <= 13) || (byte >= 32 && byte <= 126)) {
+      printableAsciiCount++;
+    }
+  }
+
+  return printableAsciiCount / sample.length >= 0.8;
+}
+
+function resolveValidatedMimeType(declaredMimeType: string, detectedMimeType: string | null, buffer: Buffer): string | null {
+  const allowedTypes = ALLOWED_MIME_TYPES as readonly string[];
+
+  if (detectedMimeType) {
+    if (!allowedTypes.includes(detectedMimeType)) return null;
+    return detectedMimeType;
+  }
+
+  const isDeclaredTextType = declaredMimeType === 'text/plain' || declaredMimeType === 'text/markdown';
+  if (isDeclaredTextType && isLikelyTextBuffer(buffer)) {
+    return declaredMimeType;
+  }
+
+  return null;
+}
 
 export async function POST(request: Request) {
   // Auth
@@ -57,15 +92,6 @@ export async function POST(request: Request) {
     return apiError('VALIDATION_ERROR', 'No file provided in field "file"', 400);
   }
 
-  const mimeType = fileEntry.type;
-  if (!(ALLOWED_MIME_TYPES as string[]).includes(mimeType)) {
-    return apiError(
-      'VALIDATION_ERROR',
-      `File type "${mimeType}" is not supported. Accepted formats: PDF, DOCX, TXT, Markdown.`,
-      415,
-    );
-  }
-
   if (fileEntry.size > MAX_FILE_SIZE_BYTES) {
     return apiError(
       'VALIDATION_ERROR',
@@ -78,7 +104,17 @@ export async function POST(request: Request) {
   const arrayBuffer = await fileEntry.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
 
-  const parsed = await parseDocument(buffer, mimeType, fileEntry.name);
+  const detectedType = await detectFileTypeFromBuffer(buffer);
+  const validatedMimeType = resolveValidatedMimeType(fileEntry.type, detectedType?.mime ?? null, buffer);
+  if (!validatedMimeType) {
+    return apiError(
+      'VALIDATION_ERROR',
+      'File type is not supported or does not match file content. Accepted formats: PDF, DOCX, TXT, Markdown.',
+      415,
+    );
+  }
+
+  const parsed = await parseDocument(buffer, validatedMimeType, fileEntry.name);
   if (!parsed.ok) {
     const statusMap = {
       UNSUPPORTED_TYPE: 415,

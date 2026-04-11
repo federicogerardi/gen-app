@@ -57,3 +57,30 @@ export function getModelMetadata(model: string) {
  * Compatible with Zod v4 array definitions and as-const patterns.
  */
 export const ALLOWED_MODELS = SUPPORTED_MODELS;
+
+/** Pricing table maintenance metadata used for operational staleness checks. */
+export const MODEL_PRICING_LAST_REVIEWED_AT = '2026-04-11T00:00:00.000Z';
+export const MODEL_PRICING_MAX_AGE_DAYS = 90;
+
+export type PricingStaleness = {
+  lastReviewedAt: string;
+  maxAgeDays: number;
+  ageDays: number;
+  stale: boolean;
+};
+
+/**
+ * Compute if pricing metadata is stale relative to the configured review date.
+ */
+export function getPricingStaleness(now: Date = new Date()): PricingStaleness {
+  const lastReviewed = new Date(MODEL_PRICING_LAST_REVIEWED_AT);
+  const ageMs = Math.max(0, now.getTime() - lastReviewed.getTime());
+  const ageDays = Math.floor(ageMs / (24 * 60 * 60 * 1000));
+
+  return {
+    lastReviewedAt: MODEL_PRICING_LAST_REVIEWED_AT,
+    maxAgeDays: MODEL_PRICING_MAX_AGE_DAYS,
+    ageDays,
+    stale: ageDays > MODEL_PRICING_MAX_AGE_DAYS,
+  };
+}

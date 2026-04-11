@@ -5,9 +5,11 @@ import { auth } from '@/lib/auth';
 import { parseDocument } from '@/lib/document-parser';
 import { db } from '@/lib/db';
 import { rateLimit } from '@/lib/rate-limit';
+import { detectFileTypeFromBuffer } from '@/lib/file-signature';
 
 jest.mock('@/lib/auth', () => ({ auth: jest.fn() }));
 jest.mock('@/lib/rate-limit', () => ({ rateLimit: jest.fn() }));
+jest.mock('@/lib/file-signature', () => ({ detectFileTypeFromBuffer: jest.fn() }));
 jest.mock('@/lib/document-parser', () => ({
   parseDocument: jest.fn(),
   ALLOWED_MIME_TYPES: [
@@ -24,6 +26,7 @@ jest.mock('@/lib/db', () => jest.requireActual('./db-mock').createDbMock());
 const mockedAuth = auth as jest.MockedFunction<typeof auth>;
 const mockedRateLimit = rateLimit as jest.MockedFunction<typeof rateLimit>;
 const mockedParseDocument = parseDocument as jest.MockedFunction<typeof parseDocument>;
+const mockedDetectFileTypeFromBuffer = detectFileTypeFromBuffer as jest.MockedFunction<typeof detectFileTypeFromBuffer>;
 const findProject = db.project.findUnique as jest.Mock;
 
 const projectId = 'cjld2cyuq0000t3rmniod1foy';
@@ -40,6 +43,7 @@ beforeEach(() => {
   mockedAuth.mockResolvedValue({ user: { id: 'user_1' } } as never);
   mockedRateLimit.mockResolvedValue({ allowed: true, remaining: 10 });
   findProject.mockResolvedValue({ id: projectId, userId: 'user_1' });
+  mockedDetectFileTypeFromBuffer.mockResolvedValue(undefined);
   mockedParseDocument.mockResolvedValue({
     ok: true,
     data: {
@@ -100,6 +104,11 @@ describe('POST /api/tools/funnel-pages/upload', () => {
   });
 
   it('returns 415 when file mime type is not supported', async () => {
+    mockedDetectFileTypeFromBuffer.mockResolvedValue({
+      ext: 'csv',
+      mime: 'text/csv',
+    });
+
     const formData = new FormData();
     formData.append('projectId', projectId);
     formData.append('file', new File(['binary'], 'briefing.csv', { type: 'text/csv' }));
@@ -110,6 +119,24 @@ describe('POST /api/tools/funnel-pages/upload', () => {
     expect(response.status).toBe(415);
     expect(json.error.code).toBe('VALIDATION_ERROR');
     expect(json.error.message).toContain('not supported');
+  });
+
+  it('returns 415 when declared mime type does not match detected content', async () => {
+    mockedDetectFileTypeFromBuffer.mockResolvedValue({
+      ext: 'png',
+      mime: 'image/png',
+    });
+
+    const formData = new FormData();
+    formData.append('projectId', projectId);
+    formData.append('file', new File(['%PDF-1.7 fake'], 'briefing.pdf', { type: 'application/pdf' }));
+
+    const response = await POST(makeMultipartRequest(formData));
+    const json = (await response.json()) as { error: { code: string; message: string } };
+
+    expect(response.status).toBe(415);
+    expect(json.error.code).toBe('VALIDATION_ERROR');
+    expect(json.error.message).toContain('does not match file content');
   });
 
   it('returns 422 when parser cannot extract text from the uploaded document', async () => {
@@ -134,6 +161,8 @@ describe('POST /api/tools/funnel-pages/upload', () => {
   });
 
   it('returns parsed document payload for a valid upload', async () => {
+    mockedDetectFileTypeFromBuffer.mockResolvedValue(undefined);
+
     const formData = new FormData();
     formData.append('projectId', projectId);
     formData.append('file', new File(['briefing content'], 'briefing.txt', { type: 'text/plain' }));
