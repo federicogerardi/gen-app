@@ -4,13 +4,13 @@ version: 1.0
 date_created: 2026-04-11
 last_updated: 2026-04-11
 owner: Platform Team
-status: Ready
+status: In Progress
 tags: [sprint, operations, quality, security, audit, execution]
 ---
 
 # Introduction
 
-![Status: Ready](https://img.shields.io/badge/status-Ready-brightgreen)
+![Status: In Progress](https://img.shields.io/badge/status-In%20Progress-blue)
 
 This runbook converts the audit execution plan into small working sessions designed to avoid monolithic implementation blocks. Each session is intentionally narrow: one objective, one bounded scope, one validation target, one explicit stop condition.
 
@@ -54,23 +54,40 @@ Suggested closure note format:
 
 ### Sprint 0 - Setup & Baseline
 
-| Session | Goal | Scope | Output | Stop Condition |
-| -------- | ---- | ----- | ------ | -------------- |
-| S0-01 | Prepare the audit track for execution | Review plan, tracker, and source audit; confirm task order and dependencies | Tracker-ready execution order | Next session can start without rereading the whole audit |
-| S0-02 | Capture validation baseline | Identify the smallest test commands per Phase 1 task | Validation checklist for Phase 1 | Each Phase 1 task has a scoped validation command |
+| Session | Goal | Scope | Output | Stop Condition | Status |
+| -------- | ---- | ----- | ------ | -------------- | ------ |
+| S0-01 | Prepare the audit track for execution | Review plan, tracker, and source audit; confirm task order and dependencies | Tracker-ready execution order | Next session can start without rereading the whole audit | ✅ Done |
+| S0-02 | Capture validation baseline | Identify the smallest test commands per Phase 1 task | Validation checklist for Phase 1 | Each Phase 1 task has a scoped validation command | ✅ Done |
+
+#### S0-02 Validation Baseline
+
+Minimum scoped validation command per Phase 1 session. Commands assume a clean working tree; test files are created as part of the respective implementation session.
+
+| Session | Covers | Files | Scoped Validation Command |
+| ------- | ------ | ----- | ------------------------- |
+| S1-01 | TASK-TRK-001 — token input path | `src/lib/llm/streaming.ts` | `npm run typecheck && npx jest --testPathPattern="costs\|streaming" --passWithNoTests` |
+| S1-02 | TASK-TRK-001 — cost calculation | `src/lib/llm/costs.ts`, `tests/unit/costs.test.ts` | `npx jest tests/unit/costs.test.ts` |
+| S1-03 | TASK-TRK-001 — persistence invariant | Prisma schema + migration | `npx prisma migrate dev --name token-positive-invariant && npm run typecheck` |
+| S1-04 | TASK-TRK-002 — atomic quota check | `src/lib/tool-routes/guards.ts` | `npx jest tests/integration/race-condition-quota.test.ts` |
+| S1-05 | TASK-TRK-002 — streaming quota integration | `src/lib/llm/streaming.ts` | `npx jest tests/integration/race-condition-quota.test.ts` |
+| S1-06 | TASK-TRK-003 — disconnect cleanup | `src/lib/llm/streaming.ts` | `npx jest tests/unit/artifact-cleanup.test.ts --testNamePattern="disconnect"` |
+| S1-07 | TASK-TRK-003 — stale artifact cron | `src/app/api/cron/cleanup-stale-artifacts/route.ts` | `npx jest tests/unit/artifact-cleanup.test.ts` |
+| S1-08 | TASK-TRK-004 — PUT status guard | `src/app/api/artifacts/[id]/route.ts` | `npx jest tests/integration/artifacts-id-route.test.ts` |
+
+Phase 1 gate (merge-ready): `npm run typecheck && npm run lint && npm test`
 
 ### Sprint 1 - Correctness
 
-| Session | Goal | Scope | Output | Stop Condition |
-| -------- | ---- | ----- | ------ | -------------- |
-| S1-01 | Token accounting input path | `src/lib/llm/streaming.ts`, provider token plumbing | Input token source is no longer derived from accumulated output | Streaming path exposes accurate input token source or fallback hook |
-| S1-02 | Token cost calculation and tests | `src/lib/llm/costs.ts`, unit tests | Accurate token cost calculation covered by tests | Cost calculation slice passes targeted tests |
-| S1-03 | Token persistence invariant | Prisma schema or persistence guard, related tests/docs | Positive token invariant enforced | Invariant is validated and documented |
-| S1-04 | Atomic quota check and increment | `src/lib/tool-routes/guards.ts` | Atomic guard behavior | Guard path prevents concurrent overage in focused test |
-| S1-05 | Streaming quota integration | `src/lib/llm/streaming.ts`, related tests | Streaming flow uses atomic quota semantics coherently | No duplicate quota logic remains on the touched path |
-| S1-06 | Disconnect cleanup in streaming | `src/lib/llm/streaming.ts` | Aborted streams fail cleanly | Client disconnect no longer leaves artifact in generating |
-| S1-07 | Stale artifact scheduled cleanup | cron route, cleanup logic, tests | Scheduled cleanup for stale artifacts | Cleanup path is testable and documented |
-| S1-08 | Artifact PUT status protection | artifact update route, integration test | Invalid state mutation blocked | PUT rejects non-terminal artifact states with covered behavior |
+| Session | Goal | Scope | Output | Stop Condition | Status |
+| -------- | ---- | ----- | ------ | -------------- | ------ |
+| S1-01 | Token accounting input path | `src/lib/llm/streaming.ts`, provider token plumbing | Input token source is no longer derived from accumulated output | Streaming path exposes accurate input token source or fallback hook | ✅ Done |
+| S1-02 | Token cost calculation and tests | `src/lib/llm/costs.ts`, unit tests | Accurate token cost calculation covered by tests | Cost calculation slice passes targeted tests | ✅ Done |
+| S1-03 | Token persistence invariant | Prisma schema or persistence guard, related tests/docs | Positive token invariant enforced | Invariant is validated and documented | ✅ Done |
+| S1-04 | Atomic quota check and increment | `src/lib/tool-routes/guards.ts` | Atomic guard behavior | Guard path prevents concurrent overage in focused test | ⬜ |
+| S1-05 | Streaming quota integration | `src/lib/llm/streaming.ts`, related tests | Streaming flow uses atomic quota semantics coherently | No duplicate quota logic remains on the touched path | ⬜ |
+| S1-06 | Disconnect cleanup in streaming | `src/lib/llm/streaming.ts` | Aborted streams fail cleanly | Client disconnect no longer leaves artifact in generating | ⬜ |
+| S1-07 | Stale artifact scheduled cleanup | cron route, cleanup logic, tests | Scheduled cleanup for stale artifacts | Cleanup path is testable and documented | ⬜ |
+| S1-08 | Artifact PUT status protection | artifact update route, integration test | Invalid state mutation blocked | PUT rejects non-terminal artifact states with covered behavior | ⬜ |
 
 ### Sprint 2 - Consistency
 

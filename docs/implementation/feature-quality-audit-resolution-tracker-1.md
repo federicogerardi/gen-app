@@ -4,13 +4,14 @@ version: 1.0
 date_created: 2026-04-11
 last_updated: 2026-04-11
 owner: Platform Team
-status: Not Started
+status: In Progress
+sprint_progress: S1-02/S1-08
 tags: [process, tracker, quality, security, audit]
 ---
 
 # Introduction
 
-![Status: Not Started](https://img.shields.io/badge/status-Not%20Started-lightgrey)
+![Status: In Progress](https://img.shields.io/badge/status-In%20Progress-blue)
 
 This tracker is the execution companion for docs/implementation/feature-quality-audit-resolution-1.md. It records completion status, evidence, and blockers while keeping the source rationale in docs/implement-quality-audit.md unchanged.
 
@@ -26,19 +27,35 @@ Session sequencing reference: docs/implementation/feature-quality-audit-resoluti
 
 ## 2. Execution Steps
 
+### Sprint 0 – Setup & Baseline
+
+- GOAL-TRK-S0: Establish execution baseline and per-task validation commands before Phase 1 implementation.
+
+| Session | Status | Date | Notes |
+| ------- | ------ | ---- | ----- |
+| S0-01 | ✅ Done | 2026-04-11 | Plan reviewed; task order confirmed: Phase 1 → Phase 4, sequential within each phase. |
+| S0-02 | ✅ Done | 2026-04-11 | Scoped validation commands established for all Phase 1 sessions. |
+
+Evidence log:
+- S0-01: Execution plan structure validated. TASK-TRK-001 through TASK-TRK-004 confirmed as Phase 1 correctness gate, with no cross-phase dependencies blocking start from S1-01.
+- S0-02: Per-session validation commands documented in `docs/implementation/feature-quality-audit-resolution-sprint-ops-1.md` §S0-02 Validation Baseline. Phase 1 gate: `npm run typecheck && npm run lint && npm test`.
+
 ### Implementation Phase 1
 
 - GOAL-TRK-001: Track correctness fixes for accounting, quota integrity, and artifact lifecycle state.
 
 | Task | Description | Completed | Date |
 | -------- | ----------- | --------- | ---- |
-| TASK-TRK-001 | Correct token accounting behavior. |  |  |
+| TASK-TRK-001 | Correct token accounting behavior. | ✅ Done | 2026-04-11 |
 | TASK-TRK-002 | Make quota enforcement atomic under concurrency. |  |  |
 | TASK-TRK-003 | Clean up stale or abandoned generating artifacts. |  |  |
 | TASK-TRK-004 | Guard artifact updates against invalid non-terminal state transitions. |  |  |
 
 Evidence log:
-- Pending.
+- Validation baseline established (S0-02). Ready to start S1-01.
+- S1-01 (2026-04-11): `inputTokenCount` in `src/lib/llm/streaming.ts` refactored da `Math.ceil(accumulated.length / 4)` (output) a `Math.ceil((promptOverride ?? JSON.stringify(input)).length / 4)` (prompt source). Variabile promossa a `const` pre-loop. Test di regressione aggiunti in `tests/unit/streaming.test.ts`. `tests/unit/llm-streaming-events.test.ts` allineato al valore corretto. Validation: `npm run typecheck && npx jest --testPathPatterns="costs|streaming" --passWithNoTests` → ✅ 11/11 passed.
+- S1-02 (2026-04-11): `src/lib/llm/costs.ts` — introdotta `calculateCostAccurate` con `MODEL_COSTS` esportata; `calculateCost` mantenuto come alias `@deprecated` per backward-compat. `tests/unit/costs.test.ts` esteso da 5 a 9 test (rate separati per modello, invariant input<output rate, alias check). Validation: `npx jest tests/unit/costs.test.ts` → ✅ 9/9 passed.
+- S1-03 (2026-04-11): Guard applicativo in `src/lib/llm/streaming.ts` — clamp `safeInputTokens = Math.max(inputTokenCount, 1)` / `safeOutputTokens = Math.max(outputTokenCount, 1)` prima del persist `status: 'completed'`; `logger.warn` su violazione invariant. Migration SQL raw aggiunta in `prisma/migrations/20260411_token_positive_invariant/migration.sql` con `CHECK` constraint PostgreSQL condizionale su `status = 'completed'`. Test `clamps outputTokens to 1 when stream yields no tokens` aggiunto in `tests/unit/streaming.test.ts`; warn log verificato nell'output. Validation: `npm run typecheck && npx jest --testPathPatterns="costs|streaming"` → ✅ 16/16 passed.
 
 ### Implementation Phase 2
 
