@@ -40,75 +40,17 @@ export function isSupportedMimeType(mimeType: string): mimeType is SupportedMime
 }
 
 async function extractPdfText(buffer: Buffer): Promise<string> {
-  // pdfjs-dist v5 instantiates `new DOMMatrix()` at module-evaluation time (SCALE_MATRIX
-  // constant). Node.js does not expose DOMMatrix as a global; install a minimal stub
-  // before the first dynamic import so the module can be evaluated without throwing.
-  if (typeof globalThis.DOMMatrix === 'undefined') {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (globalThis as any).DOMMatrix = class NodeDOMMatrix {
-      constructor(_init?: string | number[]) {}
-      preMultiplySelf(): this { return this; }
-      multiplySelf(): this { return this; }
-      invertSelf(): this { return this; }
-      translate(_tx?: number, _ty?: number, _tz?: number): NodeDOMMatrix { return new NodeDOMMatrix(); }
-      scale(_scaleX?: number, _scaleY?: number): NodeDOMMatrix { return new NodeDOMMatrix(); }
-    };
-  }
+  // Use a Node-first parser that does not rely on browser/worker globals.
+  // This avoids Vercel runtime failures when pdfjs worker chunks are not resolved.
+  const pdfParseModule = await import('pdf-parse');
+  const pdfParse = (
+    'default' in pdfParseModule ? pdfParseModule.default : pdfParseModule
+  ) as (dataBuffer: Buffer) => Promise<{ text?: string }>;
 
-  // pdfjs-dist v5 attempts to set up a worker even with disableWorker: true. In Node.js
-  // (Vercel deployment), Worker doesn't exist, causing "Setting up fake worker failed" errors.
-  // Install a minimal no-op Worker stub on globalThis to satisfy pdfjs initialization.
-  if (typeof globalThis.Worker === 'undefined') {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (globalThis as any).Worker = class FakeWorker {
-      constructor(_scriptURL: string) {}
-      postMessage() {}
-      terminate() {}
-      addEventListener() {}
-      removeEventListener() {}
-      dispatchEvent() { return false; }
-    };
-  }
+  const parsed = await pdfParse(buffer);
+  const text = typeof parsed.text === 'string' ? parsed.text : '';
 
-  // Use require() instead of dynamic import to access GlobalWorkerOptions before
-  // pdfjs module attempts internal worker imports.
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const pdfjs = require('pdfjs-dist/legacy/build/pdf.mjs');
-  
-  if (pdfjs.GlobalWorkerOptions && typeof pdfjs.GlobalWorkerOptions === 'object') {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (pdfjs.GlobalWorkerOptions as any).workerSrc = undefined;
-  }
-
-  const loadingTask = pdfjs.getDocument({
-    data: new Uint8Array(buffer),
-    disableWorker: true,
-    useWorkerFetch: false,
-  } as Parameters<typeof pdfjs.getDocument>[0]);
-
-  const pdf = await loadingTask.promise;
-
-  try {
-    const pages: string[] = [];
-
-    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
-      const page = await pdf.getPage(pageNumber);
-      const textContent = await page.getTextContent();
-      const pageText = textContent.items
-        .map((item: unknown) => ('str' in (item as Record<string, unknown>) ? (item as Record<string, unknown>).str : ''))
-        .join(' ')
-        .replace(/[ \t]{2,}/g, ' ')
-        .trim();
-
-      if (pageText.length > 0) {
-        pages.push(pageText);
-      }
-    }
-
-    return pages.join('\n\n');
-  } finally {
-    await pdf.destroy();
-  }
+  return text;
 }
 
 async function extractDocxText(buffer: Buffer): Promise<string> {
