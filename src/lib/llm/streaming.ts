@@ -1,7 +1,7 @@
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { LLMOrchestrator } from './orchestrator';
-import type { ArtifactType } from './agents/base';
+import type { ArtifactType, OutputFormat, QuotaEventStatus } from '@/lib/types/artifact';
 import { calculateCost } from './costs';
 
 const orchestrator = new LLMOrchestrator();
@@ -15,8 +15,6 @@ interface StreamParams {
   workflowType?: string | null;
   promptOverride?: string;
 }
-
-type OutputFormat = 'plain' | 'json' | 'markdown';
 
 function extractWorkflowType(input: unknown): string | null {
   if (!input || typeof input !== 'object' || Array.isArray(input)) return null;
@@ -165,7 +163,7 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
             costUSD: cost,
             model,
             artifactType: type,
-            status: 'success',
+            status: 'success' as QuotaEventStatus,
           },
         });
 
@@ -193,7 +191,7 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
             costUSD: 0,
             model,
             artifactType: type,
-            status: 'error',
+            status: 'error' as QuotaEventStatus,
           },
         });
 

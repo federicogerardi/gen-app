@@ -66,11 +66,12 @@ Evidence log:
 | Task | Description | Completed | Date |
 | -------- | ----------- | --------- | ---- |
 | TASK-TRK-005 | Centralize usage guards in artifact generation flows. | ✅ Done | 2026-04-11 |
-| TASK-TRK-006 | Consolidate allowed model definitions and pricing metadata. |  |  |
+| TASK-TRK-006 | Consolidate allowed model definitions and pricing metadata. | ✅ Done | 2026-04-11 |
 | TASK-TRK-007 | Parameterize artifact type in guard and audit writes. |  |  |
 
 Evidence log:
 - S2-01 (2026-04-11): `enforceUsageGuards` parameterized to accept `artifactType` (default 'content' for backward compat). All three generation routes (meta-ads, extraction, funnel-pages) updated to pass correct type on guard call. Quota history now reflects actual workflow type instead of hardcoded 'content'. Files: `src/lib/tool-routes/guards.ts`, `src/app/api/tools/meta-ads/generate/route.ts`, `src/app/api/tools/extraction/generate/route.ts`, `src/app/api/tools/funnel-pages/generate/route.ts`. Validation: `npm run lint && npm run typecheck && npm test` → ✅ 275/275 tests pass, no regressions. Commit: 16c67fc.
+- S2-02 (2026-04-11): Created `src/lib/llm/models.ts` as single source of truth for SUPPORTED_MODELS, MODEL_COSTS, MODEL_METADATA, DEFAULT_MODEL. Added type-safe helpers: `isSupportedModel()`, `getModelPricing()`, `getModelMetadata()`. Updated imports in `src/lib/llm/costs.ts`, `src/lib/tool-routes/schemas.ts`, `src/app/api/models/route.ts`, `tests/unit/costs.test.ts`. Removed duplicated hardcoded model lists from multiple files. Re-exported ALLOWED_MODELS from schemas.ts for backward compatibility. Validation: `npm run lint && npm run typecheck && npm test` → ✅ 275/275 tests pass, no regressions. Commit: af2b2e0.
 
 ### Implementation Phase 3
 

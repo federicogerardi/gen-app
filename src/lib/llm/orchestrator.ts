@@ -1,4 +1,5 @@
-import { type ArtifactType, BaseAgent } from './agents/base';
+import { type ArtifactType } from '@/lib/types/artifact';
+import { BaseAgent } from './agents/base';
 import { ContentAgent } from './agents/content';
 import { SeoAgent } from './agents/seo';
 import { CodeAgent } from './agents/code';

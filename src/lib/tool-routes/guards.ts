@@ -4,6 +4,8 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { rateLimit } from '@/lib/rate-limit';
 import { apiError } from './responses';
+import type { ArtifactType, QuotaEventStatus } from '@/lib/types/artifact';
+import { normalizeArtifactType } from './artifact-type-map';
 
 interface GuardError {
   ok: false;
@@ -46,13 +48,23 @@ export async function requireAuthenticatedUser(): Promise<GuardResult<{ userId: 
 export async function enforceUsageGuards(
   userId: string,
   model: string,
-  artifactType: string = 'content',
+  artifactType: string | ArtifactType = 'content',
 ): Promise<GuardResult<void>> {
+  // Normalize artifact type (resolve tool workflows to artifact types)
+  let resolvedType: ArtifactType;
+  try {
+    resolvedType = normalizeArtifactType(artifactType);
+  } catch {
+    // Fallback to 'content' if type cannot be resolved
+    resolvedType = 'content';
+  }
+
   // Early rate limit check (before DB round-trip) to reject burst traffic cheaply
   const { allowed } = await rateLimit(userId);
   if (!allowed) {
+    const status: QuotaEventStatus = 'rate_limited';
     await db.quotaHistory.create({
-      data: { userId, requestCount: 1, costUSD: 0, model, artifactType, status: 'rate_limited' },
+      data: { userId, requestCount: 1, costUSD: 0, model, artifactType: resolvedType, status },
     });
 
     return {
@@ -91,8 +103,9 @@ export async function enforceUsageGuards(
       };
     }
     if ((err as Error).message === 'QUOTA_EXHAUSTED') {
+      const status: QuotaEventStatus = 'rate_limited';
       await db.quotaHistory.create({
-        data: { userId, requestCount: 1, costUSD: 0, model, artifactType, status: 'rate_limited' },
+        data: { userId, requestCount: 1, costUSD: 0, model, artifactType: resolvedType, status },
       });
       return {
         ok: false,
@@ -100,8 +113,9 @@ export async function enforceUsageGuards(
       };
     }
     if ((err as Error).message === 'BUDGET_EXHAUSTED') {
+      const status: QuotaEventStatus = 'rate_limited';
       await db.quotaHistory.create({
-        data: { userId, requestCount: 1, costUSD: 0, model, artifactType, status: 'rate_limited' },
+        data: { userId, requestCount: 1, costUSD: 0, model, artifactType: resolvedType, status },
       });
       return {
         ok: false,
