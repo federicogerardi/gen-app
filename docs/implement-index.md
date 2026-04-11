@@ -15,12 +15,11 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
   - Integrata baseline Sentry in Next.js (server, edge, client, global error boundary, trace metadata).
   - Da completare: metriche performance e rollout su tutte le route chiave.
 
-- **Quality & security audit resolution**: `IN CORSO (Phase 1 Complete ✅ | Phase 2-4 Pending)`
-  - L'audit globale è stato formalizzato come track esecutivo in 4 fasi e 14 workstream PR-sized, separando documento sorgente, piano operativo e tracker.
-  - **Phase 1 Completato (2026-04-11)**: TASK-TRK-001–TASK-TRK-004 (Token accounting, Atomic quota, Stale cleanup, State guard). Validation: `npm run typecheck && npm test` → 46/46 tests ✅.
-  - **Phase 2–4 Pending**: Consistency (centralized guards, model defs, artifact typing), Scalability (admin pagination, streaming pressure), Hardening (upload validation, env safety, role integrity, logging, pricing).
-  - Branch: `fix/token-counting` (7 commits, ready for PR to `dev`)
-  - File: docs/implement-quality-audit.md, docs/implementation/feature-quality-audit-resolution-1.md, docs/implementation/feature-quality-audit-resolution-tracker-1.md
+- **Quality & security audit resolution**: `COMPLETATO E CHIUSO (Phase 1-4 ✅)`
+  - Track esecutivo completato su 4 fasi e 15 finding, con merge finale su `dev` (squash and merge).
+  - Tutti i task `TASK-TRK-001` → `TASK-TRK-015` risultano `Done` nel tracker operativo.
+  - Documento piano allineato a stato finale e snapshot archiviato per storico.
+  - File: docs/implement-quality-audit.md, docs/implementation/feature-quality-audit-resolution-tracker-1.md, docs/archive/implement-quality-audit.completed-2026-04-11.md
 
 - **Refactoring preview artefatti**: `IN CORSO`
   - Rafforzato fallback human-readable con nuovi test unit.
@@ -60,10 +59,10 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
   - Bloccante per debugging/monitoraggio.
   - File: docs/archive/improvement-roadmap.md
 
-- **Quality & security audit resolution track**
-  - Esecuzione incrementale dei finding di correttezza, consistenza, scalabilita e hardening emersi dall'audit globale.
-  - Piano operativo e tracker dedicati allineati al flusso PR incrementali su `dev`.
-  - File: docs/implement-quality-audit.md, docs/implementation/feature-quality-audit-resolution-1.md, docs/implementation/feature-quality-audit-resolution-tracker-1.md
+- **Quality & security audit resolution track**: `COMPLETATO`
+  - Esecuzione completata dei finding di correttezza, consistenza, scalabilita e hardening emersi dall'audit globale.
+  - Piano operativo chiuso e mantenuto come riferimento storico insieme al tracker.
+  - File: docs/implement-quality-audit.md, docs/implementation/feature-quality-audit-resolution-tracker-1.md, docs/archive/implement-quality-audit.completed-2026-04-11.md
 
 - **Error handling avanzato**
   - Retry logic, circuit breaker, error boundaries custom, fallback provider.
@@ -128,7 +127,7 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 ### Azioni più critiche/bloccanti
 1. Stabilizzazione E2E e flussi auth/db (`IN CORSO`)
 2. Structured logging & Sentry (`IN CORSO - baseline completata`)
-3. Decomposizione audit qualita/sicurezza in workstream esecutivi (`PIANIFICATO`)
+3. Audit qualita/sicurezza su 4 fasi (`COMPLETATO`)
 4. Refactoring preview artefatti (`IN CORSO`)
 5. Stabilizzazione post-deploy e validazione su Vercel
 

@@ -11,3 +11,4 @@ Contenuti archiviati:
 - `improvement-roadmap.md`: roadmap storica con task e snippet riferiti a uno stato precedente.
 - `architecture-review.md`: review architetturale point-in-time.
 - `copilot-review-followups.md`: follow-up PR storici non bloccanti.
+- `implement-quality-audit.completed-2026-04-11.md`: snapshot finale del piano audit qualità/sicurezza, chiuso dopo merge su `dev`.
