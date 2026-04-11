@@ -8,7 +8,7 @@ const envSchema = z.object({
   OPENROUTER_API_KEY: z.string().min(1, 'OPENROUTER_API_KEY required'),
   NEXT_PUBLIC_APP_URL: z.string().url().default('http://localhost:3000'),
   ALLOWED_EMAIL_DOMAINS: z.string().default('company.com'),
-  VERCEL_CRON_SECRET: z.string().min(1, 'VERCEL_CRON_SECRET required'),
+  VERCEL_CRON_SECRET: z.string().optional(),
   LOG_LEVEL: z.string().optional(),
 });
 
@@ -23,7 +23,6 @@ export function parseEnv(source: NodeJS.ProcessEnv): AppEnv {
     GOOGLE_CLIENT_ID: source.GOOGLE_CLIENT_ID ?? (isTest ? 'test-google-client-id' : ''),
     GOOGLE_CLIENT_SECRET: source.GOOGLE_CLIENT_SECRET ?? (isTest ? 'test-google-client-secret' : ''),
     OPENROUTER_API_KEY: source.OPENROUTER_API_KEY ?? (isTest ? 'test-openrouter-key' : ''),
-    VERCEL_CRON_SECRET: source.VERCEL_CRON_SECRET ?? (isTest ? 'test-cron-secret' : ''),
   };
 
   return envSchema.parse(normalized);

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import type { Role } from '@/generated/prisma';
 import { X } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Badge } from '@/components/ui/badge';
@@ -15,7 +16,7 @@ type UserItem = {
   id: string;
   name: string | null;
   email: string;
-  role: string;
+  role: Role;
   monthlyQuota: number;
   monthlyUsed: number;
   monthlyBudget: number | string;

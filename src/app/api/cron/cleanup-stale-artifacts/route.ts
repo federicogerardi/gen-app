@@ -13,6 +13,11 @@ import { logger } from '@/lib/logger';
  */
 export async function GET(request: NextRequest) {
   try {
+    if (!env.VERCEL_CRON_SECRET) {
+      logger.error({}, 'Missing VERCEL_CRON_SECRET for cron endpoint');
+      return NextResponse.json({ error: 'Server misconfiguration' }, { status: 500 });
+    }
+
     // Verify Vercel Cron secret
     const authHeader = request.headers.get('authorization');
     const expectedHeader = `Bearer ${env.VERCEL_CRON_SECRET}`;

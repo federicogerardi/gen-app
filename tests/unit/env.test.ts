@@ -36,6 +36,6 @@ describe('parseEnv', () => {
     expect(parsed.NODE_ENV).toBe('test');
     expect(parsed.DATABASE_URL).toContain('postgresql://test:test@localhost:5432/test');
     expect(parsed.OPENROUTER_API_KEY).toBe('test-openrouter-key');
-    expect(parsed.VERCEL_CRON_SECRET).toBe('test-cron-secret');
+    expect(parsed.VERCEL_CRON_SECRET).toBeUndefined();
   });
 });
