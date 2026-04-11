@@ -39,9 +39,37 @@ export function isSupportedMimeType(mimeType: string): mimeType is SupportedMime
   return (ALLOWED_MIME_TYPES as string[]).includes(mimeType);
 }
 
+function ensurePdfNodePolyfills(): void {
+  if (typeof globalThis.DOMMatrix !== 'undefined') {
+    return;
+  }
+
+  class NodeDOMMatrix {
+    a = 1;
+    b = 0;
+    c = 0;
+    d = 1;
+    e = 0;
+    f = 0;
+
+    constructor(_init?: string | number[]) {}
+
+    multiplySelf(): this { return this; }
+    preMultiplySelf(): this { return this; }
+    invertSelf(): this { return this; }
+    translateSelf(): this { return this; }
+    scaleSelf(): this { return this; }
+  }
+
+  // pdfjs evaluates DOMMatrix at module load on Node runtimes that do not provide it.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (globalThis as any).DOMMatrix = NodeDOMMatrix;
+}
+
 async function extractPdfText(buffer: Buffer): Promise<string> {
   // Use a Node-first parser that does not rely on browser/worker globals.
   // This avoids Vercel runtime failures when pdfjs worker chunks are not resolved.
+  ensurePdfNodePolyfills();
   const { PDFParse } = await import('pdf-parse');
   const parser = new PDFParse({ data: buffer });
 
