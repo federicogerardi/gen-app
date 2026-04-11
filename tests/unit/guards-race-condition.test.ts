@@ -9,13 +9,24 @@
  * These tests verify the behavioral contract without importing guards.ts directly.
  */
 
+interface MockUser {
+  monthlyUsed: number;
+  monthlyQuota: number;
+  monthlySpent?: number;
+  monthlyBudget?: number;
+}
+
+interface UpdateCall {
+  monthlyUsed: { increment: number };
+}
+
 describe('enforceUsageGuards – Atomicity Contract (S1-04)', () => {
   describe('quota enforcement atomic transaction guarantees', () => {
     it('should reject quota exhaustion without incrementing', () => {
-      const user = { monthlyUsed: 100, monthlyQuota: 100 };
-      const updateCalls: any[] = [];
+      const user: MockUser = { monthlyUsed: 100, monthlyQuota: 100 };
+      const updateCalls: UpdateCall[] = [];
 
-      const tryQuotaCheck = (user: any) => {
+      const tryQuotaCheck = (user: MockUser) => {
         if (user.monthlyUsed >= user.monthlyQuota) {
           return { ok: false, error: 'QUOTA_EXHAUSTED' };
         }
@@ -30,14 +41,14 @@ describe('enforceUsageGuards – Atomicity Contract (S1-04)', () => {
     });
 
     it('should reject budget exhaustion without incrementing', () => {
-      const user = { monthlyUsed: 50, monthlyQuota: 100, monthlySpent: 1000, monthlyBudget: 1000 };
-      const updateCalls: any[] = [];
+      const user: MockUser = { monthlyUsed: 50, monthlyQuota: 100, monthlySpent: 1000, monthlyBudget: 1000 };
+      const updateCalls: UpdateCall[] = [];
 
-      const tryBudgetCheck = (user: any) => {
+      const tryBudgetCheck = (user: MockUser) => {
         if (user.monthlyUsed >= user.monthlyQuota) {
           return { ok: false, error: 'QUOTA_EXHAUSTED' };
         }
-        if (user.monthlySpent >= user.monthlyBudget) {
+        if (user.monthlySpent !== undefined && user.monthlyBudget !== undefined && user.monthlySpent >= user.monthlyBudget) {
           return { ok: false, error: 'BUDGET_EXHAUSTED' };
         }
         updateCalls.push({ monthlyUsed: { increment: 1 } });
@@ -51,14 +62,14 @@ describe('enforceUsageGuards – Atomicity Contract (S1-04)', () => {
     });
 
     it('should increment only when all checks pass', () => {
-      const user = { monthlyUsed: 50, monthlyQuota: 100, monthlySpent: 50, monthlyBudget: 1000 };
-      const updateCalls: any[] = [];
+      const user: MockUser = { monthlyUsed: 50, monthlyQuota: 100, monthlySpent: 50, monthlyBudget: 1000 };
+      const updateCalls: UpdateCall[] = [];
 
-      const tryFullCheck = (user: any) => {
+      const tryFullCheck = (user: MockUser) => {
         if (user.monthlyUsed >= user.monthlyQuota) {
           return { ok: false, error: 'QUOTA_EXHAUSTED' };
         }
-        if (user.monthlySpent >= user.monthlyBudget) {
+        if (user.monthlySpent !== undefined && user.monthlyBudget !== undefined && user.monthlySpent >= user.monthlyBudget) {
           return { ok: false, error: 'BUDGET_EXHAUSTED' };
         }
         updateCalls.push({ monthlyUsed: { increment: 1 } });
