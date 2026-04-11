@@ -1,4 +1,5 @@
 import { createArtifactStream } from '@/lib/llm/streaming';
+import { getRequestLogger } from '@/lib/logger';
 import { buildMetaAdsPrompt } from '@/lib/tool-prompts/meta-ads';
 import {
   enforceUsageGuards,
@@ -16,6 +17,13 @@ export async function POST(request: Request) {
   }
 
   const userId = authResult.data.userId;
+  const requestId = request.headers.get('x-request-id') ?? crypto.randomUUID();
+  const log = getRequestLogger({
+    requestId,
+    route: '/api/tools/meta-ads/generate',
+    method: 'POST',
+    userId,
+  });
 
   const parsed = await parseAndValidateRequest(request, metaAdsRequestSchema);
   if (!parsed.ok) {
@@ -23,6 +31,16 @@ export async function POST(request: Request) {
   }
 
   const payload = parsed.data;
+  const startedAt = Date.now();
+
+  log.info(
+    {
+      workflowType: 'meta_ads',
+      projectId: payload.projectId,
+      model: payload.model,
+    },
+    'Tool generation started',
+  );
 
   const usageResult = await enforceUsageGuards(userId, payload.model, 'meta_ads');
   if (!usageResult.ok) {
@@ -60,8 +78,33 @@ export async function POST(request: Request) {
       },
     });
 
+    log.info(
+      {
+        workflowType: 'meta_ads',
+        projectId: payload.projectId,
+        model: payload.model,
+        duration_ms: Date.now() - startedAt,
+      },
+      'Tool generation stream initialized',
+    );
+
     return sseResponse(stream);
-  } catch {
+  } catch (error) {
+    const err = error instanceof Error
+      ? { name: error.name, message: error.message }
+      : { message: String(error) };
+
+    log.error(
+      {
+        workflowType: 'meta_ads',
+        projectId: payload.projectId,
+        model: payload.model,
+        duration_ms: Date.now() - startedAt,
+        err,
+      },
+      'Tool generation failed',
+    );
+
     return serviceUnavailableError();
   }
 }
