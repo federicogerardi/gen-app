@@ -4,8 +4,8 @@ version: 1.0
 date_created: 2026-04-11
 last_updated: 2026-04-11
 owner: Platform Team
-status: In Progress
-sprint_progress: S1-02/S1-08
+status: Phase 1 Complete ✅ | Phase 2-4 Pending
+sprint_progress: S1-01-S1-08 Done / S2-01 Pending
 tags: [process, tracker, quality, security, audit]
 ---
 
@@ -47,15 +47,17 @@ Evidence log:
 | Task | Description | Completed | Date |
 | -------- | ----------- | --------- | ---- |
 | TASK-TRK-001 | Correct token accounting behavior. | ✅ Done | 2026-04-11 |
-| TASK-TRK-002 | Make quota enforcement atomic under concurrency. |  |  |
-| TASK-TRK-003 | Clean up stale or abandoned generating artifacts. |  |  |
-| TASK-TRK-004 | Guard artifact updates against invalid non-terminal state transitions. |  |  |
+| TASK-TRK-002 | Make quota enforcement atomic under concurrency. | ✅ Done | 2026-04-11 |
+| TASK-TRK-003 | Clean up stale or abandoned generating artifacts. | ✅ Done | 2026-04-11 |
+| TASK-TRK-004 | Guard artifact updates against invalid non-terminal state transitions. | ✅ Done | 2026-04-11 |
 
 Evidence log:
 - Validation baseline established (S0-02). Ready to start S1-01.
 - S1-01 (2026-04-11): `inputTokenCount` in `src/lib/llm/streaming.ts` refactored da `Math.ceil(accumulated.length / 4)` (output) a `Math.ceil((promptOverride ?? JSON.stringify(input)).length / 4)` (prompt source). Variabile promossa a `const` pre-loop. Test di regressione aggiunti in `tests/unit/streaming.test.ts`. `tests/unit/llm-streaming-events.test.ts` allineato al valore corretto. Validation: `npm run typecheck && npx jest --testPathPatterns="costs|streaming" --passWithNoTests` → ✅ 11/11 passed.
 - S1-02 (2026-04-11): `src/lib/llm/costs.ts` — introdotta `calculateCostAccurate` con `MODEL_COSTS` esportata; `calculateCost` mantenuto come alias `@deprecated` per backward-compat. `tests/unit/costs.test.ts` esteso da 5 a 9 test (rate separati per modello, invariant input<output rate, alias check). Validation: `npx jest tests/unit/costs.test.ts` → ✅ 9/9 passed.
 - S1-03 (2026-04-11): Guard applicativo in `src/lib/llm/streaming.ts` — clamp `safeInputTokens = Math.max(inputTokenCount, 1)` / `safeOutputTokens = Math.max(outputTokenCount, 1)` prima del persist `status: 'completed'`; `logger.warn` su violazione invariant. Migration SQL raw aggiunta in `prisma/migrations/20260411_token_positive_invariant/migration.sql` con `CHECK` constraint PostgreSQL condizionale su `status = 'completed'`. Test `clamps outputTokens to 1 when stream yields no tokens` aggiunto in `tests/unit/streaming.test.ts`; warn log verificato nell'output. Validation: `npm run typecheck && npx jest --testPathPatterns="costs|streaming"` → ✅ 16/16 passed.
+- S1-04 + S1-05 (2026-04-11): `src/lib/tool-routes/guards.ts` — refactored `enforceUsageGuards` con rate limit check BEFORE transaction, quota/budget checks + `monthlyUsed` increment INSIDE atomic `db.$transaction()`. `src/lib/llm/streaming.ts` — rimosso duplicate `monthlyUsed: { increment: 1 }` dal completion update (già gestito in guards). New file `tests/unit/guards-race-condition.test.ts` (6 tests) verifica atomicità transazione, no increment if quota/budget exhausted. Validation: `npm run typecheck && npx jest --testPathPatterns="costs|streaming|guards-race"` → ✅ 22/22 passed.
+- S1-06 + S1-07 + S1-08 (2026-04-11): Schema Prisma — aggiunti field `failureReason` a Artifact (client_disconnect | timeout | error | stale). Cron route `src/app/api/cron/cleanup-stale-artifacts/route.ts` — scans generating > 24h, marks stale. Streaming cancel listener marks disconnect. PUT handler `src/app/api/artifacts/[id]/route.ts` — guard rejects PUT on non-terminal status (generating|failed), returns 409 Conflict. Tests: `tests/unit/artifact-cleanup.test.ts` (8 tests) + `tests/integration/artifacts-id-route.test.ts` +3 S1-08 state guard tests. Validation: `npm run typecheck && npx jest --testPathPatterns="cleanup|artifacts-id"` → ✅ 24/24 passed. **Phase 1 Complete**: `npm run typecheck && npm test` → ✅ 46/46 tests pass, all gates green.
 
 ### Implementation Phase 2
 
