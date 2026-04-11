@@ -3,8 +3,9 @@ import Google from 'next-auth/providers/google';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import type { Adapter } from 'next-auth/adapters';
 import { db } from '@/lib/db';
+import { env } from '@/lib/env';
 
-const allowedEmailDomains = (process.env.ALLOWED_EMAIL_DOMAINS ?? 'company.com')
+const allowedEmailDomains = env.ALLOWED_EMAIL_DOMAINS
   .split(',')
   .map((domain) => domain.trim().toLowerCase())
   .filter(Boolean);
@@ -13,8 +14,8 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(db) as Adapter,
   providers: [
     Google({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      clientId: env.GOOGLE_CLIENT_ID,
+      clientSecret: env.GOOGLE_CLIENT_SECRET,
     }),
   ],
   session: { strategy: 'database' },

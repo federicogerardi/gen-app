@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { env } from '@/lib/env';
 import type {
   LLMProvider,
   GenerateRequest,
@@ -7,10 +8,10 @@ import type {
 } from './base';
 
 const client = new OpenAI({
-  apiKey: process.env.OPENROUTER_API_KEY!,
+  apiKey: env.OPENROUTER_API_KEY,
   baseURL: 'https://openrouter.ai/api/v1',
   defaultHeaders: {
-    'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000',
+    'HTTP-Referer': env.NEXT_PUBLIC_APP_URL,
   },
 });
 

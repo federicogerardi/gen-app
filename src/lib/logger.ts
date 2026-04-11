@@ -1,4 +1,5 @@
 import pino, { type Logger } from 'pino';
+import { env } from '@/lib/env';
 
 const redactPaths = [
   'req.headers.authorization',
@@ -11,14 +12,14 @@ const redactPaths = [
 ];
 
 const baseLogger = pino({
-  level: process.env.LOG_LEVEL ?? (process.env.NODE_ENV === 'production' ? 'info' : 'debug'),
+  level: env.LOG_LEVEL ?? (env.NODE_ENV === 'production' ? 'info' : 'debug'),
   redact: {
     paths: redactPaths,
     censor: '[REDACTED]',
   },
   base: {
     service: 'gen-app',
-    env: process.env.NODE_ENV ?? 'development',
+    env: env.NODE_ENV,
   },
 });
 

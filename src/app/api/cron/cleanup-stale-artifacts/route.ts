@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { env } from '@/lib/env';
 import { logger } from '@/lib/logger';
 
 /**
@@ -14,7 +15,7 @@ export async function GET(request: NextRequest) {
   try {
     // Verify Vercel Cron secret
     const authHeader = request.headers.get('authorization');
-    const expectedHeader = `Bearer ${process.env.VERCEL_CRON_SECRET}`;
+    const expectedHeader = `Bearer ${env.VERCEL_CRON_SECRET}`;
 
     if (!authHeader || authHeader !== expectedHeader) {
       logger.warn({}, 'Unauthorized cron request: invalid or missing secret');
