@@ -24,7 +24,7 @@ export async function POST(request: Request) {
 
   const payload = parsed.data;
 
-  const usageResult = await enforceUsageGuards(userId, payload.model);
+  const usageResult = await enforceUsageGuards(userId, payload.model, 'meta-ads');
   if (!usageResult.ok) {
     return usageResult.response;
   }

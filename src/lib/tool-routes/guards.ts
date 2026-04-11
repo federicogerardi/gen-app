@@ -43,12 +43,16 @@ export async function requireAuthenticatedUser(): Promise<GuardResult<{ userId: 
   return { ok: true, data: { userId: session.user.id } };
 }
 
-export async function enforceUsageGuards(userId: string, model: string): Promise<GuardResult<void>> {
+export async function enforceUsageGuards(
+  userId: string,
+  model: string,
+  artifactType: string = 'content',
+): Promise<GuardResult<void>> {
   // Early rate limit check (before DB round-trip) to reject burst traffic cheaply
   const { allowed } = await rateLimit(userId);
   if (!allowed) {
     await db.quotaHistory.create({
-      data: { userId, requestCount: 1, costUSD: 0, model, artifactType: 'content', status: 'rate_limited' },
+      data: { userId, requestCount: 1, costUSD: 0, model, artifactType, status: 'rate_limited' },
     });
 
     return {
@@ -88,7 +92,7 @@ export async function enforceUsageGuards(userId: string, model: string): Promise
     }
     if ((err as Error).message === 'QUOTA_EXHAUSTED') {
       await db.quotaHistory.create({
-        data: { userId, requestCount: 1, costUSD: 0, model, artifactType: 'content', status: 'rate_limited' },
+        data: { userId, requestCount: 1, costUSD: 0, model, artifactType, status: 'rate_limited' },
       });
       return {
         ok: false,
@@ -97,7 +101,7 @@ export async function enforceUsageGuards(userId: string, model: string): Promise
     }
     if ((err as Error).message === 'BUDGET_EXHAUSTED') {
       await db.quotaHistory.create({
-        data: { userId, requestCount: 1, costUSD: 0, model, artifactType: 'content', status: 'rate_limited' },
+        data: { userId, requestCount: 1, costUSD: 0, model, artifactType, status: 'rate_limited' },
       });
       return {
         ok: false,

@@ -275,7 +275,7 @@ export async function POST(request: Request) {
 
   const payload = parsed.data;
 
-  const usageResult = await enforceUsageGuards(userId, payload.model);
+  const usageResult = await enforceUsageGuards(userId, payload.model, 'funnel-pages');
   if (!usageResult.ok) {
     return usageResult.response;
   }
