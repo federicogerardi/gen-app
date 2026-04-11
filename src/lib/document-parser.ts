@@ -55,9 +55,23 @@ async function extractPdfText(buffer: Buffer): Promise<string> {
     };
   }
 
+  // pdfjs-dist v5 attempts to set up a worker even with disableWorker: true. In Node.js
+  // (Vercel deployment), Worker doesn't exist, causing "Setting up fake worker failed" errors.
+  // Install a minimal no-op Worker stub on globalThis to satisfy pdfjs initialization.
+  if (typeof globalThis.Worker === 'undefined') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (globalThis as any).Worker = class FakeWorker {
+      constructor(_scriptURL: string) {}
+      postMessage() {}
+      terminate() {}
+      addEventListener() {}
+      removeEventListener() {}
+      dispatchEvent() { return false; }
+    };
+  }
+
   // Use require() instead of dynamic import to access GlobalWorkerOptions before
-  // pdfjs module attempts internal worker imports. Set workerSrc to a dummy value
-  // so pdfjs doesn't try to resolve/import the actual pdf.worker.mjs file.
+  // pdfjs module attempts internal worker imports.
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const pdfjs = require('pdfjs-dist/legacy/build/pdf.mjs');
   
