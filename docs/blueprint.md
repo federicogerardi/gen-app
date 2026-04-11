@@ -3,7 +3,7 @@
 **Version**: 1.0  
 **Status**: CORE MVP IMPLEMENTED + ACTIVE TOOL WORKFLOWS OPERATIONAL
 **Target Audience**: AI Development Agents  
-**Last Updated**: 2026-04-09
+**Last Updated**: 2026-04-11
 
 ---
 
@@ -41,6 +41,8 @@ A modular web application that allows non-technical users (MediaBuyers, SEO Spec
         │  Next.js 16 Route Handlers     │
         │  /api/artifacts/generate       │
         │  /api/tools/meta-ads/generate  │
+        │  /api/tools/extraction/generate│
+        │  /api/tools/funnel-pages/upload│
         │  /api/tools/funnel-pages/generate │
         │  /api/projects/*               │
         │  /api/users/* (admin)          │
@@ -248,7 +250,10 @@ model QuotaHistory {
 │   └── [id]              [GET|DELETE] → Fetch/delete artifact
 ├── tools/
 │   ├── meta-ads/generate    [POST] → Stream Meta Ads dedicated workflow
-│   └── funnel-pages/generate [POST] → Stream Funnel step (`optin|quiz|vsl`)
+│   ├── extraction/generate   [POST] → Stream extraction JSON from raw content + field map
+│   └── funnel-pages/
+│       ├── upload            [POST] → Parse document inline (pdf/docx/txt/md)
+│       └── generate          [POST] → Stream Funnel step (`optin|quiz|vsl`)
 ├── projects/
 │   ├── route.ts          [GET|POST] → List/create user projects
 │   └── [id]              [GET|PUT|DELETE] → Project detail CRUD
@@ -273,7 +278,7 @@ model QuotaHistory {
 
 #### Components (shadcn/ui)
 - Layout: Sidebar, Header, Main content
-- Forms: ArtifactForm (input + parameters)
+- Forms: tool-specific forms (Meta Ads) + upload-review-generate flow (Funnel Pages)
 - UI: Buttons, Dialog, Tabs, Select, NumberInput
 - Display: StreamingDisplay (real-time artifact display)
 
@@ -281,7 +286,7 @@ model QuotaHistory {
 - `/` → Landing
 - `/dashboard` → Dashboard con CTA tool dedicate
 - `/tools/meta-ads` → Tool Meta Ads
-- `/tools/funnel-pages` → Tool Funnel Pages (processo multi-step)
+- `/tools/funnel-pages` → Tool Funnel Pages (upload documento -> extraction -> review -> generazione sequenziale)
 - `/artifacts` → Project artifacts list
 - `/artifacts/[id]` → Edit artifact
 - `/admin` → Admin panel (user/quota management)

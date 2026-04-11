@@ -1,8 +1,8 @@
 # HL Funnel - Unified Input Schema
 
-Version: 1.0
+Version: 1.1
 Date: 2026-04-11
-Scope: definizione unica dei campi input richiesti da prompt optin, quiz, vsl.
+Scope: contratto semantico unico dei campi input richiesti da prompt optin, quiz, vsl.
 
 ## Obiettivo
 
@@ -12,9 +12,19 @@ Definire un set unico e organizzato di variabili per alimentare i 3 generatori:
 - VSL Generator
 
 Il set e progettato per:
-- costruire un singolo modulo UI
+- garantire un contratto coerente tra prompt/tool route
 - validare i dati prima della generazione
 - riusare lo stesso payload tra i 3 prompt
+- supportare sia inserimento manuale (briefing) sia popolamento automatico da extraction
+
+## Allineamento refactoring tool (upload-first)
+
+Con il refactoring Funnel Pages del branch corrente, il flusso UI principale e:
+1. upload documento (`/api/tools/funnel-pages/upload`)
+2. extraction campi (`/api/tools/extraction/generate` + `FUNNEL_EXTRACTION_FIELD_MAP`)
+3. generazione step funnel (`/api/tools/funnel-pages/generate`, payload V3 `extractedFields`)
+
+Questo documento resta il riferimento del **modello dati target** verso cui i campi estratti vengono mappati server-side prima della costruzione dei prompt.
 
 ## Prompt coperti
 
@@ -27,6 +37,7 @@ Il set e progettato per:
 - Required: true indica campo obbligatorio a livello modulo.
 - Type usa primitive UI-friendly: text, textarea, select, boolean, number, repeater.
 - Used by indica i generatori che leggono il campo.
+- Alcuni campi possono essere valorizzati automaticamente dal sistema (non visibili nel modulo).
 
 ## Unified Field Catalog
 
@@ -50,12 +61,12 @@ Il set e progettato per:
 | optin_title_promise | Titolo/Promessa optin | text | true | optin, quiz, vsl |
 | promised_benefit | Beneficio promesso | textarea | true | optin, quiz, vsl |
 | promised_result_format | Formato deliverable | select(video,pdf,analisi,report,altro) | true | optin, quiz, vsl |
-| email_already_collected | Email gia raccolta in optin | boolean | true | optin, quiz, vsl |
+| email_already_collected | Email gia raccolta in optin (autofill sistema=true) | boolean | false | optin, quiz, vsl |
 | primary_segmentation_basis | Variabile segmentazione primaria | text | true | quiz, vsl |
 | desired_cluster_count | Numero cluster desiderati | number | true | quiz, vsl |
 | cluster_profiles | Profili cluster | repeater(object) | true | quiz, vsl |
 | cluster_overlap_management | Regola overlap cluster | textarea | false | quiz |
-| lead_magnets_by_cluster | Lead magnet per cluster | repeater(object) | true | quiz, vsl, optin |
+| lead_magnet | Lead magnet unico | object | true | quiz, vsl, optin |
 | false_belief_vehicle | False belief veicolo | textarea | true | quiz, vsl |
 | false_belief_internal | False belief interne | textarea | true | quiz, vsl |
 | false_belief_external | False belief esterne | textarea | true | quiz, vsl |
@@ -83,7 +94,7 @@ Il set e progettato per:
 | cluster_description | textarea | true |
 | psychographic_profile | textarea | true |
 
-### lead_magnets_by_cluster[]
+### lead_magnet
 
 | Field | Type | Required |
 |---|---|---|
@@ -124,7 +135,7 @@ Il set e progettato per:
 
 - business_type must be B2B or B2C.
 - desired_cluster_count range consigliato: 3..5.
-- email_already_collected governs quiz email question generation.
+- email_already_collected e valorizzato automaticamente a true dal modulo corrente.
 - if delivery_model=done-for-you, false_belief_internal should include delega/control objections.
 - if delivery_model in (fai-da-te, corso), false_belief_internal should include technical fear/motivation signals.
 - if case_studies present, each item must include source.
@@ -137,6 +148,8 @@ Il set e progettato per:
 - Show vsl_context_group (optin_output_context, quiz_output_context) when generating VSL.
 - Show visual_proof_assets only if user declares available screenshots/proofs.
 - Show disqualified_redirect_offer only if disqualification_criteria is not empty.
+- cluster_profiles sono collassabili (accordion) per ridurre ingombro verticale.
+- lead magnet e singolo nel form; runtime mapping verso array payload `lead_magnets_by_cluster[0]`.
 
 ## Minimal MVP Field Set
 
@@ -155,9 +168,10 @@ Per una prima release del modulo, usare almeno:
 - optin_title_promise
 - promised_benefit
 - promised_result_format
-- email_already_collected
 - primary_segmentation_basis
 - desired_cluster_count
+- cluster_profiles
+- lead_magnet
 - false_belief_vehicle
 - false_belief_internal
 - false_belief_external
@@ -201,7 +215,16 @@ Per una prima release del modulo, usare almeno:
     "desired_cluster_count": 3,
     "cluster_profiles": [],
     "cluster_overlap_management": "",
-    "lead_magnets_by_cluster": []
+    "lead_magnets_by_cluster": [
+      {
+        "cluster_name": "",
+        "title": "",
+        "format": "VSL",
+        "hook": "",
+        "messaging": "",
+        "next_step": ""
+      }
+    ]
   },
   "belief_context": {
     "false_belief_vehicle": "",
@@ -234,6 +257,8 @@ Per una prima release del modulo, usare almeno:
 
 ## Notes
 
-- Questo schema privilegia un solo form per i 3 generatori.
+- Questo schema definisce il contratto funzionale condiviso tra prompt/route, non impone una sola UI.
 - I campi non necessari al singolo step possono restare vuoti, salvo required.
 - Per output di qualita marketing alta, raccomandato compilare sempre proof_context.
+- Nel flusso upload-first alcuni campi possono risultare mancanti/partial e vengono gestiti con fallback conservativi durante la mappatura.
+- `email_already_collected` continua a essere valorizzato automaticamente a `true` nel flusso funnel corrente.

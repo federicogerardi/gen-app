@@ -107,6 +107,35 @@ describe('POST /api/tools/funnel-pages/generate', () => {
     expect(mockedOptinPrompt).toHaveBeenCalled();
   });
 
+  it('routes prompt builder for optin step from extracted fields payload', async () => {
+    mockedAuth.mockResolvedValue({ user: { id: 'user_1' } } as never);
+    const res = await POST(
+      makeRequest({
+        projectId,
+        model: 'openai/gpt-4-turbo',
+        tone: 'professional',
+        step: 'optin',
+        extractedFields: {
+          business_type: 'B2B',
+          sector_niche: 'Lead generation per PMI',
+          offer_price_range: '2000-5000 EUR',
+          target_profile: 'Founder PMI',
+        },
+      })
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockedOptinPrompt).toHaveBeenCalledWith(
+      expect.objectContaining({
+        briefing: expect.objectContaining({
+          business_context: expect.objectContaining({
+            sector_niche: 'Lead generation per PMI',
+          }),
+        }),
+      })
+    );
+  });
+
   it('routes prompt builder for quiz step', async () => {
     mockedAuth.mockResolvedValue({ user: { id: 'user_1' } } as never);
     const res = await POST(makeRequest({ ...baseBody, step: 'quiz', optinOutput: 'OPTIN OUT' }));
