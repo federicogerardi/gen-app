@@ -168,9 +168,11 @@ describe('createArtifactStream', () => {
     expect(completeEvent.tokens.input).toBe(expectedInputTokens);
   });
 
-  it('persists partial content every 20 tokens', async () => {
-    const twentyTokens = Array.from({ length: 20 }, (_, i) => `t${i}`);
-    mockGenerateStream.mockReturnValue(makeTokenStream(twentyTokens));
+  it('persists partial content every 50 tokens (batched writes)', async () => {
+    // S3-02: Streaming write throttling — batch DB writes every 50 tokens
+    // Generate 50 tokens to trigger intermediate update
+    const fiftyTokens = Array.from({ length: 50 }, (_, i) => `t${i}`);
+    mockGenerateStream.mockReturnValue(makeTokenStream(fiftyTokens));
 
     const stream = await createArtifactStream({
       userId: 'user_1',
@@ -182,9 +184,34 @@ describe('createArtifactStream', () => {
 
     await readAllSse(stream);
 
-    expect(updateArtifact).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ streamedAt: expect.any(Date) }) }),
+    // Should have at least 2 calls: one intermediate (50 tokens) + one completion
+    expect(updateArtifact.mock.calls.length).toBeGreaterThanOrEqual(2);
+    // Check that at least one intermediate call has streamedAt
+    const hasIntermediateUpdate = updateArtifact.mock.calls.some(
+      (call) => call[0].data?.streamedAt && !call[0].data?.status?.includes('completed'),
     );
+    expect(hasIntermediateUpdate).toBe(true);
+  });
+
+  it('does not persist intermediate content with <50 tokens', async () => {
+    // With <50 tokens, no intermediate update should occur
+    const thirtyTokens = Array.from({ length: 30 }, (_, i) => `t${i}`);
+    mockGenerateStream.mockReturnValue(makeTokenStream(thirtyTokens));
+
+    const stream = await createArtifactStream({
+      userId: 'user_1',
+      projectId: 'proj_1',
+      type: 'content',
+      model: 'openai/gpt-4-turbo',
+      input: { topic: 'AI' },
+    });
+
+    await readAllSse(stream);
+
+    // Should have exactly 1 call (completion only, no intermediate)
+    expect(updateArtifact.mock.calls.length).toBe(1);
+    // The single call should be the completion
+    expect(updateArtifact.mock.calls[0][0].data.status).toBe('completed');
   });
 
   it('clamps outputTokens to 1 when stream yields no tokens (zero-output invariant)', async () => {
