@@ -55,14 +55,15 @@ async function extractPdfText(buffer: Buffer): Promise<string> {
     };
   }
 
-  const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
+  // Use require() instead of dynamic import to access GlobalWorkerOptions before
+  // pdfjs module attempts internal worker imports. Set workerSrc to a dummy value
+  // so pdfjs doesn't try to resolve/import the actual pdf.worker.mjs file.
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const pdfjs = require('pdfjs-dist/legacy/build/pdf.mjs');
   
-  // Pre-emptively disable worker setup by setting workerSrc to empty string.
-  // pdfjs attempts internal worker configuration even with disableWorker: true;
-  // this prevents errors when the worker file cannot be found in Vercel deployment.
   if (pdfjs.GlobalWorkerOptions && typeof pdfjs.GlobalWorkerOptions === 'object') {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (pdfjs.GlobalWorkerOptions as any).workerSrc = '';
+    (pdfjs.GlobalWorkerOptions as any).workerSrc = undefined;
   }
 
   const loadingTask = pdfjs.getDocument({
@@ -80,7 +81,7 @@ async function extractPdfText(buffer: Buffer): Promise<string> {
       const page = await pdf.getPage(pageNumber);
       const textContent = await page.getTextContent();
       const pageText = textContent.items
-        .map((item) => ('str' in item ? item.str : ''))
+        .map((item: unknown) => ('str' in (item as Record<string, unknown>) ? (item as Record<string, unknown>).str : ''))
         .join(' ')
         .replace(/[ \t]{2,}/g, ' ')
         .trim();
