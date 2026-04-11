@@ -4,7 +4,7 @@
 **Status**: LOCALLY FUNCTIONAL - CI/CD PASSING - DEPLOYED ON VERCEL (MAIN IN PRODUCTION, DEV FOR PR WORKFLOW) - HARDENING IN PROGRESS  
 **Target Audience**: AI Development Agents  
 **Estimated Duration**: 6-8 weeks (part-time)  
-**Last Updated**: 2026-04-10
+**Last Updated**: 2026-04-11
 
 ---
 
@@ -51,6 +51,12 @@ Recently completed (2026-04-08):
 - ✅ All typecheck errors resolved
 - ✅ Build passing with environment variables configured
 
+Recently completed (2026-04-11):
+- ✅ Single sprint "Internal Pages Visual Unification" executed across dashboard, tools, artifacts, admin and project pages
+- ✅ Shared visual foundations consolidated in app layer (typography variables, shell, surface system, control contrast hardening)
+- ✅ Sensitive UI elements on graphic backgrounds hardened (admin search, filters, metric micro-cards, quota drawer controls)
+- ✅ Operational visual specification added for future consistent interventions: `docs/specifications/graphic-frameworking-spec.md`
+
 ## Phase Status Summary
 
 | Phase | Status | Notes |
@@ -63,6 +69,131 @@ Recently completed (2026-04-08):
 | **6. Admin Panel & Advanced Features** | Mostly complete | Metrics and audit activity exist; full admin CRUD remains a product decision |
 | **7. Testing & Quality** | Partially complete | Jest and Playwright are configured and passing basic tests; coverage/perf/security remain open |
 | **8. Deployment & Monitoring** | Partially complete | CI/CD pipeline (GitHub Actions) implemented and passing; Vercel deployment is active, monitoring/runbook hardening still to do |
+
+---
+
+## Single Sprint Plan: Internal Pages Visual Unification (Login Concept Extension)
+
+### Execution Status (2026-04-11)
+- Status: `COMPLETATO`
+- Outcome sintetico:
+  - foundation visiva applicata in tutte le pagine interne in scope
+  - ridotte divergenze tipografiche/layout tra login e aree autenticate
+  - introdotto protocollo di continuita tramite specifica frameworking grafico
+
+### Sprint Goal
+Estendere in modo coerente il concept grafico gia introdotto nella login alle pagine interne, mantenendo la stessa identita editoriale (tipografia display + body, layering atmosferico, card con profondita morbida, gerarchia informativa chiara) senza regressioni funzionali.
+
+### Design Direction (Vincolante)
+- Direzione estetica: editorial-tech caldo e premium, con contrasti morbidi, superfici traslucide leggere e accenti controllati.
+- Pattern da preservare dalla login:
+  - display font per hero e titoli di sezione
+  - body font per contenuti operativi e form
+  - sfondo stratificato (gradient mesh + griglia sottile)
+  - card con border soft + shadow profonda ma diffusa
+  - micro-copy e badge in stile workspace professionale
+- Regola di coerenza: tutte le pagine interne devono risultare parte dello stesso prodotto a colpo d'occhio.
+
+### Scope (In)
+- Dashboard e sottopagine progetto
+- Tool pages (`/tools/meta-ads`, `/tools/funnel-pages`)
+- Artifacts listing + detail
+- Admin area
+- Navbar e shell condivisa
+
+### Scope (Out)
+- Refactor backend/API
+- Cambi di contratto dati
+- Nuove feature di business non UX
+
+### Workstreams
+
+#### WS1 - Foundation Tokens + App Shell
+Deliverable:
+- Estensione token design in `globals.css` (palette, radius, shadow, spacing, layer opacity)
+- Introduzione variabili tipografiche condivise per pagine autenticate
+- Restyling coerente di `Navbar` (stato active, dropdown, mobile sheet, contrasto)
+
+Acceptance Criteria:
+- Contrasto AA su testo primario e secondario
+- Stati hover/focus/active consistenti in desktop e mobile
+- Nessuna regressione su navigazione e logout
+
+#### WS2 - Dashboard Experience
+Deliverable:
+- Hero dashboard riallineato al linguaggio visuale login
+- Card "Tool workspace" e "Panoramica account" con nuove superfici, spacing e gerarchia
+- Miglioramento ritmo verticale e breakpoints
+
+Acceptance Criteria:
+- Above-the-fold riconoscibile come stessa famiglia visiva della login
+- Nessun overflow o layout break a 320px, 768px, 1024px, 1440px
+- KPI leggibili anche in condizioni dense
+
+#### WS3 - Tool Pages (Meta Ads + Funnel Pages)
+Deliverable:
+- Layout input/output armonizzato con shell condivisa
+- Card form e output con stile unificato, stati loading/error semanticamente chiari
+- Badge/status step funnel allineati a scala cromatica unica
+
+Acceptance Criteria:
+- Form usability invariata (nessuna frizione aggiunta)
+- Streaming output sempre leggibile con long content
+- Stati errore immediatamente distinguibili ma non invasivi
+
+#### WS4 - Artifacts Pages
+Deliverable:
+- Listing artifacts con filtri e card in linguaggio visuale comune
+- Detail artifact con tipografia markdown e metadati ben separati
+- Azioni principali (apri/elimina/back) con priorita visiva coerente
+
+Acceptance Criteria:
+- Scansione veloce della lista (status/type/model/data)
+- Markdown leggibile su desktop/mobile con heading/list/code equilibrati
+- Nessun ritorno alla preview ridondante rimossa
+
+#### WS5 - Admin Consistency
+Deliverable:
+- Restyling Admin Client Page in continuita con dashboard
+- Evidenza delle metriche baseline e tabelle attivita con migliore leggibilita
+- Uniformazione badge e componenti di controllo
+
+Acceptance Criteria:
+- Densita informativa alta ma leggibile
+- Nessuna perdita di affordance su azioni sensibili (quota update)
+
+#### WS6 - QA, Accessibility, Regression Safety
+Deliverable:
+- Passaggio completo lint + typecheck + test suites rilevanti
+- Smoke test responsive su viewport principali
+- Review accessibilita: focus ring, keyboard flow, aria-live gia presenti
+
+Acceptance Criteria:
+- `npm run lint` verde
+- `npm run typecheck` verde
+- Test integration toccati dal restyling verdi
+- Nessuna regressione su flussi: login -> dashboard -> tools -> artifacts -> admin
+
+### Sprint Sequencing (Single Sprint)
+1. Giorno 1: WS1 (foundation + shell)
+2. Giorno 2: WS2 (dashboard)
+3. Giorno 3: WS3 (tools pages)
+4. Giorno 4: WS4 + WS5 (artifacts + admin)
+5. Giorno 5: WS6 hardening, bugfix, QA finale, PR
+
+### Definition of Done
+- Coerenza visiva verificata su tutte le pagine interne in scope
+- Nessuna regressione funzionale o di accessibilita bloccante
+- Quality gates CI verdi
+- Documentazione UX aggiornata con screenshot desktop/mobile per aree principali
+
+### Risk & Mitigations
+- Rischio: divergenza stilistica tra pagine sviluppate in tempi diversi
+  - Mitigazione: token centrali + checklist visiva obbligatoria per PR
+- Rischio: regressioni responsive su layout complessi
+  - Mitigazione: validazione sistematica su breakpoint e smoke test Playwright
+- Rischio: restyling troppo invasivo su componenti critici
+  - Mitigazione: approccio incrementale per workstream con rollback rapido per pagina
 
 ---
 

@@ -1,9 +1,9 @@
 # Blueprint: LLM Artifact Generation Hub
 
 **Version**: 1.0  
-**Status**: CORE MVP IMPLEMENTED + TOOL MODULARIZATION IN PROGRESS
+**Status**: CORE MVP IMPLEMENTED + ACTIVE TOOL WORKFLOWS OPERATIONAL
 **Target Audience**: AI Development Agents  
-**Last Updated**: 2026-04-09
+**Last Updated**: 2026-04-11
 
 ---
 
@@ -41,6 +41,8 @@ A modular web application that allows non-technical users (MediaBuyers, SEO Spec
         │  Next.js 16 Route Handlers     │
         │  /api/artifacts/generate       │
         │  /api/tools/meta-ads/generate  │
+        │  /api/tools/extraction/generate│
+        │  /api/tools/funnel-pages/upload│
         │  /api/tools/funnel-pages/generate │
         │  /api/projects/*               │
         │  /api/users/* (admin)          │
@@ -54,13 +56,13 @@ A modular web application that allows non-technical users (MediaBuyers, SEO Spec
         │ │ - Route requests to agents               │   │
         │ │ - Handle streaming responses             │   │
         │ │ - Rate limit & quota check               │   │
-        │ │ - Resolve markdown prompt templates      │   │
+        │ │ - Resolve static typed prompt templates  │   │
         │ └──────┬─────────────────────────────────┬─┘   │
         │        │                                 │      │
-        │ ┌──────▼────────┬──────────┬────────┬───▼────┐  │
-        │ │ Content Agent │ SEO Agent│CodeGen│Custom  │  │
-        │ │               │ Agent    │Agent  │Agents  │  │
-        │ └──────┬────────┴──────────┴────────┴───┬────┘  │
+        │ ┌──────▼───────────┬───────────────┬────▼────┐  │
+        │ │ Meta Ads Workflow│ Funnel Workflow│ Generic │  │
+        │ │ Agent/Prompt     │ Agent/Prompt   │ Agents  │  │
+        │ └──────┬───────────┴───────────────┴────┬────┘  │
         │        │                                 │      │
         │ ┌──────▼─────────────────────────────────▼────┐  │
         │ │ OpenRouter Provider                         │  │
@@ -157,7 +159,7 @@ model Artifact {
   userId: string                // Creator
   projectId: string             // Container
   
-  type: string                  // 'content' | 'seo' | 'code' | custom...
+  type: string                  // artifact category (currently 'content' in active tool flows)
   model: string                 // 'openai/gpt-4-turbo', 'anthropic/claude-3-opus', etc.
   
   // Input/Output
@@ -210,10 +212,9 @@ model QuotaHistory {
 **Responsibility**: Coordination, not business logic
 
 #### Agents (Pluggable Tools)
-- `ContentAgent`: Marketing copy, blog posts
-- `SEOAgent`: Keyword analysis, meta descriptions
-- `CodeAgent`: Code generation, boilerplate
-- Custom agents can be added
+- Active workflow perimeter: Meta Ads + Funnel Pages
+- Generic agent layer remains available for extensibility and legacy artifact generation paths
+- New tool workflows should be integrated via dedicated prompt builders + orchestrator/provider chain
 
 #### Tool Prompt Layer (Server-only)
 - `src/lib/tool-prompts/registry.ts`: registry centralizzato dei template
@@ -249,7 +250,10 @@ model QuotaHistory {
 │   └── [id]              [GET|DELETE] → Fetch/delete artifact
 ├── tools/
 │   ├── meta-ads/generate    [POST] → Stream Meta Ads dedicated workflow
-│   └── funnel-pages/generate [POST] → Stream Funnel step (`optin|quiz|vsl`)
+│   ├── extraction/generate   [POST] → Stream extraction JSON from raw content + field map
+│   └── funnel-pages/
+│       ├── upload            [POST] → Parse document inline (pdf/docx/txt/md)
+│       └── generate          [POST] → Stream Funnel step (`optin|quiz|vsl`)
 ├── projects/
 │   ├── route.ts          [GET|POST] → List/create user projects
 │   └── [id]              [GET|PUT|DELETE] → Project detail CRUD
@@ -274,7 +278,7 @@ model QuotaHistory {
 
 #### Components (shadcn/ui)
 - Layout: Sidebar, Header, Main content
-- Forms: ArtifactForm (input + parameters)
+- Forms: tool-specific forms (Meta Ads) + upload-review-generate flow (Funnel Pages)
 - UI: Buttons, Dialog, Tabs, Select, NumberInput
 - Display: StreamingDisplay (real-time artifact display)
 
@@ -282,7 +286,7 @@ model QuotaHistory {
 - `/` → Landing
 - `/dashboard` → Dashboard con CTA tool dedicate
 - `/tools/meta-ads` → Tool Meta Ads
-- `/tools/funnel-pages` → Tool Funnel Pages (processo multi-step)
+- `/tools/funnel-pages` → Tool Funnel Pages (upload documento -> extraction -> review -> generazione sequenziale)
 - `/artifacts` → Project artifacts list
 - `/artifacts/[id]` → Edit artifact
 - `/admin` → Admin panel (user/quota management)

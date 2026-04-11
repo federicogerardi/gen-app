@@ -21,8 +21,8 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 ### implementation/
 - [implementation-plan.md](implementation/implementation-plan.md): Implementation plan dettagliato.
 
-### improvement/
-- [improvement-roadmap.md](improvement/improvement-roadmap.md): Roadmap di miglioramento e refactoring.
+### archive/
+- Documenti storici e snapshot superseded (review, roadmap, follow-up PR).
 
 ### prompts/
 - [README.md](prompts/README.md): Indice e linee guida per i prompt.
@@ -31,16 +31,18 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 - [tools/hl_funnel/](prompts/tools/hl_funnel/): Prompt generator specifici HL Funnel.
 - [tools/meta_ads/](prompts/tools/meta_ads/): Prompt generator specifici Meta Ads.
 
-### review/
-- [architecture-review.md](review/architecture-review.md): Review architetturale.
-- [copilot-review-followups.md](review/copilot-review-followups.md): Follow-up e azioni da review Copilot.
-
 ### specifications/
 - [api-specifications.md](specifications/api-specifications.md): Specifiche API e contratti.
+- [graphic-frameworking-spec.md](specifications/graphic-frameworking-spec.md): Specifica visual frameworking per interventi UI coerenti con shell grafica e template applicato.
 
 ### ux/
 - [gui-refactor-plan.md](ux/gui-refactor-plan.md): Piano di refactoring GUI.
 - [ux-strategy.md](ux/ux-strategy.md): Strategia UX e principi guida.
+
+### Aggiornamenti recenti
+- 2026-04-11: completato sprint di visual unification delle pagine interne con estensione del concept login.
+- 2026-04-11: introdotta specifica operativa di frameworking grafico per standardizzare i futuri interventi UI.
+- 2026-04-11: allineata documentazione tool al refactoring Funnel upload-first (upload -> extraction -> generate) e aggiornata parity prompt/runtime.
 
 ---
 

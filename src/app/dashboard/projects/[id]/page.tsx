@@ -32,18 +32,19 @@ export default async function ProjectPage({ params }: { params: Promise<ProjectP
   return (
     <>
       <Navbar />
-      <main className="flex-1 p-6 max-w-4xl mx-auto w-full" id="main-content">
+      <main className="app-shell app-copy flex-1 p-6 max-w-4xl mx-auto w-full relative overflow-hidden" id="main-content">
+        <div className="pointer-events-none absolute inset-0 app-grid-overlay" />
         <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
           <div>
-            <h1 className="text-2xl font-semibold">{project.name}</h1>
+            <h1 className="app-title text-3xl font-semibold text-slate-900">{project.name}</h1>
             {project.description && <p className="text-muted-foreground mt-1">{project.description}</p>}
           </div>
         </div>
 
-        <h2 className="text-lg font-medium mb-4">Artefatti ({project.artifacts.length})</h2>
+        <h2 className="app-title text-xl font-medium mb-4">Artefatti ({project.artifacts.length})</h2>
 
         {project.artifacts.length === 0 ? (
-          <Card>
+          <Card className="app-surface rounded-2xl">
             <CardContent className="py-12 text-center text-muted-foreground">
               Nessun artefatto ancora. Genera il primo.
             </CardContent>
@@ -65,7 +66,7 @@ export default async function ProjectPage({ params }: { params: Promise<ProjectP
 
               return (
                 <Link key={a.id} href={`/artifacts/${a.id}`}>
-                  <Card className="hover:shadow-md transition-shadow">
+                  <Card className="app-surface rounded-2xl hover:shadow-[0_24px_62px_-44px_rgba(15,23,42,0.74)] transition-shadow">
                     <CardHeader className="py-3 px-4 flex flex-row items-center justify-between gap-4">
                       <div className="flex items-center gap-2">
                         <Badge variant="outline">{typeLabel}</Badge>

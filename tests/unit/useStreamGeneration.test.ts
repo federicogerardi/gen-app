@@ -85,7 +85,7 @@ describe('useStreamGeneration', () => {
       'data: {"type":"start","artifactId":"art_test_1"}\n\n',
       'data: {"type":"token","token":"Hello "}\n\n',
       'data: {"type":"token","token":"world"}\n\n',
-      'data: {"type":"complete"}\n\n',
+      'data: {"type":"complete","content":"## Variante 1\\nHeadline: Hello world"}\n\n',
     ]);
     global.fetch = jest.fn().mockResolvedValue({ ok: true, body } as unknown as Response);
 
@@ -95,7 +95,7 @@ describe('useStreamGeneration', () => {
       await result.current.generate(request);
     });
 
-    expect(result.current.content).toBe('Hello world');
+    expect(result.current.content).toBe('## Variante 1\nHeadline: Hello world');
     expect(result.current.artifactId).toBe('art_test_1');
     expect(result.current.isStreaming).toBe(false);
     expect(result.current.error).toBeNull();

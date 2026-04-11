@@ -1,101 +1,339 @@
-import { NextResponse } from 'next/server';
-import { z } from 'zod';
-import { auth } from '@/lib/auth';
-import { db } from '@/lib/db';
-import { rateLimit } from '@/lib/rate-limit';
 import { createArtifactStream } from '@/lib/llm/streaming';
 import {
   buildFunnelOptinPrompt,
   buildFunnelQuizPrompt,
   buildFunnelVslPrompt,
+  type FunnelBriefingInput,
+  type FunnelUnifiedBriefingInput,
 } from '@/lib/tool-prompts/funnel-pages';
+import {
+  enforceUsageGuards,
+  parseAndValidateRequest,
+  requireAuthenticatedUser,
+  requireOwnedProject,
+} from '@/lib/tool-routes/guards';
+import { serviceUnavailableError, sseResponse } from '@/lib/tool-routes/responses';
+import {
+  funnelPagesRequestSchema,
+  getLengthByFunnelStep,
+  type FunnelPagesRequest,
+  type FunnelPagesRequestV2,
+  type FunnelPagesRequestV3,
+} from '@/lib/tool-routes/schemas';
 
-const ALLOWED_MODELS = ['openai/gpt-4-turbo', 'anthropic/claude-3-opus', 'mistralai/mistral-large'];
+function isFunnelV2Payload(payload: FunnelPagesRequest): payload is FunnelPagesRequestV2 {
+  return 'briefing' in payload;
+}
 
-const schema = z.object({
-  projectId: z.string().cuid(),
-  model: z.string().refine((m) => ALLOWED_MODELS.includes(m), { message: 'Unsupported model' }),
-  tone: z.enum(['professional', 'casual', 'formal', 'technical']),
-  step: z.enum(['optin', 'quiz', 'vsl']),
-  product: z.string().min(3),
-  audience: z.string().min(3),
-  offer: z.string().min(3),
-  promise: z.string().min(3),
-  notes: z.string().optional(),
-  optinOutput: z.string().optional(),
-  quizOutput: z.string().optional(),
-});
+function isFunnelV3Payload(payload: FunnelPagesRequest): payload is FunnelPagesRequestV3 {
+  return 'extractedFields' in payload;
+}
 
-function getLengthByStep(step: 'optin' | 'quiz' | 'vsl') {
-  if (step === 'optin') return 1200;
-  if (step === 'quiz') return 1400;
-  return 3200;
+function asNonEmptyString(value: unknown, fallback = 'Non specificato'): string {
+  if (typeof value !== 'string') {
+    return fallback;
+  }
+
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : fallback;
+}
+
+function asBoolean(value: unknown, fallback = false): boolean {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === 'true' || normalized === 'yes' || normalized === 'si') {
+      return true;
+    }
+
+    if (normalized === 'false' || normalized === 'no') {
+      return false;
+    }
+  }
+
+  return fallback;
+}
+
+function asDesiredClusterCount(value: unknown): number {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    const rounded = Math.round(value);
+    return Math.min(5, Math.max(3, rounded));
+  }
+
+  if (typeof value === 'string') {
+    const parsed = Number.parseInt(value, 10);
+    if (Number.isFinite(parsed)) {
+      return Math.min(5, Math.max(3, parsed));
+    }
+  }
+
+  return 3;
+}
+
+function asClusterProfiles(value: unknown) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .filter((item): item is Record<string, unknown> => typeof item === 'object' && item !== null)
+    .map((item) => ({
+      cluster_name: asNonEmptyString(item.cluster_name ?? item.label),
+      cluster_description: asNonEmptyString(item.cluster_description ?? item.snapshot),
+      psychographic_profile: asNonEmptyString(item.psychographic_profile),
+    }))
+    .filter((item) => item.cluster_name !== 'Non specificato');
+}
+
+function asLeadMagnetsByCluster(value: unknown) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .filter((item): item is Record<string, unknown> => typeof item === 'object' && item !== null)
+    .map((item) => ({
+      cluster_name: asNonEmptyString(item.cluster_name ?? item.cluster_label),
+      title: asNonEmptyString(item.title),
+      format: asLeadMagnetFormat(item.format),
+      hook: asNonEmptyString(item.hook ?? item.promise),
+      messaging: asNonEmptyString(item.messaging),
+      next_step: asNonEmptyString(item.next_step ?? item.delivery_timing),
+    }))
+    .filter((item) => item.cluster_name !== 'Non specificato' || item.title !== 'Non specificato');
+}
+
+function asBusinessType(value: unknown): 'B2B' | 'B2C' {
+  return value === 'B2C' ? 'B2C' : 'B2B';
+}
+
+function asDeliveryModel(value: unknown): 'done-for-you' | 'done-with-you' | 'fai-da-te' | 'corso' {
+  const allowed = new Set(['done-for-you', 'done-with-you', 'fai-da-te', 'corso']);
+  return typeof value === 'string' && allowed.has(value) ? (value as 'done-for-you' | 'done-with-you' | 'fai-da-te' | 'corso') : 'done-for-you';
+}
+
+function asPromisedResultFormat(value: unknown): 'video' | 'pdf' | 'analisi' | 'report' | 'altro' {
+  const allowed = new Set(['video', 'pdf', 'analisi', 'report', 'altro']);
+  return typeof value === 'string' && allowed.has(value) ? (value as 'video' | 'pdf' | 'analisi' | 'report' | 'altro') : 'report';
+}
+
+function asLeadMagnetFormat(value: unknown): 'VSL' | 'PDF' | 'Case Study' | 'Demo' | 'Altro' {
+  const allowed = new Set(['VSL', 'PDF', 'Case Study', 'Demo', 'Altro']);
+  return typeof value === 'string' && allowed.has(value) ? (value as 'VSL' | 'PDF' | 'Case Study' | 'Demo' | 'Altro') : 'Altro';
+}
+
+const EXTRACTION_SECTION_KEYS = [
+  'business_context',
+  'offer_context',
+  'qualification_context',
+  'optin_context',
+  'segmentation_context',
+  'belief_context',
+  'funnel_goals',
+  'proof_context',
+  'generated_context',
+  'assumptions_and_constraints',
+] as const;
+
+function normalizeExtractedFields(value: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = { ...value };
+  const wrappers = ['fields', 'data', 'result'];
+
+  for (const wrapper of wrappers) {
+    const candidate = result[wrapper];
+    if (typeof candidate === 'object' && candidate !== null && !Array.isArray(candidate)) {
+      Object.assign(result, candidate as Record<string, unknown>);
+    }
+  }
+
+  for (const key of EXTRACTION_SECTION_KEYS) {
+    const section = result[key];
+    if (typeof section !== 'object' || section === null || Array.isArray(section)) {
+      continue;
+    }
+
+    for (const [nestedKey, nestedValue] of Object.entries(section)) {
+      if (nestedValue === null || nestedValue === undefined || nestedValue === '') {
+        continue;
+      }
+
+      if (!(nestedKey in result) || result[nestedKey] === '' || result[nestedKey] === null || result[nestedKey] === undefined) {
+        result[nestedKey] = nestedValue;
+      }
+    }
+  }
+
+  return result;
+}
+
+function mapExtractedFieldsToBriefing(payload: FunnelPagesRequestV3): FunnelPagesRequestV2['briefing'] {
+  const extracted = normalizeExtractedFields(payload.extractedFields);
+  const leadMagnetSingle =
+    typeof extracted.lead_magnet === 'object' && extracted.lead_magnet !== null
+      ? (extracted.lead_magnet as Record<string, unknown>)
+      : undefined;
+
+  const leadMagnetFromSingle = leadMagnetSingle
+    ? [
+        {
+          cluster_name: asNonEmptyString(leadMagnetSingle.cluster_name ?? leadMagnetSingle.cluster_label, 'Cluster Principale'),
+          title: asNonEmptyString(leadMagnetSingle.title),
+          format: asLeadMagnetFormat(leadMagnetSingle.format),
+          hook: asNonEmptyString(leadMagnetSingle.hook ?? leadMagnetSingle.promise),
+          messaging: asNonEmptyString(leadMagnetSingle.messaging),
+          next_step: asNonEmptyString(leadMagnetSingle.next_step ?? leadMagnetSingle.delivery_timing),
+        },
+      ]
+    : [];
+
+  const leadMagnets = asLeadMagnetsByCluster(extracted.lead_magnets_by_cluster);
+
+  return {
+    business_context: {
+      business_type: asBusinessType(extracted.business_type),
+      sector_niche: asNonEmptyString(extracted.sector_niche),
+      offer_price_range: asNonEmptyString(extracted.offer_price_range),
+      target_profile: asNonEmptyString(extracted.target_profile),
+      operational_context: asNonEmptyString(extracted.operational_context, ''),
+    },
+    offer_context: {
+      core_problem: asNonEmptyString(extracted.core_problem),
+      new_opportunity: asNonEmptyString(extracted.new_opportunity),
+      old_method: asNonEmptyString(extracted.old_method),
+      delivery_model: asDeliveryModel(extracted.delivery_model),
+      client_involvement_required: asNonEmptyString(extracted.client_involvement_required, ''),
+    },
+    qualification_context: {
+      must_have_criteria: asNonEmptyString(extracted.must_have_criteria),
+      nice_to_have_criteria: asNonEmptyString(extracted.nice_to_have_criteria, ''),
+      disqualification_criteria: asNonEmptyString(extracted.disqualification_criteria),
+      minimum_operational_capabilities: asNonEmptyString(extracted.minimum_operational_capabilities),
+      disqualified_redirect_offer: asNonEmptyString(extracted.disqualified_redirect_offer, ''),
+    },
+    optin_context: {
+      optin_title_promise: asNonEmptyString(extracted.optin_title_promise),
+      promised_benefit: asNonEmptyString(extracted.promised_benefit),
+      promised_result_format: asPromisedResultFormat(extracted.promised_result_format),
+      email_already_collected: asBoolean(extracted.email_already_collected, true),
+    },
+    segmentation_context: {
+      primary_segmentation_basis: asNonEmptyString(extracted.primary_segmentation_basis),
+      desired_cluster_count: asDesiredClusterCount(extracted.desired_cluster_count),
+      cluster_profiles: asClusterProfiles(extracted.cluster_profiles),
+      cluster_overlap_management: asNonEmptyString(extracted.cluster_overlap_management, ''),
+      lead_magnets_by_cluster: leadMagnets.length > 0 ? leadMagnets : leadMagnetFromSingle,
+    },
+    belief_context: {
+      false_belief_vehicle: asNonEmptyString(extracted.false_belief_vehicle),
+      false_belief_internal: asNonEmptyString(extracted.false_belief_internal),
+      false_belief_external: asNonEmptyString(extracted.false_belief_external),
+    },
+    funnel_goals: {
+      funnel_primary_goal: asNonEmptyString(extracted.funnel_primary_goal),
+      success_metrics: asNonEmptyString(extracted.success_metrics),
+      next_customer_journey_step: asNonEmptyString(extracted.next_customer_journey_step),
+    },
+    proof_context: {
+      case_studies: [],
+      testimonials_sources: [],
+      authority_assets: asNonEmptyString(extracted.authority_assets, ''),
+      visual_proof_assets: [],
+    },
+    generated_context: {
+      optin_output_context: asNonEmptyString(payload.optinOutput ?? extracted.optin_output_context, ''),
+      quiz_output_context: asNonEmptyString(payload.quizOutput ?? extracted.quiz_output_context, ''),
+      funnel_context_notes: asNonEmptyString(payload.notes ?? extracted.funnel_context_notes, ''),
+    },
+    assumptions_and_constraints: {
+      assumptions_allowed: asBoolean(extracted.assumptions_allowed, true),
+      assumption_notes: asNonEmptyString(extracted.assumption_notes, ''),
+      forbidden_terms_or_claims: asNonEmptyString(extracted.forbidden_terms_or_claims, ''),
+    },
+  };
+}
+
+function buildPromptBriefing(payload: FunnelPagesRequest): FunnelBriefingInput | FunnelUnifiedBriefingInput {
+  if (isFunnelV2Payload(payload)) {
+    return {
+      briefing: payload.briefing,
+      tone: payload.tone,
+      notes: payload.notes,
+    };
+  }
+
+  if (isFunnelV3Payload(payload)) {
+    return {
+      briefing: mapExtractedFieldsToBriefing(payload),
+      tone: payload.tone,
+      notes: payload.notes,
+    };
+  }
+
+  return {
+    product: payload.customerContext.product,
+    audience: payload.customerContext.audience,
+    offer: payload.customerContext.offer,
+    promise: payload.promise,
+    tone: payload.tone,
+    notes: payload.notes,
+  };
+}
+
+async function buildFunnelPrompt(payload: {
+  step: 'optin' | 'quiz' | 'vsl';
+  briefing: FunnelBriefingInput | FunnelUnifiedBriefingInput;
+  optinOutput?: string;
+  quizOutput?: string;
+}) {
+  if (payload.step === 'optin') {
+    return buildFunnelOptinPrompt(payload.briefing);
+  }
+
+  if (payload.step === 'quiz') {
+    return buildFunnelQuizPrompt({ ...payload.briefing, optinOutput: payload.optinOutput! });
+  }
+
+  return buildFunnelVslPrompt({
+    ...payload.briefing,
+    optinOutput: payload.optinOutput!,
+    quizOutput: payload.quizOutput!,
+  });
 }
 
 export async function POST(request: Request) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: { code: 'UNAUTHORIZED', message: 'Authentication required' } }, { status: 401 });
+  const authResult = await requireAuthenticatedUser();
+  if (!authResult.ok) {
+    return authResult.response;
   }
 
-  const userId = session.user.id;
-  const body = await request.json().catch(() => null);
-  const parsed = schema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: { code: 'VALIDATION_ERROR', message: 'Invalid input', details: parsed.error.flatten() } }, { status: 400 });
+  const userId = authResult.data.userId;
+
+  const parsed = await parseAndValidateRequest(request, funnelPagesRequestSchema);
+  if (!parsed.ok) {
+    return parsed.response;
   }
 
   const payload = parsed.data;
 
-  if (payload.step === 'quiz' && !payload.optinOutput) {
-    return NextResponse.json({ error: { code: 'VALIDATION_ERROR', message: 'optinOutput is required for quiz step' } }, { status: 400 });
-  }
-  if (payload.step === 'vsl' && (!payload.optinOutput || !payload.quizOutput)) {
-    return NextResponse.json({ error: { code: 'VALIDATION_ERROR', message: 'optinOutput and quizOutput are required for vsl step' } }, { status: 400 });
+  const usageResult = await enforceUsageGuards(userId, payload.model);
+  if (!usageResult.ok) {
+    return usageResult.response;
   }
 
-  const user = await db.user.findUnique({ where: { id: userId } });
-  if (!user) {
-    return NextResponse.json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } }, { status: 401 });
-  }
-  if (user.monthlyUsed >= user.monthlyQuota) {
-    await db.quotaHistory.create({
-      data: { userId, requestCount: 1, costUSD: 0, model: payload.model, artifactType: 'content', status: 'rate_limited' },
-    });
-    return NextResponse.json({ error: { code: 'RATE_LIMIT_EXCEEDED', message: 'Monthly quota exhausted' } }, { status: 429 });
+  const ownershipResult = await requireOwnedProject(payload.projectId, userId);
+  if (!ownershipResult.ok) {
+    return ownershipResult.response;
   }
 
-  if (Number(user.monthlySpent) >= Number(user.monthlyBudget)) {
-    await db.quotaHistory.create({
-      data: { userId, requestCount: 1, costUSD: 0, model: payload.model, artifactType: 'content', status: 'rate_limited' },
-    });
-    return NextResponse.json({ error: { code: 'PAYMENT_REQUIRED', message: 'Monthly budget exhausted' } }, { status: 402 });
-  }
-
-  const { allowed } = await rateLimit(userId);
-  if (!allowed) {
-    await db.quotaHistory.create({
-      data: { userId, requestCount: 1, costUSD: 0, model: payload.model, artifactType: 'content', status: 'rate_limited' },
-    });
-    return NextResponse.json({ error: { code: 'RATE_LIMIT_EXCEEDED', message: 'Too many requests' } }, { status: 429 });
-  }
-
-  const project = await db.project.findUnique({ where: { id: payload.projectId } });
-  if (!project) {
-    return NextResponse.json({ error: { code: 'NOT_FOUND', message: 'Project not found' } }, { status: 404 });
-  }
-  if (project.userId !== userId) {
-    return NextResponse.json({ error: { code: 'FORBIDDEN', message: 'Access denied' } }, { status: 403 });
-  }
-
-  let prompt = '';
-  if (payload.step === 'optin') {
-    prompt = await buildFunnelOptinPrompt(payload);
-  } else if (payload.step === 'quiz') {
-    prompt = await buildFunnelQuizPrompt({ ...payload, optinOutput: payload.optinOutput! });
-  } else {
-    prompt = await buildFunnelVslPrompt({ ...payload, optinOutput: payload.optinOutput!, quizOutput: payload.quizOutput! });
-  }
+  const prompt = await buildFunnelPrompt({
+    step: payload.step,
+    briefing: buildPromptBriefing(payload),
+    optinOutput: payload.optinOutput,
+    quizOutput: payload.quizOutput,
+  });
 
   try {
     const stream = await createArtifactStream({
@@ -108,20 +346,14 @@ export async function POST(request: Request) {
       input: {
         topic: prompt,
         tone: payload.tone,
-        length: getLengthByStep(payload.step),
-        outputFormat: payload.step === 'vsl' ? 'plain' : 'json',
+        length: getLengthByFunnelStep(payload.step),
+        outputFormat: 'markdown',
         workflowType: 'funnel_pages',
       },
     });
 
-    return new Response(stream, {
-      headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-      },
-    });
+    return sseResponse(stream);
   } catch {
-    return NextResponse.json({ error: { code: 'SERVICE_UNAVAILABLE', message: 'LLM service unavailable' } }, { status: 503 });
+    return serviceUnavailableError();
   }
 }

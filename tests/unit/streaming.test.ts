@@ -24,6 +24,10 @@ jest.mock('@/lib/db', () => ({
 jest.mock('@/lib/llm/orchestrator', () => ({
   LLMOrchestrator: jest.fn().mockImplementation(() => ({
     generateStream: (...args: unknown[]) => mockGenerateStream(...args),
+    normalizeOutput: ({ rawContent }: { rawContent: string }) => ({
+      content: rawContent,
+      format: 'plain' as const,
+    }),
   })),
 }));
 

@@ -192,6 +192,8 @@ prisma/
 |---|---|
 | `npm run dev` | Start development server |
 | `npm run build` | Production build |
+| `npm run db:migrate:deploy` | Apply pending Prisma migrations (idempotent) |
+| `npm run deploy:vercel` | Run migrations first, then build |
 | `npm start` | Start production server |
 | `npm run lint` | Run ESLint |
 | `npm run typecheck` | TypeScript type-check without emit |
@@ -232,12 +234,34 @@ Current branch strategy:
 
 **Build command:**
 ```bash
+npm run deploy:vercel
+```
+
+**Deploy script order:**
+```bash
+npm run db:migrate:deploy
 npm run build
 ```
 
-**Pre-deploy command** (runs database migrations):
-```bash
-npx prisma migrate deploy
-```
+`npm run deploy:vercel` enforces this order in a single command and keeps migration execution deterministic for both Preview and Production deployments.
+
+### DATABASE_URL Change Procedure
+
+1. Update `DATABASE_URL` in the correct Vercel scope (Preview or Production).
+2. Confirm the Build Command remains `npm run deploy:vercel` in that scope.
+3. Trigger a redeploy and verify logs show `prisma migrate deploy` before the Next.js build output.
+4. Do not add runtime schema initialization in API routes or auth callbacks.
+
+### Mandatory Post-Deploy Checks
+
+1. Verify table `_prisma_migrations` exists.
+2. Verify auth tables exist (`User`, `Account`, `Session`, plus other Prisma baseline tables).
+3. Execute login smoke test (Google sign-in -> dashboard redirect with no server error).
+4. Confirm redeploy with no new migrations completes cleanly (idempotency check).
+
+### Rollback Note
+
+If deployment fails during migration, fix environment configuration or migration state first, then redeploy.
+Do not introduce runtime schema workarounds in application routes.
 
 A GitHub Actions CI pipeline runs lint, typecheck, tests, and build on every push to `main` and on all pull requests. Vercel handles production deployment from `main` and preview/development workflows from PRs against `dev`.

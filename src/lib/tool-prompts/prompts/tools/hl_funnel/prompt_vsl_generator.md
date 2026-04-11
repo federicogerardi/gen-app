@@ -1,6 +1,6 @@
 # PROMPT VSL GENERATOR
 
-Versione 4.1 - Rigor Plain Text + Profondità Strategica
+Versione 4.2 - Rigor Markdown + Profondita Strategica
 
 ## Ruolo
 
@@ -391,15 +391,16 @@ Prima di considerare lo script completo, verifica TUTTI questi punti:
 
 ## Output Obbligatorio
 
-Restituisci SOLO il testo completo della VSL in formato plain text.
+Restituisci SOLO markdown, con script VSL completo e recitabile.
 
 Vincoli output rigidi:
 - Niente JSON
-- Niente markdown
-- Niente note meta, disclaimer o spiegazioni fuori script
-- Nessuna intestazione tecnica
-- Niente tabelle, liste numerate fuori script
+- Niente code fences
+- Usa heading markdown per i 10 elementi
+- Niente commenti meta o spiegazioni fuori script, ad eccezione di una sezione finale ## Note Assunzioni per documentare i dati mancanti compilati con assunzioni conservative
+- Usa emoji leggere nei titoli se utili
 - Zero metafrasi tipo "[PAUSA]" – incorpora pause nel ritmo naturale
+- Mantieni testo pronto per telecamera, senza blocchi tecnici
 
 ## Istruzione Finale
 
@@ -408,6 +409,6 @@ Genera ora la VSL completa, lunga 17-20 minuti (~2.800-3.200 parole), rispettand
 2. Tutte le regole linguistiche (terminologia italiana, numeri con percentuali)
 3. Tutte le formule (WHAT vs HOW, "that button", "two choices")
 4. Tutti i guardrail (no competitor nominali, fai-da-te realistico, video commentati non ripetuti)
-5. Output plain text SOLO – zero markdown, meta, o strutture tecniche
+5. Output markdown SOLO – zero JSON, meta, o strutture tecniche
 
 Restituisci solo lo script recitabile, pronto per la telecamera.

@@ -1,11 +1,11 @@
 # API Specifications: LLM Artifact Generation Hub
 
-**Version**: 1.0  
+**Version**: 1.1  
 **Status**: IMPLEMENTED SUBSET + OPEN ITEMS  
 **Base URL**: `https://<your-vercel-domain>/api` (production from `main`; development/preview from PR flow on `dev`)  
 **Authentication**: NextAuth session cookie (browser). Bearer tokens solo per integrazioni server-to-server esplicite.  
-**Content-Type**: `application/json`  
-**Last Updated**: 2026-04-09
+**Content-Type**: `application/json` (default), `multipart/form-data` per upload documenti funnel  
+**Last Updated**: 2026-04-11
 
 ---
 
@@ -44,7 +44,9 @@ All errors follow this format:
 Implemented routes in the current codebase:
 - `POST /artifacts/generate`
 - `POST /tools/meta-ads/generate`
+- `POST /tools/extraction/generate`
 - `POST /tools/funnel-pages/generate`
+- `POST /tools/funnel-pages/upload`
 - `GET /artifacts/{id}`
 - `PUT /artifacts/{id}`
 - `DELETE /artifacts/{id}`
@@ -111,23 +113,75 @@ POST /tools/meta-ads/generate
   "projectId": "proj_123",
   "model": "openai/gpt-4-turbo",
   "tone": "professional",
-  "product": "Programma nutrizione 90 giorni",
-  "audience": "Donne 28-45 interessate a fitness",
-  "offer": "Call gratuita + piano personalizzato",
+  "customerContext": {
+    "product": "Programma nutrizione 90 giorni",
+    "audience": "Donne 28-45 interessate a fitness",
+    "offer": "Call gratuita + piano personalizzato"
+  },
   "objective": "lead generation",
   "angle": "problem-solution con social proof"
 }
 ```
 
-**Response**:
-- Stream SSE con eventi standard (`start`, `token`, `complete`, `error`)
-- Crea un artifact di tipo `content`
+Nota compatibilita:
+- I campi legacy top-level (`product`, `audience`, `offer`) sono ancora accettati e normalizzati server-side in `customerContext`.
 
-### Generate Funnel Pages Step (Streaming)
+**Response**:
+- Stream SSE con eventi standard (`start`, `token`, `complete`, `error`) e metadata additive (`workflowType`, `format`, `sequence`, `progress`, `code`)
+- Crea un artifact di tipo `content`
+- Formato output workflow: `markdown`
+
+### Upload Funnel Source Document
 
 **Endpoint**:
 ```
-POST /tools/funnel-pages/generate
+POST /tools/funnel-pages/upload
+```
+
+**Request** (`multipart/form-data`):
+- `projectId` (string, `cuid`)
+- `file` (binary)
+
+Formati supportati:
+- PDF (`application/pdf`)
+- DOCX (`application/vnd.openxmlformats-officedocument.wordprocessingml.document`)
+- TXT (`text/plain`)
+- Markdown (`text/markdown`)
+
+Regole principali:
+- auth obbligatoria
+- ownership check sul `projectId`
+- rate limit prima della lettura/parse file
+- parsing inline (no storage esterno)
+
+**Response** (200):
+```json
+{
+  "ok": true,
+  "data": {
+    "text": "contenuto estratto",
+    "fileName": "briefing.pdf",
+    "mimeType": "application/pdf",
+    "sizeBytes": 123456
+  }
+}
+```
+
+Errori tipici:
+- `400 VALIDATION_ERROR` (multipart o campi mancanti/non validi)
+- `401 UNAUTHORIZED`
+- `403 FORBIDDEN`
+- `404 NOT_FOUND`
+- `413 VALIDATION_ERROR` (file troppo grande)
+- `415 VALIDATION_ERROR` (tipo file non supportato)
+- `422 VALIDATION_ERROR` (parsing fallito / contenuto vuoto)
+- `429 RATE_LIMIT_EXCEEDED`
+
+### Extract Funnel Fields (Streaming)
+
+**Endpoint**:
+```
+POST /tools/extraction/generate
 ```
 
 **Request** (application/json):
@@ -136,14 +190,56 @@ POST /tools/funnel-pages/generate
   "projectId": "proj_123",
   "model": "openai/gpt-4-turbo",
   "tone": "professional",
+  "rawContent": "testo estratto dal documento",
+  "fieldMap": {
+    "business_type": {
+      "type": "select",
+      "required": true,
+      "description": "Tipo business"
+    }
+  },
+  "notes": "opzionale"
+}
+```
+
+**Response**:
+- Stream SSE con eventi standard (`start`, `token`, `complete`, `error`)
+- Workflow `extraction`
+- Output richiesto al modello: JSON (consumato dal client e mappato in `extractedFields`)
+
+### Generate Funnel Pages Step (Streaming)
+
+**Endpoint**:
+```
+POST /tools/funnel-pages/generate
+```
+
+**Request** (application/json)
+
+Il route handler accetta 3 shape compatibili:
+- `V1` legacy (`customerContext + promise`)
+- `V2` briefing unificato (`briefing`)
+- `V3` upload-first (`extractedFields`) — shape raccomandata e usata dalla UI attuale
+
+**Request V3 (raccomandata)**:
+```json
+{
+  "projectId": "proj_123",
+  "model": "openai/gpt-4-turbo",
+  "tone": "professional",
   "step": "optin",
-  "product": "Programma coaching performance",
-  "audience": "Founder e professionisti digitali 30-50",
-  "offer": "Sessione strategica gratuita + piano operativo",
-  "promise": "+30% lead qualificati in 45 giorni",
+  "extractedFields": {
+    "business_type": "B2B",
+    "sector_niche": "Servizi B2B",
+    "core_problem": "Lead poco qualificati",
+    "funnel_primary_goal": "Aumentare call qualificate"
+  },
   "notes": "Vincoli brand..."
 }
 ```
+
+Nota compatibilita:
+- I payload legacy V1/V2 restano supportati per backward compatibility.
 
 **Step-specific constraints**:
 - `step=optin`: nessun contesto precedente richiesto
@@ -151,8 +247,14 @@ POST /tools/funnel-pages/generate
 - `step=vsl`: richiede `optinOutput` e `quizOutput`
 
 **Response**:
-- Stream SSE con eventi standard (`start`, `token`, `complete`, `error`)
+- Stream SSE con eventi standard (`start`, `token`, `complete`, `error`) e metadata additive (`workflowType`, `format`, `sequence`, `progress`, `code`)
 - Crea un artifact di tipo `content`
+- Formato output workflow: `markdown` (per `optin`, `quiz`, `vsl`)
+
+Nota workflow UI Funnel Pages:
+1. upload documento (`/tools/funnel-pages/upload`)
+2. estrazione campi (`/tools/extraction/generate`)
+3. generazione sequenziale `optin -> quiz -> vsl` (`/tools/funnel-pages/generate`)
 
 ### Generate Artifact (Streaming)
 

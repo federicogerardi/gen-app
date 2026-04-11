@@ -2,7 +2,7 @@
 
 _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 
-## Stato avanzamento (aggiornato al 2026-04-10)
+## Stato avanzamento (aggiornato al 2026-04-11)
 
 - **Testing coverage >80%**: `COMPLETATO (scope corrente)`
   - Coverage Jest attuale: Statements `82.96%`, Branches `70.31%`, Functions `78.91%`, Lines `85.96%`.
@@ -19,6 +19,13 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
   - Rafforzato fallback human-readable con nuovi test unit.
   - Da completare la convergenza UX completa su tutte le viste/workflow.
 
+- **Tooling generation optimization (Meta Ads + Funnel Pages)**: `COMPLETATO (PR-1..PR-6)`
+  - Completati schema unificato input, prompt/runtime parity, normalizzazione output, SSE metadata additive, consolidamento route/error mapping e hardening finale.
+  - Standard output workflow tool allineato a `outputFormat: markdown` (Meta Ads + Funnel Pages).
+  - Esteso il flow Funnel Pages a pipeline upload-first: upload documento inline -> extraction fields -> generazione sequenziale `optin -> quiz -> vsl`.
+  - Validazione finale locale aggiornata: `npm run lint`, `npm run typecheck`, `npm run test` (30/30 suite), `npm run build` tutti `PASS`.
+  - File: docs/archive/tooling-generation-refactor-plan.md
+
 - **Deploy Vercel**: `COMPLETATO (baseline)`
   - Branch `main` in produzione.
   - Branch `dev` come ramo di sviluppo per PR.
@@ -31,31 +38,42 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
   - Consolidare e mantenere il livello raggiunto nelle prossime PR.
 - **Espansione test E2E e flussi reali auth/db**: `IN CORSO`
   - Estendere i test su login reale, generazione end-to-end, quota/admin e regression UX preview.
-  - File: docs/improvement/improvement-roadmap.md, docs/review/architecture-review.md, docs/ux/gui-refactor-plan.md
+  - File: docs/archive/improvement-roadmap.md, docs/archive/architecture-review.md, docs/ux/gui-refactor-plan.md
 
 ---
 
 ## Backend/LLM
+- **Tooling generation refactor framework (core app)**
+  - Prioritario per allineare processo Orchestrator -> Agent -> Provider, contratto input/output e consistenza streaming.
+  - Esecuzione prevista in PR incrementali (PR-1..PR-6) nel branch dedicato `feat/tooling-generation-optimization`.
+  - File: docs/archive/tooling-generation-refactor-plan.md, docs/adrs/001-modular-llm-controller-architecture.md, docs/specifications/api-specifications.md
+
 - **Structured logging & observability**
   - Implementare logging strutturato (Pino), Sentry, performance metrics.
   - Bloccante per debugging/monitoraggio.
-  - File: docs/improvement/improvement-roadmap.md
+  - File: docs/archive/improvement-roadmap.md
 
 - **Error handling avanzato**
   - Retry logic, circuit breaker, error boundaries custom, fallback provider.
-  - File: docs/improvement/improvement-roadmap.md, docs/review/architecture-review.md
+  - File: docs/archive/improvement-roadmap.md, docs/archive/architecture-review.md
 
 - **Database optimization**
   - Indici, constraints, soft deletes.
-  - File: docs/improvement/improvement-roadmap.md
+  - File: docs/archive/improvement-roadmap.md
 
 - **Quota management**
   - Automatizzare reset mensile, warning 80%, endpoint admin quota, email alert.
-  - File: docs/improvement/improvement-roadmap.md, docs/review/architecture-review.md
+  - File: docs/archive/improvement-roadmap.md, docs/archive/architecture-review.md
 
 ---
 
 ## Frontend/UX
+- **Visual unification pagine interne (estensione concept login)**: `COMPLETATO (2026-04-11)`
+  - Applicato framework visuale condiviso su dashboard, tools, artifacts, admin e project pages.
+  - Introdotte utility foundation (`app-shell`, `app-grid-overlay`, `app-surface`, `app-title`, `app-copy`) e classe controlli su sfondo grafico (`app-control`).
+  - Eseguito hardening contrasto su elementi sensibili (ricerca admin, filtri stato/tipo, card metriche, drawer quota).
+  - Specifica di riferimento per interventi futuri: `docs/specifications/graphic-frameworking-spec.md`.
+
 - **Refactoring preview artefatti**
   - Mostrare sempre preview human-readable, evitare JSON raw, fallback robusto.
   - Bloccante per usabilità.
@@ -79,14 +97,14 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 - **Vercel post-deployment hardening & monitoring**
   - Consolidare health checks, monitoring, runbook e smoke validation.
   - Prioritario per stabilizzazione post go-live.
-  - File: docs/improvement/improvement-roadmap.md, docs/implementation/implementation-plan.md
+  - File: docs/archive/improvement-roadmap.md, docs/implementation/implementation-plan.md
 
 ---
 
 ## Documentazione
 - **Allineamento documentazione vs codice**
   - Aggiornare api-specifications.md, blueprint.md, docstring, runbook.
-  - File: docs/review/copilot-review-followups.md, docs/review/architecture-review.md
+  - File: docs/archive/copilot-review-followups.md, docs/archive/architecture-review.md
 
 ---
 
@@ -100,6 +118,8 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 2. Structured logging & Sentry (`IN CORSO - baseline completata`)
 3. Refactoring preview artefatti (`IN CORSO`)
 4. Stabilizzazione post-deploy e validazione su Vercel
+
+Nota operativa: il track tooling generation e chiuso (`PR-1..PR-6` completate). Per dettaglio storico fasi/rollback: `docs/archive/tooling-generation-refactor-plan.md`.
 
 ---
 
@@ -170,6 +190,8 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 ---
 
 **Prossimi step consigliati:**
+- Mantenere monitoraggio runtime su stream/error-rate dei tool Meta Ads e Funnel Pages dopo il refactor completato.
+- Estendere test E2E sui flussi reali auth/db per consolidare il gate di regressione end-to-end.
 - Mantenere coverage >80% sul perimetro attuale e introdurre guardrail anti-regressione nei PR check.
 - Estendere coverage su flussi E2E critici (login reale, generazione completa, gestione quota/admin).
 - Estendere observability (Sentry + logging) alle route non ancora coperte e aggiungere metriche performance.

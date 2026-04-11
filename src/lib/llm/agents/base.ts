@@ -1,4 +1,4 @@
-export type ArtifactType = 'content' | 'seo' | 'code';
+export type ArtifactType = 'content' | 'seo' | 'code' | 'extraction';
 
 export abstract class BaseAgent {
   abstract type: ArtifactType;

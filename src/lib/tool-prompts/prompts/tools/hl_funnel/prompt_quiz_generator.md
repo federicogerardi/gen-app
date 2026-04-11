@@ -1,6 +1,6 @@
 # PROMPT QUIZ GENERATOR
 
-Versione 4.1 - Rigor JSON + Profondita Strategica
+Versione 4.2 - Rigor Markdown + Profondita Strategica
 
 ## Ruolo
 
@@ -107,6 +107,18 @@ Esempi lessicali:
      - Se done-for-you: distinguere chi vuole delegare vs chi vuole fare da solo.
      - Se fai-da-te/corso: distinguere timore tecnico vs motivazione ad apprendere.
 
+   Esempi opzioni per done-for-you:
+   - "'Preferisco imparare a farlo da solo, così ho il controllo totale'" → score 0 (squalifica: non cercano delega)
+   - "'Non ho tempo né voglia di imparare, voglio qualcuno che faccia tutto per me'" → score 3 (profilo ideale)
+   - "'Ho paura di affidarmi a qualcun altro, ma so di non avere le competenze'" → score 2 (ideale con obiezione da gestire)
+   - "'Vorrei capire il metodo prima di delegarlo completamente'" → score 1 (marginale, da educare)
+
+   Esempi opzioni per fai-da-te/corso:
+   - "'Ho paura di non essere abbastanza tecnico per implementarlo'" → score 2 (da rassicurare con supporto)
+   - "'Sono motivato a imparare, anche se richiede impegno e disciplina'" → score 3 (profilo ideale)
+   - "'Ho già provato cose simili e non ho mai finito'" → score 1 (marginale, richiede qualificazione)
+   - "'Non ho tempo per un corso, voglio risultati immediati'" → score 0 (squalifica: aspettativa incompatibile)
+
 6. False belief esterne (2-3).
    - Ostacoli esterni percepiti: mercato, timing, concorrenza.
 
@@ -151,90 +163,82 @@ Esempi lessicali:
 - Pattern interrupt.
 - Social proof implicita.
 
-## Output JSON obbligatorio (compatibile con funnel_hls)
+## Output Markdown obbligatorio (compatibile con funnel_hls)
 
-Restituisci SOLO JSON valido, senza markdown e senza testo extra.
+Restituisci SOLO markdown, senza JSON e senza testo extra fuori struttura.
+- Non includere code fences.
 
-Schema target:
+Struttura markdown richiesta:
 
-{
-  "business_context": {
-    "business_type": "B2B|B2C",
-    "email_already_collected": true,
-    "delivery_model": "string"
-  },
-  "questions": [
-    {
-      "id": "q1",
-      "category": "attraction|disqualification|false_belief_vehicle|false_belief_internal|false_belief_external|segmentation|urgency|qualitative_open|contact",
-      "question_type": "single_choice|open_text|contact",
-      "required": true,
-      "question": "string",
-      "options": [
-        {
-          "text": "string",
-          "score": 4,
-          "qualifies": true,
-          "cluster_tag": "segmento-a"
-        }
-      ]
-    }
-  ],
-  "segments": [
-    {
-      "name": "segmento-a",
-      "description": "string",
-      "criteria": "string"
-    }
-  ],
-  "disqualification_map": [
-    {
-      "trigger": "string",
-      "redirect_message": "string",
-      "redirect_offer": "string"
-    }
-  ],
-  "results_copy": {
-    "segmento-a": {
-      "headline": "string",
-      "hook": "string",
-      "cta": "string"
-    }
-  },
-  "false_belief_breakdown": {
-    "vehicle": ["string"],
-    "internal": ["string"],
-    "external": ["string"],
-    "priority": ["string"]
-  },
-  "lead_magnet_strategy": [
-    {
-      "segment": "segmento-a",
-      "title": "string",
-      "format": "VSL|PDF|Case Study|Demo",
-      "next_step": "string"
-    }
-  ],
-  "insights": {
-    "angles": ["string"],
-    "pain_points": ["string"],
-    "follow_up_notes": ["string"]
-  },
-  "analytics": {
-    "kpis": ["string"],
-    "drop_off_risks": ["string"],
-    "ab_tests": ["string"],
-    "success_metrics": ["string"]
-  },
-  "note_assunzioni": ["string"],
-  "quality_checks": {
-    "email_conditional_respected": true,
-    "operational_capacity_question_present": true,
-    "open_question_present": true,
-    "contact_questions_final": true,
-    "max_20_questions_respected": true
-  }
-}
+## Business Context 🧭
+- Business type: B2B|B2C
+- Email already collected: true|false
+- Delivery model: ...
+
+## Questions ❓
+Per ogni domanda usa questo formato:
+### Q1
+- Category: attraction|disqualification|false_belief_vehicle|false_belief_internal|false_belief_external|segmentation|urgency|qualitative_open|contact
+- Question type: single_choice|open_text|contact
+- Required: true|false
+- Question: ...
+- Options:
+  - text: ... | score: ... | qualifies: true|false | cluster_tag: ...
+
+## Segments 🧩
+- Segment name: ...
+- Description: ...
+- Criteria: ...
+- Psychographic profile: ... (motivazioni dominanti, paure primarie, livello di sofisticazione, auto-percezione)
+- Overlap management: ... (criterio di tie-break in caso di punteggio uguale con un altro segmento)
+
+## Disqualification Map 🚧
+- Trigger: ...
+- Disqualification type: budget_low|role_mismatch|capacity_gap|sector_mismatch|wrong_stage
+- Redirect message: ... (empatico, specifico per tipo di squalifica — non generico)
+- Redirect offer: ...
+- Estimated disqualified %: ...
+
+## Results Copy ✍️
+- Segment: ...
+- Headline: ...
+- Hook: ...
+- CTA: ...
+
+## False Belief Breakdown 🧠
+- Vehicle: ...
+- Internal: ...
+- External: ...
+- Priority: ...
+
+## Lead Magnet Strategy 🎁
+- Segment: ...
+- Title: ...
+- Format: VSL|PDF|Case Study|Demo
+- Hook: ... (angolo emozionale o gap di curiosità che apre il lead magnet per questo cluster)
+- Messaging: ... (promessa specifica e linguaggio adatto a questo cluster)
+- Next step: ...
+
+## Insights 🔍
+- Angles: ...
+- Pain points: ...
+- Follow-up notes: ...
+
+## Analytics 📊
+- KPIs: ...
+- Drop-off risks: ...
+- A/B tests: ...
+- Success metrics: ...
+
+## Note Assunzioni 📝
+- ...
+
+## Quality Checks ✅
+- email_conditional_respected: true|false
+- operational_capacity_question_present: true|false
+- open_question_present: true|false
+- contact_questions_final: true|false
+- max_20_questions_respected: true|false
 
 Vincoli tecnici obbligatori:
 - questions tra 5 e 20 elementi.
@@ -244,7 +248,7 @@ Vincoli tecnici obbligatori:
 - Almeno 1 domanda open_text o contact.
 - Almeno 1 domanda category=qualitative_open oppure question_type=open_text.
 - Domande anagrafiche finali con question_type=contact.
-- Nessun testo extra fuori JSON.
+- Nessun testo extra fuori markdown.
 
 ## Requisiti contenutistici minimi
 
@@ -267,4 +271,4 @@ Se rischi di superare 20 domande, riduci prima:
 ## Istruzione finale
 
 Genera ora il quiz completo rispettando rigorosamente schema e vincoli.
-Restituisci solo JSON valido.
+Restituisci solo markdown valido.

@@ -72,7 +72,8 @@ describe('ArtifactsClientPage', () => {
 
     render(<ArtifactsClientPage projects={[{ id: 'proj_1', name: 'Project A' }]} />);
 
-    expect(screen.getByText('Output di test')).toBeInTheDocument();
+    expect(screen.queryByText('Output di test')).not.toBeInTheDocument();
+    expect(screen.getByText('Project A')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Apri dettaglio artefatto/i })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Duplica input' })).not.toBeInTheDocument();
 
@@ -84,7 +85,7 @@ describe('ArtifactsClientPage', () => {
     confirmSpy.mockRestore();
   });
 
-  it('mostra preview semantica al posto del JSON raw', () => {
+  it('non mostra preview raw o semantica nel listing', () => {
     useArtifacts.mockReturnValue({
       isLoading: false,
       error: null,
@@ -107,7 +108,7 @@ describe('ArtifactsClientPage', () => {
 
     render(<ArtifactsClientPage projects={[{ id: 'proj_1', name: 'Project A' }]} />);
 
-    expect(screen.getByText('Titolo persuasivo - Descrizione leggibile - Scopri di piu')).toBeInTheDocument();
+    expect(screen.queryByText('Titolo persuasivo - Descrizione leggibile - Scopri di piu')).not.toBeInTheDocument();
     expect(screen.queryByText('{"headline":"Titolo persuasivo","primaryText":"Descrizione leggibile","cta":"Scopri di piu"}')).not.toBeInTheDocument();
   });
 });

@@ -6,6 +6,9 @@ export const TOOL_PROMPT_REGISTRY = {
   metaAds: {
     generation: 'tools/meta_ads/prompt_generation.md',
   },
+  extraction: {
+    generation: 'tools/extraction/prompt_generation.md',
+  },
   funnel: {
     optin: 'tools/hl_funnel/prompt_optin_generator.md',
     quiz: 'tools/hl_funnel/prompt_quiz_generator.md',
@@ -15,4 +18,5 @@ export const TOOL_PROMPT_REGISTRY = {
 
 export type ToolPromptPath =
   | (typeof TOOL_PROMPT_REGISTRY.metaAds)[keyof typeof TOOL_PROMPT_REGISTRY.metaAds]
+  | (typeof TOOL_PROMPT_REGISTRY.extraction)[keyof typeof TOOL_PROMPT_REGISTRY.extraction]
   | (typeof TOOL_PROMPT_REGISTRY.funnel)[keyof typeof TOOL_PROMPT_REGISTRY.funnel];

@@ -4,7 +4,7 @@ Full-stack TypeScript app per generazione di artifact AI via OpenRouter, con per
 
 **Stack**: Next.js 16 · React 19 · TypeScript · PostgreSQL · Prisma 7 · NextAuth v5 · shadcn/ui · Tailwind v4 · TanStack Query v5 · Zod v4 · @upstash/ratelimit · OpenRouter · Vercel
 
-**Stato progetto**: Funzionale in locale, CI/CD passing. Coverage Jest attuale su scope corrente: Statements 82.96%, Branches 70.31%, Functions 78.91%, Lines 85.96%. Deploy eseguito su Vercel: branch `main` in produzione, branch `dev` come ramo sviluppo per PR. Pending: consolidamento E2E/auth-db coverage, logging strutturato completo, UX polish.
+**Stato progetto**: Funzionale in locale, CI/CD passing. Deploy eseguito su Vercel: branch `main` in produzione, branch `dev` come ramo sviluppo per PR. Per metriche di coverage e backlog corrente fare riferimento a `docs/implement-index.md`.
 Vedi [`docs/implement-index.md`](../docs/implement-index.md) per le priorità correnti.
 
 ---
@@ -47,6 +47,25 @@ src/
 - Schema DB: [`prisma/schema.prisma`](../prisma/schema.prisma)
 - Specifiche API: [`docs/specifications/api-specifications.md`](../docs/specifications/api-specifications.md)
 
+### Focus operativo corrente: ottimizzazione tool generation
+
+Per attivita su gestione tool e qualita dei generatori, considerare questi confini come default:
+- Route layer (`src/app/api/tools/**`): auth, ownership, rate limit, validazione Zod, mapping errori uniforme.
+- Tool prompt layer (`src/lib/tool-prompts/**`): sorgente markdown versionata + template runtime statici tipizzati.
+- LLM layer (`src/lib/llm/**`): orchestrazione, agent routing, streaming, cost accounting.
+
+Guardrail specifici:
+- Evitare letture filesystem runtime per prompt nelle route (`fs.readFile`): usare `templates.ts` + `loader.ts`.
+- Preservare il contratto API errori `{ error: { code, message } }` e codici standard.
+- Mantenere il check `rateLimit(userId)` prima di chiamate OpenRouter in ogni endpoint di generazione.
+- Allineare i test quando si toccano endpoint/tool prompt (`tests/integration/*-route.test.ts`, `tests/unit/tool-prompts.test.ts`).
+
+Documentazione da linkare (non duplicare):
+- Architettura LLM: [`docs/adrs/001-modular-llm-controller-architecture.md`](../docs/adrs/001-modular-llm-controller-architecture.md)
+- Streaming SSE: [`docs/adrs/002-streaming-vs-batch-responses.md`](../docs/adrs/002-streaming-vs-batch-responses.md)
+- Quota e rate limiting: [`docs/adrs/003-rate-limiting-quota-strategy.md`](../docs/adrs/003-rate-limiting-quota-strategy.md)
+- Priorita implementative correnti: [`docs/implement-index.md`](../docs/implement-index.md)
+
 ---
 
 ## Gotcha critici
@@ -83,7 +102,7 @@ z.record(z.string(), z.unknown())  // ✅ — z.record(z.unknown()) ❌ in v4
 
 ### CI/CD — ordine step critico
 `npx prisma generate` deve precedere `npm run typecheck` e `npm run build`.
-Variabili d'ambiente richieste nel build: `OPENAI_API_KEY`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`.
+Variabili d'ambiente richieste nel build: `OPENROUTER_API_KEY`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`.
 
 ### GitHub CLI PR body — evitare warning shell
 Quando si crea una PR con testo multilinea/markdown, evitare `--body "..."` con backtick nel contenuto: in shell i backtick possono attivare command substitution e generare warning tipo `command not found`.
@@ -123,12 +142,10 @@ Linea guida:
 
 ---
 
-## Priorità correnti (da `implement-index.md`)
+## Priorità correnti
 
-1. **Stabilizzazione test E2E e auth/db real-flow** — bloccante per produzione
-2. **Logging strutturato + Sentry** — bloccante per debugging in produzione
-3. **Refactoring preview artifact** — nessun JSON raw esposto in UI
-4. **Hardening post-deploy Vercel** — con health checks, monitoring e runbook
+Le priorità operative sono mantenute in modo centralizzato in `docs/implement-index.md`.
+Evitare di duplicare in questo file liste temporanee o snapshot di backlog.
 
 ---
 

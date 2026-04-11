@@ -1,18 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { Navbar } from '@/components/layout/Navbar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatArtifactContentForDisplay } from '@/lib/artifact-preview';
+import { FUNNEL_EXTRACTION_FIELD_MAP } from '@/lib/tool-prompts/funnel-extraction-field-map';
 
 type FunnelStepKey = 'optin' | 'quiz' | 'vsl';
 
@@ -25,6 +25,19 @@ type FunnelStepState = {
   error: string | null;
 };
 
+type Phase = 'idle' | 'uploading' | 'extracting' | 'review' | 'generating';
+
+type StreamResult = {
+  content: string;
+  artifactId: string | null;
+};
+
+type FieldLabelProps = {
+  htmlFor?: string;
+  required?: boolean;
+  children: ReactNode;
+};
+
 const initialSteps: FunnelStepState[] = [
   { key: 'optin', title: 'Step 1 - Optin Page', status: 'idle', content: '', artifactId: null, error: null },
   { key: 'quiz', title: 'Step 2 - Domande Quiz', status: 'idle', content: '', artifactId: null, error: null },
@@ -33,21 +46,122 @@ const initialSteps: FunnelStepState[] = [
 
 const TONES = ['professional', 'casual', 'formal', 'technical'] as const;
 
-type StreamResult = {
-  content: string;
-  artifactId: string | null;
-};
+const ALLOWED_MIME_TYPES = [
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'text/plain',
+  'text/markdown',
+] as const;
+
+const ALLOWED_EXTENSIONS = ['.pdf', '.docx', '.txt', '.md'] as const;
+
+function FieldLabel({ htmlFor, required = true, children }: FieldLabelProps) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <Label htmlFor={htmlFor}>{children}</Label>
+      <span
+        className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+          required ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'
+        }`}
+      >
+        {required ? 'Obbligatorio' : 'Opzionale'}
+      </span>
+    </div>
+  );
+}
+
+async function streamToText(response: Response): Promise<string> {
+  const reader = response.body?.getReader();
+  if (!reader) throw new Error('Stream non disponibile');
+
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let content = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const parts = buffer.split('\n');
+    buffer = parts.pop() ?? '';
+
+    for (const line of parts) {
+      if (!line.startsWith('data: ')) continue;
+      const payload = JSON.parse(line.slice(6)) as Record<string, unknown>;
+      if (payload.type === 'token') content += (payload.token as string) ?? '';
+      if (payload.type === 'error') throw new Error((payload.message as string) ?? 'Errore di stream');
+    }
+  }
+
+  return content;
+}
+
+function parseJsonFromLLMOutput(rawOutput: string): Record<string, unknown> {
+  const fencedMatch = rawOutput.match(/```json\s*([\s\S]*?)```/);
+  if (fencedMatch) {
+    return JSON.parse(fencedMatch[1].trim()) as Record<string, unknown>;
+  }
+
+  const objectMatch = rawOutput.match(/\{[\s\S]*\}/);
+  if (objectMatch) {
+    return JSON.parse(objectMatch[0]) as Record<string, unknown>;
+  }
+
+  throw new Error('Nessun JSON trovato nella risposta del modello di estrazione');
+}
+
+const EXTRACTION_SECTION_KEYS = [
+  'business_context',
+  'offer_context',
+  'qualification_context',
+  'optin_context',
+  'segmentation_context',
+  'belief_context',
+  'funnel_goals',
+  'proof_context',
+  'generated_context',
+  'assumptions_and_constraints',
+] as const;
+
+function normalizeExtractedFields(value: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = { ...value };
+  const wrappers = ['fields', 'data', 'result'];
+
+  for (const wrapper of wrappers) {
+    const candidate = result[wrapper];
+    if (typeof candidate === 'object' && candidate !== null && !Array.isArray(candidate)) {
+      Object.assign(result, candidate as Record<string, unknown>);
+    }
+  }
+
+  for (const key of EXTRACTION_SECTION_KEYS) {
+    const section = result[key];
+    if (typeof section !== 'object' || section === null || Array.isArray(section)) {
+      continue;
+    }
+
+    for (const [nestedKey, nestedValue] of Object.entries(section)) {
+      if (nestedValue === null || nestedValue === undefined || nestedValue === '') {
+        continue;
+      }
+
+      if (!(nestedKey in result) || result[nestedKey] === '' || result[nestedKey] === null || result[nestedKey] === undefined) {
+        result[nestedKey] = nestedValue;
+      }
+    }
+  }
+
+  return result;
+}
 
 async function generateStream(request: {
   projectId: string;
   model: string;
   tone: (typeof TONES)[number];
   step: FunnelStepKey;
-  product: string;
-  audience: string;
-  offer: string;
-  promise: string;
-  notes: string;
+  extractedFields: Record<string, unknown>;
+  notes?: string;
   optinOutput?: string;
   quizOutput?: string;
 }): Promise<StreamResult> {
@@ -58,7 +172,7 @@ async function generateStream(request: {
   });
 
   if (!response.ok) {
-    const data = await response.json().catch(() => null);
+    const data = (await response.json().catch(() => null)) as { error?: { message?: string } } | null;
     throw new Error(data?.error?.message ?? 'Generazione fallita');
   }
 
@@ -80,11 +194,10 @@ async function generateStream(request: {
 
     for (const line of parts) {
       if (!line.startsWith('data: ')) continue;
-      const payload = JSON.parse(line.slice(6));
-
-      if (payload.type === 'start') artifactId = payload.artifactId ?? artifactId;
-      if (payload.type === 'token') content += payload.token ?? '';
-      if (payload.type === 'error') throw new Error(payload.message ?? 'Errore di stream');
+      const payload = JSON.parse(line.slice(6)) as Record<string, unknown>;
+      if (payload.type === 'start') artifactId = (payload.artifactId as string) ?? artifactId;
+      if (payload.type === 'token') content += (payload.token as string) ?? '';
+      if (payload.type === 'error') throw new Error((payload.message as string) ?? 'Errore di stream');
     }
   }
 
@@ -93,16 +206,16 @@ async function generateStream(request: {
 
 export default function FunnelPagesToolPage() {
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [projectId, setProjectId] = useState('');
   const [model, setModel] = useState('openai/gpt-4-turbo');
   const [tone, setTone] = useState<(typeof TONES)[number]>('professional');
-
-  const [product, setProduct] = useState('');
-  const [audience, setAudience] = useState('');
-  const [offer, setOffer] = useState('');
-  const [promise, setPromise] = useState('');
   const [notes, setNotes] = useState('');
-
+  const [phase, setPhase] = useState<Phase>('idle');
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
+  const [extractedFields, setExtractedFields] = useState<Record<string, unknown> | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [extractionError, setExtractionError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
   const [steps, setSteps] = useState<FunnelStepState[]>(initialSteps);
 
@@ -110,7 +223,7 @@ export default function FunnelPagesToolPage() {
     queryKey: ['projects'],
     queryFn: async () => {
       const res = await fetch('/api/projects');
-      return res.json();
+      return res.json() as Promise<{ projects?: Array<{ id: string; name: string }> }>;
     },
   });
 
@@ -118,7 +231,7 @@ export default function FunnelPagesToolPage() {
     queryKey: ['models'],
     queryFn: async () => {
       const res = await fetch('/api/models');
-      return res.json();
+      return res.json() as Promise<{ models?: Array<{ id: string; name: string }> }>;
     },
   });
 
@@ -126,15 +239,93 @@ export default function FunnelPagesToolPage() {
     setSteps((prev) => prev.map((step) => (step.key === key ? { ...step, ...patch } : step)));
   }
 
-  function resetSteps() {
+  function resetAll() {
+    setPhase('idle');
+    setUploadedFileName(null);
+    setExtractedFields(null);
+    setUploadError(null);
+    setExtractionError(null);
+    setNotes('');
     setSteps(initialSteps);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }
+
+  async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const fileNameLower = file.name.toLowerCase();
+    const hasAllowedExtension = ALLOWED_EXTENSIONS.some((ext) => fileNameLower.endsWith(ext));
+    const hasAllowedMime = ALLOWED_MIME_TYPES.includes(file.type as (typeof ALLOWED_MIME_TYPES)[number]);
+
+    if (!hasAllowedExtension && !hasAllowedMime) {
+      setUploadError(`Formato non supportato. Usa: ${ALLOWED_EXTENSIONS.join(', ')}`);
+      return;
+    }
+
+    if (!projectId) {
+      setUploadError('Seleziona prima un progetto.');
+      return;
+    }
+
+    setUploadError(null);
+    setExtractionError(null);
+    setExtractedFields(null);
+    setUploadedFileName(file.name);
+    setPhase('uploading');
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('projectId', projectId);
+
+      const uploadRes = await fetch('/api/tools/funnel-pages/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!uploadRes.ok) {
+        const data = (await uploadRes.json().catch(() => null)) as { error?: { message?: string } } | null;
+        throw new Error(data?.error?.message ?? 'Upload fallito');
+      }
+
+      const uploadData = (await uploadRes.json()) as { data: { text: string } };
+      setPhase('extracting');
+
+      const extractionRes = await fetch('/api/tools/extraction/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          model,
+          tone,
+          rawContent: uploadData.data.text,
+          fieldMap: FUNNEL_EXTRACTION_FIELD_MAP,
+        }),
+      });
+
+      if (!extractionRes.ok) {
+        const data = (await extractionRes.json().catch(() => null)) as { error?: { message?: string } } | null;
+        throw new Error(data?.error?.message ?? 'Estrazione fallita');
+      }
+
+      const rawOutput = await streamToText(extractionRes);
+      const parsed = parseJsonFromLLMOutput(rawOutput);
+      setExtractedFields(normalizeExtractedFields(parsed));
+      setPhase('review');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Errore inatteso';
+      setExtractionError(message);
+      setPhase('idle');
+    }
   }
 
   async function handleRunProcess() {
-    if (!projectId || !product || !audience || !offer || !promise) return;
+    if (!projectId || !extractedFields) return;
 
-    resetSteps();
+    setSteps(initialSteps);
     setRunning(true);
+    setPhase('generating');
     let currentStep: FunnelStepKey = 'optin';
 
     try {
@@ -145,13 +336,9 @@ export default function FunnelPagesToolPage() {
         model,
         tone,
         step: 'optin',
-        product,
-        audience,
-        offer,
-        promise,
-        notes,
+        extractedFields,
+        notes: notes || undefined,
       });
-
       updateStep('optin', { status: 'done', content: optin.content, artifactId: optin.artifactId });
 
       updateStep('quiz', { status: 'running', error: null });
@@ -161,14 +348,10 @@ export default function FunnelPagesToolPage() {
         model,
         tone,
         step: 'quiz',
-        product,
-        audience,
-        offer,
-        promise,
-        notes,
+        extractedFields,
+        notes: notes || undefined,
         optinOutput: optin.content,
       });
-
       updateStep('quiz', { status: 'done', content: quiz.content, artifactId: quiz.artifactId });
 
       updateStep('vsl', { status: 'running', error: null });
@@ -178,15 +361,11 @@ export default function FunnelPagesToolPage() {
         model,
         tone,
         step: 'vsl',
-        product,
-        audience,
-        offer,
-        promise,
-        notes,
+        extractedFields,
+        notes: notes || undefined,
         optinOutput: optin.content,
         quizOutput: quiz.content,
       });
-
       updateStep('vsl', { status: 'done', content: vsl.content, artifactId: vsl.artifactId });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Errore inatteso';
@@ -196,14 +375,27 @@ export default function FunnelPagesToolPage() {
     }
   }
 
+  const reviewFields = extractedFields
+    ? [
+        ['Tipo business', extractedFields.business_type],
+        ['Settore/Nicchia', extractedFields.sector_niche],
+        ['Target', extractedFields.target_profile],
+        ['Problema principale', extractedFields.core_problem],
+        ['Promessa optin', extractedFields.optin_title_promise],
+        ['Obiettivo funnel', extractedFields.funnel_primary_goal],
+      ].filter((entry): entry is [string, unknown] => Boolean(entry[1]))
+    : [];
+
   return (
     <>
       <Navbar />
-      <main className="flex-1 p-6 max-w-6xl mx-auto w-full" id="main-content">
+      <main className="app-shell app-copy relative mx-auto flex-1 w-full max-w-6xl overflow-hidden p-6" id="main-content">
+        <div className="pointer-events-none absolute inset-0 app-grid-overlay" />
+
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold">Generatore Pagine del Funnel</h1>
-            <p className="text-sm text-muted-foreground">Processo multi-step demo: optin page -&gt; domande quiz -&gt; script VSL.</p>
+            <h1 className="app-title text-3xl font-semibold text-slate-900">Generatore Pagine del Funnel</h1>
+            <p className="text-sm text-muted-foreground">Carica un documento di briefing e genera automaticamente optin, quiz e script VSL.</p>
           </div>
           <Button variant="outline" asChild>
             <Link href="/artifacts">Vai agli artefatti</Link>
@@ -211,19 +403,21 @@ export default function FunnelPagesToolPage() {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
-          <Card>
+          <Card className="app-surface app-rise rounded-3xl">
             <CardHeader>
               <CardTitle className="text-base">Input funnel</CardTitle>
-              <CardDescription>Prompt caricati da documentazione centralizzata e orchestrati step by step.</CardDescription>
+              <CardDescription>Form minimale: progetto, modello, tono di voce e documento di briefing.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-1.5">
-                <Label htmlFor="funnel-project-select">Progetto</Label>
+                <FieldLabel htmlFor="funnel-project-select">Progetto</FieldLabel>
                 <Select value={projectId} onValueChange={setProjectId}>
-                  <SelectTrigger id="funnel-project-select" aria-label="Seleziona progetto"><SelectValue placeholder="Seleziona progetto" /></SelectTrigger>
+                  <SelectTrigger id="funnel-project-select" className="app-control" aria-label="Seleziona progetto">
+                    <SelectValue placeholder="Seleziona progetto" />
+                  </SelectTrigger>
                   <SelectContent>
-                    {projectsData?.projects?.map((p: { id: string; name: string }) => (
-                      <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                    {projectsData?.projects?.map((project) => (
+                      <SelectItem key={project.id} value={project.id}>{project.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -231,20 +425,25 @@ export default function FunnelPagesToolPage() {
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-1.5">
-                  <Label htmlFor="funnel-model-select">Modello</Label>
+                  <FieldLabel htmlFor="funnel-model-select">Modello</FieldLabel>
                   <Select value={model} onValueChange={setModel}>
-                    <SelectTrigger id="funnel-model-select" aria-label="Modello LLM"><SelectValue /></SelectTrigger>
+                    <SelectTrigger id="funnel-model-select" className="app-control" aria-label="Modello LLM">
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
-                      {modelsData?.models?.map((m: { id: string; name: string }) => (
-                        <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                      {modelsData?.models?.map((item) => (
+                        <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
+
                 <div className="space-y-1.5">
-                  <Label htmlFor="funnel-tone-select">Tono</Label>
+                  <FieldLabel htmlFor="funnel-tone-select">Tono di voce</FieldLabel>
                   <Select value={tone} onValueChange={(value) => setTone(value as (typeof TONES)[number])}>
-                    <SelectTrigger id="funnel-tone-select" aria-label="Tono di comunicazione"><SelectValue /></SelectTrigger>
+                    <SelectTrigger id="funnel-tone-select" className="app-control" aria-label="Tono di comunicazione">
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       {TONES.map((item) => (
                         <SelectItem key={item} value={item}>{item}</SelectItem>
@@ -254,34 +453,83 @@ export default function FunnelPagesToolPage() {
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="funnel-product">Prodotto/Servizio</Label>
-                <Input id="funnel-product" value={product} onChange={(e) => setProduct(e.target.value)} placeholder="Es. Programma coaching performance" />
+              <div className="space-y-2">
+                <FieldLabel htmlFor="funnel-file-input">Documento di briefing</FieldLabel>
+                <p className="text-xs text-muted-foreground">Formati supportati: PDF, DOCX, TXT, Markdown. Dimensione massima: 10 MB.</p>
+                <input
+                  ref={fileInputRef}
+                  id="funnel-file-input"
+                  type="file"
+                  accept=".pdf,.docx,.txt,.md,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown"
+                  className="block w-full cursor-pointer rounded-xl border border-black/10 bg-white/60 px-3 py-2 text-sm text-foreground file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1 file:text-xs file:font-medium"
+                  onChange={handleFileChange}
+                  disabled={phase === 'uploading' || phase === 'extracting' || running || !projectId}
+                />
+                {!projectId && <p className="text-xs text-amber-700">Seleziona prima un progetto per abilitare il caricamento.</p>}
+                {uploadedFileName && <p className="text-xs text-muted-foreground">File selezionato: {uploadedFileName}</p>}
               </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="funnel-audience">Audience</Label>
-                <Input id="funnel-audience" value={audience} onChange={(e) => setAudience(e.target.value)} placeholder="Es. Founder e professionisti digitali 30-50" />
-              </div>
+              {(phase === 'uploading' || phase === 'extracting') && (
+                <div className="rounded-xl border border-black/10 bg-white/60 p-4 text-center">
+                  <p className="text-sm font-medium">{phase === 'uploading' ? 'Caricamento documento...' : 'Estrazione campi in corso...'}</p>
+                </div>
+              )}
 
-              <div className="space-y-1.5">
-                <Label htmlFor="funnel-offer">Offerta</Label>
-                <Input id="funnel-offer" value={offer} onChange={(e) => setOffer(e.target.value)} placeholder="Es. Sessione strategica gratuita + piano operativo" />
-              </div>
+              {(uploadError || extractionError) && (
+                <p className="rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive" role="alert">
+                  {uploadError ?? extractionError}
+                </p>
+              )}
 
-              <div className="space-y-1.5">
-                <Label htmlFor="funnel-promise">Promessa principale</Label>
-                <Input id="funnel-promise" value={promise} onChange={(e) => setPromise(e.target.value)} placeholder="Es. +30% lead qualificati in 45 giorni" />
-              </div>
+              {phase === 'review' && extractedFields && (
+                <>
+                  <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4 space-y-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">Campi estratti</p>
+                      <Badge variant="secondary">{Object.keys(extractedFields).length}</Badge>
+                    </div>
+                    <dl className="space-y-2">
+                      {reviewFields.length > 0 ? (
+                        reviewFields.map(([label, value]) => (
+                          <div key={label} className="flex flex-col gap-0.5">
+                            <dt className="text-xs font-medium text-muted-foreground">{label}</dt>
+                            <dd className="text-sm text-foreground line-clamp-2">{String(value)}</dd>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm text-muted-foreground">Il modello non ha restituito campi riassuntivi leggibili. Puoi comunque avviare la generazione.</p>
+                      )}
+                    </dl>
+                  </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="funnel-notes">Note opzionali</Label>
-                <Textarea id="funnel-notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder="Vincoli brand, claim da evitare, dettagli settore..." />
-              </div>
+                  <div className="space-y-1.5">
+                    <FieldLabel htmlFor="funnel-notes" required={false}>Note aggiuntive</FieldLabel>
+                    <Textarea
+                      id="funnel-notes"
+                      className="app-control"
+                      placeholder="Istruzioni extra per la generazione (opzionale)"
+                      rows={3}
+                      value={notes}
+                      onChange={(event) => setNotes(event.target.value)}
+                    />
+                  </div>
 
-              <Button onClick={handleRunProcess} disabled={running || !projectId || !product || !audience || !offer || !promise} className="w-full">
-                {running ? 'Processo in esecuzione...' : 'Avvia generazione funnel'}
-              </Button>
+                  <div className="flex items-center gap-3">
+                    <Button onClick={handleRunProcess} disabled={running || !projectId} className="flex-1">
+                      {running ? 'Generazione in corso...' : 'Avvia generazione funnel'}
+                    </Button>
+                    <Button variant="outline" onClick={resetAll} disabled={running}>
+                      Ricomincia
+                    </Button>
+                  </div>
+                </>
+              )}
+
+              {phase === 'generating' && !running && (
+                <Button variant="outline" className="w-full" onClick={resetAll}>
+                  Nuova generazione
+                </Button>
+              )}
             </CardContent>
           </Card>
 
@@ -295,7 +543,7 @@ export default function FunnelPagesToolPage() {
               });
 
               return (
-                <Card key={step.key}>
+                <Card key={step.key} className="app-surface app-rise rounded-2xl">
                   <CardHeader>
                     <div className="flex items-center justify-between gap-3">
                       <CardTitle className="text-base">{step.title}</CardTitle>
@@ -310,10 +558,12 @@ export default function FunnelPagesToolPage() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    <p className="sr-only" aria-live="polite">{step.status === 'running' ? `${step.title} in generazione` : `${step.title} aggiornato`}</p>
+                    <p className="sr-only" aria-live="polite">
+                      {step.status === 'running' ? `${step.title} in generazione` : `${step.title} aggiornato`}
+                    </p>
                     {step.content ? (
-                      <div className="rounded-md border bg-muted/20 p-4 max-h-64 overflow-y-auto" aria-live="polite">
-                        <p className="text-sm leading-7 whitespace-pre-wrap break-words text-foreground">{stepDisplay.text}</p>
+                      <div className="max-h-64 overflow-y-auto rounded-xl border border-black/10 bg-white/70 p-4" aria-live="polite">
+                        <p className="break-words whitespace-pre-wrap text-sm leading-7 text-foreground">{stepDisplay.text}</p>
                       </div>
                     ) : (
                       <p className="text-sm text-muted-foreground">

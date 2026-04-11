@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { formatArtifactPreview, getArtifactDisplayTypeLabel, getEffectiveArtifactWorkflowType } from '@/lib/artifact-preview';
+import { getArtifactDisplayTypeLabel, getEffectiveArtifactWorkflowType } from '@/lib/artifact-preview';
 
 type ProjectOption = {
   id: string;
@@ -62,15 +62,16 @@ export function ArtifactsClientPage({ projects }: Props) {
   return (
     <>
       <Navbar />
-      <main className="flex-1 p-6 max-w-5xl mx-auto w-full" id="main-content">
+      <main className="app-shell app-copy flex-1 p-6 max-w-5xl mx-auto w-full relative overflow-hidden" id="main-content">
+        <div className="pointer-events-none absolute inset-0 app-grid-overlay" />
         <div className="flex flex-wrap items-center justify-between mb-6 gap-4">
           <div>
-            <h1 className="text-2xl font-semibold">Artefatti</h1>
+            <h1 className="app-title text-3xl font-semibold text-slate-900">Artefatti</h1>
             <p className="text-sm text-muted-foreground">Filtra, riusa e gestisci rapidamente gli output generati.</p>
           </div>
         </div>
 
-        <Card className="mb-6">
+        <Card className="app-surface rounded-3xl mb-6 app-rise">
           <CardHeader className="pb-2">
             <CardTitle className="text-base">Filtri</CardTitle>
           </CardHeader>
@@ -80,7 +81,7 @@ export function ArtifactsClientPage({ projects }: Props) {
               <div className="space-y-1.5">
                 <Label htmlFor="artifact-type-filter">Tipo</Label>
                 <Select value={type} onValueChange={(value) => setType(value as typeof type)}>
-                  <SelectTrigger id="artifact-type-filter" className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectTrigger id="artifact-type-filter" className="app-control w-full"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Tutti</SelectItem>
                     <SelectItem value="content">Content</SelectItem>
@@ -93,7 +94,7 @@ export function ArtifactsClientPage({ projects }: Props) {
               <div className="space-y-1.5">
                 <Label htmlFor="artifact-status-filter">Stato</Label>
                 <Select value={status} onValueChange={(value) => setStatus(value as typeof status)}>
-                  <SelectTrigger id="artifact-status-filter" className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectTrigger id="artifact-status-filter" className="app-control w-full"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Tutti</SelectItem>
                     <SelectItem value="generating">Generating</SelectItem>
@@ -106,7 +107,7 @@ export function ArtifactsClientPage({ projects }: Props) {
               <div className="space-y-1.5">
                 <Label htmlFor="artifact-project-filter">Progetto</Label>
                 <Select value={projectId} onValueChange={setProjectId}>
-                  <SelectTrigger id="artifact-project-filter" className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectTrigger id="artifact-project-filter" className="app-control w-full"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Tutti</SelectItem>
                     {projects.map((project) => (
@@ -119,7 +120,7 @@ export function ArtifactsClientPage({ projects }: Props) {
               <div className="space-y-1.5">
                 <Label htmlFor="artifact-period-filter">Periodo</Label>
                 <Select value={period} onValueChange={(value) => setPeriod(value as typeof period)}>
-                  <SelectTrigger id="artifact-period-filter" className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectTrigger id="artifact-period-filter" className="app-control w-full"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Tutto</SelectItem>
                     <SelectItem value="7d">Ultimi 7 giorni</SelectItem>
@@ -133,19 +134,19 @@ export function ArtifactsClientPage({ projects }: Props) {
         </Card>
 
         {listQuery.isLoading ? (
-          <Card>
+          <Card className="app-surface rounded-2xl">
             <CardContent className="py-12 text-center text-muted-foreground" role="status" aria-live="polite">
               Caricamento artefatti...
             </CardContent>
           </Card>
         ) : listQuery.error ? (
-          <Card>
+          <Card className="app-surface rounded-2xl">
             <CardContent className="py-12 text-center text-destructive" role="alert">
               Errore nel caricamento artefatti.
             </CardContent>
           </Card>
         ) : artifacts.length === 0 ? (
-          <Card>
+          <Card className="app-surface rounded-2xl">
             <CardContent className="py-12 text-center text-muted-foreground" role="status" aria-live="polite">
               Nessun artefatto trovato con i filtri selezionati.
             </CardContent>
@@ -154,19 +155,13 @@ export function ArtifactsClientPage({ projects }: Props) {
           <div className="space-y-3" role="list" aria-label="Lista artefatti">
             {artifacts.map((artifact) => {
               const workflowType = getEffectiveArtifactWorkflowType(artifact.workflowType, artifact.input);
-              const preview = formatArtifactPreview({
-                type: artifact.type,
-                status: artifact.status,
-                content: artifact.content,
-                workflowType,
-              });
               const typeLabel = getArtifactDisplayTypeLabel({
                 type: artifact.type,
                 workflowType,
               });
 
               return (
-              <Card key={artifact.id} className="hover:shadow-md transition-shadow" role="listitem">
+              <Card key={artifact.id} className="app-surface rounded-2xl hover:shadow-[0_24px_60px_-42px_rgba(15,23,42,0.75)] transition-shadow" role="listitem">
                 <CardHeader className="pb-2">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
@@ -183,12 +178,6 @@ export function ArtifactsClientPage({ projects }: Props) {
                   <CardTitle className="text-base">{artifact.project?.name ?? 'Progetto non disponibile'}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div>
-                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">{preview.label}</p>
-                    <p className="text-sm text-muted-foreground line-clamp-4" aria-label={`Anteprima artefatto ${artifact.id}`}>
-                      {preview.text}
-                    </p>
-                  </div>
                   <div className="flex flex-wrap gap-2">
                     <Button className="w-full sm:w-auto" size="sm" variant="outline" onClick={() => router.push(`/artifacts/${artifact.id}`)} aria-label={`Apri dettaglio artefatto ${artifact.id}`}>
                       Apri dettaglio
