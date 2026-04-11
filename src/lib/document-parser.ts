@@ -42,15 +42,15 @@ export function isSupportedMimeType(mimeType: string): mimeType is SupportedMime
 async function extractPdfText(buffer: Buffer): Promise<string> {
   // Use a Node-first parser that does not rely on browser/worker globals.
   // This avoids Vercel runtime failures when pdfjs worker chunks are not resolved.
-  const pdfParseModule = await import('pdf-parse');
-  const pdfParse = (
-    'default' in pdfParseModule ? pdfParseModule.default : pdfParseModule
-  ) as (dataBuffer: Buffer) => Promise<{ text?: string }>;
+  const { PDFParse } = await import('pdf-parse');
+  const parser = new PDFParse({ data: buffer });
 
-  const parsed = await pdfParse(buffer);
-  const text = typeof parsed.text === 'string' ? parsed.text : '';
-
-  return text;
+  try {
+    const parsed = await parser.getText();
+    return typeof parsed.text === 'string' ? parsed.text : '';
+  } finally {
+    await parser.destroy();
+  }
 }
 
 async function extractDocxText(buffer: Buffer): Promise<string> {
