@@ -16,21 +16,8 @@ export default async function AdminPage() {
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-  const [users, totalArtifacts, completedArtifacts, recentActivity, completedArtifactsSample, quotaHistory30d] = await Promise.all([
-    db.user.findMany({
-      orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        monthlyQuota: true,
-        monthlyUsed: true,
-        monthlyBudget: true,
-        monthlySpent: true,
-        resetDate: true,
-      },
-    }),
+  const [totalUsers, totalArtifacts, completedArtifacts, recentActivity, completedArtifactsSample, quotaHistory30d] = await Promise.all([
+    db.user.count(),
     db.artifact.count(),
     db.artifact.count({ where: { status: 'completed' } }),
     db.quotaHistory.findMany({
@@ -62,18 +49,6 @@ export default async function AdminPage() {
       take: 1000,
     }),
   ]);
-
-  const usersForClient = users.map((user: typeof users[number]) => ({
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    role: user.role,
-    monthlyQuota: user.monthlyQuota,
-    monthlyUsed: user.monthlyUsed,
-    monthlyBudget: user.monthlyBudget instanceof Decimal ? user.monthlyBudget.toNumber() : Number(user.monthlyBudget),
-    monthlySpent: user.monthlySpent instanceof Decimal ? user.monthlySpent.toNumber() : Number(user.monthlySpent),
-    resetDate: user.resetDate,
-  }));
 
   const recentActivityForClient = recentActivity.map((entry: typeof recentActivity[number]) => ({
     id: entry.id,
@@ -121,7 +96,7 @@ export default async function AdminPage() {
 
   return (
     <AdminClientPage
-      users={usersForClient}
+      totalUsers={totalUsers}
       totalArtifacts={totalArtifacts}
       completedArtifacts={completedArtifacts}
       recentActivity={recentActivityForClient}

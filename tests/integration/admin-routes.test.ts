@@ -4,6 +4,7 @@ import { GET as getUsers } from '@/app/api/admin/users/route';
 import { GET as getMetrics } from '@/app/api/admin/metrics/route';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { NextRequest } from 'next/server';
 
 jest.mock('@/lib/auth', () => ({ auth: jest.fn() }));
 
@@ -22,6 +23,15 @@ const countArtifacts = (db as any).artifact.count as jest.Mock;
 const adminSession = { user: { id: 'admin_1', role: 'admin' } };
 const userSession = { user: { id: 'user_1', role: 'user' } };
 
+// Helper to create a NextRequest with query params
+function createRequest(queryParams: Record<string, string> = {}): NextRequest {
+  const url = new URL('http://localhost:3000/api/admin/users');
+  Object.entries(queryParams).forEach(([key, value]) => {
+    url.searchParams.append(key, value);
+  });
+  return new NextRequest(url);
+}
+
 beforeEach(() => {
   jest.clearAllMocks();
   findUsers.mockResolvedValue([]);
@@ -34,7 +44,7 @@ describe('GET /api/admin/users', () => {
   it('returns 403 for unauthenticated request', async () => {
     mockedAuth.mockResolvedValue(null as never);
 
-    const res = await getUsers();
+    const res = await getUsers(createRequest());
     const data = await res.json();
 
     expect(res.status).toBe(403);
@@ -44,14 +54,14 @@ describe('GET /api/admin/users', () => {
   it('returns 403 for non-admin user', async () => {
     mockedAuth.mockResolvedValue(userSession as never);
 
-    const res = await getUsers();
+    const res = await getUsers(createRequest());
     const data = await res.json();
 
     expect(res.status).toBe(403);
     expect(data.error.code).toBe('FORBIDDEN');
   });
 
-  it('returns user list for admin', async () => {
+  it('returns paginated user list for admin', async () => {
     mockedAuth.mockResolvedValue(adminSession as never);
     const users = [
       {
@@ -68,13 +78,42 @@ describe('GET /api/admin/users', () => {
       },
     ];
     findUsers.mockResolvedValue(users);
+    countUsers.mockResolvedValue(42);
 
-    const res = await getUsers();
+    const res = await getUsers(createRequest({ limit: '20', offset: '0' }));
     const data = await res.json();
 
     expect(res.status).toBe(200);
     expect(data.users).toHaveLength(1);
     expect(data.users[0].email).toBe('mario@example.com');
+    expect(data.total).toBe(42);
+    expect(data.limit).toBe(20);
+    expect(data.offset).toBe(0);
+    expect(data.hasMore).toBe(true);
+  });
+
+  it('accepts default pagination parameters', async () => {
+    mockedAuth.mockResolvedValue(adminSession as never);
+    findUsers.mockResolvedValue([]);
+    countUsers.mockResolvedValue(5);
+
+    const res = await getUsers(createRequest());
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(data.limit).toBe(20);
+    expect(data.offset).toBe(0);
+    expect(data.hasMore).toBe(false);
+  });
+
+  it('validates pagination parameters', async () => {
+    mockedAuth.mockResolvedValue(adminSession as never);
+
+    const res = await getUsers(createRequest({ limit: '999', offset: '-1' }));
+    const data = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(data.error.code).toBe('VALIDATION_ERROR');
   });
 });
 
