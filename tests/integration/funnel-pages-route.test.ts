@@ -20,13 +20,7 @@ jest.mock('@/lib/tool-prompts/funnel-pages', () => ({
   buildFunnelVslPrompt: jest.fn(),
 }));
 
-jest.mock('@/lib/db', () => ({
-  db: {
-    user: { findUnique: jest.fn() },
-    project: { findUnique: jest.fn() },
-    quotaHistory: { create: jest.fn() },
-  },
-}));
+jest.mock('@/lib/db', () => jest.requireActual('./db-mock').createDbMock());
 
 const mockedAuth = auth as jest.MockedFunction<typeof auth>;
 const mockedRateLimit = rateLimit as jest.MockedFunction<typeof rateLimit>;

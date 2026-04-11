@@ -1,5 +1,4 @@
-type ArtifactType = 'content' | 'seo' | 'code' | string;
-type ArtifactStatus = 'generating' | 'completed' | 'failed' | string;
+import type { ArtifactType, ArtifactStatus } from '@/lib/types/artifact';
 
 type PreviewInput = {
   type: ArtifactType;

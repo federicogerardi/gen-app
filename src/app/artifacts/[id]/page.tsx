@@ -10,6 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { formatArtifactContentForDisplay, getArtifactDisplayTypeLabel, getEffectiveArtifactWorkflowType } from '@/lib/artifact-preview';
+import { isArtifactType, isArtifactStatus } from '@/lib/types/artifact';
 
 export default async function ArtifactPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -31,6 +32,11 @@ export default async function ArtifactPage({ params }: { params: Promise<{ id: s
   if (!artifact || artifact.userId !== session.user.id) notFound();
 
   const workflowType = getEffectiveArtifactWorkflowType(artifact.workflowType, artifact.input);
+
+  // Type-guard artifact fields from DB (String) to runtime types (literal unions)
+  if (!isArtifactType(artifact.type) || !isArtifactStatus(artifact.status)) {
+    notFound();
+  }
 
   const readableOutput = formatArtifactContentForDisplay({
     type: artifact.type,

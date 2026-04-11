@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatArtifactContentForDisplay } from '@/lib/artifact-preview';
-import { FUNNEL_EXTRACTION_FIELD_MAP } from '@/lib/tool-prompts/funnel-extraction-field-map';
+import { FUNNEL_EXTRACTION_FIELD_MAP, normalizeExtractedFields } from '@/lib/tool-prompts/funnel-extraction-field-map';
 
 type FunnelStepKey = 'optin' | 'quiz' | 'vsl';
 
@@ -47,13 +47,12 @@ const initialSteps: FunnelStepState[] = [
 const TONES = ['professional', 'casual', 'formal', 'technical'] as const;
 
 const ALLOWED_MIME_TYPES = [
-  'application/pdf',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   'text/plain',
   'text/markdown',
 ] as const;
 
-const ALLOWED_EXTENSIONS = ['.pdf', '.docx', '.txt', '.md'] as const;
+const ALLOWED_EXTENSIONS = ['.docx', '.txt', '.md'] as const;
 
 function FieldLabel({ htmlFor, required = true, children }: FieldLabelProps) {
   return (
@@ -109,50 +108,6 @@ function parseJsonFromLLMOutput(rawOutput: string): Record<string, unknown> {
   }
 
   throw new Error('Nessun JSON trovato nella risposta del modello di estrazione');
-}
-
-const EXTRACTION_SECTION_KEYS = [
-  'business_context',
-  'offer_context',
-  'qualification_context',
-  'optin_context',
-  'segmentation_context',
-  'belief_context',
-  'funnel_goals',
-  'proof_context',
-  'generated_context',
-  'assumptions_and_constraints',
-] as const;
-
-function normalizeExtractedFields(value: Record<string, unknown>): Record<string, unknown> {
-  const result: Record<string, unknown> = { ...value };
-  const wrappers = ['fields', 'data', 'result'];
-
-  for (const wrapper of wrappers) {
-    const candidate = result[wrapper];
-    if (typeof candidate === 'object' && candidate !== null && !Array.isArray(candidate)) {
-      Object.assign(result, candidate as Record<string, unknown>);
-    }
-  }
-
-  for (const key of EXTRACTION_SECTION_KEYS) {
-    const section = result[key];
-    if (typeof section !== 'object' || section === null || Array.isArray(section)) {
-      continue;
-    }
-
-    for (const [nestedKey, nestedValue] of Object.entries(section)) {
-      if (nestedValue === null || nestedValue === undefined || nestedValue === '') {
-        continue;
-      }
-
-      if (!(nestedKey in result) || result[nestedKey] === '' || result[nestedKey] === null || result[nestedKey] === undefined) {
-        result[nestedKey] = nestedValue;
-      }
-    }
-  }
-
-  return result;
 }
 
 async function generateStream(request: {
@@ -455,12 +410,12 @@ export default function FunnelPagesToolPage() {
 
               <div className="space-y-2">
                 <FieldLabel htmlFor="funnel-file-input">Documento di briefing</FieldLabel>
-                <p className="text-xs text-muted-foreground">Formati supportati: PDF, DOCX, TXT, Markdown. Dimensione massima: 10 MB.</p>
+                <p className="text-xs text-muted-foreground">Formati supportati: DOCX, TXT, Markdown. Dimensione massima: 10 MB.</p>
                 <input
                   ref={fileInputRef}
                   id="funnel-file-input"
                   type="file"
-                  accept=".pdf,.docx,.txt,.md,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown"
+                  accept=".docx,.txt,.md,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown"
                   className="block w-full cursor-pointer rounded-xl border border-black/10 bg-white/60 px-3 py-2 text-sm text-foreground file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1 file:text-xs file:font-medium"
                   onChange={handleFileChange}
                   disabled={phase === 'uploading' || phase === 'extracting' || running || !projectId}

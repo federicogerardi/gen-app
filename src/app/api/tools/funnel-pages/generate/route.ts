@@ -1,4 +1,5 @@
 import { createArtifactStream } from '@/lib/llm/streaming';
+import { getRequestLogger } from '@/lib/logger';
 import {
   buildFunnelOptinPrompt,
   buildFunnelQuizPrompt,
@@ -13,6 +14,7 @@ import {
   requireOwnedProject,
 } from '@/lib/tool-routes/guards';
 import { serviceUnavailableError, sseResponse } from '@/lib/tool-routes/responses';
+import { normalizeExtractedFields } from '@/lib/tool-prompts/funnel-extraction-field-map';
 import {
   funnelPagesRequestSchema,
   getLengthByFunnelStep,
@@ -123,50 +125,6 @@ function asPromisedResultFormat(value: unknown): 'video' | 'pdf' | 'analisi' | '
 function asLeadMagnetFormat(value: unknown): 'VSL' | 'PDF' | 'Case Study' | 'Demo' | 'Altro' {
   const allowed = new Set(['VSL', 'PDF', 'Case Study', 'Demo', 'Altro']);
   return typeof value === 'string' && allowed.has(value) ? (value as 'VSL' | 'PDF' | 'Case Study' | 'Demo' | 'Altro') : 'Altro';
-}
-
-const EXTRACTION_SECTION_KEYS = [
-  'business_context',
-  'offer_context',
-  'qualification_context',
-  'optin_context',
-  'segmentation_context',
-  'belief_context',
-  'funnel_goals',
-  'proof_context',
-  'generated_context',
-  'assumptions_and_constraints',
-] as const;
-
-function normalizeExtractedFields(value: Record<string, unknown>): Record<string, unknown> {
-  const result: Record<string, unknown> = { ...value };
-  const wrappers = ['fields', 'data', 'result'];
-
-  for (const wrapper of wrappers) {
-    const candidate = result[wrapper];
-    if (typeof candidate === 'object' && candidate !== null && !Array.isArray(candidate)) {
-      Object.assign(result, candidate as Record<string, unknown>);
-    }
-  }
-
-  for (const key of EXTRACTION_SECTION_KEYS) {
-    const section = result[key];
-    if (typeof section !== 'object' || section === null || Array.isArray(section)) {
-      continue;
-    }
-
-    for (const [nestedKey, nestedValue] of Object.entries(section)) {
-      if (nestedValue === null || nestedValue === undefined || nestedValue === '') {
-        continue;
-      }
-
-      if (!(nestedKey in result) || result[nestedKey] === '' || result[nestedKey] === null || result[nestedKey] === undefined) {
-        result[nestedKey] = nestedValue;
-      }
-    }
-  }
-
-  return result;
 }
 
 function mapExtractedFieldsToBriefing(payload: FunnelPagesRequestV3): FunnelPagesRequestV2['briefing'] {
@@ -310,6 +268,13 @@ export async function POST(request: Request) {
   }
 
   const userId = authResult.data.userId;
+  const requestId = request.headers.get('x-request-id') ?? crypto.randomUUID();
+  const log = getRequestLogger({
+    requestId,
+    route: '/api/tools/funnel-pages/generate',
+    method: 'POST',
+    userId,
+  });
 
   const parsed = await parseAndValidateRequest(request, funnelPagesRequestSchema);
   if (!parsed.ok) {
@@ -317,8 +282,19 @@ export async function POST(request: Request) {
   }
 
   const payload = parsed.data;
+  const startedAt = Date.now();
 
-  const usageResult = await enforceUsageGuards(userId, payload.model);
+  log.info(
+    {
+      workflowType: 'funnel_pages',
+      projectId: payload.projectId,
+      model: payload.model,
+      step: payload.step,
+    },
+    'Tool generation started',
+  );
+
+  const usageResult = await enforceUsageGuards(userId, payload.model, 'funnel_pages');
   if (!usageResult.ok) {
     return usageResult.response;
   }
@@ -352,8 +328,35 @@ export async function POST(request: Request) {
       },
     });
 
+    log.info(
+      {
+        workflowType: 'funnel_pages',
+        projectId: payload.projectId,
+        model: payload.model,
+        step: payload.step,
+        duration_ms: Date.now() - startedAt,
+      },
+      'Tool generation stream initialized',
+    );
+
     return sseResponse(stream);
-  } catch {
+  } catch (error) {
+    const err = error instanceof Error
+      ? { name: error.name, message: error.message }
+      : { message: String(error) };
+
+    log.error(
+      {
+        workflowType: 'funnel_pages',
+        projectId: payload.projectId,
+        model: payload.model,
+        step: payload.step,
+        duration_ms: Date.now() - startedAt,
+        err,
+      },
+      'Tool generation failed',
+    );
+
     return serviceUnavailableError();
   }
 }

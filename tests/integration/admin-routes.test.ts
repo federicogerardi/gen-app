@@ -4,30 +4,33 @@ import { GET as getUsers } from '@/app/api/admin/users/route';
 import { GET as getMetrics } from '@/app/api/admin/metrics/route';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { NextRequest } from 'next/server';
 
 jest.mock('@/lib/auth', () => ({ auth: jest.fn() }));
 
-jest.mock('@/lib/db', () => ({
-  db: {
-    user: {
-      findMany: jest.fn(),
-      count: jest.fn(),
-      aggregate: jest.fn(),
-    },
-    artifact: {
-      count: jest.fn(),
-    },
-  },
-}));
+jest.mock('@/lib/db', () => jest.requireActual('./db-mock').createDbMock());
 
 const mockedAuth = auth as jest.MockedFunction<typeof auth>;
-const findUsers = db.user.findMany as jest.Mock;
-const countUsers = db.user.count as jest.Mock;
-const aggregateUsers = db.user.aggregate as jest.Mock;
-const countArtifacts = db.artifact.count as jest.Mock;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const findUsers = (db as any).user.findMany as jest.Mock;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const countUsers = (db as any).user.count as jest.Mock;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const aggregateUsers = (db as any).user.aggregate as jest.Mock;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const countArtifacts = (db as any).artifact.count as jest.Mock;
 
 const adminSession = { user: { id: 'admin_1', role: 'admin' } };
 const userSession = { user: { id: 'user_1', role: 'user' } };
+
+// Helper to create a NextRequest with query params
+function createRequest(queryParams: Record<string, string> = {}): NextRequest {
+  const url = new URL('http://localhost:3000/api/admin/users');
+  Object.entries(queryParams).forEach(([key, value]) => {
+    url.searchParams.append(key, value);
+  });
+  return new NextRequest(url);
+}
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -41,7 +44,7 @@ describe('GET /api/admin/users', () => {
   it('returns 403 for unauthenticated request', async () => {
     mockedAuth.mockResolvedValue(null as never);
 
-    const res = await getUsers();
+    const res = await getUsers(createRequest());
     const data = await res.json();
 
     expect(res.status).toBe(403);
@@ -51,14 +54,14 @@ describe('GET /api/admin/users', () => {
   it('returns 403 for non-admin user', async () => {
     mockedAuth.mockResolvedValue(userSession as never);
 
-    const res = await getUsers();
+    const res = await getUsers(createRequest());
     const data = await res.json();
 
     expect(res.status).toBe(403);
     expect(data.error.code).toBe('FORBIDDEN');
   });
 
-  it('returns user list for admin', async () => {
+  it('returns paginated user list for admin', async () => {
     mockedAuth.mockResolvedValue(adminSession as never);
     const users = [
       {
@@ -75,13 +78,42 @@ describe('GET /api/admin/users', () => {
       },
     ];
     findUsers.mockResolvedValue(users);
+    countUsers.mockResolvedValue(42);
 
-    const res = await getUsers();
+    const res = await getUsers(createRequest({ limit: '20', offset: '0' }));
     const data = await res.json();
 
     expect(res.status).toBe(200);
     expect(data.users).toHaveLength(1);
     expect(data.users[0].email).toBe('mario@example.com');
+    expect(data.total).toBe(42);
+    expect(data.limit).toBe(20);
+    expect(data.offset).toBe(0);
+    expect(data.hasMore).toBe(true);
+  });
+
+  it('accepts default pagination parameters', async () => {
+    mockedAuth.mockResolvedValue(adminSession as never);
+    findUsers.mockResolvedValue([]);
+    countUsers.mockResolvedValue(5);
+
+    const res = await getUsers(createRequest());
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(data.limit).toBe(20);
+    expect(data.offset).toBe(0);
+    expect(data.hasMore).toBe(false);
+  });
+
+  it('validates pagination parameters', async () => {
+    mockedAuth.mockResolvedValue(adminSession as never);
+
+    const res = await getUsers(createRequest({ limit: '999', offset: '-1' }));
+    const data = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(data.error.code).toBe('VALIDATION_ERROR');
   });
 });
 

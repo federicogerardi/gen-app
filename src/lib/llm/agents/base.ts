@@ -1,4 +1,4 @@
-export type ArtifactType = 'content' | 'seo' | 'code' | 'extraction';
+import type { ArtifactType } from '@/lib/types/artifact';
 
 export abstract class BaseAgent {
   abstract type: ArtifactType;

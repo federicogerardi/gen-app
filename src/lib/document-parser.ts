@@ -1,17 +1,15 @@
 /**
  * Inline document parser — extracts raw text from uploaded file buffers.
- * Supports: PDF, DOCX, TXT, MD.
+ * Supports: DOCX, TXT, MD.
  * No external storage; everything is processed in-memory.
  */
 
 export type SupportedMimeType =
-  | 'application/pdf'
   | 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
   | 'text/plain'
   | 'text/markdown';
 
 export const ALLOWED_MIME_TYPES: SupportedMimeType[] = [
-  'application/pdf',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   'text/plain',
   'text/markdown',
@@ -37,39 +35,6 @@ export type DocumentParseResult =
 
 export function isSupportedMimeType(mimeType: string): mimeType is SupportedMimeType {
   return (ALLOWED_MIME_TYPES as string[]).includes(mimeType);
-}
-
-async function extractPdfText(buffer: Buffer): Promise<string> {
-  const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
-  const loadingTask = pdfjs.getDocument({
-    data: new Uint8Array(buffer),
-    disableWorker: true,
-    useWorkerFetch: false,
-  } as Parameters<typeof pdfjs.getDocument>[0]);
-
-  const pdf = await loadingTask.promise;
-
-  try {
-    const pages: string[] = [];
-
-    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
-      const page = await pdf.getPage(pageNumber);
-      const textContent = await page.getTextContent();
-      const pageText = textContent.items
-        .map((item) => ('str' in item ? item.str : ''))
-        .join(' ')
-        .replace(/[ \t]{2,}/g, ' ')
-        .trim();
-
-      if (pageText.length > 0) {
-        pages.push(pageText);
-      }
-    }
-
-    return pages.join('\n\n');
-  } finally {
-    await pdf.destroy();
-  }
 }
 
 async function extractDocxText(buffer: Buffer): Promise<string> {
@@ -114,7 +79,7 @@ export async function parseDocument(
       ok: false,
       error: {
         code: 'UNSUPPORTED_TYPE',
-        message: `File type "${mimeType}" not supported. Accepted formats: PDF, DOCX, TXT, Markdown.`,
+        message: `File type "${mimeType}" not supported. Accepted formats: DOCX, TXT, Markdown.`,
       },
     };
   }
@@ -132,9 +97,7 @@ export async function parseDocument(
   try {
     let text: string;
 
-    if (mimeType === 'application/pdf') {
-      text = await extractPdfText(buffer);
-    } else if (mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+    if (mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
       text = await extractDocxText(buffer);
     } else {
       // text/plain or text/markdown

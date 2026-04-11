@@ -1,7 +1,7 @@
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { LLMOrchestrator } from './orchestrator';
-import type { ArtifactType } from './agents/base';
+import type { ArtifactType, OutputFormat, QuotaEventStatus } from '@/lib/types/artifact';
 import { calculateCost } from './costs';
 
 const orchestrator = new LLMOrchestrator();
@@ -15,8 +15,6 @@ interface StreamParams {
   workflowType?: string | null;
   promptOverride?: string;
 }
-
-type OutputFormat = 'plain' | 'json' | 'markdown';
 
 function extractWorkflowType(input: unknown): string | null {
   if (!input || typeof input !== 'object' || Array.isArray(input)) return null;
@@ -67,15 +65,16 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
 
       let accumulated = '';
       let outputTokenCount = 0;
-      let inputTokenCount = 0;
+      const inputTokenCount = Math.ceil((promptOverride ?? JSON.stringify(input)).length / 4);
       let tokenSequence = 0;
+      let pendingUpdate: Promise<void> | null = null;
 
       try {
         for await (const chunk of orchestrator.generateStream({ type, model, input, promptOverride })) {
           accumulated += chunk.token;
           outputTokenCount++;
           tokenSequence++;
-          const estimatedInputTokens = Math.ceil(accumulated.length / 4);
+          const estimatedInputTokens = inputTokenCount;
           const costEstimate = calculateCost(model, estimatedInputTokens, outputTokenCount);
 
           controller.enqueue(encode({
@@ -99,17 +98,27 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
             }));
           }
 
-          // Persist every 20 tokens to avoid losing progress on crash
-          if (outputTokenCount % 20 === 0) {
-            await db.artifact.update({
-              where: { id: artifact.id },
-              data: { content: accumulated, streamedAt: new Date() },
-            });
+          // S3-02: Batch database writes every 50 tokens to reduce DB pressure
+          // Old threshold was 20 tokens, resulting in ~800 writes/sec at scale.
+          // New threshold of 50 tokens reduces this to ~320 writes/sec.
+          if (outputTokenCount % 50 === 0) {
+            // Don't await here — let update run in background while streaming continues
+            // This implements backpressure: pending updates accumulate if DB is slow
+            pendingUpdate ??= (async () => {
+              await db.artifact.update({
+                where: { id: artifact.id },
+                data: { content: accumulated, streamedAt: new Date() },
+              });
+              pendingUpdate = null;
+            })();
           }
         }
 
-        // Estimate input tokens (rough: 1 token ≈ 4 chars of prompt)
-        inputTokenCount = Math.ceil(accumulated.length / 4);
+        // Ensure any pending update completes before marking artifact as completed
+        if (pendingUpdate) {
+          await pendingUpdate;
+        }
+
         const cost = calculateCost(model, inputTokenCount, outputTokenCount);
         const normalized = orchestrator.normalizeOutput({
           rawContent: accumulated,
@@ -128,22 +137,34 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
           );
         }
 
+        // Invariant: completed artifacts must have positive token counts.
+        // Clamp to 1 rather than persisting zeros that would corrupt cost accounting.
+        const safeInputTokens = Math.max(inputTokenCount, 1);
+        const safeOutputTokens = Math.max(outputTokenCount, 1);
+        if (inputTokenCount < 1 || outputTokenCount < 1) {
+          logger.warn(
+            { artifactId: artifact.id, inputTokenCount, outputTokenCount },
+            'Token count invariant violation: clamping to 1 before completed persist',
+          );
+        }
+
         await db.artifact.update({
           where: { id: artifact.id },
           data: {
             content: normalized.content,
             status: 'completed',
-            inputTokens: inputTokenCount,
-            outputTokens: outputTokenCount,
+            inputTokens: safeInputTokens,
+            outputTokens: safeOutputTokens,
             costUSD: cost,
             completedAt: new Date(),
           },
         });
 
+        // Note: monthlyUsed increment now happens atomically inside enforceUsageGuards (guards.ts)
+        // Only update monthlySpent here (already persisted in artifact, cost already calculated)
         await db.user.update({
           where: { id: userId },
           data: {
-            monthlyUsed: { increment: 1 },
             monthlySpent: { increment: cost },
           },
         });
@@ -155,7 +176,7 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
             costUSD: cost,
             model,
             artifactType: type,
-            status: 'success',
+            status: 'success' as QuotaEventStatus,
           },
         });
 
@@ -183,7 +204,7 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
             costUSD: 0,
             model,
             artifactType: type,
-            status: 'error',
+            status: 'error' as QuotaEventStatus,
           },
         });
 
@@ -197,6 +218,21 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
       } finally {
         controller.close();
       }
+    },
+    cancel() {
+      // S1-06: Handle client disconnect by marking artifact as failed
+      db.artifact.update({
+        where: { id: artifact.id },
+        data: {
+          status: 'failed',
+          failureReason: 'client_disconnect',
+        },
+      }).catch((err) => {
+        logger.error(
+          { artifactId: artifact.id, err },
+          'Failed to mark artifact as failed on stream cancel',
+        );
+      });
     },
   });
 

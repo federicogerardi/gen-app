@@ -71,6 +71,14 @@ export async function PUT(
     return NextResponse.json({ error: { code: 'FORBIDDEN', message: 'Access denied' } }, { status: 403 });
   }
 
+  // S1-08: Reject PUT on non-terminal artifact status
+  if (['generating', 'failed'].includes(artifact.status)) {
+    return NextResponse.json(
+      { error: { code: 'CONFLICT', message: 'Cannot modify non-terminal artifact' } },
+      { status: 409 },
+    );
+  }
+
   const body = await request.json().catch(() => null);
   const parsed = updateArtifactSchema.safeParse(body);
   if (!parsed.success) {
@@ -81,7 +89,6 @@ export async function PUT(
     where: { id },
     data: {
       content: parsed.data.content,
-      status: 'completed',
     },
   });
 

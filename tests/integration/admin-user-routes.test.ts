@@ -7,22 +7,15 @@ import { db } from '@/lib/db';
 
 jest.mock('@/lib/auth', () => ({ auth: jest.fn() }));
 
-jest.mock('@/lib/db', () => ({
-  db: {
-    user: {
-      findUnique: jest.fn(),
-      update: jest.fn(),
-    },
-    quotaHistory: {
-      findMany: jest.fn(),
-    },
-  },
-}));
+jest.mock('@/lib/db', () => jest.requireActual('./db-mock').createDbMock());
 
 const mockedAuth = auth as jest.MockedFunction<typeof auth>;
-const findUser = db.user.findUnique as jest.Mock;
-const updateUser = db.user.update as jest.Mock;
-const findHistory = db.quotaHistory.findMany as jest.Mock;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const findUser = (db as any).user.findUnique as jest.Mock;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const updateUser = (db as any).user.update as jest.Mock;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const findHistory = (db as any).quotaHistory.findMany as jest.Mock;
 
 const USER_ID = 'target_user_123';
 const makeParams = (id = USER_ID) => ({ params: Promise.resolve({ userId: id }) });

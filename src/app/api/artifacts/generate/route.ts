@@ -5,14 +5,15 @@ import { rateLimit } from '@/lib/rate-limit';
 import { createArtifactStream } from '@/lib/llm/streaming';
 import { getRequestLogger } from '@/lib/logger';
 import { z } from 'zod';
+import { ALLOWED_MODELS } from '@/lib/llm/models';
 
-const ALLOWED_MODELS = ['openai/gpt-4-turbo', 'anthropic/claude-3-opus', 'mistralai/mistral-large'];
+// Note: 'extraction' type is tool-specific, only available through /api/tools/extraction/generate
 const ALLOWED_TYPES = ['content', 'seo', 'code'] as const;
 
 const generateSchema = z.object({
   projectId: z.string().cuid(),
   type: z.enum(ALLOWED_TYPES),
-  model: z.string().refine((m) => ALLOWED_MODELS.includes(m), { message: 'Unsupported model' }),
+  model: z.string().refine((m) => ALLOWED_MODELS.includes(m as never), { message: 'Unsupported model' }),
   input: z.record(z.string(), z.unknown()),
 });
 

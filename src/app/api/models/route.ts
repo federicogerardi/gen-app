@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { getRequestLogger } from '@/lib/logger';
+import { SUPPORTED_MODELS, MODEL_METADATA, getPricingStaleness } from '@/lib/llm/models';
 
-const MODELS = [
-  { id: 'openai/gpt-4-turbo', name: 'GPT-4 Turbo', default: true },
-  { id: 'anthropic/claude-3-opus', name: 'Claude 3 Opus', default: false },
-  { id: 'mistralai/mistral-large', name: 'Mistral Large', default: false },
-];
+const MODELS = SUPPORTED_MODELS.map((id) => ({
+  id,
+  ...MODEL_METADATA[id],
+}));
 
 export async function GET() {
   const session = await auth();
@@ -13,5 +14,25 @@ export async function GET() {
     return NextResponse.json({ error: { code: 'UNAUTHORIZED', message: 'Authentication required' } }, { status: 401 });
   }
 
-  return NextResponse.json({ models: MODELS });
+  const pricing = getPricingStaleness();
+  const log = getRequestLogger({
+    requestId: crypto.randomUUID(),
+    route: '/api/models',
+    method: 'GET',
+    userId: session.user.id,
+  });
+
+  if (pricing.stale) {
+    log.warn(
+      {
+        pricing,
+      },
+      'Model pricing metadata is stale',
+    );
+  }
+
+  return NextResponse.json({
+    models: MODELS,
+    pricing,
+  });
 }

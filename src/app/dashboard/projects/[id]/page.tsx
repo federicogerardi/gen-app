@@ -6,6 +6,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { formatArtifactPreview, getArtifactDisplayTypeLabel, getEffectiveArtifactWorkflowType } from '@/lib/artifact-preview';
+import { isArtifactType, isArtifactStatus } from '@/lib/types/artifact';
 
 interface ProjectPageParams {
   id: string;
@@ -53,14 +54,17 @@ export default async function ProjectPage({ params }: { params: Promise<ProjectP
           <div className="space-y-3">
             {project.artifacts.map((a: typeof project.artifacts[number]) => {
               const workflowType = getEffectiveArtifactWorkflowType(a.workflowType, a.input);
+              // Type-guard artifact fields from DB (String) to literal unions
+              const typedArtifactType = isArtifactType(a.type) ? a.type : 'content';
+              const typedArtifactStatus = isArtifactStatus(a.status) ? a.status : 'generating';
               const preview = formatArtifactPreview({
-                type: a.type,
-                status: a.status,
+                type: typedArtifactType,
+                status: typedArtifactStatus,
                 content: a.content,
                 workflowType,
               });
               const typeLabel = getArtifactDisplayTypeLabel({
-                type: a.type,
+                type: typedArtifactType,
                 workflowType,
               });
 

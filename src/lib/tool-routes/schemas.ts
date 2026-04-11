@@ -1,10 +1,13 @@
 import { z } from 'zod';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { ALLOWED_MODELS, isSupportedModel } from '@/lib/llm/models';
 
-export const ALLOWED_MODELS = ['openai/gpt-4-turbo', 'anthropic/claude-3-opus', 'mistralai/mistral-large'] as const;
+// Re-export for backward compatibility
+export { ALLOWED_MODELS } from '@/lib/llm/models';
 
 export const toneSchema = z.enum(['professional', 'casual', 'formal', 'technical']);
 
-const modelSchema = z.string().refine((model) => ALLOWED_MODELS.includes(model as (typeof ALLOWED_MODELS)[number]), {
+const modelSchema = z.string().refine(isSupportedModel, {
   message: 'Unsupported model',
 });
 
