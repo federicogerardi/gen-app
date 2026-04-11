@@ -6,27 +6,22 @@ import { db } from '@/lib/db';
 import { rateLimit } from '@/lib/rate-limit';
 import { createArtifactStream } from '@/lib/llm/streaming';
 import { buildMetaAdsPrompt } from '@/lib/tool-prompts/meta-ads';
+import { createDbMock } from './db-mock';
 
 jest.mock('@/lib/auth', () => ({ auth: jest.fn() }));
 jest.mock('@/lib/rate-limit', () => ({ rateLimit: jest.fn() }));
 jest.mock('@/lib/llm/streaming', () => ({ createArtifactStream: jest.fn() }));
 jest.mock('@/lib/tool-prompts/meta-ads', () => ({ buildMetaAdsPrompt: jest.fn() }));
 
-jest.mock('@/lib/db', () => ({
-  db: {
-    user: { findUnique: jest.fn() },
-    project: { findUnique: jest.fn() },
-    quotaHistory: { create: jest.fn() },
-  },
-}));
+jest.mock('@/lib/db', () => createDbMock());
 
 const mockedAuth = auth as jest.MockedFunction<typeof auth>;
 const mockedRateLimit = rateLimit as jest.MockedFunction<typeof rateLimit>;
 const mockedStream = createArtifactStream as jest.MockedFunction<typeof createArtifactStream>;
 const mockedBuildPrompt = buildMetaAdsPrompt as jest.MockedFunction<typeof buildMetaAdsPrompt>;
-const findUser = db.user.findUnique as jest.Mock;
-const findProject = db.project.findUnique as jest.Mock;
-const createQuota = db.quotaHistory.create as jest.Mock;
+const findUser = (db.user?.findUnique) as jest.Mock;
+const findProject = (db.project?.findUnique) as jest.Mock;
+const createQuota = (db.quotaHistory?.create) as jest.Mock;
 
 const projectId = 'cjld2cyuq0000t3rmniod1foy';
 const body = {

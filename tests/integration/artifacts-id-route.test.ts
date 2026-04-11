@@ -1,3 +1,4 @@
+import { createDbMock } from './db-mock';
 /** @jest-environment node */
 
 import { GET, DELETE, PUT } from '@/app/api/artifacts/[id]/route';

@@ -1,3 +1,4 @@
+import { createDbMock } from './db-mock';
 /** @jest-environment node */
 
 import { POST } from '@/app/api/tools/extraction/generate/route';
