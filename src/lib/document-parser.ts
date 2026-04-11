@@ -40,6 +40,21 @@ export function isSupportedMimeType(mimeType: string): mimeType is SupportedMime
 }
 
 async function extractPdfText(buffer: Buffer): Promise<string> {
+  // pdfjs-dist v5 instantiates `new DOMMatrix()` at module-evaluation time (SCALE_MATRIX
+  // constant). Node.js does not expose DOMMatrix as a global; install a minimal stub
+  // before the first dynamic import so the module can be evaluated without throwing.
+  if (typeof globalThis.DOMMatrix === 'undefined') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (globalThis as any).DOMMatrix = class NodeDOMMatrix {
+      constructor(_init?: string | number[]) {}
+      preMultiplySelf(): this { return this; }
+      multiplySelf(): this { return this; }
+      invertSelf(): this { return this; }
+      translate(_tx?: number, _ty?: number, _tz?: number): NodeDOMMatrix { return new NodeDOMMatrix(); }
+      scale(_scaleX?: number, _scaleY?: number): NodeDOMMatrix { return new NodeDOMMatrix(); }
+    };
+  }
+
   const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
   const loadingTask = pdfjs.getDocument({
     data: new Uint8Array(buffer),

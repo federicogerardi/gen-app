@@ -160,6 +160,32 @@ describe('POST /api/tools/funnel-pages/upload', () => {
     expect(json.error.message).toBe('The document appears to be empty or unreadable.');
   });
 
+  it('returns 200 for a valid PDF upload', async () => {
+    mockedDetectFileTypeFromBuffer.mockResolvedValue({ ext: 'pdf', mime: 'application/pdf' });
+    mockedParseDocument.mockResolvedValue({
+      ok: true,
+      data: {
+        text: 'Contenuto PDF estratto',
+        mimeType: 'application/pdf',
+        sizeBytes: 7,
+        fileName: 'documento.pdf',
+      },
+    });
+
+    const formData = new FormData();
+    formData.append('projectId', projectId);
+    formData.append('file', new File(['%PDF-1.7'], 'documento.pdf', { type: 'application/pdf' }));
+
+    const response = await POST(makeMultipartRequest(formData));
+
+    expect(response.status).toBe(200);
+    expect(mockedParseDocument).toHaveBeenCalledWith(
+      expect.any(Buffer),
+      'application/pdf',
+      'documento.pdf',
+    );
+  });
+
   it('returns parsed document payload for a valid upload', async () => {
     mockedDetectFileTypeFromBuffer.mockResolvedValue(undefined);
 
