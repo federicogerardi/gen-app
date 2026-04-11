@@ -189,6 +189,43 @@ describe('PUT /api/artifacts/[id]', () => {
     expect(data.error.code).toBe('VALIDATION_ERROR');
   });
 
+  describe('S1-08: state transition guard – non-terminal artifacts', () => {
+    it('returns 409 Conflict when artifact is in generating status', async () => {
+      mockedAuth.mockResolvedValue({ user: { id: 'user_1' } } as never);
+      findArtifact.mockResolvedValue({ ...mockArtifact, status: 'generating' });
+
+      const res = await PUT(makeUpdateRequest({ content: 'new content' }), makeParams());
+      const data = await res.json();
+
+      expect(res.status).toBe(409);
+      expect(data.error.code).toBe('CONFLICT');
+      expect(updateArtifact).not.toHaveBeenCalled();
+    });
+
+    it('returns 409 Conflict when artifact is in failed status', async () => {
+      mockedAuth.mockResolvedValue({ user: { id: 'user_1' } } as never);
+      findArtifact.mockResolvedValue({ ...mockArtifact, status: 'failed', failureReason: 'error' });
+
+      const res = await PUT(makeUpdateRequest({ content: 'recovery attempt' }), makeParams());
+      const data = await res.json();
+
+      expect(res.status).toBe(409);
+      expect(data.error.code).toBe('CONFLICT');
+      expect(updateArtifact).not.toHaveBeenCalled();
+    });
+
+    it('allows PUT on completed artifact (terminal state)', async () => {
+      mockedAuth.mockResolvedValue({ user: { id: 'user_1' } } as never);
+      findArtifact.mockResolvedValue({ ...mockArtifact, status: 'completed' });
+
+      const res = await PUT(makeUpdateRequest({ content: 'corrected content' }), makeParams());
+      const data = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(updateArtifact).toHaveBeenCalled();
+    });
+  });
+
   it('returns updated artifact on success', async () => {
     mockedAuth.mockResolvedValue({ user: { id: 'user_1' } } as never);
 
