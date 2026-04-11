@@ -37,7 +37,6 @@ type ActivityItem = {
 };
 
 type Props = {
-  users: UserItem[];
   totalArtifacts: number;
   completedArtifacts: number;
   recentActivity: ActivityItem[];
@@ -52,6 +51,7 @@ type Props = {
     sampleSizeArtifacts: number;
     sampleSizeRequests30d: number;
   };
+  totalUsers: number;
 };
 
 function getTrafficClass(ratio: number) {
@@ -86,13 +86,48 @@ function getArtifactTypeLabel(type: string): string {
   return type;
 }
 
-export function AdminClientPage({ users, totalArtifacts, completedArtifacts, recentActivity, baselineMetrics }: Props) {
+export function AdminClientPage({
+  totalArtifacts,
+  completedArtifacts,
+  recentActivity,
+  baselineMetrics,
+  totalUsers,
+}: Props) {
   const [query, setQuery] = useState('');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [activityStatus, setActivityStatus] = useState<'all' | 'success' | 'error' | 'rate_limited'>('all');
   const [activityType, setActivityType] = useState<'all' | 'content' | 'seo' | 'code'>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(20);
+  const [users, setUsers] = useState<UserItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const drawerRef = useRef<HTMLElement | null>(null);
   const previousActiveElementRef = useRef<HTMLElement | null>(null);
+
+  // Fetch users when page changes
+  useEffect(() => {
+    const fetchUsers = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const offset = (currentPage - 1) * pageSize;
+        const response = await fetch(`/api/admin/users?limit=${pageSize}&offset=${offset}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch users');
+        }
+        const data = await response.json();
+        setUsers(data.users);
+      } catch (err) {
+        console.error('Failed to fetch users:', err);
+        setError('Errore nel caricamento degli utenti');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, [currentPage, pageSize]);
 
   const filteredUsers = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -105,6 +140,7 @@ export function AdminClientPage({ users, totalArtifacts, completedArtifacts, rec
 
   const totalSpent = users.reduce((acc, user) => acc + Number(user.monthlySpent), 0);
   const selectedUser = users.find((user) => user.id === selectedUserId) ?? null;
+  const totalPages = Math.ceil(totalUsers / pageSize);
 
   const filteredActivity = useMemo(() => {
     return recentActivity.filter((entry) => {
@@ -191,7 +227,7 @@ export function AdminClientPage({ users, totalArtifacts, completedArtifacts, rec
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-4 mb-8">
           <Card className="app-surface rounded-2xl">
             <CardHeader className="pb-2"><CardTitle className="text-sm">Utenti</CardTitle></CardHeader>
-            <CardContent><p className="text-2xl font-bold">{users.length}</p></CardContent>
+            <CardContent><p className="text-2xl font-bold">{totalUsers}</p></CardContent>
           </Card>
           <Card className="app-surface rounded-2xl">
             <CardHeader className="pb-2"><CardTitle className="text-sm">Artefatti</CardTitle></CardHeader>
@@ -207,56 +243,101 @@ export function AdminClientPage({ users, totalArtifacts, completedArtifacts, rec
           </Card>
         </div>
 
+        {/* Pagination info and controls */}
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+          <div className="text-sm text-muted-foreground">
+            Pagina {currentPage} di {totalPages} • Mostrando {users.length} di {totalUsers} utenti
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1 || isLoading}
+            >
+              Precedente
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages || isLoading}
+            >
+              Successivo
+            </Button>
+          </div>
+        </div>
+
         <div className="space-y-4">
-          <p className="sr-only" aria-live="polite">{filteredUsers.length} utenti mostrati con i filtri correnti.</p>
-          {filteredUsers.map((u) => {
-            const quotaRatio = u.monthlyQuota > 0 ? u.monthlyUsed / u.monthlyQuota : 1;
-            const budgetRatio = Number(u.monthlyBudget) > 0 ? Number(u.monthlySpent) / Number(u.monthlyBudget) : 1;
-
-            return (
-              <Card key={u.id} className="app-surface rounded-2xl">
-                <CardHeader className="pb-2 flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <CardTitle className="text-base">{u.name ?? u.email}</CardTitle>
-                    <p className="text-sm text-muted-foreground">{u.email}</p>
-                  </div>
-                  <Badge variant={u.role === 'admin' ? 'default' : 'secondary'}>{u.role}</Badge>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm mb-4">
-                    <div>
-                      <p className="text-muted-foreground">Quota</p>
-                      <p className="font-medium">{u.monthlyUsed} / {u.monthlyQuota}</p>
-                      <span className={`inline-flex mt-1 rounded-full px-2 py-0.5 text-xs ${getTrafficClass(quotaRatio)}`}>
-                        {Math.round(quotaRatio * 100)}%
-                      </span>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Budget</p>
-                      <p className="font-medium">${Number(u.monthlySpent).toFixed(2)} / ${Number(u.monthlyBudget).toFixed(2)}</p>
-                      <span className={`inline-flex mt-1 rounded-full px-2 py-0.5 text-xs ${getTrafficClass(budgetRatio)}`}>
-                        {Math.round(budgetRatio * 100)}%
-                      </span>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Reset</p>
-                      <p className="font-medium">{new Date(u.resetDate).toLocaleDateString('it-IT')}</p>
-                    </div>
-                  </div>
-                  <Button className="w-full sm:w-auto" size="sm" variant="outline" onClick={() => setSelectedUserId(u.id)}>
-                    Gestisci quota
-                  </Button>
-                </CardContent>
-              </Card>
-            );
-          })}
-
-          {filteredUsers.length === 0 && (
+          {isLoading && (
             <Card>
               <CardContent className="py-8 text-center text-muted-foreground">
-                Nessun utente trovato con i filtri correnti.
+                Caricamento utenti...
               </CardContent>
             </Card>
+          )}
+
+          {error && (
+            <Card>
+              <CardContent className="py-8 text-center text-destructive">
+                {error}
+              </CardContent>
+            </Card>
+          )}
+
+          {!isLoading && !error && filteredUsers.length === 0 && (
+            <Card>
+              <CardContent className="py-8 text-center text-muted-foreground">
+                {query.trim() ? 'Nessun utente trovato con i filtri correnti.' : 'Nessun utente disponibile.'}
+              </CardContent>
+            </Card>
+          )}
+
+          {!isLoading && !error && filteredUsers.length > 0 && (
+            <>
+              <p className="sr-only" aria-live="polite">{filteredUsers.length} utenti mostrati con i filtri correnti.</p>
+              {filteredUsers.map((u) => {
+                const quotaRatio = u.monthlyQuota > 0 ? u.monthlyUsed / u.monthlyQuota : 1;
+                const budgetRatio = Number(u.monthlyBudget) > 0 ? Number(u.monthlySpent) / Number(u.monthlyBudget) : 1;
+
+                return (
+                  <Card key={u.id} className="app-surface rounded-2xl">
+                    <CardHeader className="pb-2 flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <CardTitle className="text-base">{u.name ?? u.email}</CardTitle>
+                        <p className="text-sm text-muted-foreground">{u.email}</p>
+                      </div>
+                      <Badge variant={u.role === 'admin' ? 'default' : 'secondary'}>{u.role}</Badge>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm mb-4">
+                        <div>
+                          <p className="text-muted-foreground">Quota</p>
+                          <p className="font-medium">{u.monthlyUsed} / {u.monthlyQuota}</p>
+                          <span className={`inline-flex mt-1 rounded-full px-2 py-0.5 text-xs ${getTrafficClass(quotaRatio)}`}>
+                            {Math.round(quotaRatio * 100)}%
+                          </span>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Budget</p>
+                          <p className="font-medium">${Number(u.monthlySpent).toFixed(2)} / ${Number(u.monthlyBudget).toFixed(2)}</p>
+                          <span className={`inline-flex mt-1 rounded-full px-2 py-0.5 text-xs ${getTrafficClass(budgetRatio)}`}>
+                            {Math.round(budgetRatio * 100)}%
+                          </span>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Reset</p>
+                          <p className="font-medium">{new Date(u.resetDate).toLocaleDateString('it-IT')}</p>
+                        </div>
+                      </div>
+                      <Button className="w-full sm:w-auto" size="sm" variant="outline" onClick={() => setSelectedUserId(u.id)}>
+                        Gestisci quota
+                      </Button>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </>
           )}
         </div>
 

@@ -1,28 +1,84 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
+import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 
-export async function GET() {
+/**
+ * Pagination schema for admin users list
+ * - limit: number of users per page (default 20, max 100)
+ * - offset: skip N users (default 0)
+ */
+const paginationSchema = z.object({
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  offset: z.coerce.number().int().min(0).default(0),
+});
+
+export async function GET(request: NextRequest) {
   const session = await auth();
   if (!session?.user?.id || session.user.role !== 'admin') {
-    return NextResponse.json({ error: { code: 'FORBIDDEN', message: 'Admin access required' } }, { status: 403 });
+    return NextResponse.json(
+      { error: { code: 'FORBIDDEN', message: 'Admin access required' } },
+      { status: 403 },
+    );
   }
 
-  const users = await db.user.findMany({
-    orderBy: { createdAt: 'desc' },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      monthlyQuota: true,
-      monthlyUsed: true,
-      monthlyBudget: true,
-      monthlySpent: true,
-      resetDate: true,
-      createdAt: true,
-    },
+  // Parse query params
+  const searchParams = request.nextUrl.searchParams;
+  const parsed = paginationSchema.safeParse({
+    limit: searchParams.get('limit') ?? undefined,
+    offset: searchParams.get('offset') ?? undefined,
   });
 
-  return NextResponse.json({ users });
+  if (!parsed.success) {
+    return NextResponse.json(
+      {
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid pagination parameters',
+          details: parsed.error.flatten(),
+        },
+      },
+      { status: 400 },
+    );
+  }
+
+  const { limit, offset } = parsed.data;
+
+  try {
+    // Fetch total count and paginated users in parallel
+    const [total, users] = await Promise.all([
+      db.user.count(),
+      db.user.findMany({
+        skip: offset,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          monthlyQuota: true,
+          monthlyUsed: true,
+          monthlyBudget: true,
+          monthlySpent: true,
+          resetDate: true,
+          createdAt: true,
+        },
+      }),
+    ]);
+
+    return NextResponse.json({
+      users,
+      total,
+      limit,
+      offset,
+      hasMore: offset + limit < total,
+    });
+  } catch (err) {
+    console.error('Admin users list error:', err);
+    return NextResponse.json(
+      { error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch users' } },
+      { status: 500 },
+    );
+  }
 }

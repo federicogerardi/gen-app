@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { AdminClientPage } from '@/app/admin/AdminClientPage';
 
 jest.mock('@/components/layout/Navbar', () => ({
@@ -61,11 +61,34 @@ const baselineMetrics = {
   sampleSizeRequests30d: 250,
 };
 
+// Mock fetch for API pagination
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+(global as any).fetch = jest.fn((url: any) => {
+  if (typeof url === 'string' && url.includes('/api/admin/users')) {
+    return Promise.resolve({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          users,
+          total: users.length,
+          limit: 20,
+          offset: 0,
+          hasMore: false,
+        }),
+    });
+  }
+  return Promise.reject(new Error('Unhandled fetch call'));
+});
+
 describe('AdminClientPage', () => {
-  it('mostra metriche baseline e filtra utenti', () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('mostra metriche baseline e filtra utenti', async () => {
     render(
       <AdminClientPage
-        users={users}
+        totalUsers={users.length}
         totalArtifacts={120}
         completedArtifacts={108}
         recentActivity={recentActivity}
@@ -74,6 +97,12 @@ describe('AdminClientPage', () => {
     );
 
     expect(screen.getByText('Metriche baseline (30 giorni)')).toBeInTheDocument();
+
+    // Wait for users to load
+    await waitFor(() => {
+      expect(screen.getByText('Mario Rossi')).toBeInTheDocument();
+    });
+
     expect(screen.getByText('90%')).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Cerca utente'), { target: { value: 'Giulia' } });
@@ -82,16 +111,21 @@ describe('AdminClientPage', () => {
     expect(screen.getAllByRole('button', { name: 'Gestisci quota' })).toHaveLength(1);
   });
 
-  it('apre il drawer di gestione quota', () => {
+  it('apre il drawer di gestione quota', async () => {
     render(
       <AdminClientPage
-        users={users}
+        totalUsers={users.length}
         totalArtifacts={120}
         completedArtifacts={108}
         recentActivity={recentActivity}
         baselineMetrics={baselineMetrics}
       />,
     );
+
+    // Wait for users to load
+    await waitFor(() => {
+      expect(screen.getByText('Mario Rossi')).toBeInTheDocument();
+    });
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Gestisci quota' })[0]);
 
