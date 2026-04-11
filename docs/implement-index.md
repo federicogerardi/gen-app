@@ -15,8 +15,11 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
   - Integrata baseline Sentry in Next.js (server, edge, client, global error boundary, trace metadata).
   - Da completare: metriche performance e rollout su tutte le route chiave.
 
-- **Quality & security audit resolution**: `PIANIFICATO (decomposizione pronta)`
+- **Quality & security audit resolution**: `IN CORSO (Phase 1 Complete ✅ | Phase 2-4 Pending)`
   - L'audit globale è stato formalizzato come track esecutivo in 4 fasi e 14 workstream PR-sized, separando documento sorgente, piano operativo e tracker.
+  - **Phase 1 Completato (2026-04-11)**: TASK-TRK-001–TASK-TRK-004 (Token accounting, Atomic quota, Stale cleanup, State guard). Validation: `npm run typecheck && npm test` → 46/46 tests ✅.
+  - **Phase 2–4 Pending**: Consistency (centralized guards, model defs, artifact typing), Scalability (admin pagination, streaming pressure), Hardening (upload validation, env safety, role integrity, logging, pricing).
+  - Branch: `fix/token-counting` (7 commits, ready for PR to `dev`)
   - File: docs/implement-quality-audit.md, docs/implementation/feature-quality-audit-resolution-1.md, docs/implementation/feature-quality-audit-resolution-tracker-1.md
 
 - **Refactoring preview artefatti**: `IN CORSO`
