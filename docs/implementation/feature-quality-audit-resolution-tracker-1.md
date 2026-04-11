@@ -4,8 +4,8 @@ version: 1.0
 date_created: 2026-04-11
 last_updated: 2026-04-11
 owner: Platform Team
-status: Phase 1 Complete ✅ | Phase 2 Complete ✅ | Phase 3 In Progress (S3-01 ✅ S3-02 ✅) | Phase 4 Pending
-sprint_progress: S1-01-S1-08 Done | S2-01-S2-03 Done | S3-01 Done | S3-02 Done → Phase 4 Next
+status: Phase 1 Complete ✅ | Phase 2 Complete ✅ | Phase 3 Complete ✅ | Phase 4 In Progress (S4-01 ✅)
+sprint_progress: S1-01-S1-08 Done | S2-01-S2-03 Done | S3-01 Done | S3-02 Done | S4-01 Done → S4-02 Next
 tags: [process, tracker, quality, security, audit]
 ---
 
@@ -94,7 +94,7 @@ Evidence log:
 
 | Task | Description | Completed | Date |
 | -------- | ----------- | --------- | ---- |
-| TASK-TRK-010 | Verify uploaded file types via content inspection. |  |  |
+| TASK-TRK-010 | Verify uploaded file types via content inspection. | ✅ Done | 2026-04-11 |
 | TASK-TRK-011 | Add centralized environment validation. |  |  |
 | TASK-TRK-012 | Enforce role constraints in schema and types. |  |  |
 | TASK-TRK-013 | Extend structured logging across tool generation routes. |  |  |
@@ -102,7 +102,7 @@ Evidence log:
 | TASK-TRK-015 | Add pricing staleness warnings for model cost metadata. |  |  |
 
 Evidence log:
-- Pending.
+- S4-01 (2026-04-11): **Upload MIME verification via content inspection**. Hardened `src/app/api/tools/funnel-pages/upload/route.ts` to validate uploaded file type from content signatures (magic bytes) instead of trusting only client-declared MIME. Added wrapper `src/lib/file-signature.ts` for `file-type` detection and integrated route-side validation with secure fallback for plain-text/markdown buffers when binary signature is unavailable. Rejected unsupported or mismatched file content with `VALIDATION_ERROR` and HTTP 415. Extended integration coverage in `tests/integration/funnel-pages-upload-route.test.ts` with spoofing scenario (declared MIME vs detected content mismatch) and unsupported detected type checks. Validation: `npm run typecheck` ✅, `npm test -- tests/integration/funnel-pages-upload-route.test.ts` ✅ (8/8).
 
 ## 3. Dependencies
 
