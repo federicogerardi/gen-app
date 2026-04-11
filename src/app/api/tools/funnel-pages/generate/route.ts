@@ -13,6 +13,7 @@ import {
   requireOwnedProject,
 } from '@/lib/tool-routes/guards';
 import { serviceUnavailableError, sseResponse } from '@/lib/tool-routes/responses';
+import { normalizeExtractedFields } from '@/lib/tool-prompts/funnel-extraction-field-map';
 import {
   funnelPagesRequestSchema,
   getLengthByFunnelStep,
@@ -123,50 +124,6 @@ function asPromisedResultFormat(value: unknown): 'video' | 'pdf' | 'analisi' | '
 function asLeadMagnetFormat(value: unknown): 'VSL' | 'PDF' | 'Case Study' | 'Demo' | 'Altro' {
   const allowed = new Set(['VSL', 'PDF', 'Case Study', 'Demo', 'Altro']);
   return typeof value === 'string' && allowed.has(value) ? (value as 'VSL' | 'PDF' | 'Case Study' | 'Demo' | 'Altro') : 'Altro';
-}
-
-const EXTRACTION_SECTION_KEYS = [
-  'business_context',
-  'offer_context',
-  'qualification_context',
-  'optin_context',
-  'segmentation_context',
-  'belief_context',
-  'funnel_goals',
-  'proof_context',
-  'generated_context',
-  'assumptions_and_constraints',
-] as const;
-
-function normalizeExtractedFields(value: Record<string, unknown>): Record<string, unknown> {
-  const result: Record<string, unknown> = { ...value };
-  const wrappers = ['fields', 'data', 'result'];
-
-  for (const wrapper of wrappers) {
-    const candidate = result[wrapper];
-    if (typeof candidate === 'object' && candidate !== null && !Array.isArray(candidate)) {
-      Object.assign(result, candidate as Record<string, unknown>);
-    }
-  }
-
-  for (const key of EXTRACTION_SECTION_KEYS) {
-    const section = result[key];
-    if (typeof section !== 'object' || section === null || Array.isArray(section)) {
-      continue;
-    }
-
-    for (const [nestedKey, nestedValue] of Object.entries(section)) {
-      if (nestedValue === null || nestedValue === undefined || nestedValue === '') {
-        continue;
-      }
-
-      if (!(nestedKey in result) || result[nestedKey] === '' || result[nestedKey] === null || result[nestedKey] === undefined) {
-        result[nestedKey] = nestedValue;
-      }
-    }
-  }
-
-  return result;
 }
 
 function mapExtractedFieldsToBriefing(payload: FunnelPagesRequestV3): FunnelPagesRequestV2['briefing'] {
