@@ -14,6 +14,8 @@ tags: [process, tracker, quality, security, audit]
 
 This tracker is the execution companion for docs/implementation/feature-quality-audit-resolution-1.md. It records completion status, evidence, and blockers while keeping the source rationale in docs/implement-quality-audit.md unchanged.
 
+Session sequencing reference: docs/implementation/feature-quality-audit-resolution-sprint-ops-1.md.
+
 ## 1. Requirements & Constraints
 
 - REQ-TRK-001: Every completed task must record evidence or a verification summary in this tracker.
@@ -84,6 +86,7 @@ Evidence log:
 - DEP-TRK-001: docs/implementation/feature-quality-audit-resolution-1.md defines the execution scope for this tracker.
 - DEP-TRK-002: docs/implement-quality-audit.md remains the source reference for problem statements and rationale.
 - DEP-TRK-003: CI quality gates must remain green for completed items.
+- DEP-TRK-004: docs/implementation/feature-quality-audit-resolution-sprint-ops-1.md defines the recommended session order and stop conditions.
 
 ## 4. Files
 
@@ -91,6 +94,7 @@ Evidence log:
 - FILE-TRK-002: docs/implement-quality-audit.md - source audit roadmap.
 - FILE-TRK-003: docs/implement-index.md - top-level tracking index.
 - FILE-TRK-004: docs/implementation/implementation-plan.md - main roadmap reference.
+- FILE-TRK-005: docs/implementation/feature-quality-audit-resolution-sprint-ops-1.md - granular session backlog.
 
 ## 5. Testing
 
@@ -108,3 +112,4 @@ Evidence log:
 - docs/implementation/feature-quality-audit-resolution-1.md
 - docs/implement-quality-audit.md
 - docs/implementation/implementation-plan.md
+- docs/implementation/feature-quality-audit-resolution-sprint-ops-1.md
