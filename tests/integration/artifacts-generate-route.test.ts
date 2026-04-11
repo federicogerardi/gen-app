@@ -1,4 +1,3 @@
-import { createDbMock } from './db-mock';
 /** @jest-environment node */
 
 import { POST } from '@/app/api/artifacts/generate/route';
@@ -9,13 +8,7 @@ import { createArtifactStream } from '@/lib/llm/streaming';
 
 jest.mock('@/lib/auth', () => ({ auth: jest.fn() }));
 
-jest.mock('@/lib/db', () => ({
-  db: {
-    user: { findUnique: jest.fn() },
-    quotaHistory: { create: jest.fn() },
-    project: { findUnique: jest.fn() },
-  },
-}));
+jest.mock('@/lib/db', () => jest.requireActual('./db-mock').createDbMock());
 
 jest.mock('@/lib/rate-limit', () => ({ rateLimit: jest.fn() }));
 

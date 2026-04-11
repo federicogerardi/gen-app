@@ -9,10 +9,38 @@ type DbCallback = (tx: ReturnType<typeof createDbBase>) => Promise<unknown>;
 
 export function createDbBase() {
   return {
-    user: { findUnique: jest.fn(), update: jest.fn() },
-    project: { findUnique: jest.fn() },
-    quotaHistory: { create: jest.fn() },
-    artifact: { create: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
+    user: {
+      findUnique: jest.fn(),
+      findMany: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+      count: jest.fn(),
+      aggregate: jest.fn(),
+    },
+    project: {
+      findUnique: jest.fn(),
+      findMany: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+      count: jest.fn(),
+    },
+    quotaHistory: {
+      create: jest.fn(),
+      findMany: jest.fn(),
+      count: jest.fn(),
+      aggregate: jest.fn(),
+    },
+    artifact: {
+      create: jest.fn(),
+      findUnique: jest.fn(),
+      findMany: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+      count: jest.fn(),
+      aggregate: jest.fn(),
+    },
   };
 }
 

@@ -208,7 +208,7 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
         controller.close();
       }
     },
-    cancel(reason?: string) {
+    cancel() {
       // S1-06: Handle client disconnect by marking artifact as failed
       db.artifact.update({
         where: { id: artifact.id },

@@ -1,4 +1,3 @@
-import { createDbMock } from './db-mock';
 /** @jest-environment node */
 
 import { POST } from '@/app/api/tools/funnel-pages/upload/route';
@@ -20,11 +19,7 @@ jest.mock('@/lib/document-parser', () => ({
   MAX_FILE_SIZE_BYTES: 10 * 1024 * 1024,
 }));
 
-jest.mock('@/lib/db', () => ({
-  db: {
-    project: { findUnique: jest.fn() },
-  },
-}));
+jest.mock('@/lib/db', () => jest.requireActual('./db-mock').createDbMock());
 
 const mockedAuth = auth as jest.MockedFunction<typeof auth>;
 const mockedRateLimit = rateLimit as jest.MockedFunction<typeof rateLimit>;

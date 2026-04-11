@@ -4,12 +4,6 @@ import '@testing-library/jest-dom';
  * Polyfill for Next.js API globals in Node environment.
  * These are needed because Next.js uses Web APIs that don't exist in Node.js.
  */
-declare global {
-  var Request: typeof globalThis.Request;
-  var Response: typeof globalThis.Response;
-  var ReadableStream: typeof globalThis.ReadableStream;
-  var fetch: typeof globalThis.fetch;
-}
 
 if (typeof global !== 'undefined' && typeof window === 'undefined') {
   // Node environment - add Web API polyfills for Next.js compatibility

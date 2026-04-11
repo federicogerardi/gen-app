@@ -1,4 +1,3 @@
-import { createDbMock } from './db-mock';
 /** @jest-environment node */
 
 import { POST } from '@/app/api/tools/extraction/generate/route';
@@ -13,20 +12,16 @@ jest.mock('@/lib/rate-limit', () => ({ rateLimit: jest.fn() }));
 jest.mock('@/lib/llm/streaming', () => ({ createArtifactStream: jest.fn() }));
 jest.mock('@/lib/tool-prompts/extraction', () => ({ buildExtractionPrompt: jest.fn() }));
 
-jest.mock('@/lib/db', () => ({
-  db: {
-    user: { findUnique: jest.fn() },
-    project: { findUnique: jest.fn() },
-    quotaHistory: { create: jest.fn() },
-  },
-}));
+jest.mock('@/lib/db', () => jest.requireActual('./db-mock').createDbMock());
 
 const mockedAuth = auth as jest.MockedFunction<typeof auth>;
 const mockedRateLimit = rateLimit as jest.MockedFunction<typeof rateLimit>;
 const mockedStream = createArtifactStream as jest.MockedFunction<typeof createArtifactStream>;
 const mockedBuildExtractionPrompt = buildExtractionPrompt as jest.MockedFunction<typeof buildExtractionPrompt>;
-const findUser = db.user.findUnique as jest.Mock;
-const findProject = db.project.findUnique as jest.Mock;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const findUser = (db as any).user.findUnique as jest.Mock;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const findProject = (db as any).project.findUnique as jest.Mock;
 
 const projectId = 'cjld2cyuq0000t3rmniod1foy';
 const baseBody = {

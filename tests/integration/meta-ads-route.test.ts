@@ -6,14 +6,13 @@ import { db } from '@/lib/db';
 import { rateLimit } from '@/lib/rate-limit';
 import { createArtifactStream } from '@/lib/llm/streaming';
 import { buildMetaAdsPrompt } from '@/lib/tool-prompts/meta-ads';
-import { createDbMock } from './db-mock';
 
 jest.mock('@/lib/auth', () => ({ auth: jest.fn() }));
 jest.mock('@/lib/rate-limit', () => ({ rateLimit: jest.fn() }));
 jest.mock('@/lib/llm/streaming', () => ({ createArtifactStream: jest.fn() }));
 jest.mock('@/lib/tool-prompts/meta-ads', () => ({ buildMetaAdsPrompt: jest.fn() }));
 
-jest.mock('@/lib/db', () => createDbMock());
+jest.mock('@/lib/db', () => jest.requireActual('./db-mock').createDbMock());
 
 const mockedAuth = auth as jest.MockedFunction<typeof auth>;
 const mockedRateLimit = rateLimit as jest.MockedFunction<typeof rateLimit>;

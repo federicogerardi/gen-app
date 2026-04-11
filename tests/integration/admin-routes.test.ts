@@ -1,4 +1,3 @@
-import { createDbMock } from './db-mock';
 /** @jest-environment node */
 
 import { GET as getUsers } from '@/app/api/admin/users/route';
@@ -8,24 +7,17 @@ import { db } from '@/lib/db';
 
 jest.mock('@/lib/auth', () => ({ auth: jest.fn() }));
 
-jest.mock('@/lib/db', () => ({
-  db: {
-    user: {
-      findMany: jest.fn(),
-      count: jest.fn(),
-      aggregate: jest.fn(),
-    },
-    artifact: {
-      count: jest.fn(),
-    },
-  },
-}));
+jest.mock('@/lib/db', () => jest.requireActual('./db-mock').createDbMock());
 
 const mockedAuth = auth as jest.MockedFunction<typeof auth>;
-const findUsers = db.user.findMany as jest.Mock;
-const countUsers = db.user.count as jest.Mock;
-const aggregateUsers = db.user.aggregate as jest.Mock;
-const countArtifacts = db.artifact.count as jest.Mock;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const findUsers = (db as any).user.findMany as jest.Mock;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const countUsers = (db as any).user.count as jest.Mock;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const aggregateUsers = (db as any).user.aggregate as jest.Mock;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const countArtifacts = (db as any).artifact.count as jest.Mock;
 
 const adminSession = { user: { id: 'admin_1', role: 'admin' } };
 const userSession = { user: { id: 'user_1', role: 'user' } };

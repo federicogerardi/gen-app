@@ -42,7 +42,6 @@ describe('artifact-cleanup – Contracts (S1-06 + S1-07)', () => {
     });
 
     it('should only update artifacts in generating status', () => {
-      const nonTerminalStatuses = ['generating', 'failed'];
       const shouldClean = (status: string) => status === 'generating';
 
       expect(shouldClean('generating')).toBe(true);
