@@ -56,6 +56,15 @@ async function extractPdfText(buffer: Buffer): Promise<string> {
   }
 
   const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
+  
+  // Pre-emptively disable worker setup by setting workerSrc to empty string.
+  // pdfjs attempts internal worker configuration even with disableWorker: true;
+  // this prevents errors when the worker file cannot be found in Vercel deployment.
+  if (pdfjs.GlobalWorkerOptions && typeof pdfjs.GlobalWorkerOptions === 'object') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (pdfjs.GlobalWorkerOptions as any).workerSrc = '';
+  }
+
   const loadingTask = pdfjs.getDocument({
     data: new Uint8Array(buffer),
     disableWorker: true,
