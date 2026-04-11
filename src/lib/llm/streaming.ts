@@ -149,10 +149,11 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
           },
         });
 
+        // Note: monthlyUsed increment now happens atomically inside enforceUsageGuards (guards.ts)
+        // Only update monthlySpent here (already persisted in artifact, cost already calculated)
         await db.user.update({
           where: { id: userId },
           data: {
-            monthlyUsed: { increment: 1 },
             monthlySpent: { increment: cost },
           },
         });
