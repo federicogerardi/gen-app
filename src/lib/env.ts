@@ -14,8 +14,8 @@ const envSchema = z.object({
   VERCEL_CRON_SECRET: z.string().optional(),
   LOG_LEVEL: z.string().optional(),
 }).superRefine((value, ctx) => {
-  const isProductionDeployment = value.NODE_ENV === 'production' && value.VERCEL_ENV !== 'preview';
-  if (isProductionDeployment && !value.VERCEL_CRON_SECRET) {
+  const isVercelProductionDeployment = value.NODE_ENV === 'production' && value.VERCEL_ENV === 'production';
+  if (isVercelProductionDeployment && !value.VERCEL_CRON_SECRET) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ['VERCEL_CRON_SECRET'],

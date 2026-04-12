@@ -12,6 +12,9 @@ jest.mock('@/lib/db', () => ({
       create: jest.fn(),
       update: jest.fn(),
     },
+    llmModel: {
+      findFirst: jest.fn(),
+    },
     user: {
       update: jest.fn(),
     },
@@ -33,6 +36,7 @@ jest.mock('@/lib/llm/orchestrator', () => ({
 
 const createArtifact = db.artifact.create as jest.Mock;
 const updateArtifact = db.artifact.update as jest.Mock;
+const findActiveModel = db.llmModel.findFirst as jest.Mock;
 const updateUser = db.user.update as jest.Mock;
 const createQuotaHistory = db.quotaHistory.create as jest.Mock;
 
@@ -73,6 +77,7 @@ describe('createArtifactStream', () => {
     mockGenerateStream = jest.fn();
     createArtifact.mockResolvedValue({ id: 'art_1' });
     updateArtifact.mockResolvedValue({});
+    findActiveModel.mockResolvedValue(null);
     updateUser.mockResolvedValue({});
     createQuotaHistory.mockResolvedValue({});
   });

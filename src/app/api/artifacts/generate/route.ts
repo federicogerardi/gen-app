@@ -1,10 +1,10 @@
 import { createArtifactStream } from '@/lib/llm/streaming';
 import { getRequestLogger } from '@/lib/logger';
 import { z } from 'zod';
-import { ALLOWED_MODELS } from '@/lib/llm/models';
 import {
   enforceUsageGuards,
   parseAndValidateRequest,
+  requireAvailableModel,
   requireAuthenticatedUser,
   requireOwnedProject,
 } from '@/lib/tool-routes/guards';
@@ -16,7 +16,7 @@ const ALLOWED_TYPES = ['content', 'seo', 'code'] as const;
 const generateSchema = z.object({
   projectId: z.string().cuid(),
   type: z.enum(ALLOWED_TYPES),
-  model: z.string().refine((m) => ALLOWED_MODELS.includes(m as never), { message: 'Unsupported model' }),
+  model: z.string().min(1),
   input: z.record(z.string(), z.unknown()),
 });
 
@@ -42,6 +42,11 @@ export async function POST(request: Request) {
   }
 
   const { projectId, type, model, input } = parsed.data;
+
+  const modelResult = await requireAvailableModel(model);
+  if (!modelResult.ok) {
+    return modelResult.response;
+  }
 
   const usageResult = await enforceUsageGuards(userId, model, type);
   if (!usageResult.ok) {

@@ -19,7 +19,7 @@ const TONES = ['professional', 'casual', 'formal', 'technical'] as const;
 export default function MetaAdsToolPage() {
   const router = useRouter();
   const [projectId, setProjectId] = useState('');
-  const [model, setModel] = useState('openai/gpt-4-turbo');
+  const [manualModel, setManualModel] = useState('');
   const [product, setProduct] = useState('');
   const [audience, setAudience] = useState('');
   const [offer, setOffer] = useState('');
@@ -42,6 +42,11 @@ export default function MetaAdsToolPage() {
       return res.json();
     },
   });
+
+  const model = manualModel
+    || modelsData?.models?.find((item: { default?: boolean }) => item.default)?.id
+    || modelsData?.models?.[0]?.id
+    || '';
 
   const { isStreaming, content, artifactId, error, generate } = useStreamGeneration();
   const outputDisplay = formatArtifactContentForDisplay({
@@ -102,8 +107,8 @@ export default function MetaAdsToolPage() {
 
               <div className="space-y-1.5">
                 <Label htmlFor="meta-model-select">Modello</Label>
-                <Select value={model} onValueChange={setModel}>
-                  <SelectTrigger id="meta-model-select" className="app-control" aria-label="Modello LLM"><SelectValue /></SelectTrigger>
+                <Select value={model} onValueChange={setManualModel}>
+                  <SelectTrigger id="meta-model-select" className="app-control" aria-label="Modello LLM"><SelectValue placeholder="Seleziona modello" /></SelectTrigger>
                   <SelectContent>
                     {modelsData?.models?.map((m: { id: string; name: string }) => (
                       <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
@@ -150,7 +155,7 @@ export default function MetaAdsToolPage() {
                 <Textarea className="app-control" id="meta-angle" value={angle} onChange={(e) => setAngle(e.target.value)} rows={3} placeholder="Es. approccio problem-solution con social proof" />
               </div>
 
-              <Button onClick={handleGenerate} disabled={isStreaming || !projectId || !product || !audience || !offer} className="w-full">
+              <Button onClick={handleGenerate} disabled={isStreaming || !projectId || !model || !product || !audience || !offer} className="w-full">
                 {isStreaming ? 'Generazione in corso...' : 'Genera Meta Ads'}
               </Button>
             </CardContent>

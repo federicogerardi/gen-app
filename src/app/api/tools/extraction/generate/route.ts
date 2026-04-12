@@ -4,6 +4,7 @@ import { buildExtractionPrompt } from '@/lib/tool-prompts/extraction';
 import {
   enforceUsageGuards,
   parseAndValidateRequest,
+  requireAvailableModel,
   requireAuthenticatedUser,
   requireOwnedProject,
 } from '@/lib/tool-routes/guards';
@@ -32,6 +33,11 @@ export async function POST(request: Request) {
 
   const payload = parsed.data;
   const startedAt = Date.now();
+
+  const modelResult = await requireAvailableModel(payload.model);
+  if (!modelResult.ok) {
+    return modelResult.response;
+  }
 
   log.info(
     {

@@ -22,6 +22,8 @@ const mockedBuildExtractionPrompt = buildExtractionPrompt as jest.MockedFunction
 const findUser = (db as any).user.findUnique as jest.Mock;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const findProject = (db as any).project.findUnique as jest.Mock;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const findActiveModel = (db as any).llmModel.findFirst as jest.Mock;
 
 const projectId = 'cjld2cyuq0000t3rmniod1foy';
 const baseBody = {
@@ -50,6 +52,9 @@ beforeEach(() => {
   mockedRateLimit.mockResolvedValue({ allowed: true, remaining: 10 });
   mockedStream.mockResolvedValue(new ReadableStream());
   mockedBuildExtractionPrompt.mockResolvedValue('EXTRACTION PROMPT');
+  findActiveModel.mockImplementation(async ({ where }: { where?: { modelId?: string } }) => (
+    where?.modelId === 'openai/gpt-4-turbo' ? { id: 'model_1' } : null
+  ));
   findUser.mockResolvedValue({ id: 'user_1', monthlyUsed: 1, monthlyQuota: 100, monthlySpent: '1', monthlyBudget: '10' });
   findProject.mockResolvedValue({ id: projectId, userId: 'user_1' });
 });

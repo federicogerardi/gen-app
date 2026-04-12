@@ -2,7 +2,7 @@
 
 **Versione**: 1.0  
 **Status**: APP LOCALE FUNZIONANTE + TOOL MODULARI IN EVOLUZIONE  
-**Data**: 2026-04-09  
+**Data**: 2026-04-12  
 **Destinatario**: Stakeholder e Team di Progetto
 
 ---
@@ -66,9 +66,11 @@ Stiamo costruendo un **Hub di Generazione Artefatti con AI/LLM** che permette ai
 - eventuali route/tool legacy fuori perimetro sono da considerare refusi e non fanno parte dell'applicazione pubblica
 
 ### Modelli LLM
-- GPT-4 Turbo (default, highest quality)
-- Claude 3 Opus (alternative)
-- Mistral (fallback, lowest cost)
+- Registry modelli dinamico persistito in DB (`LlmModel`)
+- Gestione admin via GUI con CRUD (`/api/admin/models` e `/api/admin/models/{modelId}`)
+- Catalogo pubblico usato dai tool tramite `GET /api/models` (solo modelli attivi)
+- Default model configurabile da admin (`isDefault`)
+- Seed/fallback statico controllato mantenuto per continuita operativa
 
 ### Limiti
 - **1000 generazioni/mese** per utente (default)

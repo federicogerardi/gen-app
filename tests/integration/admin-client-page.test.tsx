@@ -61,6 +61,14 @@ const baselineMetrics = {
   sampleSizeRequests30d: 250,
 };
 
+const models = [
+  {
+    id: 'openai/gpt-4-turbo',
+    name: 'GPT-4 Turbo',
+    default: true,
+  },
+];
+
 // Mock fetch for API pagination
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 (global as any).fetch = jest.fn((url: any) => {
@@ -74,6 +82,15 @@ const baselineMetrics = {
           limit: 20,
           offset: 0,
           hasMore: false,
+        }),
+    });
+  }
+  if (typeof url === 'string' && url.includes('/api/admin/models')) {
+    return Promise.resolve({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          models,
         }),
     });
   }

@@ -6,6 +6,7 @@ import { rateLimit } from '@/lib/rate-limit';
 import { apiError } from './responses';
 import type { ArtifactType, QuotaEventStatus } from '@/lib/types/artifact';
 import { normalizeArtifactType } from './artifact-type-map';
+import { isModelAvailable } from '@/lib/llm/model-registry';
 
 interface GuardError {
   ok: false;
@@ -43,6 +44,22 @@ export async function requireAuthenticatedUser(): Promise<GuardResult<{ userId: 
   }
 
   return { ok: true, data: { userId: session.user.id } };
+}
+
+export async function requireAvailableModel(model: string): Promise<GuardResult<void>> {
+  const available = await isModelAvailable(model);
+  if (!available) {
+    return {
+      ok: false,
+      response: apiError('VALIDATION_ERROR', 'Unsupported model', 400, {
+        fieldErrors: {
+          model: ['Unsupported model'],
+        },
+      }),
+    };
+  }
+
+  return { ok: true, data: undefined };
 }
 
 export async function enforceUsageGuards(

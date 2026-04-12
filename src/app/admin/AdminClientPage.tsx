@@ -37,6 +37,17 @@ type ActivityItem = {
   };
 };
 
+type LlmModelItem = {
+  id: string;
+  modelId: string;
+  name: string;
+  inputCostPer1k: number | string;
+  outputCostPer1k: number | string;
+  isActive: boolean;
+  isDefault: boolean;
+  pricingReviewedAt: string | Date;
+};
+
 type Props = {
   totalArtifacts: number;
   completedArtifacts: number;
@@ -101,6 +112,18 @@ export function AdminClientPage({
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(20);
   const [users, setUsers] = useState<UserItem[]>([]);
+  const [models, setModels] = useState<LlmModelItem[]>([]);
+  const [modelsLoading, setModelsLoading] = useState(true);
+  const [modelsError, setModelsError] = useState<string | null>(null);
+  const [modelsBusyId, setModelsBusyId] = useState<string | null>(null);
+  const [newModel, setNewModel] = useState({
+    modelId: '',
+    name: '',
+    inputCostPer1k: '',
+    outputCostPer1k: '',
+    isActive: true,
+    isDefault: false,
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const drawerRef = useRef<HTMLElement | null>(null);
@@ -129,6 +152,158 @@ export function AdminClientPage({
 
     fetchUsers();
   }, [currentPage, pageSize]);
+
+  useEffect(() => {
+    const extractApiErrorMessage = async (response: Response, fallback: string) => {
+      try {
+        const payload = await response.json();
+        const message = payload?.error?.message;
+        return typeof message === 'string' && message.length > 0 ? message : fallback;
+      } catch {
+        return fallback;
+      }
+    };
+
+    const fetchModels = async () => {
+      setModelsLoading(true);
+      setModelsError(null);
+
+      try {
+        const response = await fetch('/api/admin/models');
+        if (!response.ok) {
+          const message = await extractApiErrorMessage(response, 'Errore nel caricamento modelli');
+          throw new Error(message);
+        }
+
+        const data = await response.json();
+        setModels(data.models ?? []);
+      } catch (err) {
+        console.error('Failed to fetch models:', err);
+        setModelsError(err instanceof Error ? err.message : 'Errore nel caricamento modelli');
+      } finally {
+        setModelsLoading(false);
+      }
+    };
+
+    fetchModels();
+  }, []);
+
+  async function refreshModels() {
+    const extractApiErrorMessage = async (response: Response, fallback: string) => {
+      try {
+        const payload = await response.json();
+        const message = payload?.error?.message;
+        return typeof message === 'string' && message.length > 0 ? message : fallback;
+      } catch {
+        return fallback;
+      }
+    };
+
+    setModelsLoading(true);
+    setModelsError(null);
+
+    try {
+      const response = await fetch('/api/admin/models');
+      if (!response.ok) {
+        const message = await extractApiErrorMessage(response, 'Errore nel caricamento modelli');
+        throw new Error(message);
+      }
+
+      const data = await response.json();
+      setModels(data.models ?? []);
+    } catch (err) {
+      console.error('Failed to refresh models:', err);
+      setModelsError(err instanceof Error ? err.message : 'Errore nel caricamento modelli');
+    } finally {
+      setModelsLoading(false);
+    }
+  }
+
+  async function handleCreateModel(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setModelsBusyId('create');
+    setModelsError(null);
+
+    try {
+      const response = await fetch('/api/admin/models', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          modelId: newModel.modelId,
+          name: newModel.name,
+          inputCostPer1k: Number(newModel.inputCostPer1k),
+          outputCostPer1k: Number(newModel.outputCostPer1k),
+          isActive: newModel.isActive,
+          isDefault: newModel.isDefault,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create model');
+      }
+
+      setNewModel({
+        modelId: '',
+        name: '',
+        inputCostPer1k: '',
+        outputCostPer1k: '',
+        isActive: true,
+        isDefault: false,
+      });
+      await refreshModels();
+    } catch (err) {
+      console.error('Failed to create model:', err);
+      setModelsError('Errore nella creazione modello');
+    } finally {
+      setModelsBusyId(null);
+    }
+  }
+
+  async function handleToggleModel(modelId: string, field: 'isActive' | 'isDefault', value: boolean) {
+    setModelsBusyId(modelId);
+    setModelsError(null);
+
+    try {
+      const response = await fetch(`/api/admin/models/${modelId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [field]: value }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update model');
+      }
+
+      await refreshModels();
+    } catch (err) {
+      console.error('Failed to update model:', err);
+      setModelsError('Errore nell\'aggiornamento modello');
+    } finally {
+      setModelsBusyId(null);
+    }
+  }
+
+  async function handleDeleteModel(modelId: string) {
+    setModelsBusyId(modelId);
+    setModelsError(null);
+
+    try {
+      const response = await fetch(`/api/admin/models/${modelId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete model');
+      }
+
+      await refreshModels();
+    } catch (err) {
+      console.error('Failed to delete model:', err);
+      setModelsError('Errore nella cancellazione modello');
+    } finally {
+      setModelsBusyId(null);
+    }
+  }
 
   const filteredUsers = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -343,6 +518,155 @@ export function AdminClientPage({
         </div>
 
         <section className="mt-10">
+          <div className="flex items-start justify-between gap-3 mb-4">
+            <div>
+              <h2 className="app-title text-xl font-medium">Registry modelli LLM</h2>
+              <p className="text-sm text-muted-foreground">Gestione centralizzata dei modelli disponibili nei tool.</p>
+            </div>
+          </div>
+
+          <Card className="app-surface rounded-2xl mb-6">
+            <CardHeader>
+              <CardTitle className="text-base">Aggiungi modello</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form className="grid gap-3 md:grid-cols-2" onSubmit={handleCreateModel}>
+                <div className="space-y-1">
+                  <Label htmlFor="new-model-id">Model ID</Label>
+                  <Input
+                    id="new-model-id"
+                    className="app-control"
+                    value={newModel.modelId}
+                    onChange={(event) => setNewModel((prev) => ({ ...prev, modelId: event.target.value }))}
+                    placeholder="es. openai/gpt-4.1"
+                    required
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="new-model-name">Nome UI</Label>
+                  <Input
+                    id="new-model-name"
+                    className="app-control"
+                    value={newModel.name}
+                    onChange={(event) => setNewModel((prev) => ({ ...prev, name: event.target.value }))}
+                    placeholder="es. GPT-4.1"
+                    required
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="new-input-cost">Costo input / 1K</Label>
+                  <Input
+                    id="new-input-cost"
+                    type="number"
+                    step="0.000001"
+                    min="0"
+                    className="app-control"
+                    value={newModel.inputCostPer1k}
+                    onChange={(event) => setNewModel((prev) => ({ ...prev, inputCostPer1k: event.target.value }))}
+                    required
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="new-output-cost">Costo output / 1K</Label>
+                  <Input
+                    id="new-output-cost"
+                    type="number"
+                    step="0.000001"
+                    min="0"
+                    className="app-control"
+                    value={newModel.outputCostPer1k}
+                    onChange={(event) => setNewModel((prev) => ({ ...prev, outputCostPer1k: event.target.value }))}
+                    required
+                  />
+                </div>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={newModel.isActive}
+                    onChange={(event) => setNewModel((prev) => ({ ...prev, isActive: event.target.checked }))}
+                  />
+                  Attivo
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={newModel.isDefault}
+                    onChange={(event) => setNewModel((prev) => ({ ...prev, isDefault: event.target.checked }))}
+                  />
+                  Imposta come default
+                </label>
+                <div className="md:col-span-2">
+                  <Button type="submit" disabled={modelsBusyId === 'create'}>
+                    {modelsBusyId === 'create' ? 'Salvataggio...' : 'Aggiungi modello'}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+
+          <Card className="app-surface rounded-2xl mb-8">
+            <CardHeader>
+              <CardTitle className="text-base">Modelli configurati</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {modelsLoading && <p className="text-sm text-muted-foreground">Caricamento modelli...</p>}
+              {modelsError && <p className="text-sm text-destructive" role="alert">{modelsError}</p>}
+              {!modelsLoading && !modelsError && models.length === 0 && (
+                <p className="text-sm text-muted-foreground">Nessun modello configurato.</p>
+              )}
+              {!modelsLoading && !modelsError && models.map((modelItem) => (
+                <div key={modelItem.id} className="rounded-xl border border-black/10 bg-white/70 p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                    <div>
+                      <p className="text-sm font-medium">{modelItem.name}</p>
+                      <p className="text-xs text-muted-foreground">{modelItem.modelId}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {modelItem.isDefault && <Badge>Default</Badge>}
+                      <Badge variant={modelItem.isActive ? 'secondary' : 'outline'}>
+                        {modelItem.isActive ? 'Attivo' : 'Disattivo'}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="grid gap-2 md:grid-cols-3 text-sm">
+                    <p>Input: ${Number(modelItem.inputCostPer1k).toFixed(6)} / 1K</p>
+                    <p>Output: ${Number(modelItem.outputCostPer1k).toFixed(6)} / 1K</p>
+                    <p>Review: {new Date(modelItem.pricingReviewedAt).toLocaleDateString('it-IT')}</p>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      disabled={modelsBusyId === modelItem.id || modelItem.isDefault}
+                      onClick={() => handleToggleModel(modelItem.id, 'isDefault', true)}
+                    >
+                      Imposta default
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      disabled={modelsBusyId === modelItem.id}
+                      onClick={() => handleToggleModel(modelItem.id, 'isActive', !modelItem.isActive)}
+                    >
+                      {modelItem.isActive ? 'Disattiva' : 'Attiva'}
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="destructive"
+                      disabled={modelsBusyId === modelItem.id || modelItem.isDefault}
+                      onClick={() => handleDeleteModel(modelItem.id)}
+                    >
+                      Elimina
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
           <div className="flex items-start justify-between gap-3 mb-4">
             <div>
               <h2 className="app-title text-xl font-medium">Metriche baseline (30 giorni)</h2>

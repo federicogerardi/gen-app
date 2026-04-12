@@ -3,7 +3,7 @@
 **Version**: 1.0  
 **Status**: CORE MVP IMPLEMENTED + ACTIVE TOOL WORKFLOWS OPERATIONAL
 **Target Audience**: AI Development Agents  
-**Last Updated**: 2026-04-11
+**Last Updated**: 2026-04-12
 
 ---
 
@@ -33,7 +33,7 @@ A modular web application that allows non-technical users (MediaBuyers, SEO Spec
 │  │ - Project Dashboard                                   │   │
 │  │ - Tool pages (Meta Ads, Funnel Pages)               │   │
 │  │ - Artifact Detail read-only con output elaborato    │   │
-│  │ - Admin CRUD (users, projects, artifacts)            │   │
+│  │ - Admin CRUD (users, projects, artifacts, models)    │   │
 │  └────────────────────┬─────────────────────────────────┘   │
 └───────────────────────┼────────────────────────────────────┘
                         │ REST + SSE
@@ -181,6 +181,27 @@ model Artifact {
 }
 ```
 
+### LlmModel
+```typescript
+model LlmModel {
+  id: string
+  modelId: string               // OpenRouter model id (unique)
+  name: string                  // Nome UI
+  inputCostPer1k: Decimal
+  outputCostPer1k: Decimal
+  isActive: boolean
+  isDefault: boolean
+  pricingReviewedAt: Date
+  createdAt: Date
+  updatedAt: Date
+}
+```
+
+Note as-is:
+- Il registry modelli e persistito in DB e gestito via endpoint admin CRUD.
+- Le route di generazione validano la disponibilita modello dal registry runtime.
+- E mantenuto un fallback statico controllato per continuita in assenza di record attivi.
+
 ### QuotaHistory
 ```typescript
 model QuotaHistory {
@@ -258,6 +279,11 @@ model QuotaHistory {
 │   ├── route.ts          [GET|POST] → List/create user projects
 │   └── [id]              [GET|PUT|DELETE] → Project detail CRUD
 ├── users/
+├── admin/
+│   ├── models            [GET|POST] → Admin model registry CRUD (list/create)
+│   └── models/[modelId]  [PUT|DELETE] → Update/delete model
+├── models/
+│   └── route.ts          [GET] → Public active model catalog for UI
 │   ├── profile           [GET]     → Current user profile
 │   └── quota             [GET]     → Current quota/spending
 ├── admin/

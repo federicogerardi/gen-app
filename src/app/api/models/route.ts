@@ -1,12 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { getRequestLogger } from '@/lib/logger';
-import { SUPPORTED_MODELS, MODEL_METADATA, getPricingStaleness } from '@/lib/llm/models';
-
-const MODELS = SUPPORTED_MODELS.map((id) => ({
-  id,
-  ...MODEL_METADATA[id],
-}));
+import { getModelPricingStaleness, listPublicModels } from '@/lib/llm/model-registry';
 
 export async function GET() {
   const session = await auth();
@@ -14,7 +9,10 @@ export async function GET() {
     return NextResponse.json({ error: { code: 'UNAUTHORIZED', message: 'Authentication required' } }, { status: 401 });
   }
 
-  const pricing = getPricingStaleness();
+  const [models, pricing] = await Promise.all([
+    listPublicModels(),
+    getModelPricingStaleness(),
+  ]);
   const log = getRequestLogger({
     requestId: crypto.randomUUID(),
     route: '/api/models',
@@ -32,7 +30,7 @@ export async function GET() {
   }
 
   return NextResponse.json({
-    models: MODELS,
+    models,
     pricing,
   });
 }

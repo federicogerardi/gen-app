@@ -1,11 +1,33 @@
 /**
- * Single source of truth for LLM models, pricing, and metadata.
- * Consolidates model definitions across the app to ensure consistency.
+ * Static fallback catalog used when DB registry is not available.
+ * Runtime model availability is managed dynamically through the admin CRUD.
  */
+export const DEFAULT_MODELS = [
+  {
+    modelId: 'openai/gpt-4-turbo',
+    name: 'GPT-4 Turbo',
+    inputCostPer1k: 0.01,
+    outputCostPer1k: 0.03,
+    pricingReviewedAt: '2026-04-11T00:00:00.000Z',
+  },
+  {
+    modelId: 'anthropic/claude-3-opus',
+    name: 'Claude 3 Opus',
+    inputCostPer1k: 0.015,
+    outputCostPer1k: 0.075,
+    pricingReviewedAt: '2026-04-11T00:00:00.000Z',
+  },
+  {
+    modelId: 'mistralai/mistral-large',
+    name: 'Mistral Large',
+    inputCostPer1k: 0.008,
+    outputCostPer1k: 0.024,
+    pricingReviewedAt: '2026-04-11T00:00:00.000Z',
+  },
+] as const;
 
-/** Enumeration of supported LLM models */
-export const SUPPORTED_MODELS = ['openai/gpt-4-turbo', 'anthropic/claude-3-opus', 'mistralai/mistral-large'] as const;
-export type SupportedModel = (typeof SUPPORTED_MODELS)[number];
+export type SupportedModel = (typeof DEFAULT_MODELS)[number]['modelId'];
+export const SUPPORTED_MODELS = DEFAULT_MODELS.map((model) => model.modelId) as readonly SupportedModel[];
 
 /** Default model for fallback and pricing lookup */
 export const DEFAULT_MODEL: SupportedModel = 'openai/gpt-4-turbo';
@@ -25,15 +47,15 @@ export const MODEL_METADATA: Record<SupportedModel, { name: string; default: boo
 };
 
 /**
- * Verify if a model string is in the supported list.
- * Type-safe compatibility check for string model parameters.
+ * Verify if a model string is in the fallback list.
+ * Runtime checks should use DB registry helpers.
  */
 export function isSupportedModel(model: unknown): model is SupportedModel {
   return typeof model === 'string' && SUPPORTED_MODELS.includes(model as SupportedModel);
 }
 
 /**
- * Get pricing for a model, falling back to default if unknown.
+ * Get fallback pricing for a model, defaulting to DEFAULT_MODEL.
  */
 export function getModelPricing(model: string) {
   if (isSupportedModel(model)) {
@@ -43,7 +65,7 @@ export function getModelPricing(model: string) {
 }
 
 /**
- * Get metadata (name, default status) for a model.
+ * Get fallback metadata for a model.
  */
 export function getModelMetadata(model: string) {
   if (isSupportedModel(model)) {
@@ -52,11 +74,20 @@ export function getModelMetadata(model: string) {
   return MODEL_METADATA[DEFAULT_MODEL];
 }
 
-/**
- * Export as array for schema validation and API responses.
- * Compatible with Zod v4 array definitions and as-const patterns.
- */
+/** @deprecated Runtime availability is now dynamic via DB registry. */
 export const ALLOWED_MODELS = SUPPORTED_MODELS;
+
+export type ModelCatalogItem = {
+  id: string;
+  modelId: string;
+  name: string;
+  inputCostPer1k: number;
+  outputCostPer1k: number;
+  isActive: boolean;
+  isDefault: boolean;
+  pricingReviewedAt: Date;
+  updatedAt: Date;
+};
 
 /** Pricing table maintenance metadata used for operational staleness checks. */
 export const MODEL_PRICING_LAST_REVIEWED_AT = '2026-04-11T00:00:00.000Z';
@@ -74,11 +105,15 @@ export type PricingStaleness = {
  */
 export function getPricingStaleness(now: Date = new Date()): PricingStaleness {
   const lastReviewed = new Date(MODEL_PRICING_LAST_REVIEWED_AT);
+  return getPricingStalenessFromDate(lastReviewed, now);
+}
+
+export function getPricingStalenessFromDate(lastReviewed: Date, now: Date = new Date()): PricingStaleness {
   const ageMs = Math.max(0, now.getTime() - lastReviewed.getTime());
   const ageDays = Math.floor(ageMs / (24 * 60 * 60 * 1000));
 
   return {
-    lastReviewedAt: MODEL_PRICING_LAST_REVIEWED_AT,
+    lastReviewedAt: lastReviewed.toISOString(),
     maxAgeDays: MODEL_PRICING_MAX_AGE_DAYS,
     ageDays,
     stale: ageDays > MODEL_PRICING_MAX_AGE_DAYS,

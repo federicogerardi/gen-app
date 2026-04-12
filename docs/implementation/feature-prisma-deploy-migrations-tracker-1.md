@@ -70,6 +70,7 @@ Evidence log:
 Evidence log:
 - **EVID-003**: Workflow updated in [.github/workflows/ci.yml](../../.github/workflows/ci.yml) with postgres service, `DATABASE_URL`, and `npx prisma migrate deploy` before quality gates.
 - **EVID-003A**: ✅ CI run validation completed on 2026-04-12: pipeline green on `dev` with postgres service + `prisma migrate deploy` preceding quality gates.
+- **EVID-003B**: ✅ Session verification completed on 2026-04-12 (read-only check): deploy/migrate chain confirmed in repository sources - [.github/workflows/ci.yml](../../.github/workflows/ci.yml) executes `npx prisma migrate deploy`, [package.json](../../package.json) defines `db:migrate:deploy` and `deploy:vercel`, and [README.md](../../README.md) documents `npm run deploy:vercel` as build command with migration-first order.
 
 ### Implementation Phase 4
 
@@ -80,9 +81,11 @@ Evidence log:
 | TASK-TRK-011 | Add DATABASE_URL switch procedure to README.md deployment section. | Yes | 2026-04-11 |
 | TASK-TRK-012 | Add post-deploy checks for _prisma_migrations, auth tables, and login smoke test. | Yes | 2026-04-11 |
 | TASK-TRK-013 | Add rollback guidance for migration/env failure scenarios. | Yes | 2026-04-11 |
+| TASK-TRK-013A | Add anti-regression guardrails for `VERCEL_CRON_SECRET` validation scope in deployment documentation. | Yes | 2026-04-12 |
 
 Evidence log:
 - **EVID-004**: Runbook content added in [README.md](../../README.md) under Deployment section (procedure, mandatory checks, rollback note).
+- **EVID-004A**: ✅ Regression-prevention instructions added on 2026-04-12 in [feature-prisma-deploy-migrations-1.md](./feature-prisma-deploy-migrations-1.md): `VERCEL_CRON_SECRET` required only in Vercel Production context, route-level runtime handling retained, and dedicated non-Vercel production/build regression tests mandated.
 
 ### Implementation Phase 5
 

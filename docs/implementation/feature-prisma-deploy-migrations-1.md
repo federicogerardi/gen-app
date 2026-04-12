@@ -28,6 +28,8 @@ Operational tracker for execution updates: docs/implementation/feature-prisma-de
 - **CON-002**: Branch strategy remains unchanged: main for production, dev for development and preview flow.
 - **GUD-001**: Keep Prisma generate before typecheck/build where required by Prisma 7 client generation.
 - **PAT-001**: Use explicit deploy scripts in package.json and reference those scripts in Vercel commands.
+- **GUD-002**: `VERCEL_CRON_SECRET` must be required only for Vercel Production runtime context (`NODE_ENV=production` and `VERCEL_ENV=production`).
+- **GUD-003**: Do not enforce `VERCEL_CRON_SECRET` in global env parsing for local builds, CI, or preview contexts; enforce missing-secret handling inside the cron route runtime path.
 
 ## 2. Implementation Steps
 
@@ -71,6 +73,16 @@ Operational tracker for execution updates: docs/implementation/feature-prisma-de
 | TASK-011 | Add mandatory post-deploy checks: _prisma_migrations table exists, User/Account/Session tables exist, login smoke test passes. | Yes | 2026-04-11 |
 | TASK-012 | Add rollback note: on failed deploy, fix env or migration state and redeploy without runtime schema workarounds. | Yes | 2026-04-11 |
 
+### Regression Guardrails (Environment Validation)
+
+- **GOAL-005**: Prevent build-time regressions caused by over-strict env validation.
+
+| Task     | Description | Completed | Date |
+| -------- | ----------- | --------- | ---- |
+| TASK-013 | Keep env validation scoped: require `VERCEL_CRON_SECRET` only when `VERCEL_ENV=production`. | Yes | 2026-04-12 |
+| TASK-014 | Keep route-level misconfiguration handling in cron route (`500` + structured log) when secret is absent at runtime. | Yes | 2026-04-12 |
+| TASK-015 | Maintain unit coverage for non-Vercel production builds without `VERCEL_CRON_SECRET` to block regressions. | Yes | 2026-04-12 |
+
 ## 3. Alternatives
 
 - **ALT-001**: Run migrations manually from local machine before each deploy. Rejected because it is non-deterministic and error-prone.
@@ -100,6 +112,8 @@ Operational tracker for execution updates: docs/implementation/feature-prisma-de
 - **TEST-003**: Vercel Preview deploy on empty Neon database creates _prisma_migrations and auth tables.
 - **TEST-004**: Authentication smoke test: Google login redirects to dashboard without server errors.
 - **TEST-005**: Idempotency test: second deploy with no new migration succeeds and applies zero schema changes.
+- **TEST-006**: Environment regression test: `parseEnv` must allow `NODE_ENV=production` without `VERCEL_CRON_SECRET` when `VERCEL_ENV` is not `production`.
+- **TEST-007**: Build regression test: `npm run build` must pass in local/CI contexts without setting `VERCEL_CRON_SECRET`.
 
 ## 7. Risks & Assumptions
 
