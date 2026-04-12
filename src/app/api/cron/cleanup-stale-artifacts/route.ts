@@ -30,39 +30,29 @@ export async function GET(request: NextRequest) {
     // Calculate 24h threshold
     const staleThreshold = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-    // Find stale artifacts
-    const staleArtifacts = await db.artifact.findMany({
+    const cleanupResult = await db.artifact.updateMany({
       where: {
         status: 'generating',
         createdAt: { lt: staleThreshold },
       },
+      data: {
+        status: 'failed',
+        failureReason: 'stale',
+      },
     });
 
-    if (staleArtifacts.length === 0) {
+    if (cleanupResult.count === 0) {
       logger.info({}, 'Stale artifact cleanup: no stale artifacts found');
       return NextResponse.json({ cleaned: 0, message: 'No stale artifacts found' }, { status: 200 });
     }
 
-    // Mark all stale artifacts as failed with reason 'stale'
-    const updatePromises = staleArtifacts.map((artifact) =>
-      db.artifact.update({
-        where: { id: artifact.id },
-        data: {
-          status: 'failed',
-          failureReason: 'stale',
-        },
-      }),
-    );
-
-    const results = await Promise.all(updatePromises);
-
     logger.info(
-      { count: results.length, staleThreshold: staleThreshold.toISOString() },
+      { count: cleanupResult.count, staleThreshold: staleThreshold.toISOString() },
       'Stale artifact cleanup completed',
     );
 
     return NextResponse.json(
-      { cleaned: results.length, message: `Cleaned ${results.length} stale artifacts` },
+      { cleaned: cleanupResult.count, message: `Cleaned ${cleanupResult.count} stale artifacts` },
       { status: 200 },
     );
   } catch (err) {

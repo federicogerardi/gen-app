@@ -124,6 +124,9 @@ OPENROUTER_API_KEY=
 UPSTASH_REDIS_REST_URL=
 UPSTASH_REDIS_REST_TOKEN=
 
+# Cron endpoint auth (required on production deployments)
+VERCEL_CRON_SECRET=
+
 # App
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```

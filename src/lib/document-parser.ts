@@ -4,6 +4,8 @@
  * No external storage; everything is processed in-memory.
  */
 
+import * as mammoth from 'mammoth';
+
 export type SupportedMimeType =
   | 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
   | 'text/plain'
@@ -38,35 +40,28 @@ export function isSupportedMimeType(mimeType: string): mimeType is SupportedMime
 }
 
 async function extractDocxText(buffer: Buffer): Promise<string> {
-  // DOCX is a ZIP with XML nodes: normalize paragraph/line/table boundaries before stripping tags.
-  const JSZip = (await import('jszip')).default;
-  const zip = await JSZip.loadAsync(buffer);
-  const documentXml = zip.file('word/document.xml');
+  const result = await mammoth.extractRawText({ buffer });
+  return result.value;
+}
 
-  if (!documentXml) {
-    throw new Error('Invalid DOCX: word/document.xml not found');
-  }
-
-  const xmlContent = await documentXml.async('string');
-  // Preserve text boundaries to give the extractor a coherent semantic context.
-  const text = xmlContent
-    .replace(/<w:tab\s*\/?\s*>/g, '\t')
-    .replace(/<w:br\s*\/?>/g, '\n')
-    .replace(/<\/w:p>/g, '\n')
-    .replace(/<\/w:tr>/g, '\n')
-    .replace(/<\/w:tc>/g, '\t')
-    .replace(/<[^>]+>/g, '')
+function decodeHtmlEntities(input: string): string {
+  return input
+    .replace(/&nbsp;/g, ' ')
     .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
-    .replace(/&#x27;/g, "'")
+    .replace(/&#x27;|&apos;/g, "'")
+    .replace(/&#(\d+);/g, (_, code) => String.fromCodePoint(Number(code)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, code) => String.fromCodePoint(Number.parseInt(code, 16)));
+}
+
+function normalizeExtractedText(input: string): string {
+  return decodeHtmlEntities(input)
     .replace(/\r\n/g, '\n')
     .replace(/\n{3,}/g, '\n\n')
     .replace(/[ \t]{2,}/g, ' ')
     .trim();
-
-  return text;
 }
 
 export async function parseDocument(
@@ -104,7 +99,7 @@ export async function parseDocument(
       text = buffer.toString('utf-8');
     }
 
-    const trimmed = text.trim();
+    const trimmed = normalizeExtractedText(text);
     if (trimmed.length === 0) {
       return {
         ok: false,

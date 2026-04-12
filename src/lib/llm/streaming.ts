@@ -2,7 +2,7 @@ import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { LLMOrchestrator } from './orchestrator';
 import type { ArtifactType, OutputFormat, QuotaEventStatus } from '@/lib/types/artifact';
-import { calculateCost } from './costs';
+import { calculateCostAccurate } from './costs';
 
 const orchestrator = new LLMOrchestrator();
 
@@ -14,6 +14,19 @@ interface StreamParams {
   input: unknown;
   workflowType?: string | null;
   promptOverride?: string;
+}
+
+function estimateUtfAwareTokens(text: string): number {
+  if (!text) return 0;
+  const utf8Bytes = new TextEncoder().encode(text).length;
+  return Math.ceil(utf8Bytes / 4);
+}
+
+function resolveTokenCount(providerCount: number | null, fallbackCount: number): number {
+  if (providerCount !== null && providerCount > 0) {
+    return providerCount;
+  }
+  return fallbackCount;
 }
 
 function extractWorkflowType(input: unknown): string | null {
@@ -64,18 +77,31 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
       }));
 
       let accumulated = '';
-      let outputTokenCount = 0;
-      const inputTokenCount = Math.ceil((promptOverride ?? JSON.stringify(input)).length / 4);
+      let fallbackOutputTokenCount = 0;
+      const sourcePrompt = promptOverride ?? JSON.stringify(input);
+      const fallbackInputTokenCount = estimateUtfAwareTokens(sourcePrompt);
+      let providerInputTokenCount: number | null = null;
+      let providerOutputTokenCount: number | null = null;
       let tokenSequence = 0;
       let pendingUpdate: Promise<void> | null = null;
 
       try {
         for await (const chunk of orchestrator.generateStream({ type, model, input, promptOverride })) {
           accumulated += chunk.token;
-          outputTokenCount++;
+          fallbackOutputTokenCount = estimateUtfAwareTokens(accumulated);
           tokenSequence++;
-          const estimatedInputTokens = inputTokenCount;
-          const costEstimate = calculateCost(model, estimatedInputTokens, outputTokenCount);
+
+          if (chunk.usage?.inputTokens && chunk.usage.inputTokens > 0) {
+            providerInputTokenCount = chunk.usage.inputTokens;
+          }
+
+          if (chunk.usage?.outputTokens && chunk.usage.outputTokens > 0) {
+            providerOutputTokenCount = chunk.usage.outputTokens;
+          }
+
+          const estimatedInputTokens = resolveTokenCount(providerInputTokenCount, fallbackInputTokenCount);
+          const estimatedOutputTokens = resolveTokenCount(providerOutputTokenCount, fallbackOutputTokenCount);
+          const costEstimate = calculateCostAccurate(model, estimatedInputTokens, estimatedOutputTokens);
 
           controller.enqueue(encode({
             type: 'token',
@@ -92,7 +118,7 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
               format: outputFormat,
               estimatedTokens: {
                 input: estimatedInputTokens,
-                output: outputTokenCount,
+                output: estimatedOutputTokens,
               },
               costEstimate,
             }));
@@ -101,7 +127,7 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
           // S3-02: Batch database writes every 50 tokens to reduce DB pressure
           // Old threshold was 20 tokens, resulting in ~800 writes/sec at scale.
           // New threshold of 50 tokens reduces this to ~320 writes/sec.
-          if (outputTokenCount % 50 === 0) {
+          if (tokenSequence % 50 === 0) {
             // Don't await here — let update run in background while streaming continues
             // This implements backpressure: pending updates accumulate if DB is slow
             pendingUpdate ??= (async () => {
@@ -119,7 +145,9 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
           await pendingUpdate;
         }
 
-        const cost = calculateCost(model, inputTokenCount, outputTokenCount);
+        const resolvedInputTokens = resolveTokenCount(providerInputTokenCount, fallbackInputTokenCount);
+        const resolvedOutputTokens = resolveTokenCount(providerOutputTokenCount, fallbackOutputTokenCount);
+        const cost = calculateCostAccurate(model, resolvedInputTokens, resolvedOutputTokens);
         const normalized = orchestrator.normalizeOutput({
           rawContent: accumulated,
           type,
@@ -139,11 +167,19 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
 
         // Invariant: completed artifacts must have positive token counts.
         // Clamp to 1 rather than persisting zeros that would corrupt cost accounting.
-        const safeInputTokens = Math.max(inputTokenCount, 1);
-        const safeOutputTokens = Math.max(outputTokenCount, 1);
-        if (inputTokenCount < 1 || outputTokenCount < 1) {
+        const safeInputTokens = Math.max(resolvedInputTokens, 1);
+        const safeOutputTokens = Math.max(resolvedOutputTokens, 1);
+        if (resolvedInputTokens < 1 || resolvedOutputTokens < 1) {
           logger.warn(
-            { artifactId: artifact.id, inputTokenCount, outputTokenCount },
+            {
+              artifactId: artifact.id,
+              inputTokenCount: resolvedInputTokens,
+              outputTokenCount: resolvedOutputTokens,
+              fallbackInputTokenCount,
+              fallbackOutputTokenCount,
+              providerInputTokenCount,
+              providerOutputTokenCount,
+            },
             'Token count invariant violation: clamping to 1 before completed persist',
           );
         }
@@ -186,7 +222,7 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
           content: normalized.content,
           workflowType,
           format: normalized.format,
-          tokens: { input: inputTokenCount, output: outputTokenCount },
+          tokens: { input: safeInputTokens, output: safeOutputTokens },
           cost,
         }));
       } catch (err) {

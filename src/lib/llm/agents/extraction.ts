@@ -1,11 +1,6 @@
 import { z } from 'zod';
 import { BaseAgent } from './base';
-
-const extractionFieldDefinitionSchema = z.object({
-  type: z.string().min(1),
-  required: z.boolean().optional(),
-  description: z.string().min(1),
-});
+import { extractionFieldDefinitionSchema } from '@/lib/tool-routes/schemas';
 
 const ExtractionInputSchema = z.object({
   rawContent: z.string().min(1),

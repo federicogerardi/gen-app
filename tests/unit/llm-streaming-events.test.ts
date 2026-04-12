@@ -93,16 +93,18 @@ describe('createArtifactStream SSE contract', () => {
     expect(progress).toEqual(expect.objectContaining({
       workflowType: 'meta_ads',
       format: 'markdown',
-      estimatedTokens: { input: 14, output: 20 },
+      estimatedTokens: expect.objectContaining({ input: 14, output: expect.any(Number) }),
     }));
+    expect(progress?.estimatedTokens.output).toBeGreaterThan(0);
 
     expect(complete).toEqual(expect.objectContaining({
       artifactId: 'art_123',
       content: 'Normalized content',
       workflowType: 'meta_ads',
       format: 'markdown',
-      tokens: { input: 14, output: 20 },
+      tokens: expect.objectContaining({ input: 14, output: expect.any(Number) }),
     }));
+    expect(complete?.tokens.output).toBe(progress?.estimatedTokens.output);
     expect(typeof complete.cost).toBe('number');
   });
 });

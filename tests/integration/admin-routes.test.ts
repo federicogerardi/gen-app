@@ -10,6 +10,16 @@ jest.mock('@/lib/auth', () => ({ auth: jest.fn() }));
 
 jest.mock('@/lib/db', () => jest.requireActual('./db-mock').createDbMock());
 
+const mockChildLogger = {
+  error: jest.fn(),
+};
+
+jest.mock('@/lib/logger', () => ({
+  getRequestLogger: jest.fn(() => ({
+    child: jest.fn(() => mockChildLogger),
+  })),
+}));
+
 const mockedAuth = auth as jest.MockedFunction<typeof auth>;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const findUsers = (db as any).user.findMany as jest.Mock;
@@ -114,6 +124,18 @@ describe('GET /api/admin/users', () => {
 
     expect(res.status).toBe(400);
     expect(data.error.code).toBe('VALIDATION_ERROR');
+  });
+
+  it('returns 500 and logs structured error when db query fails', async () => {
+    mockedAuth.mockResolvedValue(adminSession as never);
+    findUsers.mockRejectedValue(new Error('db failure'));
+
+    const res = await getUsers(createRequest({ limit: '20', offset: '0' }));
+    const data = await res.json();
+
+    expect(res.status).toBe(500);
+    expect(data.error.code).toBe('INTERNAL_ERROR');
+    expect(mockChildLogger.error).toHaveBeenCalled();
   });
 });
 

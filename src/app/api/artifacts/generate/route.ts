@@ -1,11 +1,14 @@
-import { NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
-import { db } from '@/lib/db';
-import { rateLimit } from '@/lib/rate-limit';
 import { createArtifactStream } from '@/lib/llm/streaming';
 import { getRequestLogger } from '@/lib/logger';
 import { z } from 'zod';
 import { ALLOWED_MODELS } from '@/lib/llm/models';
+import {
+  enforceUsageGuards,
+  parseAndValidateRequest,
+  requireAuthenticatedUser,
+  requireOwnedProject,
+} from '@/lib/tool-routes/guards';
+import { serviceUnavailableError } from '@/lib/tool-routes/responses';
 
 // Note: 'extraction' type is tool-specific, only available through /api/tools/extraction/generate
 const ALLOWED_TYPES = ['content', 'seo', 'code'] as const;
@@ -18,74 +21,36 @@ const generateSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  const authResult = await requireAuthenticatedUser();
+  if (!authResult.ok) {
+    return authResult.response;
+  }
+
+  const userId = authResult.data.userId;
   const requestId = request.headers.get('x-request-id') ?? crypto.randomUUID();
-  const requestLogger = getRequestLogger({
+  const log = getRequestLogger({
     requestId,
     route: '/api/artifacts/generate',
     method: 'POST',
+    userId,
   });
 
-  const session = await auth();
-  if (!session?.user?.id) {
-    requestLogger.warn({ reason: 'missing-session' }, 'Unauthorized artifact generation attempt');
-    return NextResponse.json({ error: { code: 'UNAUTHORIZED', message: 'Authentication required' } }, { status: 401 });
-  }
-
-  const userId = session.user.id;
-  const log = requestLogger.child({ userId });
-  const body = await request.json().catch(() => null);
-  const parsed = generateSchema.safeParse(body);
-  if (!parsed.success) {
+  const parsed = await parseAndValidateRequest(request, generateSchema);
+  if (!parsed.ok) {
     log.warn({ reason: 'validation-error' }, 'Artifact generation rejected due to invalid payload');
-    return NextResponse.json({ error: { code: 'VALIDATION_ERROR', message: 'Invalid input', details: parsed.error.flatten() } }, { status: 400 });
+    return parsed.response;
   }
 
   const { projectId, type, model, input } = parsed.data;
 
-  // Check quota
-  const user = await db.user.findUnique({ where: { id: userId } });
-  if (!user) {
-    log.warn({ reason: 'user-not-found' }, 'Artifact generation rejected because user record was missing');
-    return NextResponse.json({ error: { code: 'UNAUTHORIZED', message: 'User not found' } }, { status: 401 });
+  const usageResult = await enforceUsageGuards(userId, model, type);
+  if (!usageResult.ok) {
+    return usageResult.response;
   }
 
-  if (user.monthlyUsed >= user.monthlyQuota) {
-    log.info({ reason: 'quota-exhausted', monthlyUsed: user.monthlyUsed, monthlyQuota: user.monthlyQuota }, 'Artifact generation blocked by quota');
-    await db.quotaHistory.create({
-      data: { userId, requestCount: 1, costUSD: 0, model, artifactType: type, status: 'rate_limited' },
-    });
-    return NextResponse.json({ error: { code: 'RATE_LIMIT_EXCEEDED', message: 'Monthly quota exhausted' } }, { status: 429 });
-  }
-
-  const budgetNum = Number(user.monthlyBudget);
-  const spentNum = Number(user.monthlySpent);
-  if (spentNum >= budgetNum) {
-    log.info({ reason: 'budget-exhausted', monthlySpent: spentNum, monthlyBudget: budgetNum }, 'Artifact generation blocked by budget');
-    await db.quotaHistory.create({
-      data: { userId, requestCount: 1, costUSD: 0, model, artifactType: type, status: 'rate_limited' },
-    });
-    return NextResponse.json({ error: { code: 'PAYMENT_REQUIRED', message: 'Monthly budget exhausted' } }, { status: 402 });
-  }
-
-  // Redis rate limit
-  const { allowed } = await rateLimit(userId);
-  if (!allowed) {
-    log.info({ reason: 'rate-limited' }, 'Artifact generation blocked by rate limiter');
-    await db.quotaHistory.create({
-      data: { userId, requestCount: 1, costUSD: 0, model, artifactType: type, status: 'rate_limited' },
-    });
-    return NextResponse.json({ error: { code: 'RATE_LIMIT_EXCEEDED', message: 'Too many requests' } }, { status: 429 });
-  }
-
-  // Verify project ownership
-  const project = await db.project.findUnique({ where: { id: projectId } });
-  if (!project) {
-    log.warn({ reason: 'project-not-found', projectId }, 'Artifact generation rejected due to missing project');
-    return NextResponse.json({ error: { code: 'NOT_FOUND', message: 'Project not found' } }, { status: 404 });
-  }
-  if (project.userId !== userId) {
-    log.warn({ reason: 'ownership-mismatch', projectId }, 'Artifact generation rejected due to ownership mismatch');
-    return NextResponse.json({ error: { code: 'FORBIDDEN', message: 'Access denied' } }, { status: 403 });
+  const ownershipResult = await requireOwnedProject(projectId, userId);
+  if (!ownershipResult.ok) {
+    return ownershipResult.response;
   }
 
   try {
@@ -103,6 +68,6 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     log.error({ error, projectId, type, model }, 'Artifact generation failed with provider error');
-    return NextResponse.json({ error: { code: 'SERVICE_UNAVAILABLE', message: 'LLM service unavailable' } }, { status: 503 });
+    return serviceUnavailableError();
   }
 }

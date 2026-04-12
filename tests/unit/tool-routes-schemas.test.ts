@@ -130,6 +130,8 @@ describe('tool route schemas', () => {
     });
 
     expect(parsed.success).toBe(true);
+    if (!parsed.success) return;
+    expect(parsed.data.schemaVersion).toBe('v2');
   });
 
   it('rejects V2 payload with desired_cluster_count out of range', () => {
@@ -196,6 +198,41 @@ describe('tool route schemas', () => {
     });
 
     expect(parsed.success).toBe(true);
+    if (!parsed.success) return;
+    expect(parsed.data.schemaVersion).toBe('v3');
+  });
+
+  it('assigns schemaVersion v1 for legacy payload without discriminant', () => {
+    const parsed = funnelPagesRequestSchema.safeParse({
+      ...base,
+      customerContext: {
+        product: 'Corso AI',
+        audience: 'Freelancer',
+        offer: 'Sconto 50%',
+      },
+      step: 'optin',
+      promise: 'Piu clienti in 30 giorni',
+    });
+
+    expect(parsed.success).toBe(true);
+    if (!parsed.success) return;
+    expect(parsed.data.schemaVersion).toBe('v1');
+  });
+
+  it('rejects invalid schemaVersion discriminant', () => {
+    const parsed = funnelPagesRequestSchema.safeParse({
+      ...base,
+      schemaVersion: 'v9',
+      customerContext: {
+        product: 'Corso AI',
+        audience: 'Freelancer',
+        offer: 'Sconto 50%',
+      },
+      step: 'optin',
+      promise: 'Piu clienti in 30 giorni',
+    });
+
+    expect(parsed.success).toBe(false);
   });
 
   it('requires optinOutput for quiz step in V3 payload', () => {

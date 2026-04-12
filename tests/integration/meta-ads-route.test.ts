@@ -122,5 +122,10 @@ describe('POST /api/tools/meta-ads/generate', () => {
     expect(mockedStream).toHaveBeenCalledWith(
       expect.objectContaining({ workflowType: 'meta_ads', type: 'content' }),
     );
+
+    const streamArgs = mockedStream.mock.calls[0][0] as { input: { topic?: string }; promptOverride?: string };
+    expect(streamArgs.promptOverride).toBe('PROMPT');
+    expect(streamArgs.input.topic).toBe(body.objective);
+    expect(streamArgs.input.topic).not.toBe('PROMPT');
   });
 });

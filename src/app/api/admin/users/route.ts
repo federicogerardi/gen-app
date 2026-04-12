@@ -2,6 +2,7 @@ import { NextResponse, NextRequest } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { getRequestLogger } from '@/lib/logger';
 
 /**
  * Pagination schema for admin users list
@@ -14,6 +15,13 @@ const paginationSchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
+  const requestId = request.headers.get('x-request-id') ?? crypto.randomUUID();
+  const routeLogger = getRequestLogger({
+    requestId,
+    route: '/api/admin/users',
+    method: 'GET',
+  });
+
   const session = await auth();
   if (!session?.user?.id || session.user.role !== 'admin') {
     return NextResponse.json(
@@ -43,6 +51,7 @@ export async function GET(request: NextRequest) {
   }
 
   const { limit, offset } = parsed.data;
+  const logger = routeLogger.child({ userId: session.user.id, limit, offset });
 
   try {
     // Fetch total count and paginated users in parallel
@@ -75,7 +84,7 @@ export async function GET(request: NextRequest) {
       hasMore: offset + limit < total,
     });
   } catch (err) {
-    console.error('Admin users list error:', err);
+    logger.error({ err }, 'Admin users list error');
     return NextResponse.json(
       { error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch users' } },
       { status: 500 },

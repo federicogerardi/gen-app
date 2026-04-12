@@ -99,6 +99,11 @@ describe('POST /api/tools/funnel-pages/generate', () => {
     const res = await POST(makeRequest({ ...baseBody, step: 'optin' }));
     expect(res.status).toBe(200);
     expect(mockedOptinPrompt).toHaveBeenCalled();
+
+    const streamArgs = mockedStream.mock.calls[0][0] as { input: { topic?: string }; promptOverride?: string };
+    expect(streamArgs.promptOverride).toBe('OPTIN PROMPT');
+    expect(streamArgs.input.topic).toBe('funnel_optin');
+    expect(streamArgs.input.topic).not.toBe('OPTIN PROMPT');
   });
 
   it('routes prompt builder for optin step from extracted fields payload', async () => {
