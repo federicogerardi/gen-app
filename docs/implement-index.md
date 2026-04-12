@@ -138,6 +138,12 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
   - Prioritario per stabilizzazione post go-live.
   - File: docs/archive/improvement-roadmap.md, docs/implementation/implementation-plan.md
 
+- **Guardrail env validation (build-safe)**: `COMPLETATO (2026-04-12)`
+  - Evitare validazioni env endpoint-specific in import-time (`parseEnv(process.env)`), perche Next.js puo valutare moduli non correlati durante `Collecting page data`.
+  - Spostare enforcement runtime nei route handler interessati (es. cron), mantenendo comportamento esplicito per Vercel production.
+  - Coprire con test di regressione dedicati su route cron: produzione Vercel senza secret => `500`; contesti non-production Vercel senza secret => `503`.
+  - File: tests/integration/cleanup-stale-artifacts-route.test.ts, src/lib/env.ts, src/app/api/cron/cleanup-stale-artifacts/route.ts
+
 ---
 
 ## Documentazione

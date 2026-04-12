@@ -129,6 +129,18 @@ Linea guida:
 - runtime in `src/lib/tool-prompts/templates.ts` + `src/lib/tool-prompts/loader.ts`
 - evitare `fs.readFile` dinamico nelle route graph per non innescare warning Turbopack/NFT (tracing involontario dell'intero progetto)
 
+### Env validation runtime vs build-time (anti-regressione)
+Non introdurre validazioni env endpoint-specific in `src/lib/env.ts` (import-time), perche Next.js puo importare moduli non correlati durante `next build`/`Collecting page data`.
+
+Linea guida:
+- In `parseEnv(process.env)` validare solo variabili globali realmente obbligatorie per l'intera app.
+- Variabili legate a endpoint specifici (es. `VERCEL_CRON_SECRET`) vanno enforce nel relativo route handler runtime.
+- Su route cron, mantenere comportamento esplicito:
+  - `NODE_ENV=production` + `VERCEL_ENV=production` + secret mancante => risposta `500` (misconfiguration).
+  - Contesti non `VERCEL_ENV=production` + secret mancante => risposta `503` (endpoint non configurato).
+- Quando si modifica questa logica, aggiornare sempre test integration dedicati.
+  - Riferimento: `tests/integration/cleanup-stale-artifacts-route.test.ts`.
+
 ---
 
 ## Convenzioni API
