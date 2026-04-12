@@ -24,8 +24,8 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 - [implementation-plan.md](implementation/implementation-plan.md): Implementation plan dettagliato.
 - [feature-audit-remediation-sequenced-1.md](implementation/feature-audit-remediation-sequenced-1.md): Piano esecutivo audit remediation sequenziale (TASK-001..020) — completato PR #19.
 - [feature-audit-remediation-sequenced-tracker-1.md](implementation/feature-audit-remediation-sequenced-tracker-1.md): Tracker del track audit remediation — tutti i task completati.
-- [feature-prisma-deploy-migrations-1.md](implementation/feature-prisma-deploy-migrations-1.md): Piano esecutivo per deploy deterministico Prisma su Vercel — in corso.
-- [feature-prisma-deploy-migrations-tracker-1.md](implementation/feature-prisma-deploy-migrations-tracker-1.md): Tracker del deploy migrations track.
+- [feature-prisma-deploy-migrations-1.md](implementation/feature-prisma-deploy-migrations-1.md): Piano esecutivo per deploy deterministico Prisma su Vercel — completato.
+- [feature-prisma-deploy-migrations-tracker-1.md](implementation/feature-prisma-deploy-migrations-tracker-1.md): Tracker del deploy migrations track — tutti i task completati.
 
 ### review/
 - [feature-audit-remediation-closure-2026-04-12.md](review/feature-audit-remediation-closure-2026-04-12.md): Closure report del track audit remediation (PR #19, 2026-04-12).
