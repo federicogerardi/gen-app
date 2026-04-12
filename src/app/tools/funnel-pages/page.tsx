@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
@@ -163,7 +163,7 @@ export default function FunnelPagesToolPage() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [projectId, setProjectId] = useState('');
-  const [model, setModel] = useState('');
+  const [manualModel, setManualModel] = useState('');
   const [tone, setTone] = useState<(typeof TONES)[number]>('professional');
   const [notes, setNotes] = useState('');
   const [phase, setPhase] = useState<Phase>('idle');
@@ -190,19 +190,10 @@ export default function FunnelPagesToolPage() {
     },
   });
 
-  useEffect(() => {
-    if (model) return;
-    const defaultModel = modelsData?.models?.find((item: { default?: boolean }) => item.default);
-    if (defaultModel?.id) {
-      setModel(defaultModel.id);
-      return;
-    }
-
-    const firstModel = modelsData?.models?.[0];
-    if (firstModel?.id) {
-      setModel(firstModel.id);
-    }
-  }, [modelsData, model]);
+  const model = manualModel
+    || modelsData?.models?.find((item: { default?: boolean }) => item.default)?.id
+    || modelsData?.models?.[0]?.id
+    || '';
 
   function updateStep(key: FunnelStepKey, patch: Partial<FunnelStepState>) {
     setSteps((prev) => prev.map((step) => (step.key === key ? { ...step, ...patch } : step)));
@@ -400,9 +391,9 @@ export default function FunnelPagesToolPage() {
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-1.5">
                   <FieldLabel htmlFor="funnel-model-select">Modello</FieldLabel>
-                  <Select value={model} onValueChange={setModel}>
+                  <Select value={model} onValueChange={setManualModel}>
                     <SelectTrigger id="funnel-model-select" className="app-control" aria-label="Modello LLM">
-                      <SelectValue />
+                      <SelectValue placeholder="Seleziona modello" />
                     </SelectTrigger>
                     <SelectContent>
                       {modelsData?.models?.map((item) => (
@@ -429,9 +420,7 @@ export default function FunnelPagesToolPage() {
 
               <div className="space-y-2">
                 <FieldLabel htmlFor="funnel-file-input">Documento di briefing</FieldLabel>
-                <p className="text-xs text-muted-foreground">Formati supportati: DOCX, TXT, Markdown. Dimensione massima: 10 MB.</p>
                 <input
-                  ref={fileInputRef}
                   id="funnel-file-input"
                   type="file"
                   accept=".docx,.txt,.md,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown"
