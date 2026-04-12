@@ -39,7 +39,8 @@ const projectWithArtifactsSelect = {
 };
 
 function stripArtifactCost<T>(artifact: T): Omit<T, 'costUSD'> {
-  const { costUSD: _costUSD, ...sanitizedArtifact } = artifact as T & { costUSD?: unknown };
+  const { costUSD, ...sanitizedArtifact } = artifact as T & { costUSD?: unknown };
+  void costUSD;
   return sanitizedArtifact as Omit<T, 'costUSD'>;
 }
 

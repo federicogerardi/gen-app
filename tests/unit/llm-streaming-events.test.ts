@@ -108,5 +108,59 @@ describe('createArtifactStream SSE contract', () => {
     }));
     expect(complete?.tokens.output).toBe(progress?.estimatedTokens.output);
     expect(typeof complete.cost).toBe('number');
+
+    expect(mockedDb.artifact.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        model: 'openai/gpt-4-turbo',
+      }),
+    }));
+
+    expect(mockedDb.quotaHistory.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        model: 'openai/gpt-4-turbo',
+        status: 'success',
+      }),
+    }));
+  });
+
+  it('persists extraction attempt metadata inside artifact input', async () => {
+    const stream = await createArtifactStream({
+      userId: 'user_1',
+      projectId: 'proj_1',
+      type: 'extraction',
+      model: 'openai/gpt-4.1',
+      workflowType: 'extraction',
+      input: {
+        workflowType: 'extraction',
+        outputFormat: 'json',
+        extractionAttempt: 2,
+        policyVersion: '1.0.0',
+        fallbackFromModel: 'anthropic/claude-3.7-sonnet',
+      },
+    });
+
+    const reader = stream.getReader();
+    while (true) {
+      const { done } = await reader.read();
+      if (done) break;
+    }
+
+    expect(mockedDb.artifact.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        model: 'openai/gpt-4.1',
+        input: expect.objectContaining({
+          extractionAttempt: 2,
+          policyVersion: '1.0.0',
+          fallbackFromModel: 'anthropic/claude-3.7-sonnet',
+        }),
+      }),
+    }));
+
+    expect(mockedDb.quotaHistory.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        model: 'openai/gpt-4.1',
+        artifactType: 'extraction',
+      }),
+    }));
   });
 });

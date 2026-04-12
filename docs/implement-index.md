@@ -49,6 +49,11 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
   - Validazione finale locale aggiornata: `npm run lint`, `npm run typecheck`, `npm run test` (30/30 suite), `npm run build` tutti `PASS`.
   - File: docs/archive/tooling-generation-refactor-plan.md
 
+- **Extraction model policy (Funnel upload -> extraction)**: `IMPLEMENTATO (2026-04-12) + rollout operativo definito`
+  - Completate fasi 1-4: policy statica runtime su OpenRouter, fallback deterministico (`anthropic/claude-3.7-sonnet` -> `openai/gpt-4.1` -> `openai/o3`), validazione server-side parse/schema/coerenza, budget cap, telemetria tentativi e normalizzazione quota retry (1 richiesta = 1 incremento `monthlyUsed`).
+  - Contratto API aggiornato (`model` payload ignored for runtime extraction) e runbook di rollout/rollback pubblicato in review.
+  - File: docs/implementation/funnel-extraction-model-policy-plan.md, docs/implementation/feature-funnel-extraction-model-policy-tracker-1.md, docs/review/extraction-model-policy-rollout-runbook-2026-04-12.md
+
 - **Deploy Vercel**: `COMPLETATO (baseline)`
   - Branch `main` in produzione.
   - Branch `dev` come ramo di sviluppo per PR.

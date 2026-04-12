@@ -26,11 +26,14 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 - [feature-audit-remediation-sequenced-tracker-1.md](implementation/feature-audit-remediation-sequenced-tracker-1.md): Tracker del track audit remediation — tutti i task completati.
 - [feature-prisma-deploy-migrations-1.md](implementation/feature-prisma-deploy-migrations-1.md): Piano esecutivo per deploy deterministico Prisma su Vercel — completato.
 - [feature-prisma-deploy-migrations-tracker-1.md](implementation/feature-prisma-deploy-migrations-tracker-1.md): Tracker del deploy migrations track — tutti i task completati.
+- [funnel-extraction-model-policy-plan.md](implementation/funnel-extraction-model-policy-plan.md): Piano esecutivo policy runtime extraction con fallback deterministico (fasi 1-4 completate).
+- [feature-funnel-extraction-model-policy-tracker-1.md](implementation/feature-funnel-extraction-model-policy-tracker-1.md): Tracker operativo della delivery extraction policy.
 
 ### review/
 - [feature-audit-remediation-closure-2026-04-12.md](review/feature-audit-remediation-closure-2026-04-12.md): Closure report del track audit remediation (PR #19, 2026-04-12).
 - [feature-audit-remediation-gap-analysis-2026-04-12.md](review/feature-audit-remediation-gap-analysis-2026-04-12.md): Gap analysis del track audit remediation (2026-04-12).
 - [copilot-audit-2026-04-12.md](review/copilot-audit-2026-04-12.md): Report qualità e sicurezza Copilot (12 aprile 2026) — sorgente dei finding del track remediation.
+- [extraction-model-policy-rollout-runbook-2026-04-12.md](review/extraction-model-policy-rollout-runbook-2026-04-12.md): Runbook rollout/rollback e query operative per policy extraction.
 
 ### archive/
 - Documenti storici e snapshot superseded (review, roadmap, follow-up PR).
@@ -52,6 +55,7 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 - [ux-strategy.md](ux/ux-strategy.md): Strategia UX e principi guida.
 
 ### Aggiornamenti recenti
+- 2026-04-12: completata la fase documentale finale del track extraction model policy (spec API aggiornata, implement-index riallineato, runbook rollout/rollback in review).
 - 2026-04-12: completato e mergiato su `dev` il refactor di visibilità spesa user/admin split (PR #21), con checklist piano chiusa e stato as-is aggiornato.
 - 2026-04-12: aggiunto piano operativo per centralizzare la visibilità della spesa nel perimetro admin e rimuoverla dalle superfici user.
 - 2026-04-12: organizzazione documentale — archiviati working doc quality-audit track (feature-quality-audit-resolution-*), rimossa `docs/improvement/` vuota, spostato `copilot-audit` in `docs/review/`, aggiornato indice README.

@@ -9,6 +9,7 @@ export type ApiErrorCode =
   | 'RATE_LIMIT_EXCEEDED'
   | 'PAYMENT_REQUIRED'
   | 'SERVICE_UNAVAILABLE'
+  | 'EXTRACTION_FAILED'
   | 'INTERNAL_ERROR';
 
 export function apiError(code: ApiErrorCode, message: string, status: number, details?: unknown) {

@@ -33,6 +33,7 @@ All errors follow this format:
 - `RATE_LIMIT_EXCEEDED` → 429 (quota exhausted)
 - `PAYMENT_REQUIRED` → 402 (monthly budget exceeded)
 - `SERVICE_UNAVAILABLE` → 503 (provider temporarily unavailable)
+- `EXTRACTION_FAILED` → 503 (deterministic extraction fallback chain exhausted)
 - `INTERNAL_ERROR` → 500 (server error)
 
 ---
@@ -221,10 +222,20 @@ POST /tools/extraction/generate
 }
 ```
 
+Policy runtime (as-is):
+- Il campo `model` nel payload e accettato per compatibilita/audit ma non decide il modello runtime di extraction.
+- La route applica chain deterministica: `anthropic/claude-3.7-sonnet` -> `openai/gpt-4.1` -> `openai/o3`.
+- Ogni tentativo viene validato server-side con parse JSON + schema (`fields`, `missingFields`, `notes`) + coerenza con `fieldMap`.
+- Il fallback si interrompe al primo tentativo valido oppure quando il costo cumulato supera `USD 0.08`.
+- In caso di esaurimento chain/policy budget: `{ error: { code: "EXTRACTION_FAILED", message } }` con HTTP 503.
+
 **Response**:
 - Stream SSE con eventi standard (`start`, `token`, `complete`, `error`)
 - Workflow `extraction`
 - Output richiesto al modello: JSON (consumato dal client e mappato in `extractedFields`)
+
+Nota operativa:
+- La route valida internamente i tentativi e poi invia al client gli eventi SSE del tentativo valido; durante retry non e garantito passthrough token live continuo.
 
 ### Generate Funnel Pages Step (Streaming)
 
