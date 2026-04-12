@@ -6,9 +6,13 @@ import { db } from '@/lib/db';
 
 jest.mock('@/lib/env', () => ({
   env: {
+    NODE_ENV: 'production',
+    VERCEL_ENV: 'production',
     VERCEL_CRON_SECRET: 'cron-secret',
   },
 }));
+
+import { env } from '@/lib/env';
 
 jest.mock('@/lib/db', () => jest.requireActual('./db-mock').createDbMock());
 
@@ -21,6 +25,11 @@ jest.mock('@/lib/logger', () => ({
 }));
 
 const updateManyArtifacts = db.artifact.updateMany as jest.Mock;
+const envMock = env as {
+  NODE_ENV: 'production' | 'development' | 'test';
+  VERCEL_ENV: 'production' | 'preview' | 'development';
+  VERCEL_CRON_SECRET?: string;
+};
 
 function makeRequest(authHeader?: string): NextRequest {
   return new NextRequest('http://localhost/api/cron/cleanup-stale-artifacts', {
@@ -31,6 +40,9 @@ function makeRequest(authHeader?: string): NextRequest {
 describe('GET /api/cron/cleanup-stale-artifacts', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    envMock.NODE_ENV = 'production';
+    envMock.VERCEL_ENV = 'production';
+    envMock.VERCEL_CRON_SECRET = 'cron-secret';
   });
 
   it('returns 403 when authorization header is missing', async () => {
@@ -66,5 +78,26 @@ describe('GET /api/cron/cleanup-stale-artifacts', () => {
     expect(res.status).toBe(200);
     expect(data.cleaned).toBe(3);
     expect(data.message).toContain('3');
+  });
+
+  it('returns 500 in Vercel production when cron secret is missing', async () => {
+    envMock.VERCEL_CRON_SECRET = undefined;
+
+    const res = await GET(makeRequest());
+    const data = await res.json();
+
+    expect(res.status).toBe(500);
+    expect(data.error).toBe('Server misconfiguration');
+  });
+
+  it('returns 503 outside Vercel production when cron secret is missing', async () => {
+    envMock.VERCEL_ENV = 'preview';
+    envMock.VERCEL_CRON_SECRET = undefined;
+
+    const res = await GET(makeRequest());
+    const data = await res.json();
+
+    expect(res.status).toBe(503);
+    expect(data.error).toBe('Cron endpoint is not configured');
   });
 });
