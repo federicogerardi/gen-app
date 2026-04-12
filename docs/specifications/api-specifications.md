@@ -367,7 +367,6 @@ GET /artifacts/{id}
     "status": "completed",
     "inputTokens": 45,
     "outputTokens": 987,
-    "costUSD": 0.031,
     "createdAt": "2026-04-07T10:30:00Z",
     "completedAt": "2026-04-07T10:30:12Z"
   }
@@ -401,7 +400,6 @@ GET /artifacts?projectId={projectId}&limit=20&offset=0
       "type": "content",
       "status": "completed",
       "model": "openai/gpt-4-turbo",
-      "costUSD": 0.031,
       "createdAt": "2026-04-07T10:30:00Z"
     }
   ],
@@ -522,18 +520,20 @@ GET /projects/{id}
 **Response** (200 OK):
 ```json
 {
-  "id": "proj_123",
-  "name": "Marketing Campaign Q2",
-  "description": "All assets for Q2...",
-  "artifacts": [
-    {
-      "id": "art_456",
-      "type": "content",
-      "status": "completed",
-      "createdAt": "2026-04-07T10:30:00Z"
-    }
-  ],
-  "createdAt": "2026-02-01T00:00:00Z"
+  "project": {
+    "id": "proj_123",
+    "name": "Marketing Campaign Q2",
+    "description": "All assets for Q2...",
+    "artifacts": [
+      {
+        "id": "art_456",
+        "type": "content",
+        "status": "completed",
+        "createdAt": "2026-04-07T10:30:00Z"
+      }
+    ],
+    "createdAt": "2026-02-01T00:00:00Z"
+  }
 }
 ```
 
@@ -594,14 +594,14 @@ GET /users/profile
 **Response** (200 OK):
 ```json
 {
-  "id": "user_123",
-  "email": "user@company.com",
-  "name": "John Doe",
-  "monthlyQuota": 1000,
-  "monthlyUsed": 245,
-  "monthlyBudget": 500,
-  "monthlySpent": 124.56,
-  "resetDate": "2026-05-07T00:00:00Z"
+  "user": {
+    "id": "user_123",
+    "email": "user@company.com",
+    "name": "John Doe",
+    "image": null,
+    "role": "user",
+    "createdAt": "2026-01-15T00:00:00Z"
+  }
 }
 ```
 
@@ -617,16 +617,11 @@ GET /users/quota
 **Response** (200 OK):
 ```json
 {
-  "monthlyQuota": 1000,
-  "monthlyUsed": 245,
-  "percentageUsed": 24.5,
-  "remaining": 755,
-  "resetDate": "2026-05-07T00:00:00Z",
-  "monthlyBudget": 500,
-  "monthlySpent": 124.56,
-  "percentageBudgetUsed": 24.91,
-  "remainingBudget": 375.44,
-  "estimatedDaysUntilBudgetExhausted": 8
+  "quota": {
+    "monthlyQuota": 1000,
+    "monthlyUsed": 245,
+    "resetDate": "2026-05-07T00:00:00Z"
+  }
 }
 ```
 

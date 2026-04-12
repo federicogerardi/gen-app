@@ -47,7 +47,26 @@ describe('GET /api/artifacts', () => {
   it('returns paginated artifact list for authenticated user', async () => {
     mockedAuth.mockResolvedValue({ user: { id: 'user_1' } } as never);
     const artifacts = [
-      { id: 'art_1', type: 'content', status: 'completed', project: { id: 'proj_1', name: 'Test' } },
+      {
+        id: 'art_1',
+        userId: 'user_1',
+        projectId: 'proj_1',
+        type: 'content',
+        workflowType: null,
+        model: 'openai/gpt-4-turbo',
+        input: {},
+        content: 'output',
+        status: 'completed',
+        failureReason: null,
+        inputTokens: 10,
+        outputTokens: 20,
+        streamedAt: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        completedAt: new Date().toISOString(),
+        costUSD: '0.02',
+        project: { id: 'proj_1', name: 'Test' },
+      },
     ];
     findMany.mockResolvedValue(artifacts);
     countArtifacts.mockResolvedValue(1);
@@ -56,7 +75,9 @@ describe('GET /api/artifacts', () => {
     const data = await res.json();
 
     expect(res.status).toBe(200);
-    expect(data.items).toEqual(artifacts);
+    expect(data.items).toHaveLength(1);
+    expect(data.items[0].id).toBe('art_1');
+    expect(data.items[0]).not.toHaveProperty('costUSD');
     expect(data.total).toBe(1);
   });
 

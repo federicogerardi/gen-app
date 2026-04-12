@@ -36,6 +36,11 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
   - Rafforzato fallback human-readable con nuovi test unit.
   - Da completare la convergenza UX completa su tutte le viste/workflow.
 
+- **User spend visibility refactor (user/admin split)**: `COMPLETATO (2026-04-12)`
+  - Rimossi feedback economici dal perimetro user (API quota/artifacts/projects e UI dashboard/dettaglio artefatto).
+  - Mantenuta visibilità economica nel perimetro admin con assertion di test esplicite.
+  - Documentazione contrattuale allineata su `docs/specifications/api-specifications.md`.
+
 - **Tooling generation optimization (Meta Ads + Funnel Pages)**: `COMPLETATO (PR-1..PR-6)`
   - Completati schema unificato input, prompt/runtime parity, normalizzazione output, SSE metadata additive, consolidamento route/error mapping e hardening finale.
   - Standard output workflow tool allineato a `outputFormat: markdown` (Meta Ads + Funnel Pages).

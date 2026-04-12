@@ -3,8 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 export interface QuotaInfo {
   monthlyQuota: number;
   monthlyUsed: number;
-  monthlyBudget: string;
-  monthlySpent: string;
   resetDate: string;
 }
 
