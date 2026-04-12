@@ -28,8 +28,6 @@ const customJestConfig = {
     '!src/components/ui/**',
     '!src/app/api/auth/**',
     '!src/lib/auth.ts',
-    '!src/lib/db.ts',
-    '!src/lib/logger.ts',
     '!src/lib/rate-limit.ts',
     '!src/lib/llm/providers/openrouter.ts',
   ],
@@ -40,6 +38,24 @@ const customJestConfig = {
       functions: 70,
       lines: 70,
       statements: 70,
+    },
+    './src/lib/logger.ts': {
+      branches: 60,
+      functions: 75,
+      lines: 75,
+      statements: 75,
+    },
+    './src/lib/db.ts': {
+      branches: 60,
+      functions: 75,
+      lines: 75,
+      statements: 75,
+    },
+    './src/lib/llm/streaming.ts': {
+      branches: 75,
+      functions: 80,
+      lines: 80,
+      statements: 80,
     },
   },
 };

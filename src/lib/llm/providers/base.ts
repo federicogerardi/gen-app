@@ -14,6 +14,10 @@ export interface GenerateResponse {
 export interface StreamChunk {
   token: string;
   done: boolean;
+  usage?: {
+    inputTokens?: number;
+    outputTokens?: number;
+  };
 }
 
 export interface LLMProvider {

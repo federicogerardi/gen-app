@@ -101,7 +101,10 @@ export class LLMOrchestrator {
     return { content: normalized.content, inputTokens: response.inputTokens, outputTokens: response.outputTokens, cost };
   }
 
-  async *generateStream(request: ArtifactRequest): AsyncGenerator<{ token: string }> {
+  async *generateStream(request: ArtifactRequest): AsyncGenerator<{
+    token: string;
+    usage?: { inputTokens?: number; outputTokens?: number };
+  }> {
     const prompt = await this.buildPrompt(request);
 
     for await (const chunk of this.provider.generateStream({
@@ -109,7 +112,10 @@ export class LLMOrchestrator {
       prompt,
       temperature: request.temperature,
     })) {
-      yield { token: chunk.token };
+      yield {
+        token: chunk.token,
+        usage: chunk.usage,
+      };
     }
   }
 

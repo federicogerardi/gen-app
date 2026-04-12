@@ -4,7 +4,7 @@ version: 1.0
 date_created: 2026-04-12
 last_updated: 2026-04-12
 owner: Platform Team
-status: In Progress (Phase 1-2 Complete)
+status: In Progress (Phase 1-3 Complete)
 tags: [process, tracker, audit, remediation, security, quality, testing]
 ---
 
@@ -116,6 +116,24 @@ Evidence log:
 - EVID-012 (TASK-012): Added and updated tests in tests/unit/tool-routes-schemas.test.ts, tests/unit/extraction-agent-schema.test.ts, tests/unit/document-parser.test.ts, tests/integration/meta-ads-route.test.ts, tests/integration/funnel-pages-route.test.ts.
 - EVID-013 (Phase 2 validation command): npm run typecheck && npx jest tests/unit/tool-routes-schemas.test.ts tests/unit/extraction-agent-schema.test.ts tests/unit/document-parser.test.ts tests/integration/meta-ads-route.test.ts tests/integration/funnel-pages-route.test.ts => 5 suites passed, 38 tests passed.
 
+### Phase 3
+
+| Task | Finding | Current Status | Date |
+| --- | --- | --- | --- |
+| TASK-013 | SEC-5 | Completed | 2026-04-12 |
+| TASK-014 | QUA-2 | Completed | 2026-04-12 |
+| TASK-015 | TEST-1 | Completed | 2026-04-12 |
+| TASK-016 | TEST-2 | Completed | 2026-04-12 |
+
+Evidence log:
+- EVID-014 (TASK-013): Global security headers configured in next.config.ts with CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy and HSTS via headers() on all routes.
+- EVID-015 (TASK-014): Streaming token accounting now prioritizes provider usage when available and falls back to deterministic UTF-8 byte estimation in src/lib/llm/providers/base.ts, src/lib/llm/providers/openrouter.ts, src/lib/llm/orchestrator.ts, src/lib/llm/streaming.ts.
+- EVID-016 (TASK-015): Added Phase 3 smoke coverage in tests/e2e/phase3-smoke.spec.ts for artifact generation, document upload and admin quota update critical flows.
+- EVID-017 (TASK-016): Coverage policy updated with progressive infra module thresholds in jest.config.js and new integration tests for logger/db wrappers in tests/integration/infrastructure-wrappers.test.ts.
+- EVID-018 (Phase 3 validation commands):
+  - npm run typecheck && npx jest tests/unit/streaming.test.ts tests/integration/infrastructure-wrappers.test.ts tests/unit/next-config-security-headers.test.ts => 3 suites passed, 12 tests passed.
+  - npx playwright test tests/e2e/phase3-smoke.spec.ts --project=chromium => 3 tests passed.
+
 ## 5. Evidence Register (to update during implementation)
 
 - EVID-001: completed
@@ -131,6 +149,11 @@ Evidence log:
 - EVID-011: completed
 - EVID-012: completed
 - EVID-013: completed
+- EVID-014: completed
+- EVID-015: completed
+- EVID-016: completed
+- EVID-017: completed
+- EVID-018: completed
 
 ## 6. Related Documents
 

@@ -51,10 +51,18 @@ async function readAllSse(stream: ReadableStream): Promise<string[]> {
   return lines;
 }
 
-function makeTokenStream(tokens: string[]) {
+function makeTokenStream(tokens: Array<string | { token: string; usage?: { inputTokens?: number; outputTokens?: number } }>) {
   return (async function* () {
-    for (const token of tokens) {
-      yield { token };
+    for (const entry of tokens) {
+      if (typeof entry === 'string') {
+        yield { token: entry };
+        continue;
+      }
+
+      yield {
+        token: entry.token,
+        usage: entry.usage,
+      };
     }
   })();
 }
@@ -166,6 +174,48 @@ describe('createArtifactStream', () => {
 
     const expectedInputTokens = Math.ceil(override.length / 4);
     expect(completeEvent.tokens.input).toBe(expectedInputTokens);
+  });
+
+  it('uses UTF-aware byte estimation for multibyte input fallback', async () => {
+    const multibytePrompt = 'Ciao 👋🏽 mondo';
+    mockGenerateStream.mockReturnValue(makeTokenStream(['ok']));
+
+    const stream = await createArtifactStream({
+      userId: 'user_1',
+      projectId: 'proj_1',
+      type: 'content',
+      model: 'openai/gpt-4-turbo',
+      input: { topic: 'AI' },
+      promptOverride: multibytePrompt,
+    });
+
+    const lines = await readAllSse(stream);
+    const completeLine = lines.find((l) => l.includes('"type":"complete"'))!;
+    const completeEvent = JSON.parse(completeLine.replace('data: ', ''));
+
+    const expectedInputTokens = Math.ceil(new TextEncoder().encode(multibytePrompt).length / 4);
+    expect(completeEvent.tokens.input).toBe(expectedInputTokens);
+  });
+
+  it('prefers provider-reported usage counts when available', async () => {
+    mockGenerateStream.mockReturnValue(makeTokenStream([
+      { token: 'ciao', usage: { inputTokens: 77, outputTokens: 11 } },
+      { token: ' mondo', usage: { inputTokens: 77, outputTokens: 12 } },
+    ]));
+
+    const stream = await createArtifactStream({
+      userId: 'user_1',
+      projectId: 'proj_1',
+      type: 'content',
+      model: 'openai/gpt-4-turbo',
+      input: { topic: 'AI' },
+    });
+
+    const lines = await readAllSse(stream);
+    const completeLine = lines.find((l) => l.includes('"type":"complete"'))!;
+    const completeEvent = JSON.parse(completeLine.replace('data: ', ''));
+
+    expect(completeEvent.tokens).toEqual({ input: 77, output: 12 });
   });
 
   it('persists partial content every 50 tokens (batched writes)', async () => {
