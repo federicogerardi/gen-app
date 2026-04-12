@@ -29,6 +29,25 @@ describe('parseEnv', () => {
     ).toThrow();
   });
 
+  it('does not require VERCEL_CRON_SECRET on Vercel preview deployments', () => {
+    const parsed = parseEnv({
+      NODE_ENV: 'production',
+      VERCEL_ENV: 'preview',
+      DATABASE_URL: 'postgresql://user:pass@localhost:5432/db',
+      GOOGLE_CLIENT_ID: 'client-id',
+      GOOGLE_CLIENT_SECRET: 'client-secret',
+      OPENROUTER_API_KEY: 'openrouter-key',
+      UPSTASH_REDIS_REST_URL: 'https://upstash.example.com',
+      UPSTASH_REDIS_REST_TOKEN: 'upstash-token',
+      NEXT_PUBLIC_APP_URL: 'https://preview.example.com',
+      ALLOWED_EMAIL_DOMAINS: 'company.com',
+    });
+
+    expect(parsed.NODE_ENV).toBe('production');
+    expect(parsed.VERCEL_ENV).toBe('preview');
+    expect(parsed.VERCEL_CRON_SECRET).toBeUndefined();
+  });
+
   it('uses safe defaults in test mode for required secrets', () => {
     const parsed = parseEnv({
       NODE_ENV: 'test',

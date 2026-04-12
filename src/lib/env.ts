@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  VERCEL_ENV: z.enum(['production', 'preview', 'development']).optional(),
   DATABASE_URL: z.string().min(1, 'DATABASE_URL required'),
   GOOGLE_CLIENT_ID: z.string().min(1, 'GOOGLE_CLIENT_ID required'),
   GOOGLE_CLIENT_SECRET: z.string().min(1, 'GOOGLE_CLIENT_SECRET required'),
@@ -13,11 +14,12 @@ const envSchema = z.object({
   VERCEL_CRON_SECRET: z.string().optional(),
   LOG_LEVEL: z.string().optional(),
 }).superRefine((value, ctx) => {
-  if (value.NODE_ENV === 'production' && !value.VERCEL_CRON_SECRET) {
+  const isProductionDeployment = value.NODE_ENV === 'production' && value.VERCEL_ENV !== 'preview';
+  if (isProductionDeployment && !value.VERCEL_CRON_SECRET) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ['VERCEL_CRON_SECRET'],
-      message: 'VERCEL_CRON_SECRET is required in production',
+      message: 'VERCEL_CRON_SECRET is required in production deployments',
     });
   }
 });
