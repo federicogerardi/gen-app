@@ -4,13 +4,13 @@ version: 1.0
 date_created: 2026-04-12
 last_updated: 2026-04-12
 owner: Platform Team
-status: In Progress (Phase 1-3 Complete)
+status: Completed
 tags: [process, tracker, audit, remediation, security, quality, testing]
 ---
 
 # Introduction
 
-![Status: In Progress](https://img.shields.io/badge/status-In%20Progress-yellow)
+![Status: Completed](https://img.shields.io/badge/status-Completed-brightgreen)
 
 This tracker is the execution companion for docs/implementation/feature-audit-remediation-sequenced-1.md.
 It records baseline coverage, implementation progress, and evidence per task.
@@ -74,6 +74,8 @@ Status legend:
 - 2026-04-12: Tracker created and baseline populated from current code and tests.
 - 2026-04-12: Phase 1 implementation completed (TASK-001..TASK-007), with targeted typecheck and integration/unit validation passing.
 - 2026-04-12: Phase 2 implementation completed (TASK-008..TASK-012), including schema discriminant migration (backward compatible), extraction schema consolidation, and DOCX parser refactor with dedicated tests.
+- 2026-04-12: Phase 3 implementation completed (TASK-013..TASK-016), including security headers, provider-aware streaming token estimation, E2E smoke coverage, and infrastructure wrapper coverage tests.
+- 2026-04-12: Phase 4 implementation completed (TASK-017..TASK-020), including legacy route refactor to shared guards, atomic quota concurrency validation, full regression suite execution, and closure report publication.
 
 ## 4. Current Phase Status (Post-Implementation)
 
@@ -134,6 +136,21 @@ Evidence log:
   - npm run typecheck && npx jest tests/unit/streaming.test.ts tests/integration/infrastructure-wrappers.test.ts tests/unit/next-config-security-headers.test.ts => 3 suites passed, 12 tests passed.
   - npx playwright test tests/e2e/phase3-smoke.spec.ts --project=chromium => 3 tests passed.
 
+### Phase 4
+
+| Task | Finding | Current Status | Date |
+| --- | --- | --- | --- |
+| TASK-017 | QUA-1 | Completed | 2026-04-12 |
+| TASK-018 | SEC-1 | Completed | 2026-04-12 |
+| TASK-019 | TEST-3 | Completed | 2026-04-12 |
+| TASK-020 | Final validation | Completed | 2026-04-12 |
+
+Evidence log:
+- EVID-019 (TASK-017): Legacy generation route refactored to shared guard flow in src/app/api/artifacts/generate/route.ts using requireAuthenticatedUser, parseAndValidateRequest, enforceUsageGuards, and requireOwnedProject.
+- EVID-020 (TASK-018): Quota and budget checks now rely on atomic transaction logic in src/lib/tool-routes/guards.ts (monthlyUsed increment in same transactional boundary).
+- EVID-021 (TASK-019): Added parallel concurrency integration assertion in tests/integration/artifacts-generate-route.test.ts verifying one success + one quota rejection (200/429) under simultaneous requests.
+- EVID-022 (TASK-020): Full validation completed with npm run lint, npm run typecheck, npm run test (40 suites, 301 tests), and npm run test:e2e (7 tests) all passing.
+
 ## 5. Evidence Register (to update during implementation)
 
 - EVID-001: completed
@@ -154,8 +171,13 @@ Evidence log:
 - EVID-016: completed
 - EVID-017: completed
 - EVID-018: completed
+- EVID-019: completed
+- EVID-020: completed
+- EVID-021: completed
+- EVID-022: completed
 
 ## 6. Related Documents
 
 - docs/implementation/feature-audit-remediation-sequenced-1.md
 - docs/review/feature-audit-remediation-gap-analysis-2026-04-12.md
+- docs/review/feature-audit-remediation-closure-2026-04-12.md

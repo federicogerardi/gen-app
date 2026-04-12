@@ -11,11 +11,10 @@ describe('next config security headers', () => {
       withSentryConfig: (config: unknown) => config,
     }));
 
-    let config!: { headers?: () => Promise<Array<{ source: string; headers: Array<{ key: string; value: string }> }>> };
-    jest.isolateModules(() => {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      config = require('../../next.config').default;
-    });
+    const imported = await import('../../next.config');
+    const config = imported.default as {
+      headers?: () => Promise<Array<{ source: string; headers: Array<{ key: string; value: string }> }>>;
+    };
 
     expect(typeof config.headers).toBe('function');
     const rules = await config.headers!();

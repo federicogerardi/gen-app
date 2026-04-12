@@ -36,7 +36,7 @@ describe('infrastructure wrappers', () => {
     let logger!: unknown;
 
     jest.isolateModules(() => {
-      const loggerModule = require('@/lib/logger') as {
+      const loggerModule = jest.requireActual('@/lib/logger') as {
         getRequestLogger: typeof getRequestLogger;
         logger: unknown;
       };
@@ -93,8 +93,8 @@ describe('infrastructure wrappers', () => {
     let dbB: unknown;
 
     jest.isolateModules(() => {
-      dbA = (require('@/lib/db') as { db: unknown }).db;
-      dbB = (require('@/lib/db') as { db: unknown }).db;
+      dbA = (jest.requireActual('@/lib/db') as { db: unknown }).db;
+      dbB = (jest.requireActual('@/lib/db') as { db: unknown }).db;
     });
 
     expect(PrismaPg).toHaveBeenCalledWith({ connectionString: 'postgresql://localhost:5432/test' });

@@ -4,13 +4,13 @@ version: 1.0
 date_created: 2026-04-12
 last_updated: 2026-04-12
 owner: Platform Team
-status: 'Planned'
+status: 'Completed'
 tags: [feature, security, quality, testing, architecture]
 ---
 
 # Introduction
 
-![Status: Planned](https://img.shields.io/badge/status-Planned-blue)
+![Status: Completed](https://img.shields.io/badge/status-Completed-brightgreen)
 
 Piano esecutivo per risolvere tutti i rilievi del report copilot-audit-12042026 in ordine di impatto crescente: prima interventi incrementali a basso rischio, poi modifiche medie trasversali, infine refactor ad alto impatto su route legacy e controllo quota concorrente.
 
@@ -36,13 +36,13 @@ Piano esecutivo per risolvere tutti i rilievi del report copilot-audit-12042026 
 
 | Task | Description | Completed | Date |
 | -------- | --------------------- | --------- | ---------- |
-| TASK-001 | Aggiornare `src/lib/env.ts` per includere validazione `UPSTASH_REDIS_REST_URL` e `UPSTASH_REDIS_REST_TOKEN` nello schema Zod e fallire al boot in ambienti non-test quando assenti (SEC-2). |  |  |
-| TASK-002 | Rendere `VERCEL_CRON_SECRET` obbligatoria in produzione in `src/lib/env.ts` con regola condizionale esplicita e messaggio errore deterministico (SEC-4). |  |  |
-| TASK-003 | Uniformare il codice errore 409 in `src/app/api/artifacts/[id]/route.ts` usando helper tipizzato (`apiError`) ed estendendo eventuale union condivisa se necessario (SEC-3). |  |  |
-| TASK-004 | Sostituire aggiornamenti N-per-artifact con `updateMany` in `src/app/api/cron/cleanup-stale-artifacts/route.ts` e mantenere reporting conteggi coerente (QUA-3). |  |  |
-| TASK-005 | Sostituire `console.error` con logger strutturato in `src/app/api/admin/users/route.ts`, propagando `requestId` e metadati route (QUA-4). |  |  |
-| TASK-006 | Aggiornare `src/lib/llm/streaming.ts` per rimuovere uso dell'alias deprecato `calculateCost` e usare API non deprecata in `src/lib/llm/costs.ts` (QUA-6). |  |  |
-| TASK-007 | Aggiungere/aggiornare test di integrazione per cron cleanup, admin users route e gestione error code 409 in `tests/integration/` (copertura Phase 1). |  |  |
+| TASK-001 | Aggiornare `src/lib/env.ts` per includere validazione `UPSTASH_REDIS_REST_URL` e `UPSTASH_REDIS_REST_TOKEN` nello schema Zod e fallire al boot in ambienti non-test quando assenti (SEC-2). | Yes | 2026-04-12 |
+| TASK-002 | Rendere `VERCEL_CRON_SECRET` obbligatoria in produzione in `src/lib/env.ts` con regola condizionale esplicita e messaggio errore deterministico (SEC-4). | Yes | 2026-04-12 |
+| TASK-003 | Uniformare il codice errore 409 in `src/app/api/artifacts/[id]/route.ts` usando helper tipizzato (`apiError`) ed estendendo eventuale union condivisa se necessario (SEC-3). | Yes | 2026-04-12 |
+| TASK-004 | Sostituire aggiornamenti N-per-artifact con `updateMany` in `src/app/api/cron/cleanup-stale-artifacts/route.ts` e mantenere reporting conteggi coerente (QUA-3). | Yes | 2026-04-12 |
+| TASK-005 | Sostituire `console.error` con logger strutturato in `src/app/api/admin/users/route.ts`, propagando `requestId` e metadati route (QUA-4). | Yes | 2026-04-12 |
+| TASK-006 | Aggiornare `src/lib/llm/streaming.ts` per rimuovere uso dell'alias deprecato `calculateCost` e usare API non deprecata in `src/lib/llm/costs.ts` (QUA-6). | Yes | 2026-04-12 |
+| TASK-007 | Aggiungere/aggiornare test di integrazione per cron cleanup, admin users route e gestione error code 409 in `tests/integration/` (copertura Phase 1). | Yes | 2026-04-12 |
 
 ### Implementation Phase 2
 
@@ -50,11 +50,11 @@ Piano esecutivo per risolvere tutti i rilievi del report copilot-audit-12042026 
 
 | Task | Description | Completed | Date |
 | -------- | --------------------- | --------- | ---- |
-| TASK-008 | Rimuovere ridondanza di prompt in payload artifact aggiornando `src/app/api/tools/meta-ads/generate/route.ts` e `src/app/api/tools/funnel-pages/generate/route.ts` per non serializzare prompt completo in `input.topic` (QUA-5). |  |  |
-| TASK-009 | Consolidare `extractionFieldDefinitionSchema` in modulo condiviso (`src/lib/tool-routes/schemas.ts` o nuovo file condiviso in `src/lib/schemas/`) e riutilizzarlo in `src/lib/llm/agents/extraction.ts` (QUA-7). |  |  |
-| TASK-010 | Refactor `funnelPagesRequestSchema` in `src/lib/tool-routes/schemas.ts` introducendo discriminante esplicita (`schemaVersion`) e `z.discriminatedUnion` con mapping retrocompatibile (QUA-8). |  |  |
-| TASK-011 | Sostituire parsing DOCX regex-based in `src/lib/document-parser.ts` con libreria robusta (preferenza: `mammoth`) mantenendo output testuale compatibile e normalizzazione entita (QUA-9). |  |  |
-| TASK-012 | Aggiornare test unit in `tests/unit/` per schema funnel, extraction schema condiviso e parser DOCX con fixture edge-case (namespace complessi, entita HTML, tabelle) (copertura Phase 2). |  |  |
+| TASK-008 | Rimuovere ridondanza di prompt in payload artifact aggiornando `src/app/api/tools/meta-ads/generate/route.ts` e `src/app/api/tools/funnel-pages/generate/route.ts` per non serializzare prompt completo in `input.topic` (QUA-5). | Yes | 2026-04-12 |
+| TASK-009 | Consolidare `extractionFieldDefinitionSchema` in modulo condiviso (`src/lib/tool-routes/schemas.ts` o nuovo file condiviso in `src/lib/schemas/`) e riutilizzarlo in `src/lib/llm/agents/extraction.ts` (QUA-7). | Yes | 2026-04-12 |
+| TASK-010 | Refactor `funnelPagesRequestSchema` in `src/lib/tool-routes/schemas.ts` introducendo discriminante esplicita (`schemaVersion`) e `z.discriminatedUnion` con mapping retrocompatibile (QUA-8). | Yes | 2026-04-12 |
+| TASK-011 | Sostituire parsing DOCX regex-based in `src/lib/document-parser.ts` con libreria robusta (preferenza: `mammoth`) mantenendo output testuale compatibile e normalizzazione entita (QUA-9). | Yes | 2026-04-12 |
+| TASK-012 | Aggiornare test unit in `tests/unit/` per schema funnel, extraction schema condiviso e parser DOCX con fixture edge-case (namespace complessi, entita HTML, tabelle) (copertura Phase 2). | Yes | 2026-04-12 |
 
 ### Implementation Phase 3
 
@@ -62,10 +62,10 @@ Piano esecutivo per risolvere tutti i rilievi del report copilot-audit-12042026 
 
 | Task | Description | Completed | Date |
 | -------- | --------------------- | --------- | ---- |
-| TASK-013 | Definire e applicare security headers globali in `next.config.ts` (`Content-Security-Policy`, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Strict-Transport-Security`) con eccezioni minime documentate (SEC-5). |  |  |
-| TASK-014 | Rifinire stima token in `src/lib/llm/streaming.ts` usando conteggio provider-driven quando disponibile e fallback deterministico UTF-aware per input/output estimate (QUA-2). |  |  |
-| TASK-015 | Aggiungere smoke E2E in `tests/e2e/` per flussi critici: generazione artifact, upload documento, aggiornamento quota admin (TEST-1). |  |  |
-| TASK-016 | Aggiornare configurazione copertura in `jest.config.js` con target progressivo per moduli infrastrutturali prioritari e nuovi test integrazione su logger/db wrapper (TEST-2). |  |  |
+| TASK-013 | Definire e applicare security headers globali in `next.config.ts` (`Content-Security-Policy`, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Strict-Transport-Security`) con eccezioni minime documentate (SEC-5). | Yes | 2026-04-12 |
+| TASK-014 | Rifinire stima token in `src/lib/llm/streaming.ts` usando conteggio provider-driven quando disponibile e fallback deterministico UTF-aware per input/output estimate (QUA-2). | Yes | 2026-04-12 |
+| TASK-015 | Aggiungere smoke E2E in `tests/e2e/` per flussi critici: generazione artifact, upload documento, aggiornamento quota admin (TEST-1). | Yes | 2026-04-12 |
+| TASK-016 | Aggiornare configurazione copertura in `jest.config.js` con target progressivo per moduli infrastrutturali prioritari e nuovi test integrazione su logger/db wrapper (TEST-2). | Yes | 2026-04-12 |
 
 ### Implementation Phase 4
 
@@ -73,10 +73,10 @@ Piano esecutivo per risolvere tutti i rilievi del report copilot-audit-12042026 
 
 | Task | Description | Completed | Date |
 | -------- | --------------------- | --------- | ---- |
-| TASK-017 | Refactor completo di `src/app/api/artifacts/generate/route.ts` per riusare guard condivisi (`rateLimit` pre-LLM, `enforceUsageGuards`, ownership check progetto) e rimuovere logica duplicata (QUA-1). |  |  |
-| TASK-018 | Garantire atomicita quota/usage in route legacy usando transazione/guard condiviso con incremento `monthlyUsed` nello stesso boundary di validazione (SEC-1). |  |  |
-| TASK-019 | Aggiungere test concorrenza in `tests/integration/artifacts-generate-route.test.ts` con richieste parallele per verificare assenza TOCTOU e corretto blocco quota (TEST-3). |  |  |
-| TASK-020 | Eseguire regression suite completa (`npm run lint`, `npm run typecheck`, `npm run test`, `npm run test:e2e`) e pubblicare report di chiusura in `docs/review/` con mapping finding->commit->test evidence. |  |  |
+| TASK-017 | Refactor completo di `src/app/api/artifacts/generate/route.ts` per riusare guard condivisi (`rateLimit` pre-LLM, `enforceUsageGuards`, ownership check progetto) e rimuovere logica duplicata (QUA-1). | Yes | 2026-04-12 |
+| TASK-018 | Garantire atomicita quota/usage in route legacy usando transazione/guard condiviso con incremento `monthlyUsed` nello stesso boundary di validazione (SEC-1). | Yes | 2026-04-12 |
+| TASK-019 | Aggiungere test concorrenza in `tests/integration/artifacts-generate-route.test.ts` con richieste parallele per verificare assenza TOCTOU e corretto blocco quota (TEST-3). | Yes | 2026-04-12 |
+| TASK-020 | Eseguire regression suite completa (`npm run lint`, `npm run typecheck`, `npm run test`, `npm run test:e2e`) e pubblicare report di chiusura in `docs/review/` con mapping finding->commit->test evidence. | Yes | 2026-04-12 |
 
 ## 3. Alternatives
 
