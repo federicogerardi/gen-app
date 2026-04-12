@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Navbar } from '@/components/layout/Navbar';
+import { PageShell } from '@/components/layout/PageShell';
 import { useArtifacts, useDeleteArtifact } from '@/components/hooks/useArtifacts';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,7 +11,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getArtifactDisplayTypeLabel, getEffectiveArtifactWorkflowType } from '@/lib/artifact-preview';
-import { isArtifactType } from '@/lib/types/artifact';
+import { getArtifactStatusBadgeClass, getArtifactStatusLabel } from '@/lib/artifact-status-ui';
+import { buildArtifactCardIdentity } from '@/lib/artifact-card-identity';
+import { isArtifactStatus, isArtifactType } from '@/lib/types/artifact';
 
 type ProjectOption = {
   id: string;
@@ -61,20 +64,28 @@ export function ArtifactsClientPage({ projects }: Props) {
   }
 
   return (
-    <>
-      <Navbar />
-      <main className="app-shell app-copy flex-1 p-6 max-w-5xl mx-auto w-full relative overflow-hidden" id="main-content">
-        <div className="pointer-events-none absolute inset-0 app-grid-overlay" />
+    <PageShell width="workspace">
         <div className="flex flex-wrap items-center justify-between mb-6 gap-4">
           <div>
-            <h1 className="app-title text-3xl font-semibold text-slate-900">Artefatti</h1>
-            <p className="text-sm text-muted-foreground">Filtra, riusa e gestisci rapidamente gli output generati.</p>
+            <p className="text-xs uppercase tracking-widest text-muted-foreground">Storico personale</p>
+            <h1 className="app-title text-3xl font-semibold text-slate-900">Storico artefatti</h1>
+            <p className="text-sm text-muted-foreground">
+              Vista trasversale per recupero e auditing. Per il lavoro corrente usa prima i progetti.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" asChild>
+              <Link href="/dashboard/projects">Vai ai progetti</Link>
+            </Button>
+            <Button asChild>
+              <Link href="/dashboard/projects/new">Nuovo progetto</Link>
+            </Button>
           </div>
         </div>
 
         <Card className="app-surface rounded-3xl mb-6 app-rise">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Filtri</CardTitle>
+            <CardTitle className="text-base">Filtri storico</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="sr-only" aria-live="polite">{artifacts.length} artefatti mostrati con i filtri correnti.</p>
@@ -98,9 +109,9 @@ export function ArtifactsClientPage({ projects }: Props) {
                   <SelectTrigger id="artifact-status-filter" className="app-control w-full"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Tutti</SelectItem>
-                    <SelectItem value="generating">Generating</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                    <SelectItem value="failed">Failed</SelectItem>
+                    <SelectItem value="generating">In corso</SelectItem>
+                    <SelectItem value="completed">Completato</SelectItem>
+                    <SelectItem value="failed">Errore</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -149,18 +160,26 @@ export function ArtifactsClientPage({ projects }: Props) {
         ) : artifacts.length === 0 ? (
           <Card className="app-surface rounded-2xl">
             <CardContent className="py-12 text-center text-muted-foreground" role="status" aria-live="polite">
-              Nessun artefatto trovato con i filtri selezionati.
+              Nessun elemento nello storico con i filtri selezionati.
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-3" role="list" aria-label="Lista artefatti">
+          <div className="space-y-3" role="list" aria-label="Storico artefatti">
             {artifacts.map((artifact) => {
               const workflowType = getEffectiveArtifactWorkflowType(artifact.workflowType, artifact.input);
               // Type-guard artifact type from API response (String) to literal union
               const typedArtifactType = isArtifactType(artifact.type) ? artifact.type : 'content';
+              const typedArtifactStatus = isArtifactStatus(artifact.status) ? artifact.status : 'generating';
               const typeLabel = getArtifactDisplayTypeLabel({
                 type: typedArtifactType,
                 workflowType,
+              });
+              const cardIdentity = buildArtifactCardIdentity({
+                id: artifact.id,
+                type: artifact.type,
+                workflowType,
+                input: artifact.input,
+                projectName: artifact.project?.name ?? null,
               });
 
               return (
@@ -170,15 +189,16 @@ export function ArtifactsClientPage({ projects }: Props) {
                     <div className="flex items-center gap-2">
                       <Badge>{typeLabel}</Badge>
                       <Badge variant="outline">{artifact.model}</Badge>
-                      <Badge variant={artifact.status === 'completed' ? 'default' : artifact.status === 'failed' ? 'destructive' : 'secondary'}>
-                        {artifact.status}
+                      <Badge variant="outline" className={getArtifactStatusBadgeClass(typedArtifactStatus)}>
+                        {getArtifactStatusLabel(typedArtifactStatus)}
                       </Badge>
                     </div>
                     <span className="text-xs text-muted-foreground">
                       {new Date(artifact.createdAt).toLocaleString('it-IT')}
                     </span>
                   </div>
-                  <CardTitle className="text-base">{artifact.project?.name ?? 'Progetto non disponibile'}</CardTitle>
+                  <CardTitle className="text-base">{cardIdentity.title}</CardTitle>
+                  <p className="text-sm text-muted-foreground">{cardIdentity.subtitle}</p>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex flex-wrap gap-2">
@@ -202,7 +222,6 @@ export function ArtifactsClientPage({ projects }: Props) {
             })}
           </div>
         )}
-      </main>
-    </>
+    </PageShell>
   );
 }

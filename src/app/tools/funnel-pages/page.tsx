@@ -4,7 +4,7 @@ import { useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { Navbar } from '@/components/layout/Navbar';
+import { PageShell } from '@/components/layout/PageShell';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -66,17 +66,36 @@ const ALLOWED_MIME_TYPES = [
 
 const ALLOWED_EXTENSIONS = ['.docx', '.txt', '.md'] as const;
 
+const TONE_HINTS: Record<(typeof TONES)[number], string> = {
+  professional: 'Chiaro e autorevole: ideale per comunicare affidabilita e struttura del servizio.',
+  casual: 'Diretto e vicino: utile per aumentare empatia, leggibilita e coinvolgimento rapido.',
+  formal: 'Istituzionale e rigoroso: adatto a contesti premium, corporate o regolamentati.',
+  technical: 'Preciso e dettagliato: focalizzato su metodo, caratteristiche e argomentazione razionale.',
+};
+
+const STEP_STATUS_BADGE_CLASS: Record<FunnelStepState['status'], string> = {
+  idle: 'border-slate-300 bg-slate-100 text-slate-700',
+  running: 'border-amber-300 bg-amber-100 text-amber-900',
+  done: 'border-emerald-300 bg-emerald-100 text-emerald-900',
+  error: 'border-rose-300 bg-rose-100 text-rose-900',
+};
+
+const STEP_STATUS_LABEL: Record<FunnelStepState['status'], string> = {
+  idle: 'In attesa',
+  running: 'In corso',
+  done: 'Completato',
+  error: 'Errore',
+};
+
 function FieldLabel({ htmlFor, required = true, children }: FieldLabelProps) {
   return (
     <div className="flex items-center justify-between gap-3">
       <Label htmlFor={htmlFor}>{children}</Label>
-      <span
-        className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
-          required ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'
-        }`}
-      >
-        {required ? 'Obbligatorio' : 'Opzionale'}
-      </span>
+      {!required && (
+        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
+          Opzionale
+        </span>
+      )}
     </div>
   );
 }
@@ -375,10 +394,7 @@ export default function FunnelPagesToolPage() {
     : [];
 
   return (
-    <>
-      <Navbar />
-      <main className="app-shell app-copy relative mx-auto flex-1 w-full max-w-6xl overflow-hidden p-6" id="main-content">
-        <div className="pointer-events-none absolute inset-0 app-grid-overlay" />
+    <PageShell width="workspace">
 
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
@@ -396,77 +412,98 @@ export default function FunnelPagesToolPage() {
               <CardTitle className="text-base">Input funnel</CardTitle>
               <CardDescription>Form minimale: progetto, modello, tono di voce e documento di briefing.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-1.5">
-                <FieldLabel htmlFor="funnel-project-select">Progetto</FieldLabel>
-                <Select value={projectId} onValueChange={setProjectId}>
-                  <SelectTrigger id="funnel-project-select" className="app-control" aria-label="Seleziona progetto">
-                    <SelectValue placeholder="Seleziona progetto" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {projectsData?.projects?.map((project) => (
-                      <SelectItem key={project.id} value={project.id}>{project.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            <CardContent className="space-y-5">
+              <div className="space-y-6">
+                <section className="space-y-4">
+                  <div className="space-y-1 pb-1 border-b border-black/10">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Setup</p>
+                    <p className="text-sm text-slate-700">Definisci il contesto operativo prima di avviare l&apos;estrazione del briefing.</p>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="space-y-1.5">
+                      <FieldLabel htmlFor="funnel-project-select">Progetto</FieldLabel>
+                      <Select value={projectId} onValueChange={setProjectId}>
+                        <SelectTrigger id="funnel-project-select" className="app-control" aria-label="Seleziona progetto">
+                          <SelectValue placeholder="Seleziona progetto" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {projectsData?.projects?.map((project) => (
+                            <SelectItem key={project.id} value={project.id}>{project.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <FieldLabel htmlFor="funnel-model-select">Modello</FieldLabel>
+                      <Select value={model} onValueChange={setManualModel}>
+                        <SelectTrigger id="funnel-model-select" className="app-control" aria-label="Modello LLM">
+                          <SelectValue placeholder="Seleziona modello" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {modelsData?.models?.map((item) => (
+                            <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <FieldLabel htmlFor="funnel-tone-select">Tono di voce</FieldLabel>
+                      <Select value={tone} onValueChange={(value) => setTone(value as (typeof TONES)[number])}>
+                        <SelectTrigger id="funnel-tone-select" className="app-control" aria-label="Tono di comunicazione">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {TONES.map((item) => (
+                            <SelectItem key={item} value={item}>{item}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs leading-relaxed text-muted-foreground">{TONE_HINTS[tone]}</p>
+                    </div>
+                  </div>
+                </section>
+
+                <section className="space-y-4 border-t border-black/10 pt-5">
+                  <div className="space-y-1">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Briefing</p>
+                    <p className="text-sm text-slate-700">Carica il documento sorgente e verifica rapidamente che il file selezionato sia quello corretto.</p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      <FieldLabel htmlFor="funnel-file-input">Documento di briefing</FieldLabel>
+                      <input
+                        id="funnel-file-input"
+                        type="file"
+                        accept=".docx,.txt,.md,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown"
+                        className="block w-full cursor-pointer rounded-xl border border-black/10 bg-white/60 px-3 py-2 text-sm text-foreground file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1 file:text-xs file:font-medium"
+                        onChange={handleFileChange}
+                        disabled={phase === 'uploading' || phase === 'extracting' || running || !projectId || !model}
+                      />
+                      <p className="text-xs text-muted-foreground">Formati supportati: .docx, .txt, .md</p>
+                    </div>
+
+                    {!projectId && <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-800">Seleziona prima un progetto per abilitare il caricamento.</p>}
+                    {projectId && !model && <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-800">Seleziona un modello per continuare.</p>}
+                    {uploadedFileName && <p className="rounded-xl bg-slate-100/80 px-3 py-2 text-xs text-slate-700">File selezionato: {uploadedFileName}</p>}
+
+                    {(phase === 'uploading' || phase === 'extracting') && (
+                      <div className="rounded-xl border border-black/10 bg-white/60 p-4 text-center">
+                        <p className="text-sm font-medium">{phase === 'uploading' ? 'Caricamento documento...' : 'Estrazione campi in corso...'}</p>
+                      </div>
+                    )}
+
+                    {(uploadError || extractionError) && (
+                      <p className="rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive" role="alert">
+                        {uploadError ?? extractionError}
+                      </p>
+                    )}
+                  </div>
+                </section>
               </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-1.5">
-                  <FieldLabel htmlFor="funnel-model-select">Modello</FieldLabel>
-                  <Select value={model} onValueChange={setManualModel}>
-                    <SelectTrigger id="funnel-model-select" className="app-control" aria-label="Modello LLM">
-                      <SelectValue placeholder="Seleziona modello" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {modelsData?.models?.map((item) => (
-                        <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-1.5">
-                  <FieldLabel htmlFor="funnel-tone-select">Tono di voce</FieldLabel>
-                  <Select value={tone} onValueChange={(value) => setTone(value as (typeof TONES)[number])}>
-                    <SelectTrigger id="funnel-tone-select" className="app-control" aria-label="Tono di comunicazione">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {TONES.map((item) => (
-                        <SelectItem key={item} value={item}>{item}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <FieldLabel htmlFor="funnel-file-input">Documento di briefing</FieldLabel>
-                <input
-                  id="funnel-file-input"
-                  type="file"
-                  accept=".docx,.txt,.md,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown"
-                  className="block w-full cursor-pointer rounded-xl border border-black/10 bg-white/60 px-3 py-2 text-sm text-foreground file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1 file:text-xs file:font-medium"
-                  onChange={handleFileChange}
-                  disabled={phase === 'uploading' || phase === 'extracting' || running || !projectId || !model}
-                />
-                {!projectId && <p className="text-xs text-amber-700">Seleziona prima un progetto per abilitare il caricamento.</p>}
-                {projectId && !model && <p className="text-xs text-amber-700">Seleziona un modello per continuare.</p>}
-                {uploadedFileName && <p className="text-xs text-muted-foreground">File selezionato: {uploadedFileName}</p>}
-              </div>
-
-              {(phase === 'uploading' || phase === 'extracting') && (
-                <div className="rounded-xl border border-black/10 bg-white/60 p-4 text-center">
-                  <p className="text-sm font-medium">{phase === 'uploading' ? 'Caricamento documento...' : 'Estrazione campi in corso...'}</p>
-                </div>
-              )}
-
-              {(uploadError || extractionError) && (
-                <p className="rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive" role="alert">
-                  {uploadError ?? extractionError}
-                </p>
-              )}
 
               {phase === 'review' && extractedFields && (
                 <>
@@ -534,8 +571,8 @@ export default function FunnelPagesToolPage() {
                   <CardHeader>
                     <div className="flex items-center justify-between gap-3">
                       <CardTitle className="text-base">{step.title}</CardTitle>
-                      <Badge variant={step.status === 'done' ? 'secondary' : step.status === 'error' ? 'destructive' : 'outline'}>
-                        {step.status}
+                      <Badge variant="outline" className={STEP_STATUS_BADGE_CLASS[step.status]}>
+                        {STEP_STATUS_LABEL[step.status]}
                       </Badge>
                     </div>
                     <CardDescription>
@@ -569,7 +606,6 @@ export default function FunnelPagesToolPage() {
             })}
           </div>
         </div>
-      </main>
-    </>
+    </PageShell>
   );
 }

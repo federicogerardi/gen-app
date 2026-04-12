@@ -54,10 +54,15 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 
 ### ux/
 - [gui-refactor-plan.md](ux/gui-refactor-plan.md): Piano di refactoring GUI.
+- [projects-first-navigation-plan.md](ux/projects-first-navigation-plan.md): Piano per riallineare la navigazione a una gerarchia projects-first e riposizionare Artefatti come storico personale.
 - [user-spend-visibility-refactor-plan.md](ux/user-spend-visibility-refactor-plan.md): Piano e checklist operativa per centralizzare la spesa nel perimetro admin e rimuoverla dalle viste user (completato, merge su `dev`).
 - [ux-strategy.md](ux/ux-strategy.md): Strategia UX e principi guida.
 
 ### Aggiornamenti recenti
+- 2026-04-13: validazione finale completata dopo il refactor width policy shared shell: test PASS (48 suite, 352 test), typecheck PASS e build PASS.
+- 2026-04-13: estesa la copertura d'integrazione del track projects-first alla pagina dettaglio progetto, con suite completa PASS (48 suite, 352 test).
+- 2026-04-13: completata implementazione del track projects-first (fasi 1-4) con validazione completata: test PASS (48 suite, 352 test), typecheck PASS e build PASS.
+- 2026-04-13: aggiunto piano UX per riallineare la navigazione a una gerarchia projects-first e riposizionare il feed Artefatti come storico personale.
 - 2026-04-12: introdotta area notes con documento dedicato per desiderata e appunti preliminari non ancora in planning.
 - 2026-04-12: completata la fase documentale finale del track extraction model policy (spec API aggiornata, implement-index riallineato, runbook rollout/rollback in review).
 - 2026-04-12: completato e mergiato su `dev` il refactor di visibilità spesa user/admin split (PR #21), con checklist piano chiusa e stato as-is aggiornato.

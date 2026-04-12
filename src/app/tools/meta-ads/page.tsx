@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { Navbar } from '@/components/layout/Navbar';
+import { PageShell } from '@/components/layout/PageShell';
 import { useStreamGeneration } from '@/components/hooks/useStreamGeneration';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -72,10 +72,7 @@ export default function MetaAdsToolPage() {
   }
 
   return (
-    <>
-      <Navbar />
-      <main className="app-shell app-copy flex-1 p-6 max-w-6xl mx-auto w-full relative overflow-hidden" id="main-content">
-        <div className="pointer-events-none absolute inset-0 app-grid-overlay" />
+    <PageShell width="workspace">
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
             <h1 className="app-title text-3xl font-semibold text-slate-900">Generatore Meta Ads</h1>
@@ -186,7 +183,6 @@ export default function MetaAdsToolPage() {
             </CardContent>
           </Card>
         </div>
-      </main>
-    </>
+    </PageShell>
   );
 }

@@ -2,7 +2,7 @@ import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { Navbar } from '@/components/layout/Navbar';
+import { PageShell } from '@/components/layout/PageShell';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { formatArtifactContentForDisplay, getArtifactDisplayTypeLabel, getEffectiveArtifactWorkflowType } from '@/lib/artifact-preview';
+import { getArtifactStatusBadgeClass, getArtifactStatusLabel } from '@/lib/artifact-status-ui';
 import { isArtifactType, isArtifactStatus } from '@/lib/types/artifact';
 
 export default async function ArtifactPage({ params }: { params: Promise<{ id: string }> }) {
@@ -50,27 +51,29 @@ export default async function ArtifactPage({ params }: { params: Promise<{ id: s
   });
 
   return (
-    <>
-      <Navbar />
-      <main className="app-shell app-copy flex-1 p-6 max-w-6xl mx-auto w-full relative overflow-hidden" id="main-content">
-        <div className="pointer-events-none absolute inset-0 app-grid-overlay" />
+    <PageShell width="workspace">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
               <Badge>{typeLabel}</Badge>
               <Badge variant="outline">{artifact.model}</Badge>
-              <Badge variant={artifact.status === 'completed' ? 'default' : artifact.status === 'failed' ? 'destructive' : 'secondary'}>
-                {artifact.status}
+              <Badge variant="outline" className={getArtifactStatusBadgeClass(artifact.status)}>
+                {getArtifactStatusLabel(artifact.status)}
               </Badge>
             </div>
             <h1 className="app-title text-3xl font-semibold text-slate-900">Dettaglio artefatto</h1>
             <p className="text-sm text-muted-foreground">
-              Progetto: {artifact.project?.name ?? 'Progetto non disponibile'}
+              Elemento dello storico personale. Progetto: {artifact.project?.name ?? 'Progetto non disponibile'}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            {artifact.project?.id && (
+              <Button className="w-full sm:w-auto" variant="outline" asChild>
+                <Link href={`/dashboard/projects/${artifact.project.id}`}>Apri progetto</Link>
+              </Button>
+            )}
             <Button className="w-full sm:w-auto" variant="outline" asChild>
-              <Link href="/artifacts">Torna alla lista</Link>
+              <Link href="/artifacts">Torna allo storico</Link>
             </Button>
           </div>
         </div>
@@ -129,7 +132,6 @@ export default async function ArtifactPage({ params }: { params: Promise<{ id: s
             </CardContent>
           </Card>
         </div>
-      </main>
-    </>
+    </PageShell>
   );
 }

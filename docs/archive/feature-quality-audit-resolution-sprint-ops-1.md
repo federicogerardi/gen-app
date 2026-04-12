@@ -16,8 +16,8 @@ This runbook converts the audit execution plan into small working sessions desig
 
 Source documents:
 - docs/archive/implement-quality-audit.completed-2026-04-11.md
-- docs/implementation/feature-quality-audit-resolution-1.md
-- docs/implementation/feature-quality-audit-resolution-tracker-1.md
+- docs/archive/feature-quality-audit-resolution-1.md
+- docs/archive/feature-quality-audit-resolution-tracker-1.md
 
 ## 1. Operating Rules
 
@@ -129,12 +129,12 @@ This sequence creates an early vertical slice with low blast radius and a clear 
 
 ## 6. Tracker Integration
 
-- When a session closes, update the related TASK-TRK entry in docs/implementation/feature-quality-audit-resolution-tracker-1.md.
+- When a session closes, update the related TASK-TRK entry in docs/archive/feature-quality-audit-resolution-tracker-1.md.
 - If a task spans more than one session, record the session ID in the evidence log before marking the task complete.
 - If a session stops halfway, record the exact remaining step instead of a generic pending note.
 
 ## 7. Related Files
 
 - docs/archive/implement-quality-audit.completed-2026-04-11.md
-- docs/implementation/feature-quality-audit-resolution-1.md
-- docs/implementation/feature-quality-audit-resolution-tracker-1.md
+- docs/archive/feature-quality-audit-resolution-1.md
+- docs/archive/feature-quality-audit-resolution-tracker-1.md

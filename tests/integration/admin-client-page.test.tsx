@@ -1,8 +1,9 @@
+import type { ReactNode } from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { AdminClientPage } from '@/app/admin/AdminClientPage';
 
-jest.mock('@/components/layout/Navbar', () => ({
-  Navbar: () => <div data-testid="navbar" />,
+jest.mock('@/components/layout/PageShell', () => ({
+  PageShell: ({ children }: { children: ReactNode }) => <div data-testid="page-shell">{children}</div>,
 }));
 
 jest.mock('@/app/admin/AdminQuotaForm', () => ({

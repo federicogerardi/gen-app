@@ -13,9 +13,9 @@ tags: [process, tracker, quality, security, audit]
 
 ![Status: Complete](https://img.shields.io/badge/status-Complete-brightgreen)
 
-This tracker is the execution companion for docs/implementation/feature-quality-audit-resolution-1.md. It records completion status, evidence, and blockers while keeping the source rationale in docs/archive/implement-quality-audit.completed-2026-04-11.md unchanged.
+This tracker is the execution companion for docs/archive/feature-quality-audit-resolution-1.md. It records completion status, evidence, and blockers while keeping the source rationale in docs/archive/implement-quality-audit.completed-2026-04-11.md unchanged.
 
-Session sequencing reference: docs/implementation/feature-quality-audit-resolution-sprint-ops-1.md.
+Session sequencing reference: docs/archive/feature-quality-audit-resolution-sprint-ops-1.md.
 
 ## 1. Requirements & Constraints
 
@@ -38,7 +38,7 @@ Session sequencing reference: docs/implementation/feature-quality-audit-resoluti
 
 Evidence log:
 - S0-01: Execution plan structure validated. TASK-TRK-001 through TASK-TRK-004 confirmed as Phase 1 correctness gate, with no cross-phase dependencies blocking start from S1-01.
-- S0-02: Per-session validation commands documented in `docs/implementation/feature-quality-audit-resolution-sprint-ops-1.md` §S0-02 Validation Baseline. Phase 1 gate: `npm run typecheck && npm run lint && npm test`.
+- S0-02: Per-session validation commands documented in `docs/archive/feature-quality-audit-resolution-sprint-ops-1.md` §S0-02 Validation Baseline. Phase 1 gate: `npm run typecheck && npm run lint && npm test`.
 
 ### Implementation Phase 1
 
@@ -111,18 +111,18 @@ Evidence log:
 
 ## 3. Dependencies
 
-- DEP-TRK-001: docs/implementation/feature-quality-audit-resolution-1.md defines the execution scope for this tracker.
+- DEP-TRK-001: docs/archive/feature-quality-audit-resolution-1.md defines the execution scope for this tracker.
 - DEP-TRK-002: docs/archive/implement-quality-audit.completed-2026-04-11.md remains the source reference for problem statements and rationale.
 - DEP-TRK-003: CI quality gates must remain green for completed items.
-- DEP-TRK-004: docs/implementation/feature-quality-audit-resolution-sprint-ops-1.md defines the recommended session order and stop conditions.
+- DEP-TRK-004: docs/archive/feature-quality-audit-resolution-sprint-ops-1.md defines the recommended session order and stop conditions.
 
 ## 4. Files
 
-- FILE-TRK-001: docs/implementation/feature-quality-audit-resolution-1.md - execution plan.
+- FILE-TRK-001: docs/archive/feature-quality-audit-resolution-1.md - execution plan.
 - FILE-TRK-002: docs/archive/implement-quality-audit.completed-2026-04-11.md - source audit roadmap.
 - FILE-TRK-003: docs/implement-index.md - top-level tracking index.
 - FILE-TRK-004: docs/implementation/implementation-plan.md - main roadmap reference.
-- FILE-TRK-005: docs/implementation/feature-quality-audit-resolution-sprint-ops-1.md - granular session backlog.
+- FILE-TRK-005: docs/archive/feature-quality-audit-resolution-sprint-ops-1.md - granular session backlog.
 
 ## 5. Testing
 
@@ -137,7 +137,7 @@ Evidence log:
 
 ## 7. Related Specifications / Further Reading
 
-- docs/implementation/feature-quality-audit-resolution-1.md
+- docs/archive/feature-quality-audit-resolution-1.md
 - docs/archive/implement-quality-audit.completed-2026-04-11.md
 - docs/implementation/implementation-plan.md
-- docs/implementation/feature-quality-audit-resolution-sprint-ops-1.md
+- docs/archive/feature-quality-audit-resolution-sprint-ops-1.md
