@@ -2,10 +2,17 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { z } from 'zod';
+import { apiError } from '@/lib/tool-routes/responses';
 
 const updateArtifactSchema = z.object({
   content: z.string().min(1).max(100_000),
 });
+
+function stripArtifactCost<T>(artifact: T): Omit<T, 'costUSD'> {
+  const { costUSD, ...sanitizedArtifact } = artifact as T & { costUSD?: unknown };
+  void costUSD;
+  return sanitizedArtifact as Omit<T, 'costUSD'>;
+}
 
 export async function GET(
   _request: Request,
@@ -13,20 +20,20 @@ export async function GET(
 ) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: { code: 'UNAUTHORIZED', message: 'Authentication required' } }, { status: 401 });
+    return apiError('UNAUTHORIZED', 'Authentication required', 401);
   }
 
   const { id } = await params;
   const artifact = await db.artifact.findUnique({ where: { id } });
 
   if (!artifact) {
-    return NextResponse.json({ error: { code: 'NOT_FOUND', message: 'Artifact not found' } }, { status: 404 });
+    return apiError('NOT_FOUND', 'Artifact not found', 404);
   }
   if (artifact.userId !== session.user.id) {
-    return NextResponse.json({ error: { code: 'FORBIDDEN', message: 'Access denied' } }, { status: 403 });
+    return apiError('FORBIDDEN', 'Access denied', 403);
   }
 
-  return NextResponse.json({ artifact });
+  return NextResponse.json({ artifact: stripArtifactCost(artifact) });
 }
 
 export async function DELETE(
@@ -35,17 +42,17 @@ export async function DELETE(
 ) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: { code: 'UNAUTHORIZED', message: 'Authentication required' } }, { status: 401 });
+    return apiError('UNAUTHORIZED', 'Authentication required', 401);
   }
 
   const { id } = await params;
   const artifact = await db.artifact.findUnique({ where: { id } });
 
   if (!artifact) {
-    return NextResponse.json({ error: { code: 'NOT_FOUND', message: 'Artifact not found' } }, { status: 404 });
+    return apiError('NOT_FOUND', 'Artifact not found', 404);
   }
   if (artifact.userId !== session.user.id) {
-    return NextResponse.json({ error: { code: 'FORBIDDEN', message: 'Access denied' } }, { status: 403 });
+    return apiError('FORBIDDEN', 'Access denied', 403);
   }
 
   await db.artifact.delete({ where: { id } });
@@ -58,17 +65,22 @@ export async function PUT(
 ) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: { code: 'UNAUTHORIZED', message: 'Authentication required' } }, { status: 401 });
+    return apiError('UNAUTHORIZED', 'Authentication required', 401);
   }
 
   const { id } = await params;
   const artifact = await db.artifact.findUnique({ where: { id } });
 
   if (!artifact) {
-    return NextResponse.json({ error: { code: 'NOT_FOUND', message: 'Artifact not found' } }, { status: 404 });
+    return apiError('NOT_FOUND', 'Artifact not found', 404);
   }
   if (artifact.userId !== session.user.id) {
-    return NextResponse.json({ error: { code: 'FORBIDDEN', message: 'Access denied' } }, { status: 403 });
+    return apiError('FORBIDDEN', 'Access denied', 403);
+  }
+
+  // S1-08: Reject PUT on non-terminal artifact status
+  if (['generating', 'failed'].includes(artifact.status)) {
+    return apiError('CONFLICT', 'Cannot modify non-terminal artifact', 409);
   }
 
   // S1-08: Reject PUT on non-terminal artifact status
@@ -82,7 +94,7 @@ export async function PUT(
   const body = await request.json().catch(() => null);
   const parsed = updateArtifactSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: { code: 'VALIDATION_ERROR', message: 'Invalid input', details: parsed.error.flatten() } }, { status: 400 });
+    return apiError('VALIDATION_ERROR', 'Invalid input', 400, parsed.error.flatten());
   }
 
   const updated = await db.artifact.update({
@@ -92,5 +104,5 @@ export async function PUT(
     },
   });
 
-  return NextResponse.json({ artifact: updated });
+  return NextResponse.json({ artifact: stripArtifactCost(updated) });
 }

@@ -11,6 +11,34 @@ const querySchema = z.object({
   offset: z.coerce.number().int().min(0).default(0),
 });
 
+const artifactListSelect = {
+  id: true,
+  userId: true,
+  projectId: true,
+  type: true,
+  workflowType: true,
+  model: true,
+  input: true,
+  content: true,
+  status: true,
+  failureReason: true,
+  inputTokens: true,
+  outputTokens: true,
+  streamedAt: true,
+  createdAt: true,
+  updatedAt: true,
+  completedAt: true,
+  project: {
+    select: { id: true, name: true },
+  },
+} as const;
+
+function stripArtifactCost<T>(artifact: T): Omit<T, 'costUSD'> {
+  const { costUSD, ...sanitizedArtifact } = artifact as T & { costUSD?: unknown };
+  void costUSD;
+  return sanitizedArtifact as Omit<T, 'costUSD'>;
+}
+
 export async function GET(request: Request) {
   const session = await auth();
   if (!session?.user?.id) {
@@ -50,14 +78,15 @@ export async function GET(request: Request) {
       orderBy: { createdAt: 'desc' },
       skip: offset,
       take: limit,
-      include: {
-        project: {
-          select: { id: true, name: true },
-        },
-      },
+      select: artifactListSelect,
     }),
     db.artifact.count({ where }),
   ]);
 
-  return NextResponse.json({ items, total, limit, offset });
+  return NextResponse.json({
+    items: items.map((artifact) => stripArtifactCost(artifact)),
+    total,
+    limit,
+    offset,
+  });
 }

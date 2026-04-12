@@ -39,12 +39,20 @@ export class OpenRouterProvider implements LLMProvider {
       temperature: request.temperature ?? 0.7,
       max_tokens: request.maxTokens,
       stream: true,
+      stream_options: { include_usage: true },
     });
 
     for await (const chunk of stream) {
       const token = chunk.choices[0]?.delta?.content ?? '';
       const done = chunk.choices[0]?.finish_reason != null;
-      if (token) yield { token, done };
+      const usage = chunk.usage ? {
+        inputTokens: chunk.usage.prompt_tokens ?? 0,
+        outputTokens: chunk.usage.completion_tokens ?? 0,
+      } : undefined;
+
+      if (token || usage) {
+        yield { token, done, usage };
+      }
       if (done) break;
     }
   }

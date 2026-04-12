@@ -13,8 +13,6 @@ export async function GET() {
     select: {
       monthlyQuota: true,
       monthlyUsed: true,
-      monthlyBudget: true,
-      monthlySpent: true,
       resetDate: true,
     },
   });

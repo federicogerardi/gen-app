@@ -2,15 +2,15 @@
 goal: Prevent post-login failures when DATABASE_URL points to an empty database by enforcing deterministic Prisma migration execution in Vercel deploys
 version: 1.0
 date_created: 2026-04-11
-last_updated: 2026-04-11
+last_updated: 2026-04-12
 owner: Platform Team
-status: Planned
+status: Completed
 tags: [feature, deployment, prisma, vercel, reliability]
 ---
 
 # Introduction
 
-![Status: Planned](https://img.shields.io/badge/status-Planned-blue)
+![Status: Completed](https://img.shields.io/badge/status-Completed-brightgreen)
 
 This plan defines a deterministic deployment workflow that guarantees Prisma schema availability before application traffic reaches authentication and protected routes. The implementation targets Vercel Preview and Production environments and removes manual migration steps that currently cause failures after DATABASE_URL changes.
 
@@ -28,6 +28,8 @@ Operational tracker for execution updates: docs/implementation/feature-prisma-de
 - **CON-002**: Branch strategy remains unchanged: main for production, dev for development and preview flow.
 - **GUD-001**: Keep Prisma generate before typecheck/build where required by Prisma 7 client generation.
 - **PAT-001**: Use explicit deploy scripts in package.json and reference those scripts in Vercel commands.
+- **GUD-002**: `VERCEL_CRON_SECRET` must be required only for Vercel Production runtime context (`NODE_ENV=production` and `VERCEL_ENV=production`).
+- **GUD-003**: Do not enforce `VERCEL_CRON_SECRET` in global env parsing for local builds, CI, or preview contexts; enforce missing-secret handling inside the cron route runtime path.
 
 ## 2. Implementation Steps
 
@@ -37,9 +39,9 @@ Operational tracker for execution updates: docs/implementation/feature-prisma-de
 
 | Task     | Description | Completed | Date |
 | -------- | ----------- | --------- | ---- |
-| TASK-001 | Update package.json scripts with db:migrate:deploy = npx prisma migrate deploy and deploy:vercel = npm run db:migrate:deploy && npm run build. |  |  |
-| TASK-002 | Keep existing postinstall prisma generate unchanged to preserve Prisma 7 compatibility in install/build environments. |  |  |
-| TASK-003 | Add npm script documentation comments in README deploy section that explain script order and expected behavior. |  |  |
+| TASK-001 | Update package.json scripts with db:migrate:deploy = npx prisma migrate deploy and deploy:vercel = npm run db:migrate:deploy && npm run build. | Yes | 2026-04-11 |
+| TASK-002 | Keep existing postinstall prisma generate unchanged to preserve Prisma 7 compatibility in install/build environments. | Yes | 2026-04-11 |
+| TASK-003 | Add npm script documentation comments in README deploy section that explain script order and expected behavior. | Yes | 2026-04-11 |
 
 ### Implementation Phase 2
 
@@ -47,9 +49,9 @@ Operational tracker for execution updates: docs/implementation/feature-prisma-de
 
 | Task     | Description | Completed | Date |
 | -------- | ----------- | --------- | ---- |
-| TASK-004 | Set Vercel Build Command to npm run deploy:vercel for Preview environment and verify DATABASE_URL is set for Preview scope. |  |  |
-| TASK-005 | Set Vercel Build Command to npm run deploy:vercel for Production environment and verify DATABASE_URL is set for Production scope. |  |  |
-| TASK-006 | Validate Vercel deployment logs contain successful prisma migrate deploy execution before next build output. |  |  |
+| TASK-004 | Set Vercel Build Command to npm run deploy:vercel for Preview environment and verify DATABASE_URL is set for Preview scope. | Yes | 2026-04-11 |
+| TASK-005 | Set Vercel Build Command to npm run deploy:vercel for Production environment and verify DATABASE_URL is set for Production scope. | Yes | 2026-04-11 |
+| TASK-006 | Validate Vercel deployment logs contain successful prisma migrate deploy execution before next build output. | Yes | 2026-04-11 |
 
 ### Implementation Phase 3
 
@@ -57,9 +59,9 @@ Operational tracker for execution updates: docs/implementation/feature-prisma-de
 
 | Task     | Description | Completed | Date |
 | -------- | ----------- | --------- | ---- |
-| TASK-007 | Update .github/workflows/ci.yml with a postgres service container and DATABASE_URL pointing to that service. |  |  |
-| TASK-008 | Insert npx prisma migrate deploy step before lint, typecheck, test, and build. |  |  |
-| TASK-009 | Ensure CI keeps npx prisma generate before typecheck/build in final step ordering. |  |  |
+| TASK-007 | Update .github/workflows/ci.yml with a postgres service container and DATABASE_URL pointing to that service. | Yes | 2026-04-11 |
+| TASK-008 | Insert npx prisma migrate deploy step before lint, typecheck, test, and build. | Yes | 2026-04-11 |
+| TASK-009 | Ensure CI keeps npx prisma generate before typecheck/build in final step ordering. | Yes | 2026-04-11 |
 
 ### Implementation Phase 4
 
@@ -67,9 +69,19 @@ Operational tracker for execution updates: docs/implementation/feature-prisma-de
 
 | Task     | Description | Completed | Date |
 | -------- | ----------- | --------- | ---- |
-| TASK-010 | Update README deployment section with a dedicated subsection: DATABASE_URL change procedure. |  |  |
-| TASK-011 | Add mandatory post-deploy checks: _prisma_migrations table exists, User/Account/Session tables exist, login smoke test passes. |  |  |
-| TASK-012 | Add rollback note: on failed deploy, fix env or migration state and redeploy without runtime schema workarounds. |  |  |
+| TASK-010 | Update README deployment section with a dedicated subsection: DATABASE_URL change procedure. | Yes | 2026-04-11 |
+| TASK-011 | Add mandatory post-deploy checks: _prisma_migrations table exists, User/Account/Session tables exist, login smoke test passes. | Yes | 2026-04-11 |
+| TASK-012 | Add rollback note: on failed deploy, fix env or migration state and redeploy without runtime schema workarounds. | Yes | 2026-04-11 |
+
+### Regression Guardrails (Environment Validation)
+
+- **GOAL-005**: Prevent build-time regressions caused by over-strict env validation.
+
+| Task     | Description | Completed | Date |
+| -------- | ----------- | --------- | ---- |
+| TASK-013 | Keep env validation scoped: require `VERCEL_CRON_SECRET` only when `VERCEL_ENV=production`. | Yes | 2026-04-12 |
+| TASK-014 | Keep route-level misconfiguration handling in cron route (`500` + structured log) when secret is absent at runtime. | Yes | 2026-04-12 |
+| TASK-015 | Maintain unit coverage for non-Vercel production builds without `VERCEL_CRON_SECRET` to block regressions. | Yes | 2026-04-12 |
 
 ## 3. Alternatives
 
@@ -100,6 +112,8 @@ Operational tracker for execution updates: docs/implementation/feature-prisma-de
 - **TEST-003**: Vercel Preview deploy on empty Neon database creates _prisma_migrations and auth tables.
 - **TEST-004**: Authentication smoke test: Google login redirects to dashboard without server errors.
 - **TEST-005**: Idempotency test: second deploy with no new migration succeeds and applies zero schema changes.
+- **TEST-006**: Environment regression test: `parseEnv` must allow `NODE_ENV=production` without `VERCEL_CRON_SECRET` when `VERCEL_ENV` is not `production`.
+- **TEST-007**: Build regression test: `npm run build` must pass in local/CI contexts without setting `VERCEL_CRON_SECRET`.
 
 ## 7. Risks & Assumptions
 

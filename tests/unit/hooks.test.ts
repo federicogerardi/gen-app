@@ -30,8 +30,6 @@ describe('useQuota', () => {
     const quotaData = {
       monthlyQuota: 100,
       monthlyUsed: 20,
-      monthlyBudget: '50.00',
-      monthlySpent: '10.00',
       resetDate: '2026-05-01',
     };
     mockFetch({ quota: quotaData });

@@ -1,11 +1,11 @@
 # API Specifications: LLM Artifact Generation Hub
 
-**Version**: 1.1  
+**Version**: 1.2  
 **Status**: IMPLEMENTED SUBSET + OPEN ITEMS  
 **Base URL**: `https://<your-vercel-domain>/api` (production from `main`; development/preview from PR flow on `dev`)  
 **Authentication**: NextAuth session cookie (browser). Bearer tokens solo per integrazioni server-to-server esplicite.  
 **Content-Type**: `application/json` (default), `multipart/form-data` per upload documenti funnel  
-**Last Updated**: 2026-04-11
+**Last Updated**: 2026-04-12
 
 ---
 
@@ -33,6 +33,7 @@ All errors follow this format:
 - `RATE_LIMIT_EXCEEDED` → 429 (quota exhausted)
 - `PAYMENT_REQUIRED` → 402 (monthly budget exceeded)
 - `SERVICE_UNAVAILABLE` → 503 (provider temporarily unavailable)
+- `EXTRACTION_FAILED` → 503 (deterministic extraction fallback chain exhausted)
 - `INTERNAL_ERROR` → 500 (server error)
 
 ---
@@ -61,10 +62,29 @@ Implemented routes in the current codebase:
 - `PUT /admin/users/{userId}/quota`
 - `GET /admin/users/{userId}/audit`
 - `GET /admin/metrics`
+- `GET /admin/models`
+- `POST /admin/models`
+- `PUT /admin/models/{modelId}`
+- `DELETE /admin/models/{modelId}`
 - `GET /models`
 
 Documented but not yet implemented:
 - `GET /artifacts` (lista con filtri avanzati server-side e paginazione)
+
+### Model Registry (As-Is)
+
+Il catalogo modelli non e piu hardcoded a livello route validation: e gestito tramite registry DB (`LlmModel`) con CRUD admin.
+
+Comportamento corrente:
+- `GET /api/admin/models`: lista completa per gestione amministrativa
+- `POST /api/admin/models`: crea nuovo modello
+- `PUT /api/admin/models/{modelId}`: aggiorna stato/costi/default
+- `DELETE /api/admin/models/{modelId}`: elimina modello non-default
+- `GET /api/models`: espone ai client i modelli pubblici attivi
+
+Validazione runtime modello:
+- Le route di generazione validano il modello selezionato tramite availability check su registry (`requireAvailableModel`).
+- Se il registry DB non contiene righe attive, il sistema mantiene fallback statico controllato per continuita operativa.
 
 ### Auth.js Session Endpoint
 ```
@@ -202,10 +222,20 @@ POST /tools/extraction/generate
 }
 ```
 
+Policy runtime (as-is):
+- Il campo `model` nel payload e accettato per compatibilita/audit ma non decide il modello runtime di extraction.
+- La route applica chain deterministica: `anthropic/claude-3.7-sonnet` -> `openai/gpt-4.1` -> `openai/o3`.
+- Ogni tentativo viene validato server-side con parse JSON + schema (`fields`, `missingFields`, `notes`) + coerenza con `fieldMap`.
+- Il fallback si interrompe al primo tentativo valido oppure quando il costo cumulato supera `USD 0.08`.
+- In caso di esaurimento chain/policy budget: `{ error: { code: "EXTRACTION_FAILED", message } }` con HTTP 503.
+
 **Response**:
 - Stream SSE con eventi standard (`start`, `token`, `complete`, `error`)
 - Workflow `extraction`
 - Output richiesto al modello: JSON (consumato dal client e mappato in `extractedFields`)
+
+Nota operativa:
+- La route valida internamente i tentativi e poi invia al client gli eventi SSE del tentativo valido; durante retry non e garantito passthrough token live continuo.
 
 ### Generate Funnel Pages Step (Streaming)
 
@@ -348,7 +378,6 @@ GET /artifacts/{id}
     "status": "completed",
     "inputTokens": 45,
     "outputTokens": 987,
-    "costUSD": 0.031,
     "createdAt": "2026-04-07T10:30:00Z",
     "completedAt": "2026-04-07T10:30:12Z"
   }
@@ -358,8 +387,6 @@ GET /artifacts/{id}
 ---
 
 ### List Artifacts
-
-**Status**: Planned, not implemented in current codebase.
 
 **Endpoint**:
 ```
@@ -382,7 +409,6 @@ GET /artifacts?projectId={projectId}&limit=20&offset=0
       "type": "content",
       "status": "completed",
       "model": "openai/gpt-4-turbo",
-      "costUSD": 0.031,
       "createdAt": "2026-04-07T10:30:00Z"
     }
   ],
@@ -396,8 +422,6 @@ GET /artifacts?projectId={projectId}&limit=20&offset=0
 
 ### Update Artifact
 
-**Status**: Planned, not implemented in current codebase.
-
 **Endpoint**:
 ```
 PUT /artifacts/{id}
@@ -406,17 +430,18 @@ PUT /artifacts/{id}
 **Request**:
 ```json
 {
-  "content": "Updated content here",
-  "notes": "Manual edit by user"
+  "content": "Updated content here"
 }
 ```
 
 **Response** (200 OK):
 ```json
 {
-  "id": "art_456",
-  "content": "Updated content here",
-  "updatedAt": "2026-04-07T14:20:00Z"
+  "artifact": {
+    "id": "art_456",
+    "content": "Updated content here",
+    "updatedAt": "2026-04-07T14:20:00Z"
+  }
 }
 ```
 
@@ -503,18 +528,20 @@ GET /projects/{id}
 **Response** (200 OK):
 ```json
 {
-  "id": "proj_123",
-  "name": "Marketing Campaign Q2",
-  "description": "All assets for Q2...",
-  "artifacts": [
-    {
-      "id": "art_456",
-      "type": "content",
-      "status": "completed",
-      "createdAt": "2026-04-07T10:30:00Z"
-    }
-  ],
-  "createdAt": "2026-02-01T00:00:00Z"
+  "project": {
+    "id": "proj_123",
+    "name": "Marketing Campaign Q2",
+    "description": "All assets for Q2...",
+    "artifacts": [
+      {
+        "id": "art_456",
+        "type": "content",
+        "status": "completed",
+        "createdAt": "2026-04-07T10:30:00Z"
+      }
+    ],
+    "createdAt": "2026-02-01T00:00:00Z"
+  }
 }
 ```
 
@@ -575,14 +602,14 @@ GET /users/profile
 **Response** (200 OK):
 ```json
 {
-  "id": "user_123",
-  "email": "user@company.com",
-  "name": "John Doe",
-  "monthlyQuota": 1000,
-  "monthlyUsed": 245,
-  "monthlyBudget": 500,
-  "monthlySpent": 124.56,
-  "resetDate": "2026-05-07T00:00:00Z"
+  "user": {
+    "id": "user_123",
+    "email": "user@company.com",
+    "name": "John Doe",
+    "image": null,
+    "role": "user",
+    "createdAt": "2026-01-15T00:00:00Z"
+  }
 }
 ```
 
@@ -598,16 +625,11 @@ GET /users/quota
 **Response** (200 OK):
 ```json
 {
-  "monthlyQuota": 1000,
-  "monthlyUsed": 245,
-  "percentageUsed": 24.5,
-  "remaining": 755,
-  "resetDate": "2026-05-07T00:00:00Z",
-  "monthlyBudget": 500,
-  "monthlySpent": 124.56,
-  "percentageBudgetUsed": 24.91,
-  "remainingBudget": 375.44,
-  "estimatedDaysUntilBudgetExhausted": 8
+  "quota": {
+    "monthlyQuota": 1000,
+    "monthlyUsed": 245,
+    "resetDate": "2026-05-07T00:00:00Z"
+  }
 }
 ```
 

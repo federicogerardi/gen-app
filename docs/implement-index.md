@@ -2,7 +2,13 @@
 
 _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 
-## Stato avanzamento (aggiornato al 2026-04-11)
+## Aggiornamento sessione (2026-04-12)
+
+- **Verifica deploy/migrate completata**: confermato che `prisma migrate deploy` e incluso nella pipeline CI e nella catena di deploy applicativa (`db:migrate:deploy` -> `deploy:vercel` -> build).
+- **Stato funzionalita app in questa sessione**: nessuna nuova feature implementata; aggiornato solo il tracciamento documentale con evidenza di verifica deploy.
+- **Validazione ambiente locale**: `npm run typecheck` eseguito con esito `0` (pass).
+
+## Stato avanzamento (aggiornato al 2026-04-12)
 
 - **Testing coverage >80%**: `COMPLETATO (scope corrente)`
   - Coverage Jest attuale: Statements `82.96%`, Branches `70.31%`, Functions `78.91%`, Lines `85.96%`.
@@ -19,11 +25,22 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
   - Track esecutivo completato su 4 fasi e 15 finding, con merge finale su `dev` (squash and merge).
   - Tutti i task `TASK-TRK-001` → `TASK-TRK-015` risultano `Done` nel tracker operativo.
   - Documento piano allineato a stato finale e snapshot archiviato per storico.
-  - File: docs/implement-quality-audit.md, docs/implementation/feature-quality-audit-resolution-tracker-1.md, docs/archive/implement-quality-audit.completed-2026-04-11.md
+  - File: docs/archive/implement-quality-audit.completed-2026-04-11.md, docs/archive/feature-quality-audit-resolution-tracker-1.md
+
+- **Feature audit remediation sequenced (2026-04-12)**: `COMPLETATO E MERGIATO`
+  - Piano sequenziale `TASK-001..TASK-020` completato con evidenze test/unit/integration/e2e.
+  - PR #19 mergiata su `dev` e chiusa; stato operativo consolidato nel report di closure.
+  - File: docs/implementation/feature-audit-remediation-sequenced-1.md, docs/implementation/feature-audit-remediation-sequenced-tracker-1.md, docs/review/feature-audit-remediation-closure-2026-04-12.md
 
 - **Refactoring preview artefatti**: `IN CORSO`
   - Rafforzato fallback human-readable con nuovi test unit.
   - Da completare la convergenza UX completa su tutte le viste/workflow.
+
+- **User spend visibility refactor (user/admin split)**: `COMPLETATO (2026-04-12)`
+  - Rimossi feedback economici dal perimetro user (API quota/artifacts/projects e UI dashboard/dettaglio artefatto).
+  - Mantenuta visibilità economica nel perimetro admin con assertion di test esplicite.
+  - Merge eseguito su `dev` tramite PR #21.
+  - Documentazione contrattuale allineata su `docs/specifications/api-specifications.md`.
 
 - **Tooling generation optimization (Meta Ads + Funnel Pages)**: `COMPLETATO (PR-1..PR-6)`
   - Completati schema unificato input, prompt/runtime parity, normalizzazione output, SSE metadata additive, consolidamento route/error mapping e hardening finale.
@@ -31,6 +48,12 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
   - Esteso il flow Funnel Pages a pipeline upload-first: upload documento inline -> extraction fields -> generazione sequenziale `optin -> quiz -> vsl`.
   - Validazione finale locale aggiornata: `npm run lint`, `npm run typecheck`, `npm run test` (30/30 suite), `npm run build` tutti `PASS`.
   - File: docs/archive/tooling-generation-refactor-plan.md
+
+- **Extraction model policy (Funnel upload -> extraction)**: `COMPLETATO E MERGIATO (2026-04-12)`
+  - Completate tutte le 5 fasi: policy runtime statica su OpenRouter, fallback deterministico (`anthropic/claude-3.7-sonnet` -> `openai/gpt-4.1` -> `openai/o3`), validazione server-side parse/schema/coerenza, budget cap configurabile, telemetria tentativi, normalizzazione quota retry e bootstrap deploy idempotente del model registry.
+  - Root cause runtime chiusa durante il track: mismatch sul campo `notes` tra prompt e schema route, corretto con riallineamento prompt e compatibilita `string | string[]` lato validazione.
+  - Merge su `dev` completato; documentazione operativa e tracker chiusi come snapshot finale as-is.
+  - File: docs/implementation/funnel-extraction-model-policy-plan.md, docs/implementation/feature-funnel-extraction-model-policy-tracker-1.md, docs/review/extraction-model-policy-rollout-runbook-2026-04-12.md
 
 - **Deploy Vercel**: `COMPLETATO (baseline)`
   - Branch `main` in produzione.
@@ -62,7 +85,7 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 - **Quality & security audit resolution track**: `COMPLETATO`
   - Esecuzione completata dei finding di correttezza, consistenza, scalabilita e hardening emersi dall'audit globale.
   - Piano operativo chiuso e mantenuto come riferimento storico insieme al tracker.
-  - File: docs/implement-quality-audit.md, docs/implementation/feature-quality-audit-resolution-tracker-1.md, docs/archive/implement-quality-audit.completed-2026-04-11.md
+  - File: docs/archive/implement-quality-audit.completed-2026-04-11.md, docs/archive/feature-quality-audit-resolution-tracker-1.md
 
 - **Error handling avanzato**
   - Retry logic, circuit breaker, error boundaries custom, fallback provider.
@@ -75,6 +98,11 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 - **Quota management**
   - Automatizzare reset mensile, warning 80%, endpoint admin quota, email alert.
   - File: docs/archive/improvement-roadmap.md, docs/archive/architecture-review.md
+
+- **Model registry auto-sync da OpenRouter**
+  - Integrare il prelievo automatico dei costi modello esposti da OpenRouter e dei dettagli endpoint pubblicati dalla Models API per ridurre input manuale in admin e migliorare l'allineamento del registry.
+  - Valutare modalita guidata con proposta di aggiornamento e conferma admin, invece di overwrite automatico, per preservare governance operativa.
+  - File: https://openrouter.ai/api/v1/models, https://openrouter.ai/docs/overview/models
 
 ---
 

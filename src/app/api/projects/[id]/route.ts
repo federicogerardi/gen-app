@@ -8,6 +8,42 @@ const updateProjectSchema = z.object({
   description: z.string().max(500).optional(),
 });
 
+const projectWithArtifactsSelect = {
+  id: true,
+  userId: true,
+  name: true,
+  description: true,
+  createdAt: true,
+  updatedAt: true,
+  artifacts: {
+    orderBy: { createdAt: 'desc' as const },
+    select: {
+      id: true,
+      userId: true,
+      projectId: true,
+      type: true,
+      workflowType: true,
+      model: true,
+      input: true,
+      content: true,
+      status: true,
+      failureReason: true,
+      inputTokens: true,
+      outputTokens: true,
+      streamedAt: true,
+      completedAt: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  },
+};
+
+function stripArtifactCost<T>(artifact: T): Omit<T, 'costUSD'> {
+  const { costUSD, ...sanitizedArtifact } = artifact as T & { costUSD?: unknown };
+  void costUSD;
+  return sanitizedArtifact as Omit<T, 'costUSD'>;
+}
+
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -20,7 +56,7 @@ export async function GET(
   const { id } = await params;
   const project = await db.project.findUnique({
     where: { id },
-    include: { artifacts: { orderBy: { createdAt: 'desc' } } },
+    select: projectWithArtifactsSelect,
   });
 
   if (!project) {
@@ -30,7 +66,12 @@ export async function GET(
     return NextResponse.json({ error: { code: 'FORBIDDEN', message: 'Access denied' } }, { status: 403 });
   }
 
-  return NextResponse.json({ project });
+  return NextResponse.json({
+    project: {
+      ...project,
+      artifacts: project.artifacts.map((artifact) => stripArtifactCost(artifact)),
+    },
+  });
 }
 
 export async function PUT(

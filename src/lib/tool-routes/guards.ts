@@ -6,6 +6,7 @@ import { rateLimit } from '@/lib/rate-limit';
 import { apiError } from './responses';
 import type { ArtifactType, QuotaEventStatus } from '@/lib/types/artifact';
 import { normalizeArtifactType } from './artifact-type-map';
+import { isModelAvailable } from '@/lib/llm/model-registry';
 
 interface GuardError {
   ok: false;
@@ -45,10 +46,27 @@ export async function requireAuthenticatedUser(): Promise<GuardResult<{ userId: 
   return { ok: true, data: { userId: session.user.id } };
 }
 
+export async function requireAvailableModel(model: string): Promise<GuardResult<void>> {
+  const available = await isModelAvailable(model);
+  if (!available) {
+    return {
+      ok: false,
+      response: apiError('VALIDATION_ERROR', 'Unsupported model', 400, {
+        fieldErrors: {
+          model: ['Unsupported model'],
+        },
+      }),
+    };
+  }
+
+  return { ok: true, data: undefined };
+}
+
 export async function enforceUsageGuards(
   userId: string,
   model: string,
   artifactType: string | ArtifactType = 'content',
+  options?: { incrementMonthlyUsed?: boolean },
 ): Promise<GuardResult<void>> {
   // Normalize artifact type (resolve tool workflows to artifact types)
   let resolvedType: ArtifactType;
@@ -58,6 +76,8 @@ export async function enforceUsageGuards(
     // Fallback to 'content' if type cannot be resolved
     resolvedType = 'content';
   }
+
+  const incrementMonthlyUsed = options?.incrementMonthlyUsed ?? true;
 
   // Early rate limit check (before DB round-trip) to reject burst traffic cheaply
   const { allowed } = await rateLimit(userId);
@@ -73,7 +93,7 @@ export async function enforceUsageGuards(
     };
   }
 
-  // Atomic transaction: check quota/budget + increment monthlyUsed
+  // Atomic transaction: check quota/budget and optionally increment monthlyUsed
   try {
     await db.$transaction(async (tx) => {
       const user = await tx.user.findUnique({ where: { id: userId } });
@@ -89,11 +109,13 @@ export async function enforceUsageGuards(
         throw new Error('BUDGET_EXHAUSTED');
       }
 
-      // Increment monthlyUsed inside transaction (atomicity guarantee)
-      await tx.user.update({
-        where: { id: userId },
-        data: { monthlyUsed: { increment: 1 } },
-      });
+      if (incrementMonthlyUsed) {
+        // Increment monthlyUsed inside transaction (atomicity guarantee)
+        await tx.user.update({
+          where: { id: userId },
+          data: { monthlyUsed: { increment: 1 } },
+        });
+      }
     });
   } catch (err) {
     if ((err as Error).message === 'USER_NOT_FOUND') {

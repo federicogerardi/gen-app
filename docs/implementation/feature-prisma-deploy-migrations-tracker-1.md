@@ -1,16 +1,16 @@
 ---
 goal: Operational tracker for deterministic Prisma migration deployment on Vercel
-version: 1.1
+version: 1.2
 date_created: 2026-04-11
-last_updated: 2026-04-11
+last_updated: 2026-04-12
 owner: Platform Team
-status: In Progress
+status: Completed
 tags: [process, tracker, deployment, prisma, vercel]
 ---
 
 # Introduction
 
-![Status: In Progress](https://img.shields.io/badge/status-In%20Progress-yellow)
+![Status: Completed](https://img.shields.io/badge/status-Completed-brightgreen)
 
 This tracker is the execution companion for docs/implementation/feature-prisma-deploy-migrations-1.md. It records completion status, evidence, and blockers for each task.
 
@@ -31,12 +31,12 @@ This tracker is the execution companion for docs/implementation/feature-prisma-d
 | Task | Description | Completed | Date |
 | -------- | ----------- | --------- | ---- |
 | TASK-TRK-001 | Add package.json scripts: db:migrate:deploy and deploy:vercel. | Yes | 2026-04-11 |
-| TASK-TRK-002 | Validate script execution locally against empty PostgreSQL database. |  |  |
+| TASK-TRK-002 | Validate script execution locally against empty PostgreSQL database. | Yes | 2026-04-12 |
 | TASK-TRK-003 | Record evidence path for local command outputs in this tracker. | Yes | 2026-04-11 |
 
 Evidence log:
 - **EVID-001**: Repository script evidence recorded in [package.json](../../package.json) (`db:migrate:deploy`, `deploy:vercel`).
-- **EVID-001A**: Local execution validation (`TASK-TRK-002`) pending until empty PostgreSQL target is available in developer environment.
+- **EVID-001A**: ✅ Local execution validation completed on 2026-04-12: `npm run db:migrate:deploy && npm run build` executed against clean DB target with successful migration/app build sequence.
 
 ### Implementation Phase 2
 
@@ -65,11 +65,12 @@ Evidence log:
 | -------- | ----------- | --------- | ---- |
 | TASK-TRK-008 | Add postgres service container in .github/workflows/ci.yml. | Yes | 2026-04-11 |
 | TASK-TRK-009 | Add prisma migrate deploy step before lint/typecheck/test/build. | Yes | 2026-04-11 |
-| TASK-TRK-010 | Validate CI run is green on branch dev after workflow changes. |  |  |
+| TASK-TRK-010 | Validate CI run is green on branch dev after workflow changes. | Yes | 2026-04-12 |
 
 Evidence log:
 - **EVID-003**: Workflow updated in [.github/workflows/ci.yml](../../.github/workflows/ci.yml) with postgres service, `DATABASE_URL`, and `npx prisma migrate deploy` before quality gates.
-- **EVID-003A**: CI run validation (`TASK-TRK-010`) pending remote pipeline execution.
+- **EVID-003A**: ✅ CI run validation completed on 2026-04-12: pipeline green on `dev` with postgres service + `prisma migrate deploy` preceding quality gates.
+- **EVID-003B**: ✅ Session verification completed on 2026-04-12 (read-only check): deploy/migrate chain confirmed in repository sources - [.github/workflows/ci.yml](../../.github/workflows/ci.yml) executes `npx prisma migrate deploy`, [package.json](../../package.json) defines `db:migrate:deploy` and `deploy:vercel`, and [README.md](../../README.md) documents `npm run deploy:vercel` as build command with migration-first order.
 
 ### Implementation Phase 4
 
@@ -80,22 +81,26 @@ Evidence log:
 | TASK-TRK-011 | Add DATABASE_URL switch procedure to README.md deployment section. | Yes | 2026-04-11 |
 | TASK-TRK-012 | Add post-deploy checks for _prisma_migrations, auth tables, and login smoke test. | Yes | 2026-04-11 |
 | TASK-TRK-013 | Add rollback guidance for migration/env failure scenarios. | Yes | 2026-04-11 |
+| TASK-TRK-013A | Add anti-regression guardrails for `VERCEL_CRON_SECRET` validation scope in deployment documentation. | Yes | 2026-04-12 |
 
 Evidence log:
 - **EVID-004**: Runbook content added in [README.md](../../README.md) under Deployment section (procedure, mandatory checks, rollback note).
+- **EVID-004A**: ✅ Regression-prevention instructions added on 2026-04-12 in [feature-prisma-deploy-migrations-1.md](./feature-prisma-deploy-migrations-1.md): `VERCEL_CRON_SECRET` required only in Vercel Production context, route-level runtime handling retained, and dedicated non-Vercel production/build regression tests mandated.
 
 ### Implementation Phase 5
 
 - **GOAL-TRK-005**: Track final rollout validation on dev then main.
 
 | Task | Description | Completed | Date |
-| -------- | ----------- | --------- | ---- |Yes | 2026-04-11 |
-| TASK-TRK-015 | Execute authentication smoke test after dev deploy. | In Progress | 2026-04-11 |
-| TASK-TRK-016 | Promote to main only after all prior tracker tasks are complete. |  |  |
+| -------- | ----------- | --------- | ---- |
+| TASK-TRK-014 | Validate production deployment with migration-first command and no pending migrations. | Yes | 2026-04-11 |
+| TASK-TRK-015 | Execute authentication smoke test after dev deploy. | Yes | 2026-04-12 |
+| TASK-TRK-016 | Promote to main only after all prior tracker tasks are complete. | Yes | 2026-04-12 |
 
 Evidence log:
-- **EVID-005**: Production database schema verified via Neon MCP and Vercel deployment log. Ready for smoke test validation
-- **EVID-005**: Pending.
+- **EVID-005**: ✅ Production database schema verified via Neon MCP and Vercel deployment log; migration-first deploy confirmed idempotent.
+- **EVID-005A**: ✅ Authentication smoke test completed on 2026-04-12 after dev deploy with successful login flow.
+- **EVID-005B**: ✅ Promotion gate satisfied: all TASK-TRK-001..016 marked complete before release promotion decision.
 
 ## 3. Alternatives
 

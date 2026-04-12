@@ -33,6 +33,9 @@ const mockedStream = createArtifactStream as jest.MockedFunction<typeof createAr
 const findUser = db.user.findUnique as jest.Mock;
 const findProject = db.project.findUnique as jest.Mock;
 const createQuota = db.quotaHistory.create as jest.Mock;
+const updateUser = db.user.update as jest.Mock;
+const dbTransaction = db.$transaction as jest.Mock;
+const findActiveModel = db.llmModel.findFirst as jest.Mock;
 
 const VALID_PROJECT_ID = 'cjld2cyuq0000t3rmniod1foy';
 
@@ -64,8 +67,13 @@ beforeEach(() => {
   jest.clearAllMocks();
   createQuota.mockResolvedValue({});
   mockedRateLimit.mockResolvedValue({ allowed: true, remaining: 999 });
+  findActiveModel.mockImplementation(async ({ where }: { where?: { modelId?: string } }) => (
+    where?.modelId === 'openai/gpt-4-turbo' ? { id: 'model_1' } : null
+  ));
   findUser.mockResolvedValue(mockUser);
   findProject.mockResolvedValue(mockProject);
+  updateUser.mockResolvedValue({ ...mockUser, monthlyUsed: mockUser.monthlyUsed + 1 });
+  dbTransaction.mockImplementation(async (callback: (tx: typeof db) => Promise<unknown>) => callback(db));
   mockedStream.mockResolvedValue(new ReadableStream());
 });
 
@@ -207,5 +215,45 @@ describe('POST /api/artifacts/generate', () => {
         model: 'openai/gpt-4-turbo',
       }),
     );
+  });
+
+  it('enforces quota atomically under parallel requests', async () => {
+    mockedAuth.mockResolvedValue({ user: { id: 'user_1' } } as never);
+
+    let monthlyUsed = 0;
+    let txQueue: Promise<unknown> = Promise.resolve();
+
+    dbTransaction.mockImplementation(async (callback: (tx: unknown) => Promise<unknown>) => {
+      const run = async () => callback({
+        ...db,
+        user: {
+          ...db.user,
+          findUnique: jest.fn(async () => ({
+            ...mockUser,
+            monthlyUsed,
+            monthlyQuota: 1,
+            monthlySpent: '0.00',
+            monthlyBudget: '100.00',
+          })),
+          update: jest.fn(async () => {
+            monthlyUsed += 1;
+            return { ...mockUser, monthlyUsed };
+          }),
+        },
+      } as unknown);
+
+      const current = txQueue.then(run);
+      txQueue = current.catch(() => undefined);
+      return current;
+    });
+
+    const [resA, resB] = await Promise.all([
+      POST(makeRequest(VALID_BODY)),
+      POST(makeRequest(VALID_BODY)),
+    ]);
+
+    const statuses = [resA.status, resB.status].sort((a, b) => a - b);
+    expect(statuses).toEqual([200, 429]);
+    expect(mockedStream).toHaveBeenCalledTimes(1);
   });
 });

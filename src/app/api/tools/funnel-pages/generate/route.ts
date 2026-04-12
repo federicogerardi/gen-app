@@ -10,6 +10,7 @@ import {
 import {
   enforceUsageGuards,
   parseAndValidateRequest,
+  requireAvailableModel,
   requireAuthenticatedUser,
   requireOwnedProject,
 } from '@/lib/tool-routes/guards';
@@ -284,6 +285,11 @@ export async function POST(request: Request) {
   const payload = parsed.data;
   const startedAt = Date.now();
 
+  const modelResult = await requireAvailableModel(payload.model);
+  if (!modelResult.ok) {
+    return modelResult.response;
+  }
+
   log.info(
     {
       workflowType: 'funnel_pages',
@@ -320,7 +326,7 @@ export async function POST(request: Request) {
       model: payload.model,
       promptOverride: prompt,
       input: {
-        topic: prompt,
+        topic: `funnel_${payload.step}`,
         tone: payload.tone,
         length: getLengthByFunnelStep(payload.step),
         outputFormat: 'markdown',

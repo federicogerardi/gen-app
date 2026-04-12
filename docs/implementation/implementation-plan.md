@@ -40,9 +40,8 @@ Implemented in the current codebase:
 Still pending or partial:
 - Post-deploy hardening on Vercel (monitoring/runbook/smoke checks)
 - monitoring and ops documentation
-- expanded automated coverage and quality gates (>80% coverage target)
+- expanded automated coverage and quality gates (coverage >80% reached on current scope; E2E and auth/db real-flow expansion still open)
 - responsive/accessibility hardening and final UX polish
-- decomposed quality and security audit execution track (correctness, consistency, scalability, hardening)
 - cleanup finale di refusi UX/documentali fuori perimetro MVP
 
 Recently completed (2026-04-08):
@@ -51,6 +50,9 @@ Recently completed (2026-04-08):
 - ✅ All lint errors resolved (6 errors → 0 errors)
 - ✅ All typecheck errors resolved
 - ✅ Build passing with environment variables configured
+
+Recently completed (2026-04-12):
+- ✅ Quality & security audit remediation sequenced (TASK-001..020) merged into dev via PR #19; all 20 tasks completed with full lint/typecheck/unit/integration/e2e evidence.
 
 Recently completed (2026-04-11):
 - ✅ Single sprint "Internal Pages Visual Unification" executed across dashboard, tools, artifacts, admin and project pages
@@ -68,7 +70,7 @@ Recently completed (2026-04-11):
 | **4. Streaming & API Implementation** | Implemented | SSE generation and full planned artifact/project CRUD surface are in place |
 | **5. Frontend Components** | Mostly complete | Main pages and hooks exist; responsive/UX hardening is still open |
 | **6. Admin Panel & Advanced Features** | Mostly complete | Metrics and audit activity exist; full admin CRUD remains a product decision |
-| **7. Testing & Quality** | Partially complete | Jest and Playwright are configured and passing basic tests; coverage/perf/security remain open |
+| **7. Testing & Quality** | Substantially complete | Jest (82.96% statements, 70.31% branches) and Playwright passing; coverage >80% threshold met; security audit closed PR #19; E2E and auth/db real-flow expansion still open |
 | **8. Deployment & Monitoring** | Partially complete | CI/CD pipeline (GitHub Actions) implemented and passing; Vercel deployment is active, monitoring/runbook hardening still to do |
 
 ---
@@ -80,9 +82,9 @@ Recently completed (2026-04-11):
   - Tracker: docs/implementation/feature-prisma-deploy-migrations-tracker-1.md
 
 - Quality and security audit resolution
-  - Source roadmap: docs/implement-quality-audit.md
-  - Execution plan: docs/implementation/feature-quality-audit-resolution-1.md
-  - Tracker: docs/implementation/feature-quality-audit-resolution-tracker-1.md
+  - Source roadmap: docs/archive/implement-quality-audit.completed-2026-04-11.md
+  - Execution plan: docs/archive/feature-quality-audit-resolution-1.md
+  - Tracker: docs/archive/feature-quality-audit-resolution-tracker-1.md
 
 ---
 

@@ -47,14 +47,11 @@ export default async function DashboardPage() {
     }),
     db.user.findUnique({
       where: { id: session.user.id },
-      select: { monthlyQuota: true, monthlyUsed: true, monthlyBudget: true, monthlySpent: true },
+      select: { monthlyQuota: true, monthlyUsed: true },
     }),
   ]);
 
   const quotaPercent = user && user.monthlyQuota > 0 ? Math.round((user.monthlyUsed / user.monthlyQuota) * 100) : 0;
-  const budgetPercent = user && Number(user.monthlyBudget) > 0
-    ? Math.round((Number(user.monthlySpent) / Number(user.monthlyBudget)) * 100)
-    : 0;
 
   const projectsForClient = projects.map((p: typeof projects[number]) => ({
     ...p,
@@ -115,23 +112,20 @@ export default async function DashboardPage() {
               </CardContent>
             </Card>
             <Card className="app-surface rounded-2xl">
-              <CardHeader className="pb-2"><CardDescription>Quota residua</CardDescription></CardHeader>
+              <CardHeader className="pb-2"><CardDescription>Utilizzo quota</CardDescription></CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold">{Math.max(0, 100 - quotaPercent)}%</p>
-                <p className="text-xs text-muted-foreground">{Math.max(0, user.monthlyQuota - user.monthlyUsed)} richieste</p>
+                <p className="text-2xl font-bold">{Math.min(quotaPercent, 100)}%</p>
+                <p className="text-xs text-muted-foreground">{user.monthlyUsed} su {user.monthlyQuota}</p>
                 <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden" aria-hidden="true">
                   <div className="h-full bg-primary" style={{ width: `${Math.min(quotaPercent, 100)}%` }} />
                 </div>
               </CardContent>
             </Card>
             <Card className="app-surface rounded-2xl">
-              <CardHeader className="pb-2"><CardDescription>Budget speso</CardDescription></CardHeader>
+              <CardHeader className="pb-2"><CardDescription>Richieste disponibili</CardDescription></CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold">${Number(user.monthlySpent).toFixed(2)}</p>
-                <p className="text-xs text-muted-foreground">/ ${Number(user.monthlyBudget).toFixed(2)}</p>
-                <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden" aria-hidden="true">
-                  <div className="h-full bg-primary" style={{ width: `${Math.min(budgetPercent, 100)}%` }} />
-                </div>
+                <p className="text-2xl font-bold">{Math.max(0, user.monthlyQuota - user.monthlyUsed)}</p>
+                <p className="text-xs text-muted-foreground">su {user.monthlyQuota} mensili</p>
               </CardContent>
             </Card>
             <Card className="app-surface rounded-2xl">

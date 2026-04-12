@@ -1,15 +1,8 @@
 import { z } from 'zod';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { ALLOWED_MODELS, isSupportedModel } from '@/lib/llm/models';
-
-// Re-export for backward compatibility
-export { ALLOWED_MODELS } from '@/lib/llm/models';
 
 export const toneSchema = z.enum(['professional', 'casual', 'formal', 'technical']);
 
-const modelSchema = z.string().refine(isSupportedModel, {
-  message: 'Unsupported model',
-});
+const modelSchema = z.string().min(1);
 
 const customerContextSchema = z.object({
   product: z.string().min(3),
@@ -83,44 +76,73 @@ export const extractionRequestSchema = toolSharedSchema.extend({
 });
 
 const funnelStepSchema = z.enum(['optin', 'quiz', 'vsl']);
+export const funnelSchemaVersionSchema = z.enum(['v1', 'v2', 'v3']);
 
-export const funnelPagesRequestSchemaV1 = z.preprocess(
-  normalizeLegacyContext,
-  toolBaseSchema
-    .extend({
-      step: funnelStepSchema,
-      promise: z.string().min(3),
-      notes: z.string().optional(),
-      optinOutput: z.string().optional(),
-      quizOutput: z.string().optional(),
-    })
-    .superRefine((value, ctx) => {
-      if (value.step === 'quiz' && !value.optinOutput) {
+function normalizeFunnelSchemaVersion(value: unknown): unknown {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return value;
+  }
+
+  const asRecord = value as Record<string, unknown>;
+  if (asRecord.schemaVersion === 'v1' || asRecord.schemaVersion === 'v2' || asRecord.schemaVersion === 'v3') {
+    return value;
+  }
+
+  if ('schemaVersion' in asRecord) {
+    return value;
+  }
+
+  if ('extractedFields' in asRecord) {
+    return { ...asRecord, schemaVersion: 'v3' };
+  }
+
+  if ('briefing' in asRecord) {
+    return { ...asRecord, schemaVersion: 'v2' };
+  }
+
+  return { ...asRecord, schemaVersion: 'v1' };
+}
+
+const funnelPagesRequestSchemaV1Object = toolBaseSchema
+  .extend({
+    schemaVersion: z.literal('v1'),
+    step: funnelStepSchema,
+    promise: z.string().min(3),
+    notes: z.string().optional(),
+    optinOutput: z.string().optional(),
+    quizOutput: z.string().optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.step === 'quiz' && !value.optinOutput) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['optinOutput'],
+        message: 'optinOutput is required for quiz step',
+      });
+    }
+
+    if (value.step === 'vsl') {
+      if (!value.optinOutput) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['optinOutput'],
-          message: 'optinOutput is required for quiz step',
+          message: 'optinOutput is required for vsl step',
         });
       }
 
-      if (value.step === 'vsl') {
-        if (!value.optinOutput) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ['optinOutput'],
-            message: 'optinOutput is required for vsl step',
-          });
-        }
-
-        if (!value.quizOutput) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ['quizOutput'],
-            message: 'quizOutput is required for vsl step',
-          });
-        }
+      if (!value.quizOutput) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['quizOutput'],
+          message: 'quizOutput is required for vsl step',
+        });
       }
-    }),
+    }
+  });
+
+export const funnelPagesRequestSchemaV1 = z.preprocess(
+  (value) => normalizeLegacyContext(normalizeFunnelSchemaVersion(value)),
+  funnelPagesRequestSchemaV1Object,
 );
 
 const businessTypeSchema = z.enum(['B2B', 'B2C']);
@@ -227,8 +249,9 @@ export const funnelUnifiedBriefingSchema = z.object({
   }),
 });
 
-export const funnelPagesRequestSchemaV2 = toolSharedSchema
+const funnelPagesRequestSchemaV2Object = toolSharedSchema
   .extend({
+    schemaVersion: z.literal('v2'),
     step: funnelStepSchema,
     briefing: funnelUnifiedBriefingSchema,
     notes: z.string().optional(),
@@ -263,8 +286,14 @@ export const funnelPagesRequestSchemaV2 = toolSharedSchema
     }
   });
 
-export const funnelPagesRequestSchemaV3 = toolSharedSchema
+export const funnelPagesRequestSchemaV2 = z.preprocess(
+  normalizeFunnelSchemaVersion,
+  funnelPagesRequestSchemaV2Object,
+);
+
+const funnelPagesRequestSchemaV3Object = toolSharedSchema
   .extend({
+    schemaVersion: z.literal('v3'),
     step: funnelStepSchema,
     extractedFields: z
       .record(z.string(), z.unknown())
@@ -301,7 +330,19 @@ export const funnelPagesRequestSchemaV3 = toolSharedSchema
     }
   });
 
-export const funnelPagesRequestSchema = z.union([funnelPagesRequestSchemaV1, funnelPagesRequestSchemaV2, funnelPagesRequestSchemaV3]);
+export const funnelPagesRequestSchemaV3 = z.preprocess(
+  normalizeFunnelSchemaVersion,
+  funnelPagesRequestSchemaV3Object,
+);
+
+export const funnelPagesRequestSchema = z.preprocess(
+  (value) => normalizeLegacyContext(normalizeFunnelSchemaVersion(value)),
+  z.discriminatedUnion('schemaVersion', [
+    funnelPagesRequestSchemaV1Object,
+    funnelPagesRequestSchemaV2Object,
+    funnelPagesRequestSchemaV3Object,
+  ]),
+);
 
 export type MetaAdsRequest = z.infer<typeof metaAdsRequestSchema>;
 export type ExtractionRequest = z.infer<typeof extractionRequestSchema>;

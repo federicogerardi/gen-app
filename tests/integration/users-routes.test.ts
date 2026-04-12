@@ -35,8 +35,6 @@ describe('GET /api/users/quota', () => {
     const quota = {
       monthlyQuota: 100,
       monthlyUsed: 20,
-      monthlyBudget: '50.00',
-      monthlySpent: '10.00',
       resetDate: new Date().toISOString(),
     };
     findUser.mockResolvedValue(quota);
@@ -46,6 +44,8 @@ describe('GET /api/users/quota', () => {
 
     expect(res.status).toBe(200);
     expect(data.quota.monthlyQuota).toBe(100);
+    expect(data.quota).not.toHaveProperty('monthlyBudget');
+    expect(data.quota).not.toHaveProperty('monthlySpent');
     expect(findUser).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id: 'user_1' } }),
     );

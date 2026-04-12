@@ -23,11 +23,11 @@ Questo piano trasforma i **15 punti critici** del report di audit in un roadmap 
 
 Questo documento resta la **fonte completa** di razionale, problemi, impatto e scope originale dell'audit.
 
-Per l'esecuzione operativa il track è stato scomposto nei seguenti artefatti sotto `docs/implementation`:
+Per l'esecuzione operativa il track è stato scomposto nei seguenti artefatti (ora archiviati in `docs/archive`):
 
-- `docs/implementation/feature-quality-audit-resolution-1.md`: piano operativo per fasi e workstream PR-sized
-- `docs/implementation/feature-quality-audit-resolution-tracker-1.md`: tracker di avanzamento, evidenze e blocchi
-- `docs/implementation/feature-quality-audit-resolution-sprint-ops-1.md`: runbook sessioni granulari con baseline di validazione per la Phase 1
+- `docs/archive/feature-quality-audit-resolution-1.md`: piano operativo per fasi e workstream PR-sized
+- `docs/archive/feature-quality-audit-resolution-tracker-1.md`: tracker di avanzamento, evidenze e blocchi
+- `docs/archive/feature-quality-audit-resolution-sprint-ops-1.md`: runbook sessioni granulari con baseline di validazione per la Phase 1
 
 La decomposizione mantiene il perimetro invariato: **4 fasi**, **15 finding**, **14 PR indipendenti**, nessun breaking change.
 

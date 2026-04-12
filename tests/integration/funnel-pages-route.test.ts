@@ -30,6 +30,7 @@ const mockedQuizPrompt = buildFunnelQuizPrompt as jest.MockedFunction<typeof bui
 const mockedVslPrompt = buildFunnelVslPrompt as jest.MockedFunction<typeof buildFunnelVslPrompt>;
 const findUser = db.user.findUnique as jest.Mock;
 const findProject = db.project.findUnique as jest.Mock;
+const findActiveModel = db.llmModel.findFirst as jest.Mock;
 
 const projectId = 'cjld2cyuq0000t3rmniod1foy';
 const baseBody = {
@@ -57,6 +58,9 @@ beforeEach(() => {
   mockedOptinPrompt.mockResolvedValue('OPTIN PROMPT');
   mockedQuizPrompt.mockResolvedValue('QUIZ PROMPT');
   mockedVslPrompt.mockResolvedValue('VSL PROMPT');
+  findActiveModel.mockImplementation(async ({ where }: { where?: { modelId?: string } }) => (
+    where?.modelId === 'openai/gpt-4-turbo' ? { id: 'model_1' } : null
+  ));
   findUser.mockResolvedValue({ id: 'user_1', monthlyUsed: 1, monthlyQuota: 100, monthlySpent: '1', monthlyBudget: '10' });
   findProject.mockResolvedValue({ id: projectId, userId: 'user_1' });
 });
@@ -99,6 +103,11 @@ describe('POST /api/tools/funnel-pages/generate', () => {
     const res = await POST(makeRequest({ ...baseBody, step: 'optin' }));
     expect(res.status).toBe(200);
     expect(mockedOptinPrompt).toHaveBeenCalled();
+
+    const streamArgs = mockedStream.mock.calls[0][0] as { input: { topic?: string }; promptOverride?: string };
+    expect(streamArgs.promptOverride).toBe('OPTIN PROMPT');
+    expect(streamArgs.input.topic).toBe('funnel_optin');
+    expect(streamArgs.input.topic).not.toBe('OPTIN PROMPT');
   });
 
   it('routes prompt builder for optin step from extracted fields payload', async () => {

@@ -61,6 +61,14 @@ const baselineMetrics = {
   sampleSizeRequests30d: 250,
 };
 
+const models = [
+  {
+    id: 'openai/gpt-4-turbo',
+    name: 'GPT-4 Turbo',
+    default: true,
+  },
+];
+
 // Mock fetch for API pagination
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 (global as any).fetch = jest.fn((url: any) => {
@@ -74,6 +82,15 @@ const baselineMetrics = {
           limit: 20,
           offset: 0,
           hasMore: false,
+        }),
+    });
+  }
+  if (typeof url === 'string' && url.includes('/api/admin/models')) {
+    return Promise.resolve({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          models,
         }),
     });
   }
@@ -103,6 +120,8 @@ describe('AdminClientPage', () => {
       expect(screen.getByText('Mario Rossi')).toBeInTheDocument();
     });
 
+    expect(screen.getByText('$0.0210')).toBeInTheDocument();
+
     expect(screen.getByText('90%')).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Cerca utente'), { target: { value: 'Giulia' } });
@@ -131,5 +150,6 @@ describe('AdminClientPage', () => {
 
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByTestId('admin-quota-form')).toBeInTheDocument();
+    expect(screen.getAllByText('$50.00 / $500.00').length).toBeGreaterThan(0);
   });
 });

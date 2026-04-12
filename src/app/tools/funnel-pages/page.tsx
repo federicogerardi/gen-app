@@ -32,6 +32,18 @@ type StreamResult = {
   artifactId: string | null;
 };
 
+type ApiErrorPayload = {
+  error?: {
+    code?: string;
+    message?: string;
+    details?: {
+      reason?: string;
+      maxCostUsd?: number;
+      cumulativeCostUsd?: number;
+    };
+  };
+};
+
 type FieldLabelProps = {
   htmlFor?: string;
   required?: boolean;
@@ -110,6 +122,17 @@ function parseJsonFromLLMOutput(rawOutput: string): Record<string, unknown> {
   throw new Error('Nessun JSON trovato nella risposta del modello di estrazione');
 }
 
+function getExtractionErrorMessage(errorPayload: ApiErrorPayload | null): string {
+  const code = errorPayload?.error?.code;
+  const reason = errorPayload?.error?.details?.reason;
+
+  if (code === 'EXTRACTION_FAILED' && reason === 'budget_exceeded') {
+    return 'Estrazione interrotta: limite costo per richiesta raggiunto. Riprova con un file piu breve o riduci il contenuto.';
+  }
+
+  return errorPayload?.error?.message ?? 'Estrazione fallita';
+}
+
 async function generateStream(request: {
   projectId: string;
   model: string;
@@ -163,7 +186,7 @@ export default function FunnelPagesToolPage() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [projectId, setProjectId] = useState('');
-  const [model, setModel] = useState('openai/gpt-4-turbo');
+  const [manualModel, setManualModel] = useState('');
   const [tone, setTone] = useState<(typeof TONES)[number]>('professional');
   const [notes, setNotes] = useState('');
   const [phase, setPhase] = useState<Phase>('idle');
@@ -186,9 +209,14 @@ export default function FunnelPagesToolPage() {
     queryKey: ['models'],
     queryFn: async () => {
       const res = await fetch('/api/models');
-      return res.json() as Promise<{ models?: Array<{ id: string; name: string }> }>;
+      return res.json() as Promise<{ models?: Array<{ id: string; name: string; default?: boolean }> }>;
     },
   });
+
+  const model = manualModel
+    || modelsData?.models?.find((item: { default?: boolean }) => item.default)?.id
+    || modelsData?.models?.[0]?.id
+    || '';
 
   function updateStep(key: FunnelStepKey, patch: Partial<FunnelStepState>) {
     setSteps((prev) => prev.map((step) => (step.key === key ? { ...step, ...patch } : step)));
@@ -220,6 +248,11 @@ export default function FunnelPagesToolPage() {
 
     if (!projectId) {
       setUploadError('Seleziona prima un progetto.');
+      return;
+    }
+
+    if (!model) {
+      setUploadError('Seleziona prima un modello.');
       return;
     }
 
@@ -260,8 +293,8 @@ export default function FunnelPagesToolPage() {
       });
 
       if (!extractionRes.ok) {
-        const data = (await extractionRes.json().catch(() => null)) as { error?: { message?: string } } | null;
-        throw new Error(data?.error?.message ?? 'Estrazione fallita');
+        const data = (await extractionRes.json().catch(() => null)) as ApiErrorPayload | null;
+        throw new Error(getExtractionErrorMessage(data));
       }
 
       const rawOutput = await streamToText(extractionRes);
@@ -381,9 +414,9 @@ export default function FunnelPagesToolPage() {
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-1.5">
                   <FieldLabel htmlFor="funnel-model-select">Modello</FieldLabel>
-                  <Select value={model} onValueChange={setModel}>
+                  <Select value={model} onValueChange={setManualModel}>
                     <SelectTrigger id="funnel-model-select" className="app-control" aria-label="Modello LLM">
-                      <SelectValue />
+                      <SelectValue placeholder="Seleziona modello" />
                     </SelectTrigger>
                     <SelectContent>
                       {modelsData?.models?.map((item) => (
@@ -410,17 +443,16 @@ export default function FunnelPagesToolPage() {
 
               <div className="space-y-2">
                 <FieldLabel htmlFor="funnel-file-input">Documento di briefing</FieldLabel>
-                <p className="text-xs text-muted-foreground">Formati supportati: DOCX, TXT, Markdown. Dimensione massima: 10 MB.</p>
                 <input
-                  ref={fileInputRef}
                   id="funnel-file-input"
                   type="file"
                   accept=".docx,.txt,.md,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown"
                   className="block w-full cursor-pointer rounded-xl border border-black/10 bg-white/60 px-3 py-2 text-sm text-foreground file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1 file:text-xs file:font-medium"
                   onChange={handleFileChange}
-                  disabled={phase === 'uploading' || phase === 'extracting' || running || !projectId}
+                  disabled={phase === 'uploading' || phase === 'extracting' || running || !projectId || !model}
                 />
                 {!projectId && <p className="text-xs text-amber-700">Seleziona prima un progetto per abilitare il caricamento.</p>}
+                {projectId && !model && <p className="text-xs text-amber-700">Seleziona un modello per continuare.</p>}
                 {uploadedFileName && <p className="text-xs text-muted-foreground">File selezionato: {uploadedFileName}</p>}
               </div>
 
@@ -470,7 +502,7 @@ export default function FunnelPagesToolPage() {
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <Button onClick={handleRunProcess} disabled={running || !projectId} className="flex-1">
+                    <Button onClick={handleRunProcess} disabled={running || !projectId || !model} className="flex-1">
                       {running ? 'Generazione in corso...' : 'Avvia generazione funnel'}
                     </Button>
                     <Button variant="outline" onClick={resetAll} disabled={running}>

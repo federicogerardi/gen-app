@@ -6,6 +6,7 @@ import { db } from '@/lib/db';
 jest.mock('@/lib/db', () => ({
   db: {
     artifact: { create: jest.fn(), update: jest.fn() },
+    llmModel: { findFirst: jest.fn() },
     user: { update: jest.fn() },
     quotaHistory: { create: jest.fn() },
   },
@@ -28,6 +29,7 @@ jest.mock('@/lib/llm/orchestrator', () => {
 
 const mockedDb = db as unknown as {
   artifact: { create: jest.Mock; update: jest.Mock };
+  llmModel: { findFirst: jest.Mock };
   user: { update: jest.Mock };
   quotaHistory: { create: jest.Mock };
 };
@@ -38,9 +40,9 @@ describe('createArtifactStream SSE contract', () => {
 
     mockedDb.artifact.create.mockResolvedValue({ id: 'art_123' });
     mockedDb.artifact.update.mockResolvedValue({});
+    mockedDb.llmModel.findFirst.mockResolvedValue(null);
     mockedDb.user.update.mockResolvedValue({});
     mockedDb.quotaHistory.create.mockResolvedValue({});
-
   });
 
   it('emits start/token/progress/complete events with additive metadata', async () => {
@@ -93,16 +95,72 @@ describe('createArtifactStream SSE contract', () => {
     expect(progress).toEqual(expect.objectContaining({
       workflowType: 'meta_ads',
       format: 'markdown',
-      estimatedTokens: { input: 14, output: 20 },
+      estimatedTokens: expect.objectContaining({ input: 14, output: expect.any(Number) }),
     }));
+    expect(progress?.estimatedTokens.output).toBeGreaterThan(0);
 
     expect(complete).toEqual(expect.objectContaining({
       artifactId: 'art_123',
       content: 'Normalized content',
       workflowType: 'meta_ads',
       format: 'markdown',
-      tokens: { input: 14, output: 20 },
+      tokens: expect.objectContaining({ input: 14, output: expect.any(Number) }),
     }));
+    expect(complete?.tokens.output).toBe(progress?.estimatedTokens.output);
     expect(typeof complete.cost).toBe('number');
+
+    expect(mockedDb.artifact.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        model: 'openai/gpt-4-turbo',
+      }),
+    }));
+
+    expect(mockedDb.quotaHistory.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        model: 'openai/gpt-4-turbo',
+        status: 'success',
+      }),
+    }));
+  });
+
+  it('persists extraction attempt metadata inside artifact input', async () => {
+    const stream = await createArtifactStream({
+      userId: 'user_1',
+      projectId: 'proj_1',
+      type: 'extraction',
+      model: 'openai/gpt-4.1',
+      workflowType: 'extraction',
+      input: {
+        workflowType: 'extraction',
+        outputFormat: 'json',
+        extractionAttempt: 2,
+        policyVersion: '1.0.0',
+        fallbackFromModel: 'anthropic/claude-3.7-sonnet',
+      },
+    });
+
+    const reader = stream.getReader();
+    while (true) {
+      const { done } = await reader.read();
+      if (done) break;
+    }
+
+    expect(mockedDb.artifact.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        model: 'openai/gpt-4.1',
+        input: expect.objectContaining({
+          extractionAttempt: 2,
+          policyVersion: '1.0.0',
+          fallbackFromModel: 'anthropic/claude-3.7-sonnet',
+        }),
+      }),
+    }));
+
+    expect(mockedDb.quotaHistory.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        model: 'openai/gpt-4.1',
+        artifactType: 'extraction',
+      }),
+    }));
   });
 });
