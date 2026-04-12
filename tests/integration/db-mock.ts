@@ -37,6 +37,7 @@ export function createDbBase() {
       findUnique: jest.fn(),
       findMany: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn(),
       delete: jest.fn(),
       count: jest.fn(),
       aggregate: jest.fn(),

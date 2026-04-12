@@ -2,7 +2,7 @@ import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { LLMOrchestrator } from './orchestrator';
 import type { ArtifactType, OutputFormat, QuotaEventStatus } from '@/lib/types/artifact';
-import { calculateCost } from './costs';
+import { calculateCostAccurate } from './costs';
 
 const orchestrator = new LLMOrchestrator();
 
@@ -75,7 +75,7 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
           outputTokenCount++;
           tokenSequence++;
           const estimatedInputTokens = inputTokenCount;
-          const costEstimate = calculateCost(model, estimatedInputTokens, outputTokenCount);
+          const costEstimate = calculateCostAccurate(model, estimatedInputTokens, outputTokenCount);
 
           controller.enqueue(encode({
             type: 'token',
@@ -119,7 +119,7 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
           await pendingUpdate;
         }
 
-        const cost = calculateCost(model, inputTokenCount, outputTokenCount);
+        const cost = calculateCostAccurate(model, inputTokenCount, outputTokenCount);
         const normalized = orchestrator.normalizeOutput({
           rawContent: accumulated,
           type,

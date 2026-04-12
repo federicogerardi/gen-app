@@ -70,7 +70,7 @@ export async function POST(request: Request) {
       model: payload.model,
       promptOverride: prompt,
       input: {
-        topic: prompt,
+        topic: payload.objective,
         tone: payload.tone,
         length: 1200,
         outputFormat: 'markdown',

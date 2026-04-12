@@ -8,6 +8,8 @@ describe('parseEnv', () => {
       GOOGLE_CLIENT_ID: 'client-id',
       GOOGLE_CLIENT_SECRET: 'client-secret',
       OPENROUTER_API_KEY: 'openrouter-key',
+      UPSTASH_REDIS_REST_URL: 'https://upstash.example.com',
+      UPSTASH_REDIS_REST_TOKEN: 'upstash-token',
       VERCEL_CRON_SECRET: 'cron-secret',
       NEXT_PUBLIC_APP_URL: 'https://example.com',
       ALLOWED_EMAIL_DOMAINS: 'company.com,example.com',
@@ -36,6 +38,8 @@ describe('parseEnv', () => {
     expect(parsed.NODE_ENV).toBe('test');
     expect(parsed.DATABASE_URL).toContain('postgresql://test:test@localhost:5432/test');
     expect(parsed.OPENROUTER_API_KEY).toBe('test-openrouter-key');
-    expect(parsed.VERCEL_CRON_SECRET).toBeUndefined();
+    expect(parsed.UPSTASH_REDIS_REST_URL).toBe('https://test-upstash.local');
+    expect(parsed.UPSTASH_REDIS_REST_TOKEN).toBe('test-upstash-token');
+    expect(parsed.VERCEL_CRON_SECRET).toBe('test-cron-secret');
   });
 });

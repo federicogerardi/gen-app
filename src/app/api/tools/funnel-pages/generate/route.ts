@@ -320,7 +320,7 @@ export async function POST(request: Request) {
       model: payload.model,
       promptOverride: prompt,
       input: {
-        topic: prompt,
+        topic: `funnel_${payload.step}`,
         tone: payload.tone,
         length: getLengthByFunnelStep(payload.step),
         outputFormat: 'markdown',
