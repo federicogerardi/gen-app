@@ -7,7 +7,7 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 - [blueprint.md](blueprint.md): Blueprint architetturale e overview del progetto.
 - [progetto-overview.md](progetto-overview.md): Descrizione generale e obiettivi del progetto per Stakeholder e Team.
 - [implement-index.md](implement-index.md): Indice operativo delle priorità correnti e stato di avanzamento.
-- [implement-quality-audit.md](implement-quality-audit.md): Catalogo dei finding quality/security dell'audit globale e razionale della risoluzione.
+- [archive/implement-quality-audit.completed-2026-04-11.md](archive/implement-quality-audit.completed-2026-04-11.md): Snapshot storico finale dei finding quality/security dell'audit globale.
 
 ### accessibility/
 - [accessibility.md](accessibility/accessibility.md): Linee guida e strategie per l’accessibilità.

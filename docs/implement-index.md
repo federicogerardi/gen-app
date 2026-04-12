@@ -25,7 +25,7 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
   - Track esecutivo completato su 4 fasi e 15 finding, con merge finale su `dev` (squash and merge).
   - Tutti i task `TASK-TRK-001` → `TASK-TRK-015` risultano `Done` nel tracker operativo.
   - Documento piano allineato a stato finale e snapshot archiviato per storico.
-  - File: docs/implement-quality-audit.md, docs/archive/feature-quality-audit-resolution-tracker-1.md, docs/archive/implement-quality-audit.completed-2026-04-11.md
+  - File: docs/archive/implement-quality-audit.completed-2026-04-11.md, docs/archive/feature-quality-audit-resolution-tracker-1.md
 
 - **Feature audit remediation sequenced (2026-04-12)**: `COMPLETATO E MERGIATO`
   - Piano sequenziale `TASK-001..TASK-020` completato con evidenze test/unit/integration/e2e.
@@ -85,7 +85,7 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 - **Quality & security audit resolution track**: `COMPLETATO`
   - Esecuzione completata dei finding di correttezza, consistenza, scalabilita e hardening emersi dall'audit globale.
   - Piano operativo chiuso e mantenuto come riferimento storico insieme al tracker.
-  - File: docs/implement-quality-audit.md, docs/archive/feature-quality-audit-resolution-tracker-1.md, docs/archive/implement-quality-audit.completed-2026-04-11.md
+  - File: docs/archive/implement-quality-audit.completed-2026-04-11.md, docs/archive/feature-quality-audit-resolution-tracker-1.md
 
 - **Error handling avanzato**
   - Retry logic, circuit breaker, error boundaries custom, fallback provider.

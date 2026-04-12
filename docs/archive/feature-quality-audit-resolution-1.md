@@ -12,7 +12,7 @@ tags: [feature, quality, security, audit, reliability, tracking]
 
 ![Status: Planned](https://img.shields.io/badge/status-Planned-blue)
 
-This execution plan translates the audit roadmap in docs/implement-quality-audit.md into a workstream-oriented delivery track under docs/implementation. The source audit document remains the normative rationale and problem catalog; this file defines the execution decomposition, sequencing, and tracking boundaries for implementation.
+This execution plan translates the audit roadmap in docs/archive/implement-quality-audit.completed-2026-04-11.md into a workstream-oriented delivery track under docs/implementation. The source audit document remains the normative rationale and problem catalog; this file defines the execution decomposition, sequencing, and tracking boundaries for implementation.
 
 Operational tracker for execution updates: docs/implementation/feature-quality-audit-resolution-tracker-1.md.
 Granular session runbook for sprint execution: docs/implementation/feature-quality-audit-resolution-sprint-ops-1.md.
@@ -24,7 +24,7 @@ Granular session runbook for sprint execution: docs/implementation/feature-quali
 - REQ-003: Maintain the canonical error shape `{ error: { code, message, details? } }` across all touched routes.
 - REQ-004: Keep rate-limit and quota guard ordering intact before any OpenRouter call.
 - REQ-005: Update supporting documentation for each delivered phase when contracts or operational behavior change.
-- CON-001: docs/implement-quality-audit.md remains the authoritative source for full rationale, problem statements, and original effort estimates.
+- CON-001: docs/archive/implement-quality-audit.completed-2026-04-11.md remains the authoritative source for full rationale, problem statements, and original effort estimates.
 - CON-002: Use existing branch and PR policy: target branch dev, squash and merge, Conventional Commits.
 - CON-003: No runtime filesystem prompt loading may be introduced while touching generation paths.
 - GUD-001: Prefer incremental migrations, tests, and docs updates phase by phase rather than a single omnibus delivery.
@@ -43,7 +43,7 @@ Granular session runbook for sprint execution: docs/implementation/feature-quali
 | TASK-004 | Prevent artifact update flows from mutating non-terminal artifacts into misleading completed states. |  |  |
 
 Source mapping:
-- Problems 4, 5, 6, 7 in docs/implement-quality-audit.md.
+- Problems 4, 5, 6, 7 in docs/archive/implement-quality-audit.completed-2026-04-11.md.
 
 ### Implementation Phase 2
 
@@ -56,7 +56,7 @@ Source mapping:
 | TASK-007 | Parameterize artifact type in guard and audit writes so quota history reflects the actual workflow executed. |  |  |
 
 Source mapping:
-- Problems 1, 2, 3 in docs/implement-quality-audit.md.
+- Problems 1, 2, 3 in docs/archive/implement-quality-audit.completed-2026-04-11.md.
 
 ### Implementation Phase 3
 
@@ -68,7 +68,7 @@ Source mapping:
 | TASK-009 | Reduce streaming write pressure on the database with throttled or batched persistence behavior. |  |  |
 
 Source mapping:
-- Problems 8, 9 in docs/implement-quality-audit.md.
+- Problems 8, 9 in docs/archive/implement-quality-audit.completed-2026-04-11.md.
 
 ### Implementation Phase 4
 
@@ -84,7 +84,7 @@ Source mapping:
 | TASK-015 | Add pricing metadata freshness checks so stale model cost tables surface operational warnings. |  |  |
 
 Source mapping:
-- Problems 10, 11, 12, 13, 14, 15 in docs/implement-quality-audit.md.
+- Problems 10, 11, 12, 13, 14, 15 in docs/archive/implement-quality-audit.completed-2026-04-11.md.
 
 ## 3. Delivery Strategy
 
@@ -96,14 +96,14 @@ Source mapping:
 
 ## 4. Dependencies
 
-- DEP-001: Existing audit roadmap in docs/implement-quality-audit.md must stay aligned with any scope changes.
+- DEP-001: Existing audit roadmap in docs/archive/implement-quality-audit.completed-2026-04-11.md must stay aligned with any scope changes.
 - DEP-002: Related ADRs and API specs must be updated when implementation changes affect contracts or runtime guarantees.
 - DEP-003: Prisma migrations, if required by a task, must follow the existing migration-first deploy workflow documented under docs/implementation.
 - DEP-004: Coverage and validation commands remain `npm run lint`, `npm run typecheck`, `npm run test`, and `npm run build` unless a narrower task explicitly justifies a reduced validation set.
 
 ## 5. Files
 
-- FILE-001: docs/implement-quality-audit.md - source audit roadmap and rationale.
+- FILE-001: docs/archive/implement-quality-audit.completed-2026-04-11.md - source audit roadmap and rationale.
 - FILE-002: docs/implement-index.md - top-level index entry for the decomposed audit track.
 - FILE-003: docs/implementation/implementation-plan.md - main implementation roadmap entry point.
 - FILE-004: docs/implementation/feature-quality-audit-resolution-1.md - execution plan for the audit track.
@@ -127,7 +127,7 @@ Source mapping:
 
 ## 8. Related Specifications / Further Reading
 
-- docs/implement-quality-audit.md
+- docs/archive/implement-quality-audit.completed-2026-04-11.md
 - docs/implement-index.md
 - docs/implementation/implementation-plan.md
 - docs/implementation/feature-quality-audit-resolution-sprint-ops-1.md
