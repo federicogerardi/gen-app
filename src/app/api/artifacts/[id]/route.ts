@@ -83,6 +83,14 @@ export async function PUT(
     return apiError('CONFLICT', 'Cannot modify non-terminal artifact', 409);
   }
 
+  // S1-08: Reject PUT on non-terminal artifact status
+  if (['generating', 'failed'].includes(artifact.status)) {
+    return NextResponse.json(
+      { error: { code: 'CONFLICT', message: 'Cannot modify non-terminal artifact' } },
+      { status: 409 },
+    );
+  }
+
   const body = await request.json().catch(() => null);
   const parsed = updateArtifactSchema.safeParse(body);
   if (!parsed.success) {
