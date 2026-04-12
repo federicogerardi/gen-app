@@ -1,10 +1,12 @@
+import { env } from '@/lib/env';
+
 export const EXTRACTION_POLICY_VERSION = '1.0.0';
 
 export const EXTRACTION_PRIMARY_MODEL = 'anthropic/claude-3.7-sonnet';
 export const EXTRACTION_FALLBACK_MODELS = ['openai/gpt-4.1', 'openai/o3'] as const;
 
 export const EXTRACTION_MAX_ATTEMPTS = 3;
-export const EXTRACTION_MAX_COST_USD = 0.08;
+export const EXTRACTION_MAX_COST_USD = env.EXTRACTION_MAX_COST_USD;
 export const EXTRACTION_TIMEOUT_MS = 45_000;
 
 export type ExtractionEscalationReason =

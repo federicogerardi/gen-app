@@ -1,16 +1,16 @@
 ---
 goal: Static Extraction Model Policy with Deterministic Fallback Chain for Funnel Upload Flow
-version: 1.3
+version: 1.5
 date_created: 2026-04-12
 last_updated: 2026-04-12
 owner: Platform AI / Tooling
-status: Completed
-tags: [feature, llm, extraction, openrouter, policy, reliability, cost]
+status: In Progress
+tags: [feature, llm, extraction, openrouter, policy, reliability, cost, deploy, model-registry]
 ---
 
 # Introduction
 
-![Status: Completed](https://img.shields.io/badge/status-Completed-brightgreen)
+![Status: In progress](https://img.shields.io/badge/status-In%20progress-yellow)
 
 Questo piano definisce l'implementazione di una policy runtime per la fase di estrazione dati nel flusso Funnel da file caricato utente, con modello statico e catena di fallback deterministica su OpenRouter. L'obiettivo e separare l'estrazione strutturata dalla scelta modello usata per la generazione creativa, migliorando affidabilita JSON, prevedibilita operativa e controllo costo.
 
@@ -26,6 +26,9 @@ Questo piano definisce l'implementazione di una policy runtime per la fase di es
 - **REQ-008**: La policy deve essere configurabile tramite costanti centralizzate, non hardcoded in route.
 - **REQ-009**: Telemetria minima per tentativo: modello, indice tentativo, latenza, token, costo stimato, esito validazione.
 - **REQ-010**: La soluzione deve essere retrocompatibile con payload corrente che include il campo `model`.
+- **REQ-011**: In deploy, i model ID runtime fondamentali per extraction devono essere bootstrap/persistiti automaticamente nel registry DB se assenti.
+- **REQ-012**: Il bootstrap deploy deve essere idempotente (nessuna duplicazione, safe su deploy ripetuti).
+- **REQ-013**: Se pricing reale non disponibile, consentire pricing mock per garantire disponibilita operativa dei model ID.
 - **SEC-001**: Nessun downgrade dei controlli esistenti: `auth()`, ownership progetto, rate-limit pre-LLM.
 - **SEC-002**: Nessuna esposizione nel payload di dettagli interni sensibili (stack, prompt interni, policy chain completa).
 - **SEC-003**: Mantenere la sanitizzazione e la validazione Zod prima delle chiamate LLM.
@@ -33,6 +36,7 @@ Questo piano definisce l'implementazione di una policy runtime per la fase di es
 - **CON-002**: Non introdurre letture filesystem runtime nel path route extraction.
 - **CON-003**: Mantenere i codici errore standard (`VALIDATION_ERROR`, `INTERNAL_ERROR`, `RATE_LIMIT_EXCEEDED`, ecc.).
 - **CON-004**: Il budget per richiesta extraction non deve superare USD 0.08 salvo override esplicito futuro.
+- **CON-005**: Il bootstrap non deve sovrascrivere in modo distruttivo i modelli gia gestiti da admin (soprattutto `isDefault`) salvo regole esplicite.
 - **GUD-001**: Preferire funzioni pure e piccole per validazione tentativo e decisione fallback.
 - **GUD-002**: Ogni decisione di fallback deve essere tracciabile nei log con reason machine-readable.
 - **PAT-001**: Policy centralizzata in modulo dedicato, route sottile, reuse di `createArtifactStream`.
@@ -89,6 +93,18 @@ Questo piano definisce l'implementazione di una policy runtime per la fase di es
 | TASK-020 | Definire rollout in 2 fasi: 20% shadow traffic 48h, poi 100% se metriche sopra soglia (`json_valid_rate`, `schema_pass_rate`, `p95_latency`, `mean_cost`). | Yes | 2026-04-12 |
 | TASK-021 | Preparare runbook fallback operativo con query log e criteri rollback in `docs/review/` se la policy degrada metriche oltre soglia. | Yes | 2026-04-12 |
 
+### Implementation Phase 5
+
+- **GOAL-005**: Garantire disponibilita automatica in DB dei model ID extraction al deploy.
+
+| Task | Description | Completed | Date |
+| -------- | --------------------- | --------- | ---------- |
+| TASK-022 | Creare bootstrap idempotente registry modelli extraction (`anthropic/claude-3.7-sonnet`, `openai/gpt-4.1`, `openai/o3`) con pricing mock fallback se assenti. | Yes | 2026-04-12 |
+| TASK-023 | Integrare il bootstrap nella pipeline deploy (`db:migrate:deploy` -> bootstrap modelli -> build) senza rompere preview/prod. | Yes | 2026-04-12 |
+| TASK-024 | Preservare semantica non distruttiva: non alterare `isDefault` esistente se gia definito da amministrazione. | Yes | 2026-04-12 |
+| TASK-025 | Aggiungere test di integrazione/script su idempotenza bootstrap e presenza model ID post-bootstrap. | Yes | 2026-04-12 |
+| TASK-026 | Aggiornare documentazione operativa deploy con regole bootstrap modelli e pricing mock policy. | Yes | 2026-04-12 |
+
 ## 3. Execution Log
 
 - 2026-04-12: Piano iniziale creato con policy statica extraction e fallback chain deterministica.
@@ -100,6 +116,11 @@ Questo piano definisce l'implementazione di una policy runtime per la fase di es
 - 2026-04-12: Fase 2 implementata in route extraction con fallback deterministico, validazione post-output, errore unificato `EXTRACTION_FAILED`, telemetria per tentativo e test integrazione verdi.
 - 2026-04-12: Fase 3 completata con metadati tentativo persistiti, policy budget enforcement sui retry, e normalizzazione quota (`monthlyUsed`) a singolo incremento per richiesta utente.
 - 2026-04-12: Fase 4 completata con aggiornamento contratto API extraction, implement-index riallineato, rollout plan in 2 fasi e runbook operativo pubblicato in `docs/review/`.
+- 2026-04-12: Aggiunto nuovo ramo di lavoro prioritario (Fase 5) per bootstrap deploy dei model ID extraction nel registry DB con pricing mock fallback.
+- 2026-04-12: Inserito contribution block dedicato alla Fase 5 con blueprint tecnico deploy, acceptance gates e DoD extension per chiudere TASK-022..TASK-026.
+- 2026-04-12: Avvio operativo Fase 5 con bootstrap idempotente implementato (`scripts/bootstrap-extraction-models.mjs`), integrazione pipeline (`deploy:vercel`) e test unitari dedicati (`tests/unit/extraction-model-bootstrap.test.ts`).
+- 2026-04-12: Root cause delivery identificato in extraction chain: mismatch `notes` (prompt richiedeva array, schema route accettava string). Fix applicato con schema tolerant (`string | string[]`) e prompt riallineato.
+- 2026-04-12: Validazione runtime dev completata su upload funnel: extraction riuscita al primo modello della chain (`anthropic/claude-3.7-sonnet`) con risposta endpoint `200` e stream inizializzato.
 
 ## 4. Contribution Added In This Iteration
 
@@ -136,6 +157,35 @@ Contributo pratico inserito nel piano per accelerare l'esecuzione tecnica e migl
 - **SEQ-004**: Chiudere test integrazione route extraction con casi deterministici di retry.
 - **SEQ-005**: Allineare cost accounting, update tracker e aggiornamento spec API.
 
+### 4.4 Phase 5 Delivery Blueprint (deploy bootstrap)
+
+Contributo operativo aggiuntivo per chiudere la Fase 5 in modo deploy-safe, idempotente e verificabile.
+
+- **P5-001 (single source of truth)**: Riutilizzare la chain da `src/lib/llm/extraction-model-policy.ts` come fonte canonica dei model ID da bootstrap per evitare drift da duplicazioni hardcoded.
+- **P5-002 (idempotent upsert)**: Implementare `scripts/bootstrap-extraction-models.mjs` con create/reactivate idempotente su `LlmModel` via chiave univoca `modelId`.
+- **P5-003 (non destructive semantics)**: In update, abilitare disponibilita minima (`isActive`) e fallback pricing solo quando mancante; non modificare `isDefault` gia impostato da admin.
+- **P5-004 (mock pricing policy)**: Se pricing reale non disponibile, applicare valori mock stabili e tracciabili per permettere guard model/cost senza blocchi runtime.
+- **P5-005 (deploy order)**: Forzare ordine pipeline `db:migrate:deploy` -> `db:bootstrap:extraction-models` -> `build`.
+- **P5-006 (fail fast)**: Se bootstrap fallisce, uscita non-zero e deploy bloccato; vietato fallback silenzioso.
+- **P5-007 (preview parity)**: Eseguire bootstrap anche in preview se `DATABASE_URL` e disponibile, mantenendo comportamento idempotente.
+- **P5-008 (drift check)**: Aggiungere validazione startup/deploy che confronta model ID policy vs registry DB con log machine-readable (`missing_model_ids`).
+
+### 4.5 Phase 5 Acceptance Gates
+
+- **AC-011**: Dopo bootstrap, `anthropic/claude-3.7-sonnet`, `openai/gpt-4.1`, `openai/o3` risultano presenti e attivi in `LlmModel`.
+- **AC-012**: Due esecuzioni consecutive del bootstrap non creano duplicati e non alterano campi non governati dalla policy (incluso `isDefault`).
+- **AC-013**: In assenza pricing reale, i campi prezzo risultano valorizzati con fallback mock coerente e validato da test.
+- **AC-014**: La pipeline deploy fallisce esplicitamente se bootstrap non completa, prevenendo release con registry incompleto.
+- **AC-015**: Il drift check segnala mismatch tra policy runtime e registry DB con dettagli utili alla diagnosi.
+
+### 4.6 Phase 5 Definition of Done Extension
+
+- **DOD-008**: Script bootstrap implementato, documentato e invocabile tramite script npm dedicato.
+- **DOD-009**: Pipeline deploy aggiornata con step bootstrap post-migrazione e pre-build.
+- **DOD-010**: Test coprono create, update non distruttivo, idempotenza e fallback pricing mock.
+- **DOD-011**: Tracker aggiornato con evidenze TASK-022..TASK-026 e output validazione.
+- **DOD-012**: Documentazione operativa deploy aggiornata con run order, failure policy e rollback note.
+
 ## 5. Alternatives
 
 - **ALT-001**: Continuare a usare il modello da payload utente anche per extraction; scartata per variabilita elevata e risultato meno predicibile.
@@ -162,9 +212,11 @@ Contributo pratico inserito nel piano per accelerare l'esecuzione tecnica e migl
 - **FILE-006**: `tests/integration/extraction-route.test.ts` - test integrazione chain fallback + esiti.
 - **FILE-007**: `docs/specifications/api-specifications.md` - aggiornamento contratto endpoint extraction.
 - **FILE-008**: `docs/implement-index.md` - registrazione stato e link piano.
+- **FILE-009**: `scripts/bootstrap-extraction-models.mjs` - bootstrap idempotente dei model ID extraction nel registry DB.
+- **FILE-010**: `package.json` - integrazione script bootstrap nella catena deploy.
 
 Stato file documentali:
-- `docs/implementation/funnel-extraction-model-policy-plan.md`: creato e aggiornato (v1.3).
+- `docs/implementation/funnel-extraction-model-policy-plan.md`: creato e aggiornato (v1.5).
 - `docs/implementation/feature-funnel-extraction-model-policy-tracker-1.md`: creato.
 - `docs/implement-index.md`: aggiornato con nuova iniziativa attiva.
 
@@ -192,6 +244,12 @@ Evidenze implementazione fase 4:
 - `tests/integration/extraction-route.test.ts`: copertura chain `claude-3.7-sonnet -> gpt-4.1 -> o3`, stop al primo successo e terminal failure policy.
 - `docs/review/extraction-model-policy-rollout-runbook-2026-04-12.md`: rollout 20%/100%, soglie metriche, query operative, trigger rollback e procedura post-incident.
 
+Evidenze implementazione fase 5:
+- `scripts/bootstrap-extraction-models.mjs`: bootstrap deploy idempotente con adapter Prisma 7, fail-fast e fallback `.env.local` per `DATABASE_URL`.
+- `package.json`: pipeline aggiornata con `db:bootstrap:extraction-models` tra migrate e build.
+- `docs/review/extraction-model-policy-rollout-runbook-2026-04-12.md`: procedura operativa deploy bootstrap documentata (task 026).
+- Runtime dev proof: log applicativo con `attemptIndex=1`, `runtimeModel=anthropic/claude-3.7-sonnet`, `parseOk=true`, `schemaOk=true`, `consistencyOk=true`, `POST /api/tools/extraction/generate 200`.
+
 ## 8. Testing
 
 - **TEST-001**: Validare che il runtime model del primo tentativo sia sempre `anthropic/claude-3.7-sonnet` indipendentemente da `payload.model`.
@@ -204,6 +262,9 @@ Evidenze implementazione fase 4:
 - **TEST-008**: Verificare contratto API invariato su auth, ownership, rate-limit, validation error mapping.
 - **TEST-009**: Verificare che il flusso Funnel creativo continui a usare il modello utente in `src/app/api/tools/funnel-pages/generate/route.ts`.
 - **TEST-010**: Verificare logging minimo per tentativo con campi obbligatori (`attemptIndex`, `runtimeModel`, `fallbackReason`).
+- **TEST-011**: Verificare che bootstrap deploy crei i 3 model ID extraction se assenti.
+- **TEST-012**: Verificare idempotenza bootstrap su run multipli (nessun duplicato, stato coerente).
+- **TEST-013**: Verificare che `isDefault` esistente non venga sovrascritto dal bootstrap.
 
 ## 9. Risks & Assumptions
 
@@ -211,9 +272,11 @@ Evidenze implementazione fase 4:
 - **RISK-002**: Incremento costo su richieste degradate che arrivano fino a `openai/o3`.
 - **RISK-003**: Possibile regressione conteggio quota se i retry non sono normalizzati a una singola richiesta utente.
 - **RISK-004**: Modelli policy non presenti/attivi nel catalogo runtime possono causare `Unsupported model`.
+- **RISK-005**: Bootstrap deploy non idempotente puo introdurre drift nel registry modelli.
 - **ASSUMPTION-001**: OpenRouter supporta stabilmente i model ID scelti in ambiente di produzione.
 - **ASSUMPTION-002**: I prompt di extraction restano orientati a JSON deterministico e non includono output narrativo.
 - **ASSUMPTION-003**: Le soglie iniziali (`45s`, `USD 0.08`, `3 attempts`) sono adeguate al carico corrente e verranno eventualmente tarate.
+- **ASSUMPTION-004**: L'ambiente deploy dispone di `DATABASE_URL` e privilegi DB necessari per upsert su `LlmModel`.
 
 ## 10. Related Specifications / Further Reading
 

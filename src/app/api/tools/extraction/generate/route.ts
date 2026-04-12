@@ -22,7 +22,7 @@ import { z } from 'zod';
 const extractionOutputSchema = z.object({
   fields: z.record(z.string(), z.unknown()),
   missingFields: z.array(z.string()).optional().default([]),
-  notes: z.string().optional().default(''),
+  notes: z.union([z.string(), z.array(z.string())]).optional().default(''),
 });
 
 type AttemptStreamResult = {
@@ -456,6 +456,19 @@ export async function POST(request: Request) {
     },
     'Extraction fallback chain exhausted',
   );
+
+  if (lastFallbackReason === 'budget_exceeded') {
+    return apiError(
+      'EXTRACTION_FAILED',
+      'Estrazione interrotta: budget massimo per richiesta superato',
+      503,
+      {
+        reason: 'budget_exceeded',
+        maxCostUsd: EXTRACTION_MAX_COST_USD,
+        cumulativeCostUsd: Number(cumulativeCost.toFixed(6)),
+      },
+    );
+  }
 
   return apiError('EXTRACTION_FAILED', 'Impossibile completare l\'estrazione in modo affidabile', 503);
 }
