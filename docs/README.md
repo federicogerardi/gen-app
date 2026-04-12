@@ -29,6 +29,9 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 - [funnel-extraction-model-policy-plan.md](implementation/funnel-extraction-model-policy-plan.md): Piano esecutivo policy runtime extraction con fallback deterministico (fasi 1-4 completate).
 - [feature-funnel-extraction-model-policy-tracker-1.md](implementation/feature-funnel-extraction-model-policy-tracker-1.md): Tracker operativo della delivery extraction policy.
 
+### notes/
+- [desiderata-e-appunti-futuri-sviluppi.md](notes/desiderata-e-appunti-futuri-sviluppi.md): Raccolta di idee e appunti preliminari non ancora in planning o refactoring.
+
 ### review/
 - [feature-audit-remediation-closure-2026-04-12.md](review/feature-audit-remediation-closure-2026-04-12.md): Closure report del track audit remediation (PR #19, 2026-04-12).
 - [feature-audit-remediation-gap-analysis-2026-04-12.md](review/feature-audit-remediation-gap-analysis-2026-04-12.md): Gap analysis del track audit remediation (2026-04-12).
@@ -55,6 +58,7 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 - [ux-strategy.md](ux/ux-strategy.md): Strategia UX e principi guida.
 
 ### Aggiornamenti recenti
+- 2026-04-12: introdotta area notes con documento dedicato per desiderata e appunti preliminari non ancora in planning.
 - 2026-04-12: completata la fase documentale finale del track extraction model policy (spec API aggiornata, implement-index riallineato, runbook rollout/rollback in review).
 - 2026-04-12: completato e mergiato su `dev` il refactor di visibilità spesa user/admin split (PR #21), con checklist piano chiusa e stato as-is aggiornato.
 - 2026-04-12: aggiunto piano operativo per centralizzare la visibilità della spesa nel perimetro admin e rimuoverla dalle superfici user.
