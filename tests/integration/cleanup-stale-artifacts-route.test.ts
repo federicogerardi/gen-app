@@ -13,7 +13,6 @@ jest.mock('@/lib/env', () => ({
 }));
 
 import { env } from '@/lib/env';
-
 jest.mock('@/lib/db', () => jest.requireActual('./db-mock').createDbMock());
 
 jest.mock('@/lib/logger', () => ({

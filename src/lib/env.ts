@@ -14,6 +14,15 @@ const envSchema = z.object({
   EXTRACTION_MAX_COST_USD: z.coerce.number().positive().default(0.08),
   VERCEL_CRON_SECRET: z.string().optional(),
   LOG_LEVEL: z.string().optional(),
+}).superRefine((value, ctx) => {
+  const isVercelProductionDeployment = value.NODE_ENV === 'production' && value.VERCEL_ENV === 'production';
+  if (isVercelProductionDeployment && !value.VERCEL_CRON_SECRET) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['VERCEL_CRON_SECRET'],
+      message: 'VERCEL_CRON_SECRET is required in production deployments',
+    });
+  }
 });
 
 export type AppEnv = z.infer<typeof envSchema>;
