@@ -167,7 +167,8 @@ Fonte di verifica cronologica: output `gh pr list --state merged` filtrato per f
 
 ### 9.2 Merge oggi (2026-04-12)
 
-- Nessun merge rilevato dalla query GH nella finestra `merged:2026-04-12`.
+- GH-010: PR #19 `feat(api): complete phase 4 audit remediation closure` mergiata su `dev` (squash and merge) e chiusa.
+- Stato as-is: remediation track `TASK-001..TASK-020` consolidato su ramo `dev`.
 
 ### 9.3 Impatto storico sul piano corrente
 
@@ -175,3 +176,4 @@ Fonte di verifica cronologica: output `gh pr list --state merged` filtrato per f
 - **HIS-001**: Alcuni task del piano potrebbero risultare parzialmente gia coperti da PR #14, #15, #16, #17; prima di esecuzione fase 1 eseguire una verifica diff puntuale finding->file.
 - **HIS-002**: Il piano resta valido come remediation completa perché l'audit del 2026-04-12 segnala finding ancora aperti; i task non vengono marcati completati senza evidenza test aggiornata.
 - **HIS-003**: In fase esecutiva, aggiornare colonna Completed/Date solo dopo validazione automatica (lint, typecheck, test unit/integration/e2e) e mapping a ID finding.
+- **HIS-004**: A valle del merge PR #19, il piano e da considerarsi chiuso e non piu in esecuzione attiva; eventuali nuove azioni vanno tracciate in un nuovo piano incrementale.

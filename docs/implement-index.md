@@ -2,7 +2,7 @@
 
 _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 
-## Stato avanzamento (aggiornato al 2026-04-11)
+## Stato avanzamento (aggiornato al 2026-04-12)
 
 - **Testing coverage >80%**: `COMPLETATO (scope corrente)`
   - Coverage Jest attuale: Statements `82.96%`, Branches `70.31%`, Functions `78.91%`, Lines `85.96%`.
@@ -20,6 +20,11 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
   - Tutti i task `TASK-TRK-001` → `TASK-TRK-015` risultano `Done` nel tracker operativo.
   - Documento piano allineato a stato finale e snapshot archiviato per storico.
   - File: docs/implement-quality-audit.md, docs/implementation/feature-quality-audit-resolution-tracker-1.md, docs/archive/implement-quality-audit.completed-2026-04-11.md
+
+- **Feature audit remediation sequenced (2026-04-12)**: `COMPLETATO E MERGIATO`
+  - Piano sequenziale `TASK-001..TASK-020` completato con evidenze test/unit/integration/e2e.
+  - PR #19 mergiata su `dev` e chiusa; stato operativo consolidato nel report di closure.
+  - File: docs/implementation/feature-audit-remediation-sequenced-1.md, docs/implementation/feature-audit-remediation-sequenced-tracker-1.md, docs/review/feature-audit-remediation-closure-2026-04-12.md
 
 - **Refactoring preview artefatti**: `IN CORSO`
   - Rafforzato fallback human-readable con nuovi test unit.

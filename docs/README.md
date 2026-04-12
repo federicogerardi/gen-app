@@ -40,6 +40,7 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 - [ux-strategy.md](ux/ux-strategy.md): Strategia UX e principi guida.
 
 ### Aggiornamenti recenti
+- 2026-04-12: chiuso il track di remediation audit sequenziale con merge PR #19 su `dev` e pubblicazione report di closure in `docs/review/feature-audit-remediation-closure-2026-04-12.md`.
 - 2026-04-11: completato sprint di visual unification delle pagine interne con estensione del concept login.
 - 2026-04-11: introdotta specifica operativa di frameworking grafico per standardizzare i futuri interventi UI.
 - 2026-04-11: allineata documentazione tool al refactoring Funnel upload-first (upload -> extraction -> generate) e aggiornata parity prompt/runtime.
