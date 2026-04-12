@@ -3,7 +3,13 @@
 Versione: 1.0  
 Data: 2026-04-12  
 Area: GUI, contratti dati user-facing, admin visibility  
-Stato: pianificato
+Stato: completato (merge su dev)
+
+Ultimo aggiornamento as-is: 2026-04-12
+
+- Implementazione completata e merge eseguito su `dev`.
+- Contratti user-facing sanitizzati (quota/artifacts/projects) e UI user riallineata.
+- Perimetro admin preservato con assertion test esplicite su visibilita economica.
 
 ---
 
@@ -80,7 +86,7 @@ Conseguenze operative:
 
 ---
 
-## Stato attuale sintetico
+## Stato pre-refactor (snapshot storico)
 
 ### Leak economici nel perimetro user
 
@@ -303,51 +309,51 @@ Motivazione:
 
 ### Preparazione
 
-- [ ] Confermare i componenti user dove la spesa è ancora visibile.
-- [ ] Confermare che la centralizzazione della spesa resta esclusivamente admin.
+- [x] Confermare i componenti user dove la spesa è ancora visibile.
+- [x] Confermare che la centralizzazione della spesa resta esclusivamente admin.
 
 ### API e contratti
 
-- [ ] Aggiornare [src/app/api/users/quota/route.ts](../../src/app/api/users/quota/route.ts) rimuovendo `monthlyBudget` e `monthlySpent`.
-- [ ] Aggiornare [src/app/api/artifacts/route.ts](../../src/app/api/artifacts/route.ts) rimuovendo `costUSD` dal payload user-facing.
-- [ ] Aggiornare [src/app/api/artifacts/[id]/route.ts](../../src/app/api/artifacts/%5Bid%5D/route.ts) rimuovendo `costUSD` dal payload user-facing.
-- [ ] Aggiornare [src/app/api/projects/[id]/route.ts](../../src/app/api/projects/%5Bid%5D/route.ts) per non esporre `costUSD` negli artifact inclusi.
-- [ ] Verificare eventuale esposizione indiretta di artifact con costo in altri payload collegati.
+- [x] Aggiornare [src/app/api/users/quota/route.ts](../../src/app/api/users/quota/route.ts) rimuovendo `monthlyBudget` e `monthlySpent`.
+- [x] Aggiornare [src/app/api/artifacts/route.ts](../../src/app/api/artifacts/route.ts) rimuovendo `costUSD` dal payload user-facing.
+- [x] Aggiornare [src/app/api/artifacts/[id]/route.ts](../../src/app/api/artifacts/%5Bid%5D/route.ts) rimuovendo `costUSD` dal payload user-facing.
+- [x] Aggiornare [src/app/api/projects/[id]/route.ts](../../src/app/api/projects/%5Bid%5D/route.ts) per non esporre `costUSD` negli artifact inclusi.
+- [x] Verificare eventuale esposizione indiretta di artifact con costo in altri payload collegati.
 
 ### Frontend user
 
-- [ ] Aggiornare [src/components/hooks/useQuota.ts](../../src/components/hooks/useQuota.ts).
-- [ ] Aggiornare [src/components/hooks/useArtifacts.ts](../../src/components/hooks/useArtifacts.ts).
-- [ ] Rifattorizzare [src/app/dashboard/page.tsx](../../src/app/dashboard/page.tsx) per mostrare solo metriche di generazione e rimuovere la select server-side dei campi economici.
-- [ ] Rifattorizzare [src/app/artifacts/[id]/page.tsx](../../src/app/artifacts/%5Bid%5D/page.tsx) rimuovendo il costo.
-- [ ] Verificare che [src/app/artifacts/ArtifactsClientPage.tsx](../../src/app/artifacts/ArtifactsClientPage.tsx) non reintroduca dati economici via tipo o rendering futuro.
-- [ ] Verificare che eventuali viste progetto user-facing non reintroducano costo tramite artifact inclusi.
+- [x] Aggiornare [src/components/hooks/useQuota.ts](../../src/components/hooks/useQuota.ts).
+- [x] Aggiornare [src/components/hooks/useArtifacts.ts](../../src/components/hooks/useArtifacts.ts).
+- [x] Rifattorizzare [src/app/dashboard/page.tsx](../../src/app/dashboard/page.tsx) per mostrare solo metriche di generazione e rimuovere la select server-side dei campi economici.
+- [x] Rifattorizzare [src/app/artifacts/[id]/page.tsx](../../src/app/artifacts/%5Bid%5D/page.tsx) rimuovendo il costo.
+- [x] Verificare che [src/app/artifacts/ArtifactsClientPage.tsx](../../src/app/artifacts/ArtifactsClientPage.tsx) non reintroduca dati economici via tipo o rendering futuro.
+- [x] Verificare che eventuali viste progetto user-facing non reintroducano costo tramite artifact inclusi.
 
 ### Frontend admin
 
-- [ ] Verificare che [src/app/admin/AdminClientPage.tsx](../../src/app/admin/AdminClientPage.tsx) mantenga overview spesa, budget per utente e costi activity.
-- [ ] Verificare che [src/app/admin/AdminQuotaForm.tsx](../../src/app/admin/AdminQuotaForm.tsx) resti invariato funzionalmente.
+- [x] Verificare che [src/app/admin/AdminClientPage.tsx](../../src/app/admin/AdminClientPage.tsx) mantenga overview spesa, budget per utente e costi activity.
+- [x] Verificare che [src/app/admin/AdminQuotaForm.tsx](../../src/app/admin/AdminQuotaForm.tsx) resti invariato funzionalmente.
 
 ### Test
 
-- [ ] Aggiornare [tests/unit/hooks.test.ts](../../tests/unit/hooks.test.ts).
-- [ ] Aggiornare [tests/integration/users-routes.test.ts](../../tests/integration/users-routes.test.ts).
-- [ ] Aggiornare [tests/integration/artifacts-client-page.test.tsx](../../tests/integration/artifacts-client-page.test.tsx) o aggiungere assertion sull assenza di costo.
-- [ ] Aggiornare [tests/integration/artifacts-route.test.ts](../../tests/integration/artifacts-route.test.ts).
-- [ ] Aggiornare [tests/integration/artifacts-id-route.test.ts](../../tests/integration/artifacts-id-route.test.ts).
-- [ ] Aggiornare [tests/integration/projects-id-route.test.ts](../../tests/integration/projects-id-route.test.ts).
-- [ ] Aggiornare [tests/integration/admin-client-page.test.tsx](../../tests/integration/admin-client-page.test.tsx) con assertion esplicite sulla presenza del feedback economico.
+- [x] Aggiornare [tests/unit/hooks.test.ts](../../tests/unit/hooks.test.ts).
+- [x] Aggiornare [tests/integration/users-routes.test.ts](../../tests/integration/users-routes.test.ts).
+- [x] Aggiornare [tests/integration/artifacts-client-page.test.tsx](../../tests/integration/artifacts-client-page.test.tsx) o aggiungere assertion sull assenza di costo.
+- [x] Aggiornare [tests/integration/artifacts-route.test.ts](../../tests/integration/artifacts-route.test.ts).
+- [x] Aggiornare [tests/integration/artifacts-id-route.test.ts](../../tests/integration/artifacts-id-route.test.ts).
+- [x] Aggiornare [tests/integration/projects-id-route.test.ts](../../tests/integration/projects-id-route.test.ts).
+- [x] Aggiornare [tests/integration/admin-client-page.test.tsx](../../tests/integration/admin-client-page.test.tsx) con assertion esplicite sulla presenza del feedback economico.
 
 ### Documentazione
 
-- [ ] Aggiornare [docs/specifications/api-specifications.md](../specifications/api-specifications.md).
-- [ ] Aggiornare [docs/implement-index.md](../implement-index.md) se il lavoro viene schedulato o completato come priorità UX attiva.
+- [x] Aggiornare [docs/specifications/api-specifications.md](../specifications/api-specifications.md).
+- [x] Aggiornare [docs/implement-index.md](../implement-index.md) se il lavoro viene schedulato o completato come priorità UX attiva.
 
 ### Verifica finale
 
-- [ ] Un utente role `user` non vede importi in dashboard, lista artefatti, dettaglio artefatto e hook/API associati.
-- [ ] Un utente role `admin` continua a vedere importi in overview admin, schede utenti, drawer quota e attività recente.
-- [ ] Nessuna regressione sui flussi core di autenticazione, lista artefatti e admin quota management.
+- [x] Un utente role `user` non vede importi in dashboard, lista artefatti, dettaglio artefatto e hook/API associati.
+- [x] Un utente role `admin` continua a vedere importi in overview admin, schede utenti, drawer quota e attività recente.
+- [x] Nessuna regressione sui flussi core di autenticazione, lista artefatti e admin quota management.
 
 ---
 

@@ -39,6 +39,7 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 - **User spend visibility refactor (user/admin split)**: `COMPLETATO (2026-04-12)`
   - Rimossi feedback economici dal perimetro user (API quota/artifacts/projects e UI dashboard/dettaglio artefatto).
   - Mantenuta visibilità economica nel perimetro admin con assertion di test esplicite.
+  - Merge eseguito su `dev` tramite PR #21.
   - Documentazione contrattuale allineata su `docs/specifications/api-specifications.md`.
 
 - **Tooling generation optimization (Meta Ads + Funnel Pages)**: `COMPLETATO (PR-1..PR-6)`

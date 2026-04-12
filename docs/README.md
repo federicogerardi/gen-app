@@ -48,10 +48,11 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 
 ### ux/
 - [gui-refactor-plan.md](ux/gui-refactor-plan.md): Piano di refactoring GUI.
-- [user-spend-visibility-refactor-plan.md](ux/user-spend-visibility-refactor-plan.md): Piano e checklist operativa per centralizzare la spesa nel perimetro admin e rimuoverla dalle viste user.
+- [user-spend-visibility-refactor-plan.md](ux/user-spend-visibility-refactor-plan.md): Piano e checklist operativa per centralizzare la spesa nel perimetro admin e rimuoverla dalle viste user (completato, merge su `dev`).
 - [ux-strategy.md](ux/ux-strategy.md): Strategia UX e principi guida.
 
 ### Aggiornamenti recenti
+- 2026-04-12: completato e mergiato su `dev` il refactor di visibilità spesa user/admin split (PR #21), con checklist piano chiusa e stato as-is aggiornato.
 - 2026-04-12: aggiunto piano operativo per centralizzare la visibilità della spesa nel perimetro admin e rimuoverla dalle superfici user.
 - 2026-04-12: organizzazione documentale — archiviati working doc quality-audit track (feature-quality-audit-resolution-*), rimossa `docs/improvement/` vuota, spostato `copilot-audit` in `docs/review/`, aggiornato indice README.
 - 2026-04-12: chiuso il track di remediation audit sequenziale con merge PR #19 su `dev` e pubblicazione report di closure in `docs/review/feature-audit-remediation-closure-2026-04-12.md`.

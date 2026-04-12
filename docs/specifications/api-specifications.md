@@ -377,8 +377,6 @@ GET /artifacts/{id}
 
 ### List Artifacts
 
-**Status**: Planned, not implemented in current codebase.
-
 **Endpoint**:
 ```
 GET /artifacts?projectId={projectId}&limit=20&offset=0
@@ -413,8 +411,6 @@ GET /artifacts?projectId={projectId}&limit=20&offset=0
 
 ### Update Artifact
 
-**Status**: Planned, not implemented in current codebase.
-
 **Endpoint**:
 ```
 PUT /artifacts/{id}
@@ -423,17 +419,18 @@ PUT /artifacts/{id}
 **Request**:
 ```json
 {
-  "content": "Updated content here",
-  "notes": "Manual edit by user"
+  "content": "Updated content here"
 }
 ```
 
 **Response** (200 OK):
 ```json
 {
-  "id": "art_456",
-  "content": "Updated content here",
-  "updatedAt": "2026-04-07T14:20:00Z"
+  "artifact": {
+    "id": "art_456",
+    "content": "Updated content here",
+    "updatedAt": "2026-04-07T14:20:00Z"
+  }
 }
 ```
 
