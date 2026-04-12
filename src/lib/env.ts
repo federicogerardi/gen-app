@@ -11,6 +11,7 @@ const envSchema = z.object({
   UPSTASH_REDIS_REST_TOKEN: z.string().min(1, 'UPSTASH_REDIS_REST_TOKEN required'),
   NEXT_PUBLIC_APP_URL: z.string().url().default('http://localhost:3000'),
   ALLOWED_EMAIL_DOMAINS: z.string().default('company.com'),
+  EXTRACTION_MAX_COST_USD: z.coerce.number().positive().default(0.08),
   VERCEL_CRON_SECRET: z.string().optional(),
   LOG_LEVEL: z.string().optional(),
 }).superRefine((value, ctx) => {

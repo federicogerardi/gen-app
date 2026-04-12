@@ -32,6 +32,18 @@ type StreamResult = {
   artifactId: string | null;
 };
 
+type ApiErrorPayload = {
+  error?: {
+    code?: string;
+    message?: string;
+    details?: {
+      reason?: string;
+      maxCostUsd?: number;
+      cumulativeCostUsd?: number;
+    };
+  };
+};
+
 type FieldLabelProps = {
   htmlFor?: string;
   required?: boolean;
@@ -108,6 +120,17 @@ function parseJsonFromLLMOutput(rawOutput: string): Record<string, unknown> {
   }
 
   throw new Error('Nessun JSON trovato nella risposta del modello di estrazione');
+}
+
+function getExtractionErrorMessage(errorPayload: ApiErrorPayload | null): string {
+  const code = errorPayload?.error?.code;
+  const reason = errorPayload?.error?.details?.reason;
+
+  if (code === 'EXTRACTION_FAILED' && reason === 'budget_exceeded') {
+    return 'Estrazione interrotta: limite costo per richiesta raggiunto. Riprova con un file piu breve o riduci il contenuto.';
+  }
+
+  return errorPayload?.error?.message ?? 'Estrazione fallita';
 }
 
 async function generateStream(request: {
@@ -270,8 +293,8 @@ export default function FunnelPagesToolPage() {
       });
 
       if (!extractionRes.ok) {
-        const data = (await extractionRes.json().catch(() => null)) as { error?: { message?: string } } | null;
-        throw new Error(data?.error?.message ?? 'Estrazione fallita');
+        const data = (await extractionRes.json().catch(() => null)) as ApiErrorPayload | null;
+        throw new Error(getExtractionErrorMessage(data));
       }
 
       const rawOutput = await streamToText(extractionRes);

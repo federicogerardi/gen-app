@@ -22,5 +22,5 @@ Formato:
     "nome_campo": "valore_o_null"
   },
   "missingFields": ["nome_campo"],
-  "notes": ["nota breve opzionale"]
+  "notes": "nota breve opzionale"
 }

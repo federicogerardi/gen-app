@@ -1,16 +1,16 @@
 ---
 goal: Operational tracker for static extraction model policy with deterministic fallback chain
-version: 1.3
+version: 1.5
 date_created: 2026-04-12
 last_updated: 2026-04-12
 owner: Platform AI / Tooling
-status: Completed
-tags: [process, tracker, extraction, llm, openrouter, reliability, cost]
+status: In Progress
+tags: [process, tracker, extraction, llm, openrouter, reliability, cost, deploy, model-registry]
 ---
 
 # Introduction
 
-![Status: Completed](https://img.shields.io/badge/status-Completed-brightgreen)
+![Status: In progress](https://img.shields.io/badge/status-In%20progress-yellow)
 
 This tracker is the execution companion for docs/implementation/funnel-extraction-model-policy-plan.md.
 It records baseline status, implementation progress, and evidence for each execution task.
@@ -71,6 +71,16 @@ Status legend:
 | TASK-020 | Gap | Rollout gates/metrics not yet codified in an execution runbook artifact. |
 | TASK-021 | Gap | No dedicated closure/runbook note under docs/review for this initiative yet. |
 
+### Phase 5 - Deploy bootstrap model registry
+
+| Task | Baseline Status | Evidence Snapshot |
+| --- | --- | --- |
+| TASK-022 | Gap | No deploy bootstrap currently ensures extraction runtime model IDs in `LlmModel`. |
+| TASK-023 | Gap | Deploy chain runs migrate+build but not model registry bootstrap step. |
+| TASK-024 | Gap | No explicit guard that bootstrap preserves admin-selected `isDefault`. |
+| TASK-025 | Gap | No automated test coverage for bootstrap idempotency/presence guarantees. |
+| TASK-026 | Gap | Deploy docs do not yet include bootstrap behavior and pricing-mock policy for extraction models. |
+
 ## 3. Execution Log
 
 - 2026-04-12: Tracker created with baseline aligned to current repository state.
@@ -80,6 +90,9 @@ Status legend:
 - 2026-04-12: Phase 2 implemented in route (`fallback chain`, validation gates, `EXTRACTION_FAILED`, per-attempt telemetry) with updated integration tests passing.
 - 2026-04-12: Phase 3 completed (`monthlyUsed` single increment across retries, attempt metadata persistence, budget cap stop) with integration + unit validations.
 - 2026-04-12: Phase 4 completed (API spec update, implement-index realignment, rollout gates definition, runbook publication in review).
+- 2026-04-12: New prioritized branch added (Phase 5) for deploy-time bootstrap of extraction runtime models in DB with mock pricing fallback.
+- 2026-04-12: Phase 5 started with bootstrap implementation (`scripts/bootstrap-extraction-models.mjs`), deploy pipeline integration (`deploy:vercel`), non-destructive default preservation and dedicated unit tests passing.
+- 2026-04-12: Runtime dev validation completed: funnel upload extraction succeeded on the first chain model (`anthropic/claude-3.7-sonnet`) with endpoint response `200`.
 
 ## 4. Current Phase Status
 
@@ -124,6 +137,16 @@ Status legend:
 | TASK-020 | Completed | 2026-04-12 |
 | TASK-021 | Completed | 2026-04-12 |
 
+### Phase 5
+
+| Task | Current Status | Date |
+| --- | --- | --- |
+| TASK-022 | Completed | 2026-04-12 |
+| TASK-023 | Completed | 2026-04-12 |
+| TASK-024 | Completed | 2026-04-12 |
+| TASK-025 | Completed | 2026-04-12 |
+| TASK-026 | Completed | 2026-04-12 |
+
 ## 5. Evidence Register (to update during execution)
 
 - EVID-001: docs index updated with extraction policy track entry in `docs/implement-index.md`
@@ -143,6 +166,11 @@ Status legend:
 - EVID-015: pending
 - EVID-016: pending
 - EVID-017: pending
+- EVID-018: bootstrap script implemented in `scripts/bootstrap-extraction-models.mjs` and helper module in `src/lib/llm/extraction-model-bootstrap.ts`
+- EVID-019: deploy pipeline updated in `package.json` (`deploy:vercel` includes bootstrap step)
+- EVID-020: non-destructive `isDefault` behavior enforced in bootstrap implementation
+- EVID-021: unit test coverage added for bootstrap idempotency and presence guarantees
+- EVID-022: deploy/bootstrap operational policy documented in runbook
 
 Phase 1 evidence log:
 - EVID-004 (TASK-001..TASK-004): constants and pure helpers implemented in `src/lib/llm/extraction-model-policy.ts`.
@@ -165,6 +193,15 @@ Phase 4 evidence log:
 - EVID-015 (TASK-018): index status realigned in `docs/implement-index.md` from planned to implemented with rollout defined.
 - EVID-016 (TASK-020/TASK-021): rollout gates and rollback criteria formalized in `docs/review/extraction-model-policy-rollout-runbook-2026-04-12.md`.
 - EVID-017 (TASK-019): integration chain assertions already covered in `tests/integration/extraction-route.test.ts` and validated in prior phase command (`PASS`, 17 tests total).
+
+Phase 5 evidence log:
+- EVID-018 (TASK-022): bootstrap script implemented in `scripts/bootstrap-extraction-models.mjs` and helper module added in `src/lib/llm/extraction-model-bootstrap.ts`.
+- EVID-019 (TASK-023): deploy pipeline updated in `package.json` (`deploy:vercel` now runs `db:migrate:deploy` -> `db:bootstrap:extraction-models` -> `build`).
+- EVID-020 (TASK-024): bootstrap logic preserves admin-defined defaults by avoiding `isDefault` mutations on existing records (`scripts/bootstrap-extraction-models.mjs`, `src/lib/llm/extraction-model-bootstrap.ts`).
+- EVID-021 (TASK-025): test coverage added in `tests/unit/extraction-model-bootstrap.test.ts` (idempotency, create/reactivate, preserve default).
+- Validation evidence: `npm run test -- tests/unit/extraction-model-bootstrap.test.ts` -> PASS (4 tests), `npm run typecheck` -> PASS, `npm run lint` -> PASS.
+- EVID-022 (TASK-026): deploy/bootstrap policy documented in `docs/review/extraction-model-policy-rollout-runbook-2026-04-12.md`.
+- Runtime validation evidence: development log confirms `attemptIndex=1`, `runtimeModel=anthropic/claude-3.7-sonnet`, `parseOk=true`, `schemaOk=true`, `consistencyOk=true`, followed by `POST /api/tools/extraction/generate 200`.
 
 ## 6. Related Documents
 

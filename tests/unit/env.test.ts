@@ -78,5 +78,16 @@ describe('parseEnv', () => {
     expect(parsed.UPSTASH_REDIS_REST_URL).toBe('https://test-upstash.local');
     expect(parsed.UPSTASH_REDIS_REST_TOKEN).toBe('test-upstash-token');
     expect(parsed.VERCEL_CRON_SECRET).toBe('test-cron-secret');
+    expect(parsed.EXTRACTION_MAX_COST_USD).toBe(0.08);
+  });
+
+  it('supports overriding extraction max cost from env', () => {
+    const parsed = parseEnv({
+      NODE_ENV: 'test',
+      NEXT_PUBLIC_APP_URL: 'http://localhost:3000',
+      EXTRACTION_MAX_COST_USD: '0.25',
+    });
+
+    expect(parsed.EXTRACTION_MAX_COST_USD).toBe(0.25);
   });
 });

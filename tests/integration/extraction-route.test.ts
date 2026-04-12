@@ -132,6 +132,29 @@ describe('POST /api/tools/extraction/generate', () => {
     }));
   });
 
+  it('accepts extraction output when notes is returned as array', async () => {
+    mockedAuth.mockResolvedValue({ user: { id: 'user_1' } } as never);
+    mockedStream.mockResolvedValueOnce(createSseStream([
+      { type: 'start', artifactId: 'art_1', workflowType: 'extraction', format: 'json' },
+      {
+        type: 'token',
+        token: '{"fields":{"business_type":"B2B"},"missingFields":[],"notes":["ok"]}',
+        sequence: 1,
+      },
+      {
+        type: 'complete',
+        artifactId: 'art_1',
+        content: '{"fields":{"business_type":"B2B"},"missingFields":[],"notes":["ok"]}',
+        cost: 0.01,
+      },
+    ]));
+
+    const res = await POST(makeRequest(baseBody));
+
+    expect(res.status).toBe(200);
+    expect(mockedStream).toHaveBeenCalledTimes(1);
+  });
+
   it('falls back to second model when first attempt returns invalid JSON', async () => {
     mockedAuth.mockResolvedValue({ user: { id: 'user_1' } } as never);
     mockedStream
@@ -220,6 +243,11 @@ describe('POST /api/tools/extraction/generate', () => {
     expect(body).toEqual(expect.objectContaining({
       error: expect.objectContaining({
         code: 'EXTRACTION_FAILED',
+        details: expect.objectContaining({
+          reason: 'budget_exceeded',
+          maxCostUsd: expect.any(Number),
+          cumulativeCostUsd: expect.any(Number),
+        }),
       }),
     }));
     expect(mockedStream).toHaveBeenCalledTimes(2);

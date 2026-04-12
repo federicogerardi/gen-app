@@ -22,6 +22,33 @@ Copre:
 - monitoraggio metriche
 - query di diagnostica
 - criteri di rollback
+- bootstrap deploy del model registry extraction
+
+## Deploy Bootstrap Procedure (Phase 5)
+
+Ordine operativo obbligatorio in deploy:
+1. `npm run db:migrate:deploy`
+2. `npm run db:bootstrap:extraction-models`
+3. `npm run build`
+
+Obiettivi bootstrap:
+- garantire presenza/attivazione model ID runtime extraction (`anthropic/claude-3.7-sonnet`, `openai/gpt-4.1`, `openai/o3`)
+- garantire idempotenza su run ripetuti
+- non alterare `isDefault` gia impostato da amministrazione
+- usare pricing mock solo in create (fallback operativo)
+
+Failure policy:
+- lo step `db:bootstrap:extraction-models` e fail-fast
+- qualunque errore nello script blocca il deploy (exit code non-zero)
+- nessun fallback silenzioso consentito
+
+Log di successo attesi:
+- evento `extraction_models_bootstrap_completed`
+- campi: `requiredModelIds`, `created`, `reactivated`, `alreadyActive`, `preservedDefault`
+
+Log di failure attesi:
+- evento `extraction_models_bootstrap_failed`
+- campo `message` con dettaglio errore
 
 ## Rollout Plan (2 fasi)
 
