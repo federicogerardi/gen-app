@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Navbar } from '@/components/layout/Navbar';
+import { PageShell } from '@/components/layout/PageShell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -39,10 +39,7 @@ export default function NewProjectPage() {
   }
 
   return (
-    <>
-      <Navbar />
-      <main className="app-shell app-copy flex-1 p-6 max-w-lg mx-auto w-full relative overflow-hidden" id="main-content">
-        <div className="pointer-events-none absolute inset-0 app-grid-overlay" />
+    <PageShell width="form">
         <Card className="app-surface rounded-3xl app-rise">
           <CardHeader><CardTitle className="app-title text-2xl">Nuovo progetto</CardTitle></CardHeader>
           <CardContent>
@@ -62,7 +59,6 @@ export default function NewProjectPage() {
             </form>
           </CardContent>
         </Card>
-      </main>
-    </>
+    </PageShell>
   );
 }

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Role } from '@/generated/prisma';
 import { X } from 'lucide-react';
-import { Navbar } from '@/components/layout/Navbar';
+import { PageShell } from '@/components/layout/PageShell';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -381,9 +381,7 @@ export function AdminClientPage({
 
   return (
     <>
-      <Navbar />
-      <main className="app-shell app-copy flex-1 p-6 max-w-5xl mx-auto w-full relative overflow-hidden" id="main-content">
-        <div className="pointer-events-none absolute inset-0 app-grid-overlay" />
+      <PageShell width="workspace">
         <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
           <h1 className="app-title text-3xl font-semibold text-slate-900">Gestione utenti</h1>
           <div className="w-full sm:w-80">
@@ -766,7 +764,7 @@ export function AdminClientPage({
             </CardContent>
           </Card>
         </section>
-      </main>
+      </PageShell>
 
       {selectedUser && (
         <div className="fixed inset-0 z-50">

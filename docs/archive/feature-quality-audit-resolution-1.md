@@ -12,10 +12,10 @@ tags: [feature, quality, security, audit, reliability, tracking]
 
 ![Status: Planned](https://img.shields.io/badge/status-Planned-blue)
 
-This execution plan translates the audit roadmap in docs/archive/implement-quality-audit.completed-2026-04-11.md into a workstream-oriented delivery track under docs/implementation. The source audit document remains the normative rationale and problem catalog; this file defines the execution decomposition, sequencing, and tracking boundaries for implementation.
+This execution plan translates the audit roadmap in docs/archive/implement-quality-audit.completed-2026-04-11.md into a workstream-oriented delivery track preserved in docs/archive. The source audit document remains the normative rationale and problem catalog; this file defines the execution decomposition, sequencing, and tracking boundaries for implementation.
 
-Operational tracker for execution updates: docs/implementation/feature-quality-audit-resolution-tracker-1.md.
-Granular session runbook for sprint execution: docs/implementation/feature-quality-audit-resolution-sprint-ops-1.md.
+Operational tracker for execution updates: docs/archive/feature-quality-audit-resolution-tracker-1.md.
+Granular session runbook for sprint execution: docs/archive/feature-quality-audit-resolution-sprint-ops-1.md.
 
 ## 1. Requirements & Constraints
 
@@ -92,7 +92,7 @@ Source mapping:
 - Deliver Phase 2 next to reduce divergence risk before further hardening.
 - Deliver Phase 3 only after correctness and shared contracts are stable.
 - Deliver Phase 4 incrementally, allowing security and observability workstreams to ship as independent PRs.
-- Execute each phase through session-sized slices defined in docs/implementation/feature-quality-audit-resolution-sprint-ops-1.md rather than through phase-wide implementation blocks.
+- Execute each phase through session-sized slices defined in docs/archive/feature-quality-audit-resolution-sprint-ops-1.md rather than through phase-wide implementation blocks.
 
 ## 4. Dependencies
 
@@ -106,9 +106,9 @@ Source mapping:
 - FILE-001: docs/archive/implement-quality-audit.completed-2026-04-11.md - source audit roadmap and rationale.
 - FILE-002: docs/implement-index.md - top-level index entry for the decomposed audit track.
 - FILE-003: docs/implementation/implementation-plan.md - main implementation roadmap entry point.
-- FILE-004: docs/implementation/feature-quality-audit-resolution-1.md - execution plan for the audit track.
-- FILE-005: docs/implementation/feature-quality-audit-resolution-tracker-1.md - operational tracker for execution status and evidence.
-- FILE-006: docs/implementation/feature-quality-audit-resolution-sprint-ops-1.md - granular sprint operations runbook.
+- FILE-004: docs/archive/feature-quality-audit-resolution-1.md - execution plan for the audit track.
+- FILE-005: docs/archive/feature-quality-audit-resolution-tracker-1.md - operational tracker for execution status and evidence.
+- FILE-006: docs/archive/feature-quality-audit-resolution-sprint-ops-1.md - granular sprint operations runbook.
 
 ## 6. Testing & Acceptance Gates
 
@@ -130,7 +130,7 @@ Source mapping:
 - docs/archive/implement-quality-audit.completed-2026-04-11.md
 - docs/implement-index.md
 - docs/implementation/implementation-plan.md
-- docs/implementation/feature-quality-audit-resolution-sprint-ops-1.md
+- docs/archive/feature-quality-audit-resolution-sprint-ops-1.md
 - docs/adrs/002-streaming-vs-batch-responses.md
 - docs/adrs/003-rate-limiting-quota-strategy.md
 - docs/specifications/api-specifications.md
