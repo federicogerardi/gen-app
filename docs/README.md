@@ -6,6 +6,8 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 
 - [blueprint.md](blueprint.md): Blueprint architetturale e overview del progetto.
 - [progetto-overview.md](progetto-overview.md): Descrizione generale e obiettivi del progetto per Stakeholder e Team.
+- [implement-index.md](implement-index.md): Indice operativo delle priorità correnti e stato di avanzamento.
+- [implement-quality-audit.md](implement-quality-audit.md): Catalogo dei finding quality/security dell'audit globale e razionale della risoluzione.
 
 ### accessibility/
 - [accessibility.md](accessibility/accessibility.md): Linee guida e strategie per l’accessibilità.
@@ -20,6 +22,15 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 
 ### implementation/
 - [implementation-plan.md](implementation/implementation-plan.md): Implementation plan dettagliato.
+- [feature-audit-remediation-sequenced-1.md](implementation/feature-audit-remediation-sequenced-1.md): Piano esecutivo audit remediation sequenziale (TASK-001..020) — completato PR #19.
+- [feature-audit-remediation-sequenced-tracker-1.md](implementation/feature-audit-remediation-sequenced-tracker-1.md): Tracker del track audit remediation — tutti i task completati.
+- [feature-prisma-deploy-migrations-1.md](implementation/feature-prisma-deploy-migrations-1.md): Piano esecutivo per deploy deterministico Prisma su Vercel — in corso.
+- [feature-prisma-deploy-migrations-tracker-1.md](implementation/feature-prisma-deploy-migrations-tracker-1.md): Tracker del deploy migrations track.
+
+### review/
+- [feature-audit-remediation-closure-2026-04-12.md](review/feature-audit-remediation-closure-2026-04-12.md): Closure report del track audit remediation (PR #19, 2026-04-12).
+- [feature-audit-remediation-gap-analysis-2026-04-12.md](review/feature-audit-remediation-gap-analysis-2026-04-12.md): Gap analysis del track audit remediation (2026-04-12).
+- [copilot-audit-2026-04-12.md](review/copilot-audit-2026-04-12.md): Report qualità e sicurezza Copilot (12 aprile 2026) — sorgente dei finding del track remediation.
 
 ### archive/
 - Documenti storici e snapshot superseded (review, roadmap, follow-up PR).
@@ -40,6 +51,7 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 - [ux-strategy.md](ux/ux-strategy.md): Strategia UX e principi guida.
 
 ### Aggiornamenti recenti
+- 2026-04-12: organizzazione documentale — archiviati working doc quality-audit track (feature-quality-audit-resolution-*), rimossa `docs/improvement/` vuota, spostato `copilot-audit` in `docs/review/`, aggiornato indice README.
 - 2026-04-12: chiuso il track di remediation audit sequenziale con merge PR #19 su `dev` e pubblicazione report di closure in `docs/review/feature-audit-remediation-closure-2026-04-12.md`.
 - 2026-04-11: completato sprint di visual unification delle pagine interne con estensione del concept login.
 - 2026-04-11: introdotta specifica operativa di frameworking grafico per standardizzare i futuri interventi UI.

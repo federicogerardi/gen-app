@@ -138,7 +138,7 @@ Piano esecutivo per risolvere tutti i rilievi del report copilot-audit-12042026 
 
 ## 8. Related Specifications / Further Reading
 
-- `docs/copilot-audit-12042026.md`
+- `docs/review/copilot-audit-2026-04-12.md`
 - `docs/archive/implement-quality-audit.completed-2026-04-11.md`
 - `docs/specifications/api-specifications.md`
 - `docs/adrs/001-modular-llm-controller-architecture.md`
