@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { Navbar } from '@/components/layout/Navbar';
+import { PageShell } from '@/components/layout/PageShell';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -28,22 +28,12 @@ export default async function DashboardPage() {
   const session = await auth();
   if (!session?.user?.id) redirect('/');
 
-  const [projects, , user] = await Promise.all([
+  const [projects, user] = await Promise.all([
     db.project.findMany({
       where: { userId: session.user.id },
       orderBy: { createdAt: 'desc' },
       take: 10,
       include: { _count: { select: { artifacts: true } } },
-    }),
-    db.artifact.findMany({
-      where: { userId: session.user.id },
-      orderBy: { createdAt: 'desc' },
-      take: 6,
-      include: {
-        project: {
-          select: { id: true, name: true },
-        },
-      },
     }),
     db.user.findUnique({
       where: { id: session.user.id },
@@ -59,26 +49,66 @@ export default async function DashboardPage() {
   }));
 
   return (
-    <>
-      <Navbar />
-      <main className="app-shell app-copy flex-1 p-6 max-w-5xl mx-auto w-full relative overflow-hidden" id="main-content">
-        <div className="pointer-events-none absolute inset-0 app-grid-overlay" />
-        <section className="app-rise relative rounded-3xl border border-black/10 bg-gradient-to-r from-slate-950 via-slate-800 to-slate-700 text-white p-6 mb-8 shadow-[0_28px_70px_-45px_rgba(15,23,42,0.85)]">
+    <PageShell width="workspace">
+      <section className="app-rise relative rounded-3xl border border-black/10 bg-gradient-to-r from-slate-950 via-slate-800 to-slate-700 text-white p-6 mb-8 shadow-[0_28px_70px_-45px_rgba(15,23,42,0.85)]">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-xs uppercase tracking-widest text-white/70 mb-2">Workspace Marketing AI</p>
-              <h1 className="app-title text-2xl md:text-3xl font-semibold">Scegli il tool giusto e genera piu velocemente</h1>
+              <h1 className="app-title text-2xl md:text-3xl font-semibold">Organizza il lavoro nei progetti e genera in modo contestuale</h1>
               <p className="text-sm text-white/80 mt-2 max-w-2xl">
-                Flusso separato per SEO Specialist e MediaBuyer: meno attrito in input, più iterazioni utili per campagna.
+                Parti dai progetti: ogni artefatto resta tracciato nel suo contesto, con cronologia chiara e iterazioni piu veloci.
               </p>
             </div>
-            <Button asChild variant="secondary"><Link href="/dashboard/projects/new">Nuovo progetto</Link></Button>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button asChild variant="secondary"><Link href="/dashboard/projects">Apri progetti</Link></Button>
+              <Button asChild variant="outline" className="border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white">
+                <Link href="/dashboard/projects/new">Nuovo progetto</Link>
+              </Button>
+            </div>
           </div>
+        </section>
+
+        <section className="app-rise mb-10" id="projects-workspace" style={{ animationDelay: '70ms' }}>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 className="app-title text-2xl font-semibold text-slate-900">Workspace progetti</h2>
+              <p className="text-sm text-muted-foreground">Accedi rapidamente ai progetti recenti o vai alla lista completa.</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button variant="outline" size="sm" asChild><Link href="/dashboard/projects">Tutti i progetti</Link></Button>
+              <Button size="sm" asChild><Link href="/dashboard/projects/new">Nuovo progetto</Link></Button>
+            </div>
+          </div>
+
+          {projectsForClient.length === 0 ? (
+            <Card className="app-surface rounded-2xl">
+              <CardContent className="py-12 text-center text-muted-foreground">
+                Nessun progetto ancora. Creane uno per iniziare.
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {projectsForClient.map((p: typeof projectsForClient[number]) => (
+                <Link key={p.id} href={`/dashboard/projects/${p.id}`}>
+                  <Card className="app-surface rounded-2xl hover:shadow-[0_26px_65px_-44px_rgba(15,23,42,0.75)] transition-shadow h-full">
+                    <CardHeader>
+                      <CardTitle className="text-base">{p.name}</CardTitle>
+                      {p.description && <CardDescription className="line-clamp-2">{p.description}</CardDescription>}
+                    </CardHeader>
+                    <CardContent className="flex items-center justify-between gap-2">
+                      <Badge variant="secondary">{p._count.artifacts} artefatti</Badge>
+                      <span className="text-xs text-muted-foreground">Apri progetto</span>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          )}
         </section>
 
         <section className="app-rise relative mb-8" style={{ animationDelay: '90ms' }}>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="app-title text-xl font-medium">Tool workspace</h2>
+            <h2 className="app-title text-xl font-medium">Tool disponibili</h2>
           </div>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {TOOL_ACTIONS.map((tool) => (
@@ -134,36 +164,6 @@ export default async function DashboardPage() {
             </Card>
           </div>
         )}
-
-        <div className="flex items-center justify-between mb-4 mt-10">
-          <h2 className="app-title text-xl font-medium">Progetti recenti</h2>
-          <Button variant="outline" size="sm" asChild><Link href="/dashboard/projects/new">Nuovo progetto</Link></Button>
-        </div>
-
-        {projectsForClient.length === 0 ? (
-          <Card className="app-surface rounded-2xl">
-            <CardContent className="py-12 text-center text-muted-foreground">
-              Nessun progetto ancora. Creane uno per iniziare.
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="app-rise grid gap-4 md:grid-cols-2 lg:grid-cols-3" style={{ animationDelay: '190ms' }}>
-            {projectsForClient.map((p: typeof projectsForClient[number]) => (
-              <Link key={p.id} href={`/dashboard/projects/${p.id}`}>
-                <Card className="app-surface rounded-2xl hover:shadow-[0_26px_65px_-44px_rgba(15,23,42,0.75)] transition-shadow h-full">
-                  <CardHeader>
-                    <CardTitle className="text-base">{p.name}</CardTitle>
-                    {p.description && <CardDescription className="line-clamp-2">{p.description}</CardDescription>}
-                  </CardHeader>
-                  <CardContent>
-                    <Badge variant="secondary">{p._count.artifacts} artefatti</Badge>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
-        )}
-      </main>
-    </>
+    </PageShell>
   );
 }

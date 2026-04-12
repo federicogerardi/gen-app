@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { ArtifactsClientPage } from '@/app/artifacts/ArtifactsClientPage';
 
@@ -8,8 +9,8 @@ jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: pushMock }),
 }));
 
-jest.mock('@/components/layout/Navbar', () => ({
-  Navbar: () => <div data-testid="navbar" />,
+jest.mock('@/components/layout/PageShell', () => ({
+  PageShell: ({ children }: { children: ReactNode }) => <div data-testid="page-shell">{children}</div>,
 }));
 
 jest.mock('@/components/hooks/useArtifacts', () => ({
@@ -72,7 +73,8 @@ describe('ArtifactsClientPage', () => {
     render(<ArtifactsClientPage projects={[{ id: 'proj_1', name: 'Project A' }]} />);
 
     expect(screen.queryByText('Output di test')).not.toBeInTheDocument();
-    expect(screen.getByText('Project A')).toBeInTheDocument();
+    expect(screen.getByText('Contenuto • Generazione ART_1')).toBeInTheDocument();
+    expect(screen.getByText('Project A · ID ART_1')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Apri dettaglio artefatto/i })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Duplica input' })).not.toBeInTheDocument();
 
@@ -82,6 +84,34 @@ describe('ArtifactsClientPage', () => {
     expect(mutateAsyncMock).toHaveBeenCalledWith('art_1');
 
     confirmSpy.mockRestore();
+  });
+
+  it('mostra una subtitle più distintiva quando il tono è presente nell input', () => {
+    useArtifacts.mockReturnValue({
+      isLoading: false,
+      error: null,
+      data: {
+        items: [
+          {
+            ...baseArtifact,
+            id: 'art_2',
+            workflowType: 'meta_ads',
+            input: {
+              topic: 'lead b2b',
+              tone: 'professional',
+            },
+          },
+        ],
+        total: 1,
+        limit: 100,
+        offset: 0,
+      },
+    });
+
+    render(<ArtifactsClientPage projects={[{ id: 'proj_1', name: 'Project A' }]} />);
+
+    expect(screen.getByText('Meta Ads • Lead b2b')).toBeInTheDocument();
+    expect(screen.getByText('Project A · Tono: professional · ID ART_2')).toBeInTheDocument();
   });
 
   it('non mostra preview raw o semantica nel listing', () => {

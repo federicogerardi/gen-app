@@ -130,6 +130,12 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
   - Migliorare gestione quota/budget, drawer accessibile, audit timeline.
   - File: docs/ux/gui-refactor-plan.md
 
+- **Projects-first navigation & IA**: `COMPLETATO (2026-04-13)`
+  - Riallineata la gerarchia dell'app ai progetti come entita primaria con route indice dedicata `/dashboard/projects`, dashboard project-first e riposizionamento di Artefatti come storico trasversale personale.
+  - Validazione completata: test `PASS` (48 suite, 352 test), typecheck `PASS` e build produzione `PASS`.
+  - Copertura aggiuntiva: test d'integrazione su pagina dettaglio progetto per rendering card identity e guard auth/ownership.
+  - File: docs/ux/projects-first-navigation-plan.md
+
 ---
 
 ## DevOps/Deployment
