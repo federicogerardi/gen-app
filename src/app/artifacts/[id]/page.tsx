@@ -117,10 +117,6 @@ export default async function ArtifactPage({ params }: { params: Promise<{ id: s
                 <p className="font-semibold">{artifact.outputTokens}</p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Costo</p>
-                <p className="font-semibold">${Number(artifact.costUSD).toFixed(4)}</p>
-              </div>
-              <div>
                 <p className="text-xs text-muted-foreground">Creato</p>
                 <p className="font-semibold">{new Date(artifact.createdAt).toLocaleString('it-IT')}</p>
               </div>

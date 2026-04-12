@@ -22,6 +22,7 @@ const mockArtifact = {
   type: 'content',
   status: 'completed',
   content: 'lorem ipsum',
+  costUSD: '0.01',
 };
 
 beforeEach(() => {
@@ -72,6 +73,7 @@ describe('GET /api/artifacts/[id]', () => {
 
     expect(res.status).toBe(200);
     expect(data.artifact.id).toBe(ARTIFACT_ID);
+    expect(data.artifact).not.toHaveProperty('costUSD');
   });
 });
 
@@ -225,6 +227,7 @@ describe('PUT /api/artifacts/[id]', () => {
 
     expect(res.status).toBe(200);
     expect(data.artifact).toBeDefined();
+    expect(data.artifact).not.toHaveProperty('costUSD');
     expect(updateArtifact).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: ARTIFACT_ID },

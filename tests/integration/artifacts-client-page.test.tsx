@@ -33,7 +33,6 @@ const baseArtifact = {
   status: 'completed',
   inputTokens: 10,
   outputTokens: 20,
-  costUSD: '0.01',
   createdAt: new Date().toISOString(),
   completedAt: new Date().toISOString(),
 };

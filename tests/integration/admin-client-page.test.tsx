@@ -120,6 +120,8 @@ describe('AdminClientPage', () => {
       expect(screen.getByText('Mario Rossi')).toBeInTheDocument();
     });
 
+    expect(screen.getByText('$0.0210')).toBeInTheDocument();
+
     expect(screen.getByText('90%')).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Cerca utente'), { target: { value: 'Giulia' } });
@@ -148,5 +150,6 @@ describe('AdminClientPage', () => {
 
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByTestId('admin-quota-form')).toBeInTheDocument();
+    expect(screen.getAllByText('$50.00 / $500.00').length).toBeGreaterThan(0);
   });
 });

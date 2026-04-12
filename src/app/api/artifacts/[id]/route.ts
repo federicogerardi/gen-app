@@ -8,6 +8,11 @@ const updateArtifactSchema = z.object({
   content: z.string().min(1).max(100_000),
 });
 
+function stripArtifactCost<T>(artifact: T): Omit<T, 'costUSD'> {
+  const { costUSD: _costUSD, ...sanitizedArtifact } = artifact as T & { costUSD?: unknown };
+  return sanitizedArtifact as Omit<T, 'costUSD'>;
+}
+
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -27,7 +32,7 @@ export async function GET(
     return apiError('FORBIDDEN', 'Access denied', 403);
   }
 
-  return NextResponse.json({ artifact });
+  return NextResponse.json({ artifact: stripArtifactCost(artifact) });
 }
 
 export async function DELETE(
@@ -90,5 +95,5 @@ export async function PUT(
     },
   });
 
-  return NextResponse.json({ artifact: updated });
+  return NextResponse.json({ artifact: stripArtifactCost(updated) });
 }

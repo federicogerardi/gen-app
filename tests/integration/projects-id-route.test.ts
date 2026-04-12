@@ -16,7 +16,35 @@ const deleteProject = db.project.delete as jest.Mock;
 const PROJECT_ID = 'proj_abc123';
 const makeParams = (id = PROJECT_ID) => ({ params: Promise.resolve({ id }) });
 
-const mockProject = { id: PROJECT_ID, userId: 'user_1', name: 'Test Project', artifacts: [] };
+const mockProject = {
+  id: PROJECT_ID,
+  userId: 'user_1',
+  name: 'Test Project',
+  description: null,
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+  artifacts: [
+    {
+      id: 'art_1',
+      userId: 'user_1',
+      projectId: PROJECT_ID,
+      type: 'content',
+      workflowType: null,
+      model: 'openai/gpt-4-turbo',
+      input: {},
+      content: 'output',
+      status: 'completed',
+      failureReason: null,
+      inputTokens: 10,
+      outputTokens: 12,
+      streamedAt: null,
+      completedAt: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      costUSD: '0.03',
+    },
+  ],
+};
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -66,6 +94,7 @@ describe('GET /api/projects/[id]', () => {
 
     expect(res.status).toBe(200);
     expect(data.project.id).toBe(PROJECT_ID);
+    expect(data.project.artifacts[0]).not.toHaveProperty('costUSD');
   });
 });
 

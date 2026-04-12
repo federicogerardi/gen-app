@@ -12,7 +12,6 @@ export interface Artifact {
   status: string;
   inputTokens: number;
   outputTokens: number;
-  costUSD: string;
   createdAt: string;
   completedAt: string | null;
 }
