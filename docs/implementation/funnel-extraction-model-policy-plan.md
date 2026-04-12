@@ -4,13 +4,13 @@ version: 1.5
 date_created: 2026-04-12
 last_updated: 2026-04-12
 owner: Platform AI / Tooling
-status: In Progress
+status: Completed
 tags: [feature, llm, extraction, openrouter, policy, reliability, cost, deploy, model-registry]
 ---
 
 # Introduction
 
-![Status: In progress](https://img.shields.io/badge/status-In%20progress-yellow)
+![Status: Completed](https://img.shields.io/badge/status-Completed-brightgreen)
 
 Questo piano definisce l'implementazione di una policy runtime per la fase di estrazione dati nel flusso Funnel da file caricato utente, con modello statico e catena di fallback deterministica su OpenRouter. L'obiettivo e separare l'estrazione strutturata dalla scelta modello usata per la generazione creativa, migliorando affidabilita JSON, prevedibilita operativa e controllo costo.
 
@@ -121,6 +121,7 @@ Questo piano definisce l'implementazione di una policy runtime per la fase di es
 - 2026-04-12: Avvio operativo Fase 5 con bootstrap idempotente implementato (`scripts/bootstrap-extraction-models.mjs`), integrazione pipeline (`deploy:vercel`) e test unitari dedicati (`tests/unit/extraction-model-bootstrap.test.ts`).
 - 2026-04-12: Root cause delivery identificato in extraction chain: mismatch `notes` (prompt richiedeva array, schema route accettava string). Fix applicato con schema tolerant (`string | string[]`) e prompt riallineato.
 - 2026-04-12: Validazione runtime dev completata su upload funnel: extraction riuscita al primo modello della chain (`anthropic/claude-3.7-sonnet`) con risposta endpoint `200` e stream inizializzato.
+- 2026-04-12: Merge su `dev` completato; piano chiuso come snapshot finale as-is dell'iniziativa implementata.
 
 ## 4. Contribution Added In This Iteration
 
@@ -216,9 +217,9 @@ Contributo operativo aggiuntivo per chiudere la Fase 5 in modo deploy-safe, idem
 - **FILE-010**: `package.json` - integrazione script bootstrap nella catena deploy.
 
 Stato file documentali:
-- `docs/implementation/funnel-extraction-model-policy-plan.md`: creato e aggiornato (v1.5).
-- `docs/implementation/feature-funnel-extraction-model-policy-tracker-1.md`: creato.
-- `docs/implement-index.md`: aggiornato con nuova iniziativa attiva.
+- `docs/implementation/funnel-extraction-model-policy-plan.md`: completato e chiuso come snapshot finale (v1.5).
+- `docs/implementation/feature-funnel-extraction-model-policy-tracker-1.md`: completato e chiuso con stato finale post-merge.
+- `docs/implement-index.md`: aggiornato con stato iniziativa completato e mergiato su `dev`.
 
 Evidenze implementazione fase 1:
 - `src/lib/llm/extraction-model-policy.ts`: aggiunto modulo policy con chain, limiti, helper pianificazione tentativi ed escalation.

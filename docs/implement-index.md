@@ -49,9 +49,10 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
   - Validazione finale locale aggiornata: `npm run lint`, `npm run typecheck`, `npm run test` (30/30 suite), `npm run build` tutti `PASS`.
   - File: docs/archive/tooling-generation-refactor-plan.md
 
-- **Extraction model policy (Funnel upload -> extraction)**: `IN CORSO (nuovo ramo prioritario deploy bootstrap, 2026-04-12)`
-  - Fasi 1-4 completate: policy statica runtime su OpenRouter, fallback deterministico (`anthropic/claude-3.7-sonnet` -> `openai/gpt-4.1` -> `openai/o3`), validazione server-side parse/schema/coerenza, budget cap, telemetria tentativi e normalizzazione quota retry (1 richiesta = 1 incremento `monthlyUsed`).
-  - Nuovo ramo di lavoro aperto (Fase 5): bootstrap idempotente a deploy dei 3 model ID extraction nel registry DB con pricing mock fallback, per garantire disponibilita runtime anche dopo cambio chain statica.
+- **Extraction model policy (Funnel upload -> extraction)**: `COMPLETATO E MERGIATO (2026-04-12)`
+  - Completate tutte le 5 fasi: policy runtime statica su OpenRouter, fallback deterministico (`anthropic/claude-3.7-sonnet` -> `openai/gpt-4.1` -> `openai/o3`), validazione server-side parse/schema/coerenza, budget cap configurabile, telemetria tentativi, normalizzazione quota retry e bootstrap deploy idempotente del model registry.
+  - Root cause runtime chiusa durante il track: mismatch sul campo `notes` tra prompt e schema route, corretto con riallineamento prompt e compatibilita `string | string[]` lato validazione.
+  - Merge su `dev` completato; documentazione operativa e tracker chiusi come snapshot finale as-is.
   - File: docs/implementation/funnel-extraction-model-policy-plan.md, docs/implementation/feature-funnel-extraction-model-policy-tracker-1.md, docs/review/extraction-model-policy-rollout-runbook-2026-04-12.md
 
 - **Deploy Vercel**: `COMPLETATO (baseline)`

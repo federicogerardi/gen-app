@@ -4,13 +4,13 @@ version: 1.5
 date_created: 2026-04-12
 last_updated: 2026-04-12
 owner: Platform AI / Tooling
-status: In Progress
+status: Completed
 tags: [process, tracker, extraction, llm, openrouter, reliability, cost, deploy, model-registry]
 ---
 
 # Introduction
 
-![Status: In progress](https://img.shields.io/badge/status-In%20progress-yellow)
+![Status: Completed](https://img.shields.io/badge/status-Completed-brightgreen)
 
 This tracker is the execution companion for docs/implementation/funnel-extraction-model-policy-plan.md.
 It records baseline status, implementation progress, and evidence for each execution task.
@@ -93,6 +93,7 @@ Status legend:
 - 2026-04-12: New prioritized branch added (Phase 5) for deploy-time bootstrap of extraction runtime models in DB with mock pricing fallback.
 - 2026-04-12: Phase 5 started with bootstrap implementation (`scripts/bootstrap-extraction-models.mjs`), deploy pipeline integration (`deploy:vercel`), non-destructive default preservation and dedicated unit tests passing.
 - 2026-04-12: Runtime dev validation completed: funnel upload extraction succeeded on the first chain model (`anthropic/claude-3.7-sonnet`) with endpoint response `200`.
+- 2026-04-12: Merge su `dev` completato; tracker chiuso come stato finale dell'esecuzione.
 
 ## 4. Current Phase Status
 
@@ -147,7 +148,7 @@ Status legend:
 | TASK-025 | Completed | 2026-04-12 |
 | TASK-026 | Completed | 2026-04-12 |
 
-## 5. Evidence Register (to update during execution)
+## 5. Evidence Register (finalized at closure)
 
 - EVID-001: docs index updated with extraction policy track entry in `docs/implement-index.md`
 - EVID-002: plan enriched with execution gates and DoD in `docs/implementation/funnel-extraction-model-policy-plan.md`
@@ -155,22 +156,25 @@ Status legend:
 - EVID-004: constants/helpers implemented and validated in `src/lib/llm/extraction-model-policy.ts`
 - EVID-005: unit tests added in `tests/unit/extraction-model-policy.test.ts`
 - EVID-006: route fallback chain implemented in `src/app/api/tools/extraction/generate/route.ts`
-- EVID-007: pending
-- EVID-008: pending
-- EVID-009: pending
-- EVID-010: pending
-- EVID-011: pending
-- EVID-012: pending
-- EVID-013: pending
-- EVID-014: pending
-- EVID-015: pending
-- EVID-016: pending
-- EVID-017: pending
+- EVID-007: completed
+- EVID-008: completed
+- EVID-009: completed
+- EVID-010: completed
+- EVID-011: completed
+- EVID-012: completed
+- EVID-013: completed
+- EVID-014: completed
+- EVID-015: completed
+- EVID-016: completed
+- EVID-017: completed
 - EVID-018: bootstrap script implemented in `scripts/bootstrap-extraction-models.mjs` and helper module in `src/lib/llm/extraction-model-bootstrap.ts`
 - EVID-019: deploy pipeline updated in `package.json` (`deploy:vercel` includes bootstrap step)
 - EVID-020: non-destructive `isDefault` behavior enforced in bootstrap implementation
 - EVID-021: unit test coverage added for bootstrap idempotency and presence guarantees
 - EVID-022: deploy/bootstrap operational policy documented in runbook
+
+Closure note:
+- All tasks `TASK-001..TASK-026` are completed and the initiative has been merged into `dev`.
 
 Phase 1 evidence log:
 - EVID-004 (TASK-001..TASK-004): constants and pure helpers implemented in `src/lib/llm/extraction-model-policy.ts`.
