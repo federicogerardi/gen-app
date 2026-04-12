@@ -2,6 +2,12 @@
 
 _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 
+## Aggiornamento sessione (2026-04-12)
+
+- **Verifica deploy/migrate completata**: confermato che `prisma migrate deploy` e incluso nella pipeline CI e nella catena di deploy applicativa (`db:migrate:deploy` -> `deploy:vercel` -> build).
+- **Stato funzionalita app in questa sessione**: nessuna nuova feature implementata; aggiornato solo il tracciamento documentale con evidenza di verifica deploy.
+- **Validazione ambiente locale**: `npm run typecheck` eseguito con esito `0` (pass).
+
 ## Stato avanzamento (aggiornato al 2026-04-12)
 
 - **Testing coverage >80%**: `COMPLETATO (scope corrente)`
@@ -80,6 +86,11 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 - **Quota management**
   - Automatizzare reset mensile, warning 80%, endpoint admin quota, email alert.
   - File: docs/archive/improvement-roadmap.md, docs/archive/architecture-review.md
+
+- **Model registry auto-sync da OpenRouter**
+  - Integrare il prelievo automatico dei costi modello esposti da OpenRouter e dei dettagli endpoint pubblicati dalla Models API per ridurre input manuale in admin e migliorare l'allineamento del registry.
+  - Valutare modalita guidata con proposta di aggiornamento e conferma admin, invece di overwrite automatico, per preservare governance operativa.
+  - File: https://openrouter.ai/api/v1/models, https://openrouter.ai/docs/overview/models
 
 ---
 

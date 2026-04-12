@@ -96,6 +96,22 @@ model Artifact {
   updatedAt      DateTime  @updatedAt
 }
 
+model LlmModel {
+  id                String   @id @default(cuid())
+  modelId           String   @unique
+  name              String
+  inputCostPer1k    Decimal
+  outputCostPer1k   Decimal
+  isActive          Boolean  @default(true)
+  isDefault         Boolean  @default(false)
+  pricingReviewedAt DateTime @default(now())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([isDefault])
+}
+
 model QuotaHistory {
   id           String                @id @default(cuid())
   userId       String

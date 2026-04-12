@@ -2,7 +2,8 @@ import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { LLMOrchestrator } from './orchestrator';
 import type { ArtifactType, OutputFormat, QuotaEventStatus } from '@/lib/types/artifact';
-import { calculateCostAccurate } from './costs';
+import { calculateCostWithPricing } from './costs';
+import { getModelPricingForRuntime } from './model-registry';
 
 const orchestrator = new LLMOrchestrator();
 
@@ -49,6 +50,7 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
   const { userId, projectId, type, model, input, promptOverride } = params;
   const workflowType = params.workflowType ?? extractWorkflowType(input);
   const outputFormat = extractOutputFormat(input);
+  const modelPricing = await getModelPricingForRuntime(model);
 
   const artifact = await db.artifact.create({
     data: {
@@ -101,7 +103,7 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
 
           const estimatedInputTokens = resolveTokenCount(providerInputTokenCount, fallbackInputTokenCount);
           const estimatedOutputTokens = resolveTokenCount(providerOutputTokenCount, fallbackOutputTokenCount);
-          const costEstimate = calculateCostAccurate(model, estimatedInputTokens, estimatedOutputTokens);
+          const costEstimate = calculateCostWithPricing(modelPricing, estimatedInputTokens, estimatedOutputTokens);
 
           controller.enqueue(encode({
             type: 'token',
@@ -147,7 +149,7 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
 
         const resolvedInputTokens = resolveTokenCount(providerInputTokenCount, fallbackInputTokenCount);
         const resolvedOutputTokens = resolveTokenCount(providerOutputTokenCount, fallbackOutputTokenCount);
-        const cost = calculateCostAccurate(model, resolvedInputTokens, resolvedOutputTokens);
+        const cost = calculateCostWithPricing(modelPricing, resolvedInputTokens, resolvedOutputTokens);
         const normalized = orchestrator.normalizeOutput({
           rawContent: accumulated,
           type,

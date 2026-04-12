@@ -1,15 +1,8 @@
 import { z } from 'zod';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { ALLOWED_MODELS, isSupportedModel } from '@/lib/llm/models';
-
-// Re-export for backward compatibility
-export { ALLOWED_MODELS } from '@/lib/llm/models';
 
 export const toneSchema = z.enum(['professional', 'casual', 'formal', 'technical']);
 
-const modelSchema = z.string().refine(isSupportedModel, {
-  message: 'Unsupported model',
-});
+const modelSchema = z.string().min(1);
 
 const customerContextSchema = z.object({
   product: z.string().min(3),

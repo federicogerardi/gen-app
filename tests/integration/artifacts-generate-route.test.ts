@@ -35,6 +35,7 @@ const findProject = db.project.findUnique as jest.Mock;
 const createQuota = db.quotaHistory.create as jest.Mock;
 const updateUser = db.user.update as jest.Mock;
 const dbTransaction = db.$transaction as jest.Mock;
+const findActiveModel = db.llmModel.findFirst as jest.Mock;
 
 const VALID_PROJECT_ID = 'cjld2cyuq0000t3rmniod1foy';
 
@@ -66,6 +67,9 @@ beforeEach(() => {
   jest.clearAllMocks();
   createQuota.mockResolvedValue({});
   mockedRateLimit.mockResolvedValue({ allowed: true, remaining: 999 });
+  findActiveModel.mockImplementation(async ({ where }: { where?: { modelId?: string } }) => (
+    where?.modelId === 'openai/gpt-4-turbo' ? { id: 'model_1' } : null
+  ));
   findUser.mockResolvedValue(mockUser);
   findProject.mockResolvedValue(mockProject);
   updateUser.mockResolvedValue({ ...mockUser, monthlyUsed: mockUser.monthlyUsed + 1 });

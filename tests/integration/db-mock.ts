@@ -42,6 +42,15 @@ export function createDbBase() {
       count: jest.fn(),
       aggregate: jest.fn(),
     },
+    llmModel: {
+      create: jest.fn(),
+      findUnique: jest.fn(),
+      findFirst: jest.fn(),
+      findMany: jest.fn(),
+      update: jest.fn(),
+      updateMany: jest.fn(),
+      delete: jest.fn(),
+    },
   };
 }
 

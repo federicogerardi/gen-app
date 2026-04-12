@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
@@ -19,7 +19,7 @@ const TONES = ['professional', 'casual', 'formal', 'technical'] as const;
 export default function MetaAdsToolPage() {
   const router = useRouter();
   const [projectId, setProjectId] = useState('');
-  const [model, setModel] = useState('openai/gpt-4-turbo');
+  const [model, setModel] = useState('');
   const [product, setProduct] = useState('');
   const [audience, setAudience] = useState('');
   const [offer, setOffer] = useState('');
@@ -42,6 +42,20 @@ export default function MetaAdsToolPage() {
       return res.json();
     },
   });
+
+  useEffect(() => {
+    if (model) return;
+    const defaultModel = modelsData?.models?.find((item: { default?: boolean }) => item.default);
+    if (defaultModel?.id) {
+      setModel(defaultModel.id);
+      return;
+    }
+
+    const firstModel = modelsData?.models?.[0];
+    if (firstModel?.id) {
+      setModel(firstModel.id);
+    }
+  }, [modelsData, model]);
 
   const { isStreaming, content, artifactId, error, generate } = useStreamGeneration();
   const outputDisplay = formatArtifactContentForDisplay({
@@ -150,7 +164,7 @@ export default function MetaAdsToolPage() {
                 <Textarea className="app-control" id="meta-angle" value={angle} onChange={(e) => setAngle(e.target.value)} rows={3} placeholder="Es. approccio problem-solution con social proof" />
               </div>
 
-              <Button onClick={handleGenerate} disabled={isStreaming || !projectId || !product || !audience || !offer} className="w-full">
+              <Button onClick={handleGenerate} disabled={isStreaming || !projectId || !model || !product || !audience || !offer} className="w-full">
                 {isStreaming ? 'Generazione in corso...' : 'Genera Meta Ads'}
               </Button>
             </CardContent>

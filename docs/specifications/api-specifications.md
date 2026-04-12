@@ -1,11 +1,11 @@
 # API Specifications: LLM Artifact Generation Hub
 
-**Version**: 1.1  
+**Version**: 1.2  
 **Status**: IMPLEMENTED SUBSET + OPEN ITEMS  
 **Base URL**: `https://<your-vercel-domain>/api` (production from `main`; development/preview from PR flow on `dev`)  
 **Authentication**: NextAuth session cookie (browser). Bearer tokens solo per integrazioni server-to-server esplicite.  
 **Content-Type**: `application/json` (default), `multipart/form-data` per upload documenti funnel  
-**Last Updated**: 2026-04-11
+**Last Updated**: 2026-04-12
 
 ---
 
@@ -61,10 +61,29 @@ Implemented routes in the current codebase:
 - `PUT /admin/users/{userId}/quota`
 - `GET /admin/users/{userId}/audit`
 - `GET /admin/metrics`
+- `GET /admin/models`
+- `POST /admin/models`
+- `PUT /admin/models/{modelId}`
+- `DELETE /admin/models/{modelId}`
 - `GET /models`
 
 Documented but not yet implemented:
 - `GET /artifacts` (lista con filtri avanzati server-side e paginazione)
+
+### Model Registry (As-Is)
+
+Il catalogo modelli non e piu hardcoded a livello route validation: e gestito tramite registry DB (`LlmModel`) con CRUD admin.
+
+Comportamento corrente:
+- `GET /api/admin/models`: lista completa per gestione amministrativa
+- `POST /api/admin/models`: crea nuovo modello
+- `PUT /api/admin/models/{modelId}`: aggiorna stato/costi/default
+- `DELETE /api/admin/models/{modelId}`: elimina modello non-default
+- `GET /api/models`: espone ai client i modelli pubblici attivi
+
+Validazione runtime modello:
+- Le route di generazione validano il modello selezionato tramite availability check su registry (`requireAvailableModel`).
+- Se il registry DB non contiene righe attive, il sistema mantiene fallback statico controllato per continuita operativa.
 
 ### Auth.js Session Endpoint
 ```

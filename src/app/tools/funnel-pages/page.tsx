@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
@@ -163,7 +163,7 @@ export default function FunnelPagesToolPage() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [projectId, setProjectId] = useState('');
-  const [model, setModel] = useState('openai/gpt-4-turbo');
+  const [model, setModel] = useState('');
   const [tone, setTone] = useState<(typeof TONES)[number]>('professional');
   const [notes, setNotes] = useState('');
   const [phase, setPhase] = useState<Phase>('idle');
@@ -186,9 +186,23 @@ export default function FunnelPagesToolPage() {
     queryKey: ['models'],
     queryFn: async () => {
       const res = await fetch('/api/models');
-      return res.json() as Promise<{ models?: Array<{ id: string; name: string }> }>;
+      return res.json() as Promise<{ models?: Array<{ id: string; name: string; default?: boolean }> }>;
     },
   });
+
+  useEffect(() => {
+    if (model) return;
+    const defaultModel = modelsData?.models?.find((item: { default?: boolean }) => item.default);
+    if (defaultModel?.id) {
+      setModel(defaultModel.id);
+      return;
+    }
+
+    const firstModel = modelsData?.models?.[0];
+    if (firstModel?.id) {
+      setModel(firstModel.id);
+    }
+  }, [modelsData, model]);
 
   function updateStep(key: FunnelStepKey, patch: Partial<FunnelStepState>) {
     setSteps((prev) => prev.map((step) => (step.key === key ? { ...step, ...patch } : step)));
@@ -220,6 +234,11 @@ export default function FunnelPagesToolPage() {
 
     if (!projectId) {
       setUploadError('Seleziona prima un progetto.');
+      return;
+    }
+
+    if (!model) {
+      setUploadError('Seleziona prima un modello.');
       return;
     }
 
@@ -418,9 +437,10 @@ export default function FunnelPagesToolPage() {
                   accept=".docx,.txt,.md,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown"
                   className="block w-full cursor-pointer rounded-xl border border-black/10 bg-white/60 px-3 py-2 text-sm text-foreground file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1 file:text-xs file:font-medium"
                   onChange={handleFileChange}
-                  disabled={phase === 'uploading' || phase === 'extracting' || running || !projectId}
+                  disabled={phase === 'uploading' || phase === 'extracting' || running || !projectId || !model}
                 />
                 {!projectId && <p className="text-xs text-amber-700">Seleziona prima un progetto per abilitare il caricamento.</p>}
+                {projectId && !model && <p className="text-xs text-amber-700">Seleziona un modello per continuare.</p>}
                 {uploadedFileName && <p className="text-xs text-muted-foreground">File selezionato: {uploadedFileName}</p>}
               </div>
 
@@ -470,7 +490,7 @@ export default function FunnelPagesToolPage() {
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <Button onClick={handleRunProcess} disabled={running || !projectId} className="flex-1">
+                    <Button onClick={handleRunProcess} disabled={running || !projectId || !model} className="flex-1">
                       {running ? 'Generazione in corso...' : 'Avvia generazione funnel'}
                     </Button>
                     <Button variant="outline" onClick={resetAll} disabled={running}>
