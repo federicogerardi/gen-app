@@ -2,7 +2,7 @@
 
 **Data creazione**: 11 aprile 2026  
 **Stato attuale**: ✅ Completato e chiuso (squash+merge su `dev`)  
-**Archiviazione**: `docs/archive/implement-quality-audit.completed-2026-04-11.md`  
+**Archiviazione**: `docs/archive/implement-quality-audit-closure-2026-04-11.md`  
 **Fonte**: Audit Globale di Qualità e Sicurezza  
 **Durata stimata**: 4–5 settimane (92 ore)  
 **Fasi**: 4 progressivi e incrementali  

@@ -57,7 +57,7 @@ La PR applica remediation strutturale su 5 sprint:
 ### Esito sintetico
 
 - Coerenza generale: `allineata`.
-- Item pianificati in `magic-copilot.md`: 17/17 coperti in PR #28.
+- Item pianificati in `copilot-remediation-strategy.md`: 17/17 coperti in PR #28.
 - Nota A7: il piano prevedeva conversione enum Prisma **oppure** fallback con indici/constraint; e stata adottata la strategia fallback con indici `@@index([type])` e `@@index([status])`.
 
 ### Tracciabilita per ID

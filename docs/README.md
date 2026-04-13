@@ -7,7 +7,7 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 - [blueprint.md](blueprint.md): Blueprint architetturale e overview del progetto.
 - [progetto-overview.md](progetto-overview.md): Descrizione generale e obiettivi del progetto per Stakeholder e Team.
 - [implement-index.md](implement-index.md): Indice operativo delle priorità correnti e stato di avanzamento.
-- [archive/implement-quality-audit.completed-2026-04-11.md](archive/implement-quality-audit.completed-2026-04-11.md): Snapshot storico finale dei finding quality/security dell'audit globale.
+- [archive/implement-quality-audit-closure-2026-04-11.md](archive/implement-quality-audit-closure-2026-04-11.md): Snapshot storico finale dei finding quality/security dell'audit globale.
 
 ### accessibility/
 - [accessibility.md](accessibility/accessibility.md): Linee guida e strategie per l’accessibilità.
@@ -52,6 +52,7 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 
 ### specifications/
 - [api-specifications.md](specifications/api-specifications.md): Specifiche API e contratti.
+- [documentation-filename-naming-spec.md](specifications/documentation-filename-naming-spec.md): Regole operative e pattern canonico per il naming dei file markdown in `docs/`.
 - [graphic-frameworking-spec.md](specifications/graphic-frameworking-spec.md): Specifica visual frameworking per interventi UI coerenti con shell grafica e template applicato.
 
 ### ux/
@@ -61,6 +62,7 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 - [ux-strategy.md](ux/ux-strategy.md): Strategia UX e principi guida.
 
 ### Aggiornamenti recenti
+- 2026-04-13: introdotta specifica canonica per il naming dei file documentazione in `docs/specifications/documentation-filename-naming-spec.md`.
 - 2026-04-13: riallineata la linea alta docs (`blueprint`, `progetto-overview`, `api-specifications`) allo stato as-is post PR-28 e introdotti guardrail permanenti di rigore documentale.
 - 2026-04-13: verificata e documentata la consistenza tra piano `magic-copilot` (C1..B2) e interventi PR #28 con matrice di tracciabilita nei report review/changelog.
 - 2026-04-13: aggiunti report review/changelog dell'ultimo merge PR -> `dev` (PR #28) per tracciabilita interventi e base documentale locale.

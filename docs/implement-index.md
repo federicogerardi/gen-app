@@ -25,7 +25,7 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
   - Track esecutivo completato su 4 fasi e 15 finding, con merge finale su `dev` (squash and merge).
   - Tutti i task `TASK-TRK-001` → `TASK-TRK-015` risultano `Done` nel tracker operativo.
   - Documento piano allineato a stato finale e snapshot archiviato per storico.
-  - File: docs/archive/implement-quality-audit.completed-2026-04-11.md, docs/archive/feature-quality-audit-resolution-tracker-1.md
+  - File: docs/archive/implement-quality-audit-closure-2026-04-11.md, docs/archive/feature-quality-audit-resolution-tracker-1.md
 
 - **Feature audit remediation sequenced (2026-04-12)**: `COMPLETATO E MERGIATO`
   - Piano sequenziale `TASK-001..TASK-020` completato con evidenze test/unit/integration/e2e.
@@ -67,7 +67,7 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
   - Consolidare e mantenere il livello raggiunto nelle prossime PR.
 - **Espansione test E2E e flussi reali auth/db**: `IN CORSO`
   - Estendere i test su login reale, generazione end-to-end, quota/admin e regression UX preview.
-  - File: docs/archive/improvement-roadmap.md, docs/archive/architecture-review.md, docs/ux/gui-refactor-plan.md
+  - File: docs/archive/llm-artifact-generation-roadmap-plan.md, docs/archive/architecture-review.md, docs/ux/gui-refactor-plan.md
 
 ---
 
@@ -80,24 +80,24 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 - **Structured logging & observability**
   - Implementare logging strutturato (Pino), Sentry, performance metrics.
   - Bloccante per debugging/monitoraggio.
-  - File: docs/archive/improvement-roadmap.md
+  - File: docs/archive/llm-artifact-generation-roadmap-plan.md
 
 - **Quality & security audit resolution track**: `COMPLETATO`
   - Esecuzione completata dei finding di correttezza, consistenza, scalabilita e hardening emersi dall'audit globale.
   - Piano operativo chiuso e mantenuto come riferimento storico insieme al tracker.
-  - File: docs/archive/implement-quality-audit.completed-2026-04-11.md, docs/archive/feature-quality-audit-resolution-tracker-1.md
+  - File: docs/archive/implement-quality-audit-closure-2026-04-11.md, docs/archive/feature-quality-audit-resolution-tracker-1.md
 
 - **Error handling avanzato**
   - Retry logic, circuit breaker, error boundaries custom, fallback provider.
-  - File: docs/archive/improvement-roadmap.md, docs/archive/architecture-review.md
+  - File: docs/archive/llm-artifact-generation-roadmap-plan.md, docs/archive/architecture-review.md
 
 - **Database optimization**
   - Indici, constraints, soft deletes.
-  - File: docs/archive/improvement-roadmap.md
+  - File: docs/archive/llm-artifact-generation-roadmap-plan.md
 
 - **Quota management**
   - Automatizzare reset mensile, warning 80%, endpoint admin quota, email alert.
-  - File: docs/archive/improvement-roadmap.md, docs/archive/architecture-review.md
+  - File: docs/archive/llm-artifact-generation-roadmap-plan.md, docs/archive/architecture-review.md
 
 - **Model registry auto-sync da OpenRouter**
   - Integrare il prelievo automatico dei costi modello esposti da OpenRouter e dei dettagli endpoint pubblicati dalla Models API per ridurre input manuale in admin e migliorare l'allineamento del registry.
@@ -142,7 +142,7 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 - **Vercel post-deployment hardening & monitoring**
   - Consolidare health checks, monitoring, runbook e smoke validation.
   - Prioritario per stabilizzazione post go-live.
-  - File: docs/archive/improvement-roadmap.md, docs/implementation/implementation-plan.md
+  - File: docs/archive/llm-artifact-generation-roadmap-plan.md, docs/implementation/implementation-plan.md
 
 - **Guardrail env validation (build-safe)**: `COMPLETATO (2026-04-12)`
   - Evitare validazioni env endpoint-specific in import-time (`parseEnv(process.env)`), perche Next.js puo valutare moduli non correlati durante `Collecting page data`.
@@ -155,7 +155,7 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 ## Documentazione
 - **Allineamento documentazione vs codice**
   - Aggiornare api-specifications.md, blueprint.md, docstring, runbook.
-  - File: docs/archive/copilot-review-followups.md, docs/archive/architecture-review.md
+  - File: docs/archive/copilot-review-followups-overview.md, docs/archive/architecture-review.md
 
 ---
 

@@ -82,7 +82,7 @@ Recently completed (2026-04-11):
   - Tracker: docs/implementation/feature-prisma-deploy-migrations-tracker-1.md
 
 - Quality and security audit resolution
-  - Source roadmap: docs/archive/implement-quality-audit.completed-2026-04-11.md
+  - Source roadmap: docs/archive/implement-quality-audit-closure-2026-04-11.md
   - Execution plan: docs/archive/feature-quality-audit-resolution-1.md
   - Tracker: docs/archive/feature-quality-audit-resolution-tracker-1.md
 
