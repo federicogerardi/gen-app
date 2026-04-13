@@ -48,14 +48,14 @@ export async function POST(request: Request) {
     'Tool generation started',
   );
 
-  const usageResult = await enforceUsageGuards(userId, payload.model, 'meta_ads');
-  if (!usageResult.ok) {
-    return usageResult.response;
-  }
-
   const ownershipResult = await requireOwnedProject(payload.projectId, userId);
   if (!ownershipResult.ok) {
     return ownershipResult.response;
+  }
+
+  const usageResult = await enforceUsageGuards(userId, payload.model, 'meta_ads');
+  if (!usageResult.ok) {
+    return usageResult.response;
   }
 
   const prompt = await buildMetaAdsPrompt({
@@ -94,7 +94,7 @@ export async function POST(request: Request) {
       'Tool generation stream initialized',
     );
 
-    return sseResponse(stream);
+    return sseResponse(stream, requestId);
   } catch (error) {
     const err = error instanceof Error
       ? { name: error.name, message: error.message }

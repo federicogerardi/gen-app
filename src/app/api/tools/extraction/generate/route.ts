@@ -401,7 +401,7 @@ export async function POST(request: Request) {
           'Tool generation stream initialized',
         );
 
-        return sseResponse(replaySseChunks(consumed.chunks));
+        return sseResponse(replaySseChunks(consumed.chunks), requestId);
       }
 
       if (!policyDecision.escalate) {

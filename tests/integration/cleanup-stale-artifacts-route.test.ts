@@ -49,7 +49,7 @@ describe('GET /api/cron/cleanup-stale-artifacts', () => {
     const data = await res.json();
 
     expect(res.status).toBe(403);
-    expect(data.error).toBe('Unauthorized');
+    expect(data.error.code).toBe('UNAUTHORIZED');
   });
 
   it('returns cleaned: 0 when no stale artifacts are found', async () => {
@@ -86,7 +86,7 @@ describe('GET /api/cron/cleanup-stale-artifacts', () => {
     const data = await res.json();
 
     expect(res.status).toBe(500);
-    expect(data.error).toBe('Server misconfiguration');
+    expect(data.error.code).toBe('INTERNAL_ERROR');
   });
 
   it('returns 503 outside Vercel production when cron secret is missing', async () => {
@@ -97,6 +97,6 @@ describe('GET /api/cron/cleanup-stale-artifacts', () => {
     const data = await res.json();
 
     expect(res.status).toBe(503);
-    expect(data.error).toBe('Cron endpoint is not configured');
+    expect(data.error.code).toBe('SERVICE_UNAVAILABLE');
   });
 });
