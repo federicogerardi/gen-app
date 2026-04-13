@@ -1,11 +1,11 @@
 # API Specifications: LLM Artifact Generation Hub
 
-**Version**: 1.2  
+**Version**: 1.3  
 **Status**: IMPLEMENTED SUBSET + OPEN ITEMS  
 **Base URL**: `https://<your-vercel-domain>/api` (production from `main`; development/preview from PR flow on `dev`)  
 **Authentication**: NextAuth session cookie (browser). Bearer tokens solo per integrazioni server-to-server esplicite.  
 **Content-Type**: `application/json` (default), `multipart/form-data` per upload documenti funnel  
-**Last Updated**: 2026-04-12
+**Last Updated**: 2026-04-13
 
 ---
 
@@ -175,7 +175,6 @@ POST /tools/funnel-pages/upload
 - `file` (binary)
 
 Formati supportati:
-- PDF (`application/pdf`)
 - DOCX (`application/vnd.openxmlformats-officedocument.wordprocessingml.document`)
 - TXT (`text/plain`)
 - Markdown (`text/markdown`)
@@ -192,8 +191,8 @@ Regole principali:
   "ok": true,
   "data": {
     "text": "contenuto estratto",
-    "fileName": "briefing.pdf",
-    "mimeType": "application/pdf",
+    "fileName": "briefing.docx",
+    "mimeType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     "sizeBytes": 123456
   }
 }

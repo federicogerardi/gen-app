@@ -37,6 +37,8 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 - [feature-audit-remediation-gap-analysis-2026-04-12.md](review/feature-audit-remediation-gap-analysis-2026-04-12.md): Gap analysis del track audit remediation (2026-04-12).
 - [copilot-audit-2026-04-12.md](review/copilot-audit-2026-04-12.md): Report qualità e sicurezza Copilot (12 aprile 2026) — sorgente dei finding del track remediation.
 - [extraction-model-policy-rollout-runbook-2026-04-12.md](review/extraction-model-policy-rollout-runbook-2026-04-12.md): Runbook rollout/rollback e query operative per policy extraction.
+- [pr-28-dev-merge-review-2026-04-13.md](review/pr-28-dev-merge-review-2026-04-13.md): Review operativa dell'ultimo merge PR verso `dev` (PR #28), con metadati, scope e sintesi sprint.
+- [pr-28-dev-commit-changelog-2026-04-13.md](review/pr-28-dev-commit-changelog-2026-04-13.md): Changelog commit-level della PR #28 con shortstat e note di riuso per documentazione.
 
 ### archive/
 - Documenti storici e snapshot superseded (review, roadmap, follow-up PR).
@@ -59,6 +61,9 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 - [ux-strategy.md](ux/ux-strategy.md): Strategia UX e principi guida.
 
 ### Aggiornamenti recenti
+- 2026-04-13: riallineata la linea alta docs (`blueprint`, `progetto-overview`, `api-specifications`) allo stato as-is post PR-28 e introdotti guardrail permanenti di rigore documentale.
+- 2026-04-13: verificata e documentata la consistenza tra piano `magic-copilot` (C1..B2) e interventi PR #28 con matrice di tracciabilita nei report review/changelog.
+- 2026-04-13: aggiunti report review/changelog dell'ultimo merge PR -> `dev` (PR #28) per tracciabilita interventi e base documentale locale.
 - 2026-04-13: validazione finale completata dopo il refactor width policy shared shell: test PASS (48 suite, 352 test), typecheck PASS e build PASS.
 - 2026-04-13: estesa la copertura d'integrazione del track projects-first alla pagina dettaglio progetto, con suite completa PASS (48 suite, 352 test).
 - 2026-04-13: completata implementazione del track projects-first (fasi 1-4) con validazione completata: test PASS (48 suite, 352 test), typecheck PASS e build PASS.

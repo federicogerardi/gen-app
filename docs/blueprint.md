@@ -1,9 +1,9 @@
 # Blueprint: LLM Artifact Generation Hub
 
-**Version**: 1.0  
-**Status**: CORE MVP IMPLEMENTED + ACTIVE TOOL WORKFLOWS OPERATIONAL
+**Version**: 1.1  
+**Status**: CORE MVP IMPLEMENTED + TOOL WORKFLOWS OPERATIONAL + PR-28 REMEDIATION ALIGNED
 **Target Audience**: AI Development Agents  
-**Last Updated**: 2026-04-12
+**Last Updated**: 2026-04-13
 
 ---
 
@@ -159,7 +159,7 @@ model Artifact {
   userId: string                // Creator
   projectId: string             // Container
   
-  type: string                  // artifact category (currently 'content' in active tool flows)
+  type: string                  // artifact category ('content' | 'seo' | 'code' | 'extraction')
   model: string                 // 'openai/gpt-4-turbo', 'anthropic/claude-3-opus', etc.
   
   // Input/Output
@@ -180,6 +180,10 @@ model Artifact {
   updatedAt: Date
 }
 ```
+
+As-is notes (post remediation):
+- `Artifact.type` e `Artifact.status` restano campi stringa a DB level.
+- Sono presenti indici espliciti su `type` e `status` per performance e consistenza query.
 
 ### LlmModel
 ```typescript
@@ -267,30 +271,31 @@ model QuotaHistory {
 ```
 /api/
 ├── artifacts/
+│   ├── route.ts          [GET]     → List artifacts (filters + pagination)
 │   ├── generate          [POST]    → Stream LLM response
-│   └── [id]              [GET|DELETE] → Fetch/delete artifact
+│   └── [id]              [GET|PUT|DELETE] → Artifact detail/update/delete
 ├── tools/
 │   ├── meta-ads/generate    [POST] → Stream Meta Ads dedicated workflow
 │   ├── extraction/generate   [POST] → Stream extraction JSON from raw content + field map
 │   └── funnel-pages/
-│       ├── upload            [POST] → Parse document inline (pdf/docx/txt/md)
+│       ├── upload            [POST] → Parse document inline (docx/txt/md)
 │       └── generate          [POST] → Stream Funnel step (`optin|quiz|vsl`)
 ├── projects/
 │   ├── route.ts          [GET|POST] → List/create user projects
 │   └── [id]              [GET|PUT|DELETE] → Project detail CRUD
 ├── users/
-├── admin/
-│   ├── models            [GET|POST] → Admin model registry CRUD (list/create)
-│   └── models/[modelId]  [PUT|DELETE] → Update/delete model
+│   ├── profile           [GET]      → Current user profile
+│   └── quota             [GET]      → Current quota/spending
 ├── models/
 │   └── route.ts          [GET] → Public active model catalog for UI
-│   ├── profile           [GET]     → Current user profile
-│   └── quota             [GET]     → Current quota/spending
 ├── admin/
+│   ├── metrics           [GET]      → Admin metrics
+│   ├── models            [GET|POST] → Admin model registry CRUD
+│   ├── models/[id]       [PUT|DELETE] → Update/delete model by DB primary key
 │   └── users/
 │       ├── route.ts      [GET]     → List users (admin)
+│       ├── [userId]/audit [GET]    → User audit timeline (admin)
 │       └── [userId]/quota [PUT]    → Update quota/budget or reset usage
-├── models/route.ts       [GET]     → Supported LLM models
 └── auth/[...nextauth]    [GET|POST] → Auth.js handlers
 ```
 
@@ -406,14 +411,14 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   pull_request:
 
 jobs:
   quality:
     runs-on: ubuntu-latest
     env:
-      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
       UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
     steps:
@@ -432,9 +437,9 @@ jobs:
 
 **Key Points**:
 - **`npx prisma generate`** must run before `npm run typecheck` (TypeScript needs `@/generated/prisma`)
-- **Environment variables** required during build: `OPENAI_API_KEY`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`
+- **Environment variables** required during build: `OPENROUTER_API_KEY`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`
 - **Node.js 22 LTS** for stability and compatibility
-- **Runs on**: `push` to `main` and all `pull_request` events
+- **Runs on**: `push` to `main`/`dev` and all `pull_request` events
 
 ---
 
@@ -470,10 +475,10 @@ jobs:
 - Server-Side Rendering for fast initial load
 - Database query optimization
 - Redis caching for frequent models
-- CDN-ready (Render supports caching)
+- CDN-ready on Vercel edge infrastructure
 
 ### ✅ Cost Efficiency
-- ~$150/month base (Render + DB)
+- Base infra cost aligned to Vercel + managed DB + Redis usage tiers
 - ~$100-500/month LLM costs (OpenRouter)
 - No expensive infrastructure
 - Auto-billing tied to usage
@@ -524,13 +529,23 @@ jobs:
 
 ---
 
-## Next Steps for Implementation
+## Documentation Rigor Guardrails
 
-1. **Phase 1**: Database schema + authentication
-2. **Phase 2**: Core API routes + orchestrator
-3. **Phase 3**: Frontend UI + streaming consumer
-4. **Phase 4**: Agent implementations
-5. **Phase 5**: Admin panel
-6. **Phase 6**: Testing + deployment
+Per evitare nuovo drift tra codice e documentazione (e futuri sprint di correzione), ogni PR che tocca API/schema/runtime deve includere allineamento docs nello stesso ciclo.
 
-See `implementation-plan.md` for detailed phases.
+Trigger obbligatori di update documentale:
+- Modifica endpoint, path params, error contract o semantica auth/permission.
+- Modifica schema Prisma, migrazioni, enum/valori supportati o policy di retention.
+- Modifica flussi tool attivi, input/output shape o MIME supportati.
+- Modifica env vars richieste a build/runtime o policy deploy CI/CD.
+
+Checklist minima pre-merge:
+- `docs/specifications/api-specifications.md` allineato a route e payload reali.
+- `docs/blueprint.md` allineato per API map, data model summary e deployment notes.
+- `docs/implement-index.md` aggiornato su stato operativo (completato/in corso).
+- Aggiunta evidenza nel changelog/review quando il cambio e remediation/hardening.
+
+Ownership:
+- Author PR: propone update docs.
+- Reviewer: valida coerenza codice/docs prima di approvare.
+- Merge gate: nessun merge con drift documentale noto senza follow-up issue esplicita.
