@@ -117,7 +117,7 @@ function buildBriefingText(input: FunnelBriefingInput | FunnelUnifiedBriefingInp
 
 export async function buildFunnelOptinPrompt(input: FunnelBriefingInput | FunnelUnifiedBriefingInput): Promise<string> {
   const template = await loadPromptSource(TOOL_PROMPT_REGISTRY.funnel.optin);
-  return `${template}\n\n## BRIEFING OPERATIVO\n${buildBriefingText(input)}\n\nRestituisci output rigorosamente conforme alle regole del prompt.`;
+  return `${template}\n\n## BRIEFING OPERATIVO\n${buildBriefingText(input)}\n\nNota aggiuntiva per questo step:\nnell'optin page puoi usare emoji in modo persuasivo e misurato per aumentare attenzione, leggibilita e click intent, evitando abuso, tono infantile o perdita di credibilita.\n\nRestituisci output rigorosamente conforme alle regole del prompt.`;
 }
 
 export async function buildFunnelQuizPrompt(

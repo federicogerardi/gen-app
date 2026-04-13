@@ -97,6 +97,7 @@ describe('funnel prompt builders', () => {
     expect(prompt).toContain('PROMPT TEMPLATE');
     expect(prompt).toContain('## BRIEFING OPERATIVO');
     expect(prompt).toContain('Prodotto/Servizio: Corso AI');
+    expect(prompt).toContain("nell'optin page puoi usare emoji in modo persuasivo e misurato");
   });
 
   it('buildFunnelQuizPrompt includes optin context', async () => {
