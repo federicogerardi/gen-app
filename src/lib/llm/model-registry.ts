@@ -99,7 +99,7 @@ export async function getModelPricingForRuntime(modelId: string) {
     };
   }
 
-  const fallback = DEFAULT_MODELS.find((item) => item.modelId === DEFAULT_MODEL)!;
+  const fallback = DEFAULT_MODELS.find((item) => item.modelId === modelId) ?? DEFAULT_MODELS.find((item) => item.modelId === DEFAULT_MODEL)!;
   return {
     input: fallback.inputCostPer1k,
     output: fallback.outputCostPer1k,

@@ -25,12 +25,13 @@ export function apiError(code: ApiErrorCode, message: string, status: number, de
   );
 }
 
-export function sseResponse(stream: ReadableStream) {
+export function sseResponse(stream: ReadableStream, requestId?: string) {
   return new Response(stream, {
     headers: {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
       Connection: 'keep-alive',
+      ...(requestId ? { 'x-request-id': requestId } : {}),
     },
   });
 }

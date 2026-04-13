@@ -18,7 +18,7 @@ export interface StreamEvent {
 
 export interface GenerateRequest {
   projectId: string;
-  type: 'content' | 'seo' | 'code';
+  type: 'content' | 'seo' | 'code' | 'extraction';
   model: string;
   input: Record<string, unknown>;
 }

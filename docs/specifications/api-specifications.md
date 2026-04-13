@@ -44,6 +44,7 @@ All errors follow this format:
 
 Implemented routes in the current codebase:
 - `POST /artifacts/generate`
+- `GET /artifacts`
 - `POST /tools/meta-ads/generate`
 - `POST /tools/extraction/generate`
 - `POST /tools/funnel-pages/generate`
@@ -64,12 +65,9 @@ Implemented routes in the current codebase:
 - `GET /admin/metrics`
 - `GET /admin/models`
 - `POST /admin/models`
-- `PUT /admin/models/{modelId}`
-- `DELETE /admin/models/{modelId}`
+- `PUT /admin/models/{id}`
+- `DELETE /admin/models/{id}`
 - `GET /models`
-
-Documented but not yet implemented:
-- `GET /artifacts` (lista con filtri avanzati server-side e paginazione)
 
 ### Model Registry (As-Is)
 
@@ -78,13 +76,27 @@ Il catalogo modelli non e piu hardcoded a livello route validation: e gestito tr
 Comportamento corrente:
 - `GET /api/admin/models`: lista completa per gestione amministrativa
 - `POST /api/admin/models`: crea nuovo modello
-- `PUT /api/admin/models/{modelId}`: aggiorna stato/costi/default
-- `DELETE /api/admin/models/{modelId}`: elimina modello non-default
+- `PUT /api/admin/models/{id}`: aggiorna stato/costi/default (il param `{id}` è la primary key CUID del DB)
+- `DELETE /api/admin/models/{id}`: elimina modello non-default
 - `GET /api/models`: espone ai client i modelli pubblici attivi
 
 Validazione runtime modello:
 - Le route di generazione validano il modello selezionato tramite availability check su registry (`requireAvailableModel`).
 - Se il registry DB non contiene righe attive, il sistema mantiene fallback statico controllato per continuita operativa.
+
+### GET /artifacts — Filtri supportati
+
+Query parameters:
+- `projectId` (cuid, opzionale): filtra per progetto; l'utente autenticato deve essere proprietario.
+- `status` (`generating` | `completed` | `failed`, opzionale)
+- `type` (`content` | `seo` | `code` | `extraction`, opzionale)
+- `limit` (1–100, default 20), `offset` (default 0)
+
+### Admin endpoints — Auth behaviour
+
+Gli endpoint `/api/admin/*` usano la guardia `requireAdminUser()`:
+- Utente non autenticato (sessione assente) → `401 UNAUTHORIZED`
+- Utente autenticato ma senza ruolo `admin` → `403 FORBIDDEN`
 
 ### Auth.js Session Endpoint
 ```

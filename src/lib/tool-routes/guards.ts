@@ -20,6 +20,25 @@ interface GuardSuccess<T> {
 
 type GuardResult<T> = GuardError | GuardSuccess<T>;
 
+export async function requireAdminUser(): Promise<GuardResult<{ userId: string }>> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return {
+      ok: false,
+      response: apiError('UNAUTHORIZED', 'Authentication required', 401),
+    };
+  }
+
+  if (session.user.role !== 'admin') {
+    return {
+      ok: false,
+      response: apiError('FORBIDDEN', 'Admin access required', 403),
+    };
+  }
+
+  return { ok: true, data: { userId: session.user.id } };
+}
+
 export async function parseAndValidateRequest<T extends z.ZodTypeAny>(request: Request, schema: T): Promise<GuardResult<z.infer<T>>> {
   const body = await request.json().catch(() => null);
   const parsed = schema.safeParse(body);

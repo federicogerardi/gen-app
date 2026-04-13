@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { z } from 'zod';
+import { apiError } from '@/lib/tool-routes/responses';
 
 const createProjectSchema = z.object({
   name: z.string().min(1).max(100),
@@ -11,7 +12,7 @@ const createProjectSchema = z.object({
 export async function GET() {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: { code: 'UNAUTHORIZED', message: 'Authentication required' } }, { status: 401 });
+    return apiError('UNAUTHORIZED', 'Authentication required', 401);
   }
 
   const projects = await db.project.findMany({
@@ -26,13 +27,13 @@ export async function GET() {
 export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: { code: 'UNAUTHORIZED', message: 'Authentication required' } }, { status: 401 });
+    return apiError('UNAUTHORIZED', 'Authentication required', 401);
   }
 
   const body = await request.json().catch(() => null);
   const parsed = createProjectSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: { code: 'VALIDATION_ERROR', message: 'Invalid input', details: parsed.error.flatten() } }, { status: 400 });
+    return apiError('VALIDATION_ERROR', 'Invalid input', 400, parsed.error.flatten());
   }
 
   const project = await db.project.create({

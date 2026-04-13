@@ -16,12 +16,12 @@ export async function GET(request: NextRequest) {
     const isVercelProductionDeployment = env.NODE_ENV === 'production' && env.VERCEL_ENV === 'production';
     if (isVercelProductionDeployment && !env.VERCEL_CRON_SECRET) {
       logger.error({}, 'Missing VERCEL_CRON_SECRET for cron endpoint');
-      return NextResponse.json({ error: 'Server misconfiguration' }, { status: 500 });
+      return NextResponse.json({ error: { code: 'INTERNAL_ERROR', message: 'Server misconfiguration' } }, { status: 500 });
     }
 
     if (!env.VERCEL_CRON_SECRET) {
       logger.warn({}, 'Cron endpoint disabled: missing VERCEL_CRON_SECRET outside Vercel production');
-      return NextResponse.json({ error: 'Cron endpoint is not configured' }, { status: 503 });
+      return NextResponse.json({ error: { code: 'SERVICE_UNAVAILABLE', message: 'Cron endpoint is not configured' } }, { status: 503 });
     }
 
     // Verify Vercel Cron secret
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
 
     if (!authHeader || authHeader !== expectedHeader) {
       logger.warn({}, 'Unauthorized cron request: invalid or missing secret');
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+      return NextResponse.json({ error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } }, { status: 403 });
     }
 
     // Calculate 24h threshold
@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
   } catch (err) {
     logger.error({ err }, 'Error during stale artifact cleanup');
     return NextResponse.json(
-      { error: 'Internal server error', message: err instanceof Error ? err.message : 'Unknown error' },
+      { error: { code: 'INTERNAL_ERROR', message: err instanceof Error ? err.message : 'Unknown error' } },
       { status: 500 },
     );
   }

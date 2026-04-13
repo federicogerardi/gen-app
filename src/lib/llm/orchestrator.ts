@@ -4,7 +4,7 @@ import { ContentAgent } from './agents/content';
 import { SeoAgent } from './agents/seo';
 import { CodeAgent } from './agents/code';
 import { ExtractionAgent } from './agents/extraction';
-import { calculateCost } from './costs';
+import { calculateCostAccurate } from './costs';
 import { OpenRouterProvider } from './providers/openrouter';
 import type { LLMProvider } from './providers/base';
 import {
@@ -96,7 +96,7 @@ export class LLMOrchestrator {
       type: request.type,
       workflowType: extractWorkflowTypeFromInput(request.input),
     });
-    const cost = calculateCost(request.model, response.inputTokens, response.outputTokens);
+    const cost = calculateCostAccurate(request.model, response.inputTokens, response.outputTokens);
 
     return { content: normalized.content, inputTokens: response.inputTokens, outputTokens: response.outputTokens, cost };
   }
