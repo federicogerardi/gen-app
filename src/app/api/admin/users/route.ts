@@ -1,8 +1,8 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { z } from 'zod';
-import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { getRequestLogger } from '@/lib/logger';
+import { requireAdminUser } from '@/lib/tool-routes/guards';
 
 /**
  * Pagination schema for admin users list
@@ -22,13 +22,12 @@ export async function GET(request: NextRequest) {
     method: 'GET',
   });
 
-  const session = await auth();
-  if (!session?.user?.id || session.user.role !== 'admin') {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: 'Admin access required' } },
-      { status: 403 },
-    );
+  const adminResult = await requireAdminUser();
+  if (!adminResult.ok) {
+    return adminResult.response;
   }
+
+  const userId = adminResult.data.userId;
 
   // Parse query params
   const searchParams = request.nextUrl.searchParams;
@@ -51,7 +50,7 @@ export async function GET(request: NextRequest) {
   }
 
   const { limit, offset } = parsed.data;
-  const logger = routeLogger.child({ userId: session.user.id, limit, offset });
+  const logger = routeLogger.child({ userId, limit, offset });
 
   try {
     // Fetch total count and paginated users in parallel

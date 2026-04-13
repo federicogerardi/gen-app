@@ -3,16 +3,11 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { z } from 'zod';
 import { apiError } from '@/lib/tool-routes/responses';
+import { stripArtifactCost } from '@/lib/api/artifact-serializer';
 
 const updateArtifactSchema = z.object({
   content: z.string().min(1).max(100_000),
 });
-
-function stripArtifactCost<T>(artifact: T): Omit<T, 'costUSD'> {
-  const { costUSD, ...sanitizedArtifact } = artifact as T & { costUSD?: unknown };
-  void costUSD;
-  return sanitizedArtifact as Omit<T, 'costUSD'>;
-}
 
 export async function GET(
   _request: Request,

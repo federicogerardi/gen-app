@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { requireAdminUser } from '@/lib/tool-routes/guards';
 
 const updateModelSchema = z.object({
   name: z.string().min(2).optional(),
@@ -12,22 +12,13 @@ const updateModelSchema = z.object({
   pricingReviewedAt: z.string().datetime().optional(),
 });
 
-async function requireAdmin() {
-  const session = await auth();
-  if (!session?.user?.id || session.user.role !== 'admin') {
-    return null;
-  }
-
-  return session;
-}
-
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ modelId: string }> },
 ) {
-  const session = await requireAdmin();
-  if (!session) {
-    return NextResponse.json({ error: { code: 'FORBIDDEN', message: 'Admin access required' } }, { status: 403 });
+  const adminResult = await requireAdminUser();
+  if (!adminResult.ok) {
+    return adminResult.response;
   }
 
   const { modelId } = await params;
@@ -81,9 +72,9 @@ export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ modelId: string }> },
 ) {
-  const session = await requireAdmin();
-  if (!session) {
-    return NextResponse.json({ error: { code: 'FORBIDDEN', message: 'Admin access required' } }, { status: 403 });
+  const adminResult = await requireAdminUser();
+  if (!adminResult.ok) {
+    return adminResult.response;
   }
 
   const { modelId } = await params;

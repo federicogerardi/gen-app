@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { requireAdminUser } from '@/lib/tool-routes/guards';
 
 const createModelSchema = z.object({
   modelId: z.string().min(3),
@@ -13,19 +13,10 @@ const createModelSchema = z.object({
   pricingReviewedAt: z.string().datetime().optional(),
 });
 
-async function requireAdmin() {
-  const session = await auth();
-  if (!session?.user?.id || session.user.role !== 'admin') {
-    return null;
-  }
-
-  return session;
-}
-
 export async function GET() {
-  const session = await requireAdmin();
-  if (!session) {
-    return NextResponse.json({ error: { code: 'FORBIDDEN', message: 'Admin access required' } }, { status: 403 });
+  const adminResult = await requireAdminUser();
+  if (!adminResult.ok) {
+    return adminResult.response;
   }
 
   try {
@@ -60,9 +51,9 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await requireAdmin();
-  if (!session) {
-    return NextResponse.json({ error: { code: 'FORBIDDEN', message: 'Admin access required' } }, { status: 403 });
+  const adminResult = await requireAdminUser();
+  if (!adminResult.ok) {
+    return adminResult.response;
   }
 
   const body = await request.json().catch(() => null);

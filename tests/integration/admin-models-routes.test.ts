@@ -53,6 +53,16 @@ beforeEach(() => {
 });
 
 describe('Admin model routes', () => {
+  it('GET returns 401 for unauthenticated request', async () => {
+    mockedAuth.mockResolvedValue(null as never);
+
+    const res = await GET();
+    const data = await res.json();
+
+    expect(res.status).toBe(401);
+    expect(data.error.code).toBe('UNAUTHORIZED');
+  });
+
   it('GET returns 403 for non-admin', async () => {
     mockedAuth.mockResolvedValue(userSession as never);
 
