@@ -1,7 +1,7 @@
 /** @jest-environment node */
 
 import { GET, POST } from '@/app/api/admin/models/route';
-import { PUT, DELETE } from '@/app/api/admin/models/[modelId]/route';
+import { PUT, DELETE } from '@/app/api/admin/models/[id]/route';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 
@@ -116,7 +116,7 @@ describe('Admin model routes', () => {
 
     const res = await PUT(
       makeJsonRequest('PUT', { isDefault: true }),
-      { params: Promise.resolve({ modelId: 'model_2' }) },
+      { params: Promise.resolve({ id: 'model_2' }) },
     );
 
     expect(res.status).toBe(200);
@@ -130,7 +130,7 @@ describe('Admin model routes', () => {
 
     const res = await DELETE(
       makeJsonRequest('DELETE'),
-      { params: Promise.resolve({ modelId: 'model_1' }) },
+      { params: Promise.resolve({ id: 'model_1' }) },
     );
     const data = await res.json();
 

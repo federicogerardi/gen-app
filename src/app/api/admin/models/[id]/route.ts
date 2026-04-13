@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
+import { apiError } from '@/lib/tool-routes/responses';
 import { requireAdminUser } from '@/lib/tool-routes/guards';
 
 const updateModelSchema = z.object({
@@ -14,32 +15,23 @@ const updateModelSchema = z.object({
 
 export async function PUT(
   request: Request,
-  { params }: { params: Promise<{ modelId: string }> },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const adminResult = await requireAdminUser();
   if (!adminResult.ok) {
     return adminResult.response;
   }
 
-  const { modelId } = await params;
-  const existing = await db.llmModel.findUnique({ where: { id: modelId } });
+  const { id } = await params;
+  const existing = await db.llmModel.findUnique({ where: { id } });
   if (!existing) {
-    return NextResponse.json({ error: { code: 'NOT_FOUND', message: 'Model not found' } }, { status: 404 });
+    return apiError('NOT_FOUND', 'Model not found', 404);
   }
 
   const body = await request.json().catch(() => null);
   const parsed = updateModelSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json(
-      {
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: 'Invalid input',
-          details: parsed.error.flatten(),
-        },
-      },
-      { status: 400 },
-    );
+    return apiError('VALIDATION_ERROR', 'Invalid input', 400, parsed.error.flatten());
   }
 
   const data = parsed.data;
@@ -53,7 +45,7 @@ export async function PUT(
     }
 
     return tx.llmModel.update({
-      where: { id: modelId },
+      where: { id },
       data: {
         name: data.name,
         inputCostPer1k: data.inputCostPer1k,
@@ -70,26 +62,23 @@ export async function PUT(
 
 export async function DELETE(
   _request: Request,
-  { params }: { params: Promise<{ modelId: string }> },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const adminResult = await requireAdminUser();
   if (!adminResult.ok) {
     return adminResult.response;
   }
 
-  const { modelId } = await params;
-  const existing = await db.llmModel.findUnique({ where: { id: modelId } });
+  const { id } = await params;
+  const existing = await db.llmModel.findUnique({ where: { id } });
   if (!existing) {
-    return NextResponse.json({ error: { code: 'NOT_FOUND', message: 'Model not found' } }, { status: 404 });
+    return apiError('NOT_FOUND', 'Model not found', 404);
   }
 
   if (existing.isDefault) {
-    return NextResponse.json(
-      { error: { code: 'VALIDATION_ERROR', message: 'Cannot delete default model' } },
-      { status: 400 },
-    );
+    return apiError('VALIDATION_ERROR', 'Cannot delete default model', 400);
   }
 
-  await db.llmModel.delete({ where: { id: modelId } });
+  await db.llmModel.delete({ where: { id } });
   return NextResponse.json({ success: true });
 }
