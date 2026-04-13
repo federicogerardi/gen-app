@@ -197,4 +197,16 @@ describe('DELETE /api/projects/[id]', () => {
     expect(res.status).toBe(204);
     expect(deleteProject).toHaveBeenCalledWith({ where: { id: PROJECT_ID } });
   });
+
+  it('delegates artifact removal to DB cascade on project delete', async () => {
+    mockedAuth.mockResolvedValue({ user: { id: 'user_1' } } as never);
+    // Simulate that artifacts are removed by cascade — delete resolves without error
+    deleteProject.mockResolvedValue({});
+
+    const res = await DELETE(new Request('http://localhost'), makeParams());
+
+    expect(res.status).toBe(204);
+    // The route itself does not manually delete artifacts; cascade handles it at DB level
+    expect(deleteProject).toHaveBeenCalledTimes(1);
+  });
 });
