@@ -11,6 +11,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { formatArtifactContentForDisplay, getArtifactDisplayTypeLabel, getEffectiveArtifactWorkflowType } from '@/lib/artifact-preview';
 import { getArtifactStatusBadgeClass, getArtifactStatusLabel } from '@/lib/artifact-status-ui';
+import { buildArtifactRelaunchHref } from '@/lib/artifact-relaunch';
 import { isArtifactType, isArtifactStatus } from '@/lib/types/artifact';
 
 export default async function ArtifactPage({ params }: { params: Promise<{ id: string }> }) {
@@ -49,6 +50,12 @@ export default async function ArtifactPage({ params }: { params: Promise<{ id: s
     type: artifact.type,
     workflowType,
   });
+  const relaunchHref = buildArtifactRelaunchHref({
+    id: artifact.id,
+    projectId: artifact.projectId,
+    workflowType,
+    input: artifact.input,
+  });
 
   return (
     <PageShell width="workspace">
@@ -67,6 +74,11 @@ export default async function ArtifactPage({ params }: { params: Promise<{ id: s
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            {relaunchHref && (
+              <Button className="w-full sm:w-auto" asChild>
+                <Link href={relaunchHref}>Rigenera variante</Link>
+              </Button>
+            )}
             {artifact.project?.id && (
               <Button className="w-full sm:w-auto" variant="outline" asChild>
                 <Link href={`/dashboard/projects/${artifact.project.id}`}>Apri progetto</Link>

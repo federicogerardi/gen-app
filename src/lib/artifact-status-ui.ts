@@ -7,9 +7,9 @@ const ARTIFACT_STATUS_LABEL: Record<ArtifactStatus, string> = {
 };
 
 const ARTIFACT_STATUS_BADGE_CLASS: Record<ArtifactStatus, string> = {
-  generating: 'border-amber-300 bg-amber-100 text-amber-900',
-  completed: 'border-emerald-300 bg-emerald-100 text-emerald-900',
-  failed: 'border-rose-300 bg-rose-100 text-rose-900',
+  generating: 'border-amber-400 bg-amber-200 text-amber-950',
+  completed: 'border-emerald-400 bg-emerald-200 text-emerald-950',
+  failed: 'border-rose-400 bg-rose-200 text-rose-950',
 };
 
 export function getArtifactStatusLabel(status: ArtifactStatus): string {

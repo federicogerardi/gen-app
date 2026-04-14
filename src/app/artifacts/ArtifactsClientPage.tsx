@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { getArtifactDisplayTypeLabel, getEffectiveArtifactWorkflowType } from '@/lib/artifact-preview';
 import { getArtifactStatusBadgeClass, getArtifactStatusLabel } from '@/lib/artifact-status-ui';
 import { buildArtifactCardIdentity } from '@/lib/artifact-card-identity';
+import { buildArtifactRelaunchHref } from '@/lib/artifact-relaunch';
 import { isArtifactStatus, isArtifactType } from '@/lib/types/artifact';
 
 type ProjectOption = {
@@ -50,7 +51,9 @@ export function ArtifactsClientPage({ projects }: Props) {
   const deleteMutation = useDeleteArtifact();
 
   const artifacts = useMemo(() => {
-    const base = listQuery.data?.items ?? [];
+    const base = [...(listQuery.data?.items ?? [])].sort(
+      (left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime(),
+    );
     const since = getSinceDate(period);
     if (!since) return base;
     return base.filter((item) => new Date(item.createdAt) >= since);
@@ -147,19 +150,19 @@ export function ArtifactsClientPage({ projects }: Props) {
 
         {listQuery.isLoading ? (
           <Card className="app-surface rounded-2xl">
-            <CardContent className="py-12 text-center text-muted-foreground" role="status" aria-live="polite">
+            <CardContent className="py-12 text-center text-muted-foreground" role="status" aria-live="polite" aria-atomic="true">
               Caricamento artefatti...
             </CardContent>
           </Card>
         ) : listQuery.error ? (
           <Card className="app-surface rounded-2xl">
-            <CardContent className="py-12 text-center text-destructive" role="alert">
+            <CardContent className="py-12 text-center text-destructive" role="alert" aria-live="assertive">
               Errore nel caricamento artefatti.
             </CardContent>
           </Card>
         ) : artifacts.length === 0 ? (
           <Card className="app-surface rounded-2xl">
-            <CardContent className="py-12 text-center text-muted-foreground" role="status" aria-live="polite">
+            <CardContent className="py-12 text-center text-muted-foreground" role="status" aria-live="polite" aria-atomic="true">
               Nessun elemento nello storico con i filtri selezionati.
             </CardContent>
           </Card>
@@ -180,6 +183,12 @@ export function ArtifactsClientPage({ projects }: Props) {
                 workflowType,
                 input: artifact.input,
                 projectName: artifact.project?.name ?? null,
+              });
+              const relaunchHref = buildArtifactRelaunchHref({
+                id: artifact.id,
+                projectId: artifact.projectId,
+                workflowType,
+                input: artifact.input,
               });
 
               return (
@@ -205,6 +214,17 @@ export function ArtifactsClientPage({ projects }: Props) {
                     <Button className="w-full sm:w-auto" size="sm" variant="outline" onClick={() => router.push(`/artifacts/${artifact.id}`)} aria-label={`Apri dettaglio artefatto ${artifact.id}`}>
                       Apri dettaglio
                     </Button>
+                    {relaunchHref && (
+                      <Button
+                        className="w-full sm:w-auto"
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => router.push(relaunchHref)}
+                        aria-label={`Usa artefatto ${artifact.id} come base`}
+                      >
+                        Usa come base
+                      </Button>
+                    )}
                     <Button
                       className="w-full sm:w-auto"
                       size="sm"

@@ -1,7 +1,7 @@
 # HL Funnel - Unified Input Schema
 
-Version: 1.1
-Date: 2026-04-11
+Version: 1.2
+Date: 2026-04-14
 Scope: contratto semantico unico dei campi input richiesti da prompt optin, quiz, vsl.
 
 ## Obiettivo
@@ -74,7 +74,7 @@ Questo documento resta il riferimento del **modello dati target** verso cui i ca
 | success_metrics | Metriche di successo | textarea | true | optin, quiz, vsl |
 | next_customer_journey_step | Step successivo journey | textarea | true | optin, quiz, vsl |
 | case_studies | Casi studio verificabili | repeater(object) | false | optin, quiz, vsl |
-| testimonials_sources | Fonti testimonianze | repeater(object) | false | optin, vsl |
+| testimonials_sources | Fonti testimonianze strutturate | repeater(object) | false | optin, vsl |
 | authority_assets | Asset di credibilita | textarea | false | optin, vsl |
 | visual_proof_assets | Asset prova visiva | repeater(object) | false | vsl |
 | optin_output_context | Output optin gia generato | textarea | false | vsl |
@@ -122,6 +122,8 @@ Questo documento resta il riferimento del **modello dati target** verso cui i ca
 | quote | textarea | true |
 | source | text | true |
 | timestamp | text | false |
+| achieved_result | textarea | false |
+| measurable_results | textarea | false |
 
 ### visual_proof_assets[]
 
@@ -140,6 +142,7 @@ Questo documento resta il riferimento del **modello dati target** verso cui i ca
 - if delivery_model in (fai-da-te, corso), false_belief_internal should include technical fear/motivation signals.
 - if case_studies present, each item must include source.
 - if testimonials_sources present, non verificato cannot be quoted directly.
+- if achieved_result or measurable_results are present, they must be attributable to the same testimonial source.
 - assumptions_allowed=true permits conservative fallbacks and requires assumption_notes when critical fields are missing.
 
 ## Conditional UI Logic
@@ -262,3 +265,4 @@ Per una prima release del modulo, usare almeno:
 - Per output di qualita marketing alta, raccomandato compilare sempre proof_context.
 - Nel flusso upload-first alcuni campi possono risultare mancanti/partial e vengono gestiti con fallback conservativi durante la mappatura.
 - `email_already_collected` continua a essere valorizzato automaticamente a `true` nel flusso funnel corrente.
+- Nel mapping upload-first (payload V3), `testimonials_sources` viene propagato in `proof_context` mantenendo anche `achieved_result` e `measurable_results` quando disponibili.

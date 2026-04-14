@@ -770,7 +770,7 @@ export function AdminClientPage({
         <div className="fixed inset-0 z-50">
           <button
             aria-label="Chiudi pannello"
-            className="absolute inset-0 bg-black/40"
+            className="absolute inset-0 bg-black/40 outline-none focus-visible:ring-4 focus-visible:ring-blue-500/40"
             onClick={() => setSelectedUserId(null)}
             type="button"
           />

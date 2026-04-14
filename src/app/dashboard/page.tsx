@@ -6,6 +6,10 @@ import { PageShell } from '@/components/layout/PageShell';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { getArtifactDisplayTypeLabel, getEffectiveArtifactWorkflowType } from '@/lib/artifact-preview';
+import { getArtifactStatusBadgeClass, getArtifactStatusLabel } from '@/lib/artifact-status-ui';
+import { isArtifactStatus, isArtifactType } from '@/lib/types/artifact';
+import { PersonalTrendCard } from './PersonalTrendCard';
 
 const TOOL_ACTIONS = [
   {
@@ -28,12 +32,35 @@ export default async function DashboardPage() {
   const session = await auth();
   if (!session?.user?.id) redirect('/');
 
-  const [projects, user] = await Promise.all([
+  const trendStartDate = new Date();
+  trendStartDate.setUTCHours(0, 0, 0, 0);
+  trendStartDate.setUTCDate(trendStartDate.getUTCDate() - 29);
+
+  const [projects, latestArtifacts, trendArtifacts, user] = await Promise.all([
     db.project.findMany({
       where: { userId: session.user.id },
       orderBy: { createdAt: 'desc' },
       take: 10,
       include: { _count: { select: { artifacts: true } } },
+    }),
+    db.artifact.findMany({
+      where: { userId: session.user.id },
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+      select: {
+        id: true,
+        type: true,
+        workflowType: true,
+        status: true,
+        createdAt: true,
+      },
+    }),
+    db.artifact.findMany({
+      where: {
+        userId: session.user.id,
+        createdAt: { gte: trendStartDate },
+      },
+      select: { createdAt: true },
     }),
     db.user.findUnique({
       where: { id: session.user.id },
@@ -47,6 +74,22 @@ export default async function DashboardPage() {
     ...p,
     description: p.description === null ? undefined : p.description,
   }));
+
+  const trendCountByDate = new Map<string, number>();
+  for (const artifact of trendArtifacts) {
+    const key = artifact.createdAt.toISOString().slice(0, 10);
+    trendCountByDate.set(key, (trendCountByDate.get(key) ?? 0) + 1);
+  }
+
+  const trendPoints30d = Array.from({ length: 30 }, (_unused, index) => {
+    const day = new Date(trendStartDate);
+    day.setUTCDate(trendStartDate.getUTCDate() + index);
+    const key = day.toISOString().slice(0, 10);
+    return {
+      date: key,
+      count: trendCountByDate.get(key) ?? 0,
+    };
+  });
 
   return (
     <PageShell width="workspace">
@@ -108,7 +151,7 @@ export default async function DashboardPage() {
 
         <section className="app-rise relative mb-8" style={{ animationDelay: '90ms' }}>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="app-title text-xl font-medium">Tool disponibili</h2>
+            <h2 className="app-title text-xl font-medium">Tool del workspace</h2>
           </div>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {TOOL_ACTIONS.map((tool) => (
@@ -126,6 +169,57 @@ export default async function DashboardPage() {
               </Card>
             ))}
           </div>
+        </section>
+
+        <section className="app-rise relative mb-8" style={{ animationDelay: '120ms' }}>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="app-title text-xl font-medium">Ultimi artefatti generati</h2>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/artifacts">Apri storico</Link>
+            </Button>
+          </div>
+
+          {latestArtifacts.length === 0 ? (
+            <Card className="app-surface rounded-2xl">
+              <CardContent className="py-8 text-center text-muted-foreground">
+                Nessun artefatto recente disponibile.
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-3" role="list" aria-label="Ultimi artefatti generati">
+              {latestArtifacts.map((artifact) => {
+                const typedStatus = isArtifactStatus(artifact.status) ? artifact.status : 'generating';
+                const typedType = isArtifactType(artifact.type) ? artifact.type : 'content';
+                const typeLabel = getArtifactDisplayTypeLabel({
+                  type: typedType,
+                  workflowType: getEffectiveArtifactWorkflowType(artifact.workflowType, null),
+                });
+
+                return (
+                  <Card key={artifact.id} className="app-surface rounded-2xl" role="listitem">
+                    <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge>{typeLabel}</Badge>
+                        <Badge variant="outline" className={getArtifactStatusBadgeClass(typedStatus)}>
+                          {getArtifactStatusLabel(typedStatus)}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(artifact.createdAt).toLocaleString('it-IT')}
+                        </span>
+                      </div>
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={`/artifacts/${artifact.id}`}>Apri dettaglio</Link>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        <section className="app-rise relative mb-8" style={{ animationDelay: '130ms' }}>
+          <PersonalTrendCard points30d={trendPoints30d} />
         </section>
 
         <div className="flex items-center justify-between mb-6">
