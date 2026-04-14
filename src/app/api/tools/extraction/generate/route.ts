@@ -1,6 +1,6 @@
 import { createArtifactStream, persistArtifactFailure, persistArtifactSuccess } from '@/lib/llm/streaming';
 import { db } from '@/lib/db';
-import { getRequestLogger } from '@/lib/logger';
+import { getRequestLogger, logger } from '@/lib/logger';
 import {
   EXTRACTION_FIRST_TOKEN_TIMEOUT_MS,
   EXTRACTION_JSON_PARSE_TIMEOUT_MS,
@@ -95,6 +95,39 @@ type ExistingExtractionArtifact = {
   workflowType?: string | null;
   failureReason?: string | null;
 };
+
+type RouteLogger = {
+  info: (payload: Record<string, unknown>, message: string) => void;
+  warn: (payload: Record<string, unknown>, message: string) => void;
+  error: (payload: Record<string, unknown>, message: string) => void;
+};
+
+function logBestEffort(
+  log: RouteLogger,
+  level: 'info' | 'warn' | 'error',
+  payload: Record<string, unknown>,
+  message: string,
+) {
+  try {
+    log[level](payload, message);
+  } catch (err) {
+    try {
+      logger.warn(
+        {
+          workflowType: 'extraction',
+          requestId: typeof payload.requestId === 'string' ? payload.requestId : null,
+          logLevel: level,
+          logMessage: message,
+          policyVersion: EXTRACTION_POLICY_VERSION,
+          logError: err instanceof Error ? err.message : String(err),
+        },
+        'Extraction observability failure suppressed',
+      );
+    } catch {
+      // Never block user path because observability sinks fail.
+    }
+  }
+}
 
 function parseSsePayload(line: string): Record<string, unknown> | null {
   if (!line.startsWith('data: ')) {
@@ -756,9 +789,14 @@ export async function POST(request: Request) {
       hardFailReason: 'unauthorized',
     });
     const terminalState = mapExtractionTerminalState({ outcome: completionOutcome, reason: completionReason });
-    baseLog.warn(
+    logBestEffort(baseLog, 'warn',
       {
         workflowType: 'extraction',
+        requestId,
+        attemptIndex: null,
+        runtimeModel: null,
+        timeoutKind: null,
+        fallbackReason: null,
         completionOutcome,
         completionReason,
         artifactStatus: terminalState.artifactStatus,
@@ -786,9 +824,14 @@ export async function POST(request: Request) {
       hardFailReason: 'validation_error',
     });
     const terminalState = mapExtractionTerminalState({ outcome: completionOutcome, reason: completionReason });
-    log.warn(
+    logBestEffort(log, 'warn',
       {
         workflowType: 'extraction',
+        requestId,
+        attemptIndex: null,
+        runtimeModel: null,
+        timeoutKind: null,
+        fallbackReason: null,
         completionOutcome,
         completionReason,
         artifactStatus: terminalState.artifactStatus,
@@ -809,9 +852,14 @@ export async function POST(request: Request) {
     ? getExtractionAttemptPlan({ maxAttempts: 2, attemptTimeoutMs: [18_000, 22_000] })
     : getExtractionAttemptPlan();
 
-  log.info(
+  logBestEffort(log, 'info',
     {
       workflowType: 'extraction',
+      requestId,
+      attemptIndex: null,
+      timeoutKind: null,
+      fallbackReason: null,
+      completionReason: null,
       projectId: payload.projectId,
       model: payload.model,
       runtimeModel,
@@ -830,12 +878,17 @@ export async function POST(request: Request) {
       hardFailReason: ownershipResult.response.status === 404 ? 'forbidden' : 'forbidden',
     });
     const terminalState = mapExtractionTerminalState({ outcome: completionOutcome, reason: completionReason });
-    log.warn(
+    logBestEffort(log, 'warn',
       {
         workflowType: 'extraction',
         projectId: payload.projectId,
         completionOutcome,
         completionReason,
+        requestId,
+        attemptIndex: null,
+        runtimeModel: null,
+        timeoutKind: null,
+        fallbackReason: null,
         artifactStatus: terminalState.artifactStatus,
         httpStatus: ownershipResult.response.status,
         policyVersion: EXTRACTION_POLICY_VERSION,
@@ -853,10 +906,16 @@ export async function POST(request: Request) {
     });
 
     if (existingArtifact) {
-      log.info(
+      logBestEffort(log, 'info',
         {
           workflowType: 'extraction',
           projectId: payload.projectId,
+          requestId,
+          attemptIndex: null,
+          runtimeModel: null,
+          timeoutKind: null,
+          completionReason: null,
+          fallbackReason: null,
           artifactId: existingArtifact.id,
           artifactStatus: existingArtifact.status,
           idempotencyKey,
@@ -892,7 +951,7 @@ export async function POST(request: Request) {
       break;
     }
 
-    log.warn(
+    logBestEffort(log, 'warn',
       {
         workflowType: 'extraction',
         projectId: payload.projectId,
@@ -906,11 +965,15 @@ export async function POST(request: Request) {
   }
 
   if (firstRunnableAttemptIndex === -1) {
-    log.error(
+    logBestEffort(log, 'error',
       {
         workflowType: 'extraction',
         projectId: payload.projectId,
         requestId,
+        attemptIndex: null,
+        runtimeModel: null,
+        timeoutKind: null,
+        completionReason: 'no_signal_after_chain_exhausted',
         fallbackReason: 'provider_error',
         responseMode: extractionResponseMode,
         policyVersion: EXTRACTION_POLICY_VERSION,
@@ -977,7 +1040,7 @@ export async function POST(request: Request) {
     if (!modelResult.ok) {
       lastFallbackReason = 'provider_error';
 
-      log.warn(
+      logBestEffort(log, 'warn',
         {
           workflowType: 'extraction',
           projectId: payload.projectId,
@@ -1148,7 +1211,7 @@ export async function POST(request: Request) {
       lastFallbackReason = fallbackReason;
       lastTimeoutKind = consumed.timeoutKind ?? null;
 
-      log.info(
+      logBestEffort(log, 'info',
         {
           workflowType: 'extraction',
           projectId: payload.projectId,
@@ -1157,6 +1220,7 @@ export async function POST(request: Request) {
           attemptIndex: attempt.attemptIndex,
           runtimeModel: attempt.model,
           fallbackReason: success ? null : fallbackReason,
+          completionReason: null,
           duration_ms: Date.now() - attemptStartedAt,
           costEstimate: consumed.costEstimate,
           parseOk,
@@ -1260,7 +1324,7 @@ export async function POST(request: Request) {
           }
         }
 
-        log.info(
+        logBestEffort(log, 'info',
           {
             workflowType: 'extraction',
             projectId: payload.projectId,
@@ -1268,6 +1332,10 @@ export async function POST(request: Request) {
             responseMode: extractionResponseMode,
             duration_ms: Date.now() - startedAt,
             requestId,
+            attemptIndex: attempt.attemptIndex,
+            runtimeModel: attempt.model,
+            timeoutKind: consumed.timeoutKind ?? null,
+            fallbackReason: consumed.timedOut ? 'timeout' : null,
             completionOutcome,
             completionReason,
             artifactStatus: terminalState.artifactStatus,
@@ -1287,7 +1355,7 @@ export async function POST(request: Request) {
         ? { name: error.name, message: error.message }
         : { message: String(error) };
 
-      log.error(
+      logBestEffort(log, 'error',
         {
           workflowType: 'extraction',
           projectId: payload.projectId,
@@ -1347,12 +1415,15 @@ export async function POST(request: Request) {
     attemptIndex: lastAttemptIndex,
   });
 
-  log.error(
+  logBestEffort(log, 'error',
     {
       workflowType: 'extraction',
       projectId: payload.projectId,
       requestId,
       artifactId: artifactStub.id,
+      attemptIndex: lastAttemptIndex,
+      runtimeModel: lastAttemptModel,
+      timeoutKind: lastTimeoutKind,
       duration_ms: Date.now() - startedAt,
       fallbackReason: lastFallbackReason,
       responseMode: extractionResponseMode,

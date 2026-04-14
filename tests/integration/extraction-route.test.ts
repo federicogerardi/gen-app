@@ -23,7 +23,14 @@ jest.mock('@/lib/llm/streaming', () => ({
   createArtifactStream: jest.fn(),
 }));
 jest.mock('@/lib/tool-prompts/extraction', () => ({ buildExtractionPrompt: jest.fn() }));
-jest.mock('@/lib/logger', () => ({ getRequestLogger: jest.fn() }));
+jest.mock('@/lib/logger', () => ({
+  getRequestLogger: jest.fn(),
+  logger: {
+    warn: jest.fn(),
+    info: jest.fn(),
+    error: jest.fn(),
+  },
+}));
 
 jest.mock('@/lib/db', () => jest.requireActual('./db-mock').createDbMock());
 
@@ -293,6 +300,26 @@ describe('POST /api/tools/extraction/generate', () => {
         }),
       }),
     );
+  });
+
+  it('does not fail user path when request logger methods throw', async () => {
+    mockedAuth.mockResolvedValue({ user: { id: 'user_1' } } as never);
+    mockedGetRequestLogger.mockReturnValue({
+      info: jest.fn(() => {
+        throw new Error('logger sink down');
+      }),
+      warn: jest.fn(() => {
+        throw new Error('logger sink down');
+      }),
+      error: jest.fn(() => {
+        throw new Error('logger sink down');
+      }),
+    } as never);
+
+    const res = await POST(makeRequest(baseBody));
+
+    expect(res.status).toBe(200);
+    expect(mockedStream).toHaveBeenCalledTimes(1);
   });
 
   it('accepts extraction output when notes is returned as array', async () => {

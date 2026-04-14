@@ -164,10 +164,61 @@ Campi minimi da aggregare:
 - `requestId`
 - `attemptIndex`
 - `runtimeModel`
+- `timeoutKind`
+- `completionReason`
 - `fallbackReason`
 - `duration_ms`
 - `costEstimate`
 - `parseOk`, `schemaOk`, `consistencyOk`
+
+Nota Sprint 4 (2026-04-14):
+- la route extraction applica logging best-effort; failure dei sink osservabilita non devono bloccare il path utente.
+- i log terminali includono in modo uniforme `completionReason`, `fallbackReason`, `timeoutKind`, `attemptIndex`, `runtimeModel`.
+
+## TASK-0402 Baseline Queries (Completed)
+
+Obiettivo operativo:
+- raccogliere baseline numerica su due finestre consecutive per `timeout_distribution`, `partial_rate`, `fallback_depth_mean`.
+
+Finestra consigliata:
+- 30 minuti (rolling), con confronto su due finestre consecutive prima di promuovere il gate AC-040x.
+
+Query 1 - Timeout distribution:
+1. Filtrare eventi `Extraction attempt failed` con `fallbackReason = timeout`.
+2. Raggruppare per `timeoutKind` (`first_token`, `json_start`, `json_parse`, `token_idle`, `route_deadline`).
+3. Calcolare percentuale su totale timeout della finestra.
+
+Output atteso:
+- tabella per finestra con colonne `timeoutKind`, `count`, `ratio`.
+
+Query 2 - Partial rate:
+1. Filtrare eventi terminali route extraction (`Tool generation stream initialized`).
+2. Calcolare `partial_rate = count(completionOutcome = completed_partial) / count(all completionOutcome)`.
+3. Segmentare per `responseMode` (`structured`, `text`) per evitare bias di mix traffico.
+
+Output atteso:
+- tabella per finestra con colonne `responseMode`, `completed_full`, `completed_partial`, `partial_rate`.
+
+Query 3 - Fallback depth mean:
+1. Per ogni `requestId` prendere il massimo `attemptIndex` osservato.
+2. Calcolare `fallback_depth_mean = avg(max_attemptIndex_per_request)`.
+3. Evidenziare anche p95 di attempt depth per intercettare code patologiche.
+
+Output atteso:
+- tabella per finestra con colonne `request_count`, `fallback_depth_mean`, `fallback_depth_p95`.
+
+Checklist di validazione operativa:
+1. Completezza campi log minimi >= 99% richieste della finestra (`requestId`, `attemptIndex`, `runtimeModel`, `timeoutKind`, `completionReason`, `fallbackReason`).
+2. Nessun incremento error rate attribuibile alla pipeline osservabilita (best-effort invariato).
+3. Baseline consolidata su due finestre consecutive e allegata al tracker prima della chiusura `TASK-0402`.
+
+Esito operativo TASK-0402 (2026-04-14):
+- query baseline definite e rese operative nel runbook;
+- metriche aggregate coperte: `timeout_distribution`, `partial_rate`, `fallback_depth_mean` (+ p95 depth);
+- integrazione tracker/index completata.
+
+Nota:
+- la promozione produzione resta vincolata ai gate KPI runtime su finestre consecutive; questa condizione non blocca la chiusura del task di strumentazione/query operative.
 
 ## Criteri di rollback
 

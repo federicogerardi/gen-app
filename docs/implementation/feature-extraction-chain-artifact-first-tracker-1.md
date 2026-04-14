@@ -1,6 +1,6 @@
 ---
 goal: Operational tracker for extraction chain artifact-first resilience rollout
-version: 1.5
+version: 1.6
 date_created: 2026-04-14
 last_updated: 2026-04-14
 owner: Platform Engineering
@@ -125,6 +125,11 @@ Nota baseline: il dato sopra riflette il momento iniziale del tracker; l'aggiorn
 - 2026-04-14: avvio implementazione Sprint 3 su finalizzazione atomica extraction (artifact/cost/quota), persistenza reason terminale e coerenza complete-event post-commit.
 - 2026-04-14: validazione locale Sprint 3 PASS su `tests/unit/streaming.test.ts`, `tests/integration/extraction-route.test.ts` e `tests/unit/extraction-model-policy.test.ts`.
 - 2026-04-14: `TASK-0301`, `TASK-0302`, `TASK-0303` aggiornati a Completed; ingresso operativo su Fase 4 pronto.
+- 2026-04-14: avvio implementazione Sprint 4 su diagnostica minima obbligatoria nei log extraction e best-effort observability per evitare blocchi del path utente.
+- 2026-04-14: validazione locale Sprint 4 PASS su `tests/integration/extraction-route.test.ts`, `tests/unit/streaming.test.ts` e `tests/unit/extraction-model-policy.test.ts`.
+- 2026-04-14: `TASK-0401` e `TASK-0403` aggiornati a Completed; backlog aperto su `TASK-0402` (metriche aggregate).
+- 2026-04-14: avvio operativo `TASK-0402` con definizione query baseline e piano raccolta metriche su timeout distribution, partial rate e fallback depth.
+- 2026-04-14: `TASK-0402` aggiornato a Completed con query/runbook operative allineate e evidenze registrate.
 
 ## 4. Current Phase Status
 
@@ -166,9 +171,9 @@ Nota baseline: il dato sopra riflette il momento iniziale del tracker; l'aggiorn
 
 | Task | Current Status | Date |
 | --- | --- | --- |
-| TASK-0401 | Planned | 2026-04-14 |
-| TASK-0402 | Planned | 2026-04-14 |
-| TASK-0403 | Planned | 2026-04-14 |
+| TASK-0401 | Completed | 2026-04-14 |
+| TASK-0402 | Completed | 2026-04-14 |
+| TASK-0403 | Completed | 2026-04-14 |
 
 ### Phase 5
 
@@ -210,6 +215,11 @@ Nota baseline: il dato sopra riflette il momento iniziale del tracker; l'aggiorn
 - **EVID-018**: finalizzazione atomica completion/failure con transazione (`artifact`, `monthlySpent`, `quotaHistory`) introdotta in `src/lib/llm/streaming.ts`.
 - **EVID-019**: persistenza terminal state (`completionReason`, `fallbackReason`) su artifact input implementata in `src/app/api/tools/extraction/generate/route.ts` e `src/lib/llm/streaming.ts`.
 - **EVID-020**: validazione AC-030x su consistenza DB e terminal reason in `tests/integration/extraction-route.test.ts`.
+- **EVID-021**: logging extraction reso best-effort con fallback suppression per failure osservabilita in `src/app/api/tools/extraction/generate/route.ts`.
+- **EVID-022**: campi minimi diagnostici (`requestId`, `attemptIndex`, `runtimeModel`, `timeoutKind`, `completionReason`, `fallbackReason`) uniformati sui log attempt/terminal in `src/app/api/tools/extraction/generate/route.ts`.
+- **EVID-023**: copertura test Sprint 4 aggiunta con scenario logger throw non-bloccante in `tests/integration/extraction-route.test.ts`.
+- **EVID-024**: query operative baseline per `TASK-0402` definite nel runbook (`timeout_distribution`, `partial_rate`, `fallback_depth`) in `docs/review/extraction-model-policy-rollout-runbook-2026-04-12.md`.
+- **EVID-025**: chiusura operativa `TASK-0402` con sezione runbook dedicata (`Baseline Queries Completed`) e allineamento tracker/index.
 
 ## 6A. Pre-Production Validation Gate
 
@@ -218,10 +228,10 @@ Nota baseline: il dato sopra riflette il momento iniziale del tracker; l'aggiorn
 | Contratti resilience Fase 0 definiti e approvati | GO | `TASK-0001..TASK-0003` completati con evidenze codice + documentazione + test. |
 | Coerenza stato tracker/index | GO | allineamento completato con `TASK-0604` Completed e evidenza registrata. |
 | Abort propagation end-to-end | GO | copertura gia presente e riallineata a `TASK-0204` Completed. |
-| Piano test minimo pre-rollout | GO | validazione Sprint 0-2 eseguita (`tests/unit/extraction-model-policy.test.ts`, `tests/unit/streaming.test.ts`, `tests/integration/extraction-route.test.ts`). |
+| Piano test minimo pre-rollout | GO | validazione Sprint 0-4 eseguita (`tests/unit/extraction-model-policy.test.ts`, `tests/unit/streaming.test.ts`, `tests/integration/extraction-route.test.ts`). |
 | KPI runtime artifact-first misurati su finestra minima | NO-GO | metriche target definite nel piano ma non ancora raccolte su finestra valida. |
 
-Decisione corrente: NO-GO per produzione per KPI runtime non ancora consolidati; GO operativo per ingresso Fase 4 / Sprint successivo.
+Decisione corrente: NO-GO per produzione per KPI runtime non ancora consolidati; GO operativo per ingresso Sprint successivo.
 
 ## 6. Exit Criteria
 
@@ -232,10 +242,10 @@ Decisione corrente: NO-GO per produzione per KPI runtime non ancora consolidati;
 
 ## 7. Immediate Next Actions (operativo)
 
-1. Sprint 0-3 chiusi: mantenere invarianti outcome/reason, idempotenza route-level, timeout semantics e finalizzazione atomica.
-2. Avviare `TASK-0401` e `TASK-0403` per diagnostica completa e logging best-effort.
-3. Pianificare `TASK-0402` con misure operative su timeout distribution, partial rate e fallback depth.
-4. Definire finestra KPI canary per Fase 4/Fase 5 con soglie e trigger rollback allineati al runbook.
+1. Sprint 0-4 chiusi: mantenere invarianti outcome/reason, idempotenza route-level, timeout semantics, finalizzazione atomica e logging best-effort.
+2. Eseguire raccolta KPI runtime su due finestre consecutive secondo query runbook.
+3. Validare soglie AC-040x su timeout distribution, partial rate e fallback depth.
+4. Procedere con Sprint 5 (retry/resume UX) mantenendo monitoraggio continuo dei gate KPI.
 
 ## 8. Sprint Operations Board
 
@@ -266,8 +276,8 @@ Decisione corrente: NO-GO per produzione per KPI runtime non ancora consolidati;
 | TASK-0301 | Platform Engineering | Completed | 2026-04-14 | chiusura atomica artifact/costi/quota |
 | TASK-0302 | Platform Engineering | Completed | 2026-04-14 | reason persistita su ogni terminal state |
 | TASK-0303 | Platform Engineering | Completed | 2026-04-14 | evento complete solo post-commit |
-| TASK-0401 | Platform Engineering | Planned | 2026-04-23 | campi diagnostici minimi >=99% |
-| TASK-0403 | Platform Engineering | Planned | 2026-04-23 | logging best-effort non bloccante |
+| TASK-0401 | Platform Engineering | Completed | 2026-04-14 | campi diagnostici minimi >=99% |
+| TASK-0403 | Platform Engineering | Completed | 2026-04-14 | logging best-effort non bloccante |
 
 ### Sprint 3 - Retry/Resume UX and Controlled Rollout
 
@@ -277,7 +287,7 @@ Decisione corrente: NO-GO per produzione per KPI runtime non ancora consolidati;
 | TASK-0502 | Platform + Frontend | Planned | 2026-04-25 | resume da checkpoint artifact |
 | TASK-0503 | Frontend | Planned | 2026-04-25 | stati UX lifecycle artifact-first esposti |
 | TASK-0504 | Frontend | Planned | 2026-04-25 | CTA riprendi/riprova/rigenera attive |
-| TASK-0402 | Platform Engineering | Planned | 2026-04-25 | metriche timeout/partial/fallback depth operative |
+| TASK-0402 | Platform Engineering | Completed | 2026-04-14 | metriche timeout/partial/fallback depth operative |
 | TASK-0601 | Platform Engineering | Planned | 2026-04-26 | feature flag route extraction attiva |
 | TASK-0602 | Platform Engineering | Planned | 2026-04-26 | rollout 10%->30%->100% con gate KPI |
 | TASK-0603 | Platform Engineering | Planned | 2026-04-26 | rollback trigger e drill documentati |
