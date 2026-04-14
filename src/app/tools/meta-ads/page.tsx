@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
@@ -16,7 +16,7 @@ import { formatArtifactContentForDisplay } from '@/lib/artifact-preview';
 
 const TONES = ['professional', 'casual', 'formal', 'technical'] as const;
 
-export default function MetaAdsToolPage() {
+function MetaAdsToolContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const toneFromQuery = searchParams.get('tone');
@@ -194,5 +194,21 @@ export default function MetaAdsToolPage() {
           </Card>
         </div>
     </PageShell>
+  );
+}
+
+export default function MetaAdsToolPage() {
+  return (
+    <Suspense
+      fallback={(
+        <PageShell width="workspace">
+          <div className="py-10 text-sm text-muted-foreground" role="status" aria-live="polite" aria-atomic="true">
+            Caricamento tool Meta Ads...
+          </div>
+        </PageShell>
+      )}
+    >
+      <MetaAdsToolContent />
+    </Suspense>
   );
 }

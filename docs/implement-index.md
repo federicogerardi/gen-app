@@ -8,6 +8,7 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 - **Field map extraction funnel esteso**: aggiunta voce `testimonials_sources` in `FUNNEL_EXTRACTION_FIELD_MAP` per rendere esplicita l'estrazione della social proof dal documento sorgente.
 - **Validazione recente**: test mirati `PASS` su mapping e route funnel (`tests/unit/funnel-mapping.test.ts`, `tests/unit/funnel-extraction-field-map.test.ts`, `tests/integration/funnel-pages-route.test.ts`).
 - **Sprint microtask GUI/UX low-impact**: completato il backlog MT-UX-01..08 con evidenze operative consolidate nel tracker dedicato, incluse validazioni test e verifica GUI locale.
+- **Guardrail CI Next.js App Router**: introdotte linee guida build-safe per `useSearchParams` con boundary `Suspense` per prevenire errori di prerender in pipeline quality.
 
 ## Aggiornamento sessione (2026-04-12)
 

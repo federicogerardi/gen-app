@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, type ReactNode } from 'react';
+import { Suspense, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
@@ -201,7 +201,7 @@ async function generateStream(request: {
   return { content, artifactId };
 }
 
-export default function FunnelPagesToolPage() {
+function FunnelPagesToolContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const toneFromQuery = searchParams.get('tone');
@@ -616,5 +616,21 @@ export default function FunnelPagesToolPage() {
           </div>
         </div>
     </PageShell>
+  );
+}
+
+export default function FunnelPagesToolPage() {
+  return (
+    <Suspense
+      fallback={(
+        <PageShell width="workspace">
+          <div className="py-10 text-sm text-muted-foreground" role="status" aria-live="polite" aria-atomic="true">
+            Caricamento tool Funnel Pages...
+          </div>
+        </PageShell>
+      )}
+    >
+      <FunnelPagesToolContent />
+    </Suspense>
   );
 }

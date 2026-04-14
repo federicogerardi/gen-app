@@ -9,6 +9,29 @@
 
 ---
 
+## Frontend Build Guardrails (Next.js App Router)
+
+Per prevenire errori CI di prerender su pagine tool (`/tools/*`) e pagine client App Router:
+
+- Se una pagina usa `useSearchParams()`, il componente che invoca l'hook deve essere renderizzato dentro un boundary `Suspense`.
+- Pattern raccomandato:
+  - `export default function Page() { return <Suspense><PageContent /></Suspense>; }`
+  - `function PageContent() { const searchParams = useSearchParams(); ... }`
+- Evitare di usare `useSearchParams()` direttamente nel componente `default export` della pagina senza `Suspense`.
+- Applicare lo stesso controllo ai nuovi tool client-side prima di aprire PR.
+
+Checklist minima pre-merge (obbligatoria per pagine tool):
+
+1. `npm run test`
+2. `npm run build`
+3. Verifica manuale GUI locale delle route toccate
+
+Errore tipico prevenuto da questo guardrail:
+
+- `useSearchParams() should be wrapped in a suspense boundary`
+
+---
+
 ## Error Responses
 
 All errors follow this format:

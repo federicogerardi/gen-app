@@ -63,6 +63,7 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 - [ux-strategy.md](ux/ux-strategy.md): Strategia UX e principi guida.
 
 ### Aggiornamenti recenti
+- 2026-04-14: aggiunto guardrail build-safe Next.js App Router in `docs/specifications/api-specifications.md` per evitare errori CI su `useSearchParams` senza boundary `Suspense`.
 - 2026-04-14: aggiornate le specifiche funnel/API per il passaggio di testimonianze strutturate (`quote`, `source`, `achieved_result`, `measurable_results`) dal payload extraction al contesto generazione.
 - 2026-04-14: introdotto piano operativo microtask GUI/UX low-impact in `docs/implementation/gui-ux-low-impact-microtasks-sprint-plan-2026-04-14.md` e allineato `docs/implement-index.md`.
 - 2026-04-13: introdotta specifica canonica per il naming dei file documentazione in `docs/specifications/documentation-filename-naming-spec.md`.
