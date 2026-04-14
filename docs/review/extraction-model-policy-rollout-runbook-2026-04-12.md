@@ -83,6 +83,40 @@ Soglie di stabilita post-promozione (prime 24h):
 - nessun degrado >30% su `p95_latency`
 - `mean_cost` entro +15% rispetto alla baseline fase A
 
+## Hardening Acceptance-Timeout (2026-04-14)
+
+Obiettivo:
+- validare in dev che il nuovo decision engine (`hard_accept` / `soft_accept` / `reject`) e l'early-abort first-token riducano fallback superflui senza introdurre incoerenze semantiche.
+
+Nota perimetro attuale Funnel:
+- il flusso UI usa `responseMode: text` con payload V3 `extractionContext`.
+- in text mode la chain e ridotta a 2 tentativi (18s / 22s).
+- in text mode, timeout con contenuto gia utile puo essere accettato come `soft_accept` per evitare `EXTRACTION_FAILED` non necessari.
+
+Checklist operativa dev (go/no-go):
+1. Verificare nei log per ogni tentativo la presenza dei campi diagnostici: `expectedFieldCount`, `knownExtractedCount`, `knownMissingCount`, `overlapCount`, `consistencyDecision`, `consistencyDecisionReason`, `acceptanceDecision`, `acceptanceReason`, `criticalCoverage`.
+2. Validare almeno un caso per ciascun esito acceptance:
+   - `hard_accept` con campi attesi coerenti
+   - `soft_accept` con output parziale e copertura critica sopra soglia
+   - `reject` con overlap reale o copertura critica insufficiente
+3. Validare fallback anticipato su stream stall (assenza token entro 12s) con `fallbackReason=timeout` e `timeoutKind=first_token`.
+4. Validare fallback anticipato su stream senza inizio JSON (`{`) entro 8s dal primo token non vuoto con `fallbackReason=timeout` e `timeoutKind=json_start`.
+5. Validare fallback anticipato su stream con `{` ma senza JSON parseable entro 7s con `fallbackReason=timeout` e `timeoutKind=json_parse`.
+6. Validare fallback anticipato su stream idle post-primo token (assenza token successivi oltre 10s) con `fallbackReason=timeout` e `timeoutKind=token_idle`.
+7. Verificare che i timeout route-level propaghino cancellazione upstream (`AbortSignal`) fino al provider per evitare timeout effettivi oltre soglia.
+8. Confermare assenza regressioni su contratto errori API `{ error: { code, message } }`.
+
+Go criteria:
+- completezza log diagnostici >= 99% richieste extraction monitorate.
+- first-attempt success rate >= 80% nel campione dev.
+- p95 latenza extraction < 45s nel campione dev.
+- nessun aumento di `EXTRACTION_FAILED` oltre baseline pre-hardening.
+
+No-go criteria:
+- mancanza sistematica dei campi diagnostici richiesti.
+- aumento `EXTRACTION_FAILED` > 20% rispetto baseline.
+- regressioni semantiche sui codici errore o su guard route (auth/usage/ownership).
+
 ## Metriche operative
 
 - `json_valid_rate`: percentuale tentativi con parse JSON valido
@@ -92,6 +126,7 @@ Soglie di stabilita post-promozione (prime 24h):
 - `p95_latency`: latenza p95 per richiesta extraction
 - `mean_cost`: costo medio richiesta extraction
 - `fallback_depth_mean`: media numero tentativi per richiesta
+- `first_attempt_text_accept_rate`: percentuale richieste text mode chiuse al primo tentativo (inclusi soft-accept su timeout con contenuto utile)
 
 ## Query log consigliate
 
@@ -103,7 +138,6 @@ Eventi principali:
 - `Extraction attempt succeeded`
 - `Extraction attempt failed`
 - `Extraction fallback chain exhausted`
-- `Extraction attempt chain stopped by budget policy`
 
 Campi minimi da aggregare:
 - `requestId`
@@ -137,7 +171,7 @@ Trigger soft rollback (decisione operativa):
 ## Post-incident checklist
 
 - Verifica attivazione modelli in registry (`llmModel`) e priorita chain
-- Verifica conformita prompt JSON-only
+- Verifica conformita prompt text-first (sezioni obbligatorie + checklist required)
 - Verifica accuratezza mapping `fieldMap`
 - Verifica semantica quota/costi su retry (`monthlyUsed` single increment)
 - Aggiornamento test regressione se emerge un nuovo failure mode

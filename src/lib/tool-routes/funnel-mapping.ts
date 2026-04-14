@@ -123,7 +123,7 @@ export function asTestimonialSources(value: unknown) {
 }
 
 export function mapExtractedFieldsToBriefing(payload: FunnelPagesRequestV3): FunnelPagesRequestV2['briefing'] {
-  const extracted = normalizeExtractedFields(payload.extractedFields);
+  const extracted = normalizeExtractedFields(payload.extractedFields ?? {});
   const leadMagnetSingle =
     typeof extracted.lead_magnet === 'object' && extracted.lead_magnet !== null
       ? (extracted.lead_magnet as Record<string, unknown>)

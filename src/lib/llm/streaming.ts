@@ -51,6 +51,7 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
   const workflowType = params.workflowType ?? extractWorkflowType(input);
   const outputFormat = extractOutputFormat(input);
   const modelPricing = await getModelPricingForRuntime(model);
+  const providerAbortController = new AbortController();
 
   const artifact = await db.artifact.create({
     data: {
@@ -63,6 +64,8 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
       status: 'generating',
     },
   });
+
+  let cancellationReason: 'timeout' | 'client_disconnect' | 'other' | null = null;
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -88,7 +91,13 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
       let pendingUpdate: Promise<void> | null = null;
 
       try {
-        for await (const chunk of orchestrator.generateStream({ type, model, input, promptOverride })) {
+        for await (const chunk of orchestrator.generateStream({
+          type,
+          model,
+          input,
+          promptOverride,
+          abortSignal: providerAbortController.signal,
+        })) {
           accumulated += chunk.token;
           fallbackOutputTokenCount = estimateUtfAwareTokens(accumulated);
           tokenSequence++;
@@ -230,35 +239,102 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Generation failed';
 
-        await db.artifact.update({
-          where: { id: artifact.id },
-          data: { status: 'failed' },
-        });
+        const resolvedInputTokens = resolveTokenCount(providerInputTokenCount, fallbackInputTokenCount);
+        const resolvedOutputTokens = resolveTokenCount(providerOutputTokenCount, fallbackOutputTokenCount);
+        const hasUsefulPartialContent = accumulated.trim().length >= 120;
+        const canPersistPartialTimeout = providerAbortController.signal.aborted
+          && cancellationReason === 'timeout'
+          && hasUsefulPartialContent;
 
-        await db.quotaHistory.create({
-          data: {
-            userId,
-            requestCount: 1,
-            costUSD: 0,
-            model,
-            artifactType: type,
-            status: 'error' as QuotaEventStatus,
-          },
-        });
+        if (canPersistPartialTimeout) {
+          const cost = calculateCostWithPricing(modelPricing, resolvedInputTokens, resolvedOutputTokens);
+          await db.artifact.update({
+            where: { id: artifact.id },
+            data: {
+              content: accumulated,
+              status: 'completed',
+              inputTokens: Math.max(resolvedInputTokens, 1),
+              outputTokens: Math.max(resolvedOutputTokens, 1),
+              costUSD: cost,
+              completedAt: new Date(),
+            },
+          });
 
-        controller.enqueue(encode({
-          type: 'error',
-          code: 'INTERNAL_ERROR',
-          message,
-          workflowType,
-          format: outputFormat,
-        }));
+          await db.user.update({
+            where: { id: userId },
+            data: {
+              monthlySpent: { increment: cost },
+            },
+          });
+
+          await db.quotaHistory.create({
+            data: {
+              userId,
+              requestCount: 1,
+              costUSD: cost,
+              model,
+              artifactType: type,
+              status: 'success' as QuotaEventStatus,
+            },
+          });
+        } else {
+          await db.artifact.update({
+            where: { id: artifact.id },
+            data: { status: 'failed' },
+          });
+
+          await db.quotaHistory.create({
+            data: {
+              userId,
+              requestCount: 1,
+              costUSD: 0,
+              model,
+              artifactType: type,
+              status: 'error' as QuotaEventStatus,
+            },
+          });
+
+          if (!providerAbortController.signal.aborted) {
+            controller.enqueue(encode({
+              type: 'error',
+              code: 'INTERNAL_ERROR',
+              message,
+              workflowType,
+              format: outputFormat,
+            }));
+          }
+        }
       } finally {
-        controller.close();
+        try {
+          controller.close();
+        } catch {
+          // Stream may already be cancelled by caller timeout handling.
+        }
       }
     },
-    cancel() {
-      // S1-06: Handle client disconnect by marking artifact as failed
+    cancel(reason) {
+      const normalizedReason = typeof reason === 'string'
+        ? reason
+        : reason instanceof Error
+          ? reason.message
+          : 'stream_cancelled';
+
+      cancellationReason = normalizedReason === 'timeout'
+        ? 'timeout'
+        : normalizedReason === 'stream_cancelled'
+          ? 'client_disconnect'
+          : 'other';
+
+      providerAbortController.abort(
+        reason instanceof Error ? reason : new Error(normalizedReason),
+      );
+
+      // Mark as failed only for actual client disconnects.
+      // Timeout cancellations may still be accepted upstream with useful partial content.
+      if (cancellationReason !== 'client_disconnect') {
+        return;
+      }
+
       db.artifact.update({
         where: { id: artifact.id },
         data: {

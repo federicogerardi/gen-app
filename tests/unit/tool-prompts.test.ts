@@ -5,6 +5,7 @@ import {
   buildFunnelQuizPrompt,
   buildFunnelVslPrompt,
 } from '@/lib/tool-prompts/funnel-pages';
+import { EXTRACTION_GENERATION_TEMPLATE } from '@/lib/tool-prompts/extraction-templates';
 import { TOOL_PROMPT_REGISTRY } from '@/lib/tool-prompts/registry';
 import { loadPromptSource } from '@/lib/tool-prompts/loader';
 
@@ -72,6 +73,40 @@ describe('buildExtractionPrompt', () => {
     expect(prompt).toContain('Extraction template:');
     expect(prompt).toContain('business_type');
     expect(prompt).toContain('Testo sorgente con dati business e target.');
+  });
+
+  it('builds text-mode extraction prompt with schema-aligned sections and required checklist', async () => {
+    const prompt = await buildExtractionPrompt({
+      tone: 'professional',
+      responseMode: 'text',
+      rawContent: 'Briefing aziendale con target, offerta, proof e obiettivi funnel.',
+      fieldMap: {
+        business_type: {
+          type: 'select',
+          required: true,
+          description: 'Tipo business',
+        },
+        core_problem: {
+          type: 'textarea',
+          required: true,
+          description: 'Problema principale',
+        },
+      },
+      notes: 'Mantieni solo fatti verificabili',
+    });
+
+    expect(prompt).toContain('## Business Context');
+    expect(prompt).toContain('## Offer & Delivery Context');
+    expect(prompt).toContain('## Qualification Context');
+    expect(prompt).toContain('## Segmentation & Lead Magnet Context');
+    expect(prompt).toContain('## Belief Context');
+    expect(prompt).toContain('## Funnel Goal Context');
+    expect(prompt).toContain('## Proof Context');
+    expect(prompt).toContain('## Missing / Unclear');
+    expect(prompt).toContain('## Required Fields Checklist');
+    expect(prompt).toContain('business_type');
+    expect(prompt).toContain('core_problem');
+    expect(prompt).toContain('testo virgoletato + fonte');
   });
 });
 
@@ -179,5 +214,15 @@ describe('funnel prompt builders', () => {
     expect(prompt).toContain('### Business Context');
     expect(prompt).toContain('Tipo business: B2B');
     expect(prompt).toContain('Segmentazione primaria: Maturita funnel');
+  });
+});
+
+describe('extraction prompt contract', () => {
+  it('enforces flat keys, full fields population, critical fields first and valid partial JSON', () => {
+    expect(EXTRACTION_GENERATION_TEMPLATE).toContain('Usa esclusivamente chiavi flat presenti nella field map');
+    expect(EXTRACTION_GENERATION_TEMPLATE).toContain('Compila sempre fields con tutte le chiavi della field map');
+    expect(EXTRACTION_GENERATION_TEMPLATE).toContain('Critical fields first');
+    expect(EXTRACTION_GENERATION_TEMPLATE).toContain('Restituisci solo JSON valido, senza testo extra');
+    expect(EXTRACTION_GENERATION_TEMPLATE).toContain('JSON valido con fields parziali/null');
   });
 });

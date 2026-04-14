@@ -1,13 +1,15 @@
-import { env } from '@/lib/env';
-
 export const EXTRACTION_POLICY_VERSION = '1.0.0';
 
 export const EXTRACTION_PRIMARY_MODEL = 'anthropic/claude-3.7-sonnet';
 export const EXTRACTION_FALLBACK_MODELS = ['openai/gpt-4.1', 'openai/o3'] as const;
 
 export const EXTRACTION_MAX_ATTEMPTS = 3;
-export const EXTRACTION_MAX_COST_USD = env.EXTRACTION_MAX_COST_USD;
 export const EXTRACTION_TIMEOUT_MS = 45_000;
+export const EXTRACTION_FIRST_TOKEN_TIMEOUT_MS = 12_000;
+export const EXTRACTION_TOKEN_IDLE_TIMEOUT_MS = 10_000;
+export const EXTRACTION_JSON_START_TIMEOUT_MS = 8_000;
+export const EXTRACTION_JSON_PARSE_TIMEOUT_MS = 7_000;
+export const EXTRACTION_DEFAULT_ATTEMPT_TIMEOUTS_MS = [35_000, 25_000, 30_000] as const;
 
 export type ExtractionEscalationReason =
   | 'parse_failed'
@@ -15,7 +17,6 @@ export type ExtractionEscalationReason =
   | 'consistency_failed'
   | 'timeout'
   | 'provider_error'
-  | 'budget_exceeded'
   | 'max_attempts_reached';
 
 export type ExtractionAttemptPlanItem = {
@@ -36,9 +37,7 @@ export type ExtractionAttemptResult = {
 
 export type ExtractionPolicyState = {
   attemptIndex: number;
-  cumulativeCostUsd?: number;
   maxAttempts?: number;
-  maxCostUsd?: number;
 };
 
 export function getExtractionModelChain(): readonly string[] {
@@ -47,17 +46,20 @@ export function getExtractionModelChain(): readonly string[] {
 
 export function getExtractionAttemptPlan(config?: {
   timeoutMs?: number;
+  attemptTimeoutMs?: number[];
   maxAttempts?: number;
 }): ExtractionAttemptPlanItem[] {
-  const timeoutMs = config?.timeoutMs ?? EXTRACTION_TIMEOUT_MS;
   const maxAttempts = Math.max(1, config?.maxAttempts ?? EXTRACTION_MAX_ATTEMPTS);
   const chain = getExtractionModelChain().slice(0, maxAttempts);
+  const perAttemptTimeouts = config?.attemptTimeoutMs
+    ?? (typeof config?.timeoutMs === 'number' ? undefined : [...EXTRACTION_DEFAULT_ATTEMPT_TIMEOUTS_MS]);
+  const fallbackTimeoutMs = config?.timeoutMs ?? EXTRACTION_TIMEOUT_MS;
 
   return chain.map((model, index) => ({
     attemptIndex: index + 1,
     model,
     isFallback: index > 0,
-    timeoutMs,
+    timeoutMs: perAttemptTimeouts?.[index] ?? fallbackTimeoutMs,
   }));
 }
 
@@ -84,12 +86,6 @@ export function shouldEscalateExtractionAttempt(
   }
 
   const maxAttempts = state.maxAttempts ?? EXTRACTION_MAX_ATTEMPTS;
-  const maxCostUsd = state.maxCostUsd ?? EXTRACTION_MAX_COST_USD;
-  const cumulativeCostUsd = state.cumulativeCostUsd ?? 0;
-
-  if (cumulativeCostUsd > maxCostUsd) {
-    return { escalate: false, reason: 'budget_exceeded' };
-  }
 
   if (state.attemptIndex >= maxAttempts) {
     return { escalate: false, reason: 'max_attempts_reached' };
