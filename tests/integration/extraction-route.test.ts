@@ -34,6 +34,12 @@ const findUser = (db as any).user.findUnique as jest.Mock;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const findProject = (db as any).project.findUnique as jest.Mock;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+const createArtifact = (db as any).artifact.create as jest.Mock;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const findArtifact = (db as any).artifact.findFirst as jest.Mock;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const updateArtifact = (db as any).artifact.update as jest.Mock;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const findActiveModel = (db as any).llmModel.findFirst as jest.Mock;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const updateUser = (db as any).user.update as jest.Mock;
@@ -97,6 +103,9 @@ beforeEach(() => {
     },
   ]));
   mockedBuildExtractionPrompt.mockResolvedValue('EXTRACTION PROMPT');
+  createArtifact.mockResolvedValue({ id: 'artifact_stub_1' });
+  findArtifact.mockResolvedValue(null);
+  updateArtifact.mockResolvedValue({});
   findActiveModel.mockImplementation(async ({ where }: { where?: { modelId?: string } }) => {
     const modelId = where?.modelId;
     const allowedModels = [
@@ -210,6 +219,14 @@ describe('POST /api/tools/extraction/generate', () => {
         acceptanceReason: 'known_fields_present',
       }),
       'Extraction attempt succeeded',
+    );
+    expect(createArtifact).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          type: 'extraction',
+          status: 'generating',
+        }),
+      }),
     );
   });
 
@@ -378,6 +395,8 @@ describe('POST /api/tools/extraction/generate', () => {
     expect(mockedStream).toHaveBeenCalledTimes(2);
     expect(mockedStream).toHaveBeenNthCalledWith(1, expect.objectContaining({ model: EXTRACTION_PRIMARY_MODEL }));
     expect(mockedStream).toHaveBeenNthCalledWith(2, expect.objectContaining({ model: EXTRACTION_FALLBACK_MODELS[0] }));
+    expect(mockedStream).toHaveBeenNthCalledWith(1, expect.objectContaining({ artifactId: 'artifact_stub_1', persistFailure: false }));
+    expect(mockedStream).toHaveBeenNthCalledWith(2, expect.objectContaining({ artifactId: 'artifact_stub_1', persistFailure: false }));
     expect(mockLogger.info).toHaveBeenCalledWith(
       expect.objectContaining({
         attemptIndex: 1,
@@ -391,6 +410,7 @@ describe('POST /api/tools/extraction/generate', () => {
     expect(updateUser).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({ monthlyUsed: expect.objectContaining({ increment: 1 }) }),
     }));
+    expect(createArtifact).toHaveBeenCalledTimes(1);
   });
 
   it('returns EXTRACTION_FAILED when fallback chain is exhausted', async () => {
@@ -423,6 +443,12 @@ describe('POST /api/tools/extraction/generate', () => {
     }));
     expect(mockedStream).toHaveBeenCalledTimes(3);
     expect(updateUser).toHaveBeenCalledTimes(1);
+    expect(updateArtifact).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'artifact_stub_1' },
+        data: expect.objectContaining({ status: 'failed', failureReason: 'error' }),
+      }),
+    );
   });
 
   it('aborts stalled first attempt on first-token timeout and falls back quickly', async () => {
@@ -465,6 +491,34 @@ describe('POST /api/tools/extraction/generate', () => {
       }),
       'Extraction attempt failed',
     );
+  });
+
+  it('replays completed artifact on idempotency hit without creating duplicates', async () => {
+    mockedAuth.mockResolvedValue({ user: { id: 'user_1' } } as never);
+    findArtifact.mockResolvedValue({
+          id: 'art_existing',
+          status: 'completed',
+          content: 'contenuto gia generato',
+          workflowType: 'extraction',
+          failureReason: null,
+    });
+
+    const res = await POST(new Request('http://localhost/api/tools/extraction/generate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-idempotency-key': 'idem-key-12345',
+      },
+      body: JSON.stringify(baseBody),
+    }));
+
+    const body = await res.text();
+
+    expect(res.status).toBe(200);
+    expect(body).toContain('art_existing');
+    expect(body).toContain('contenuto gia generato');
+    expect(createArtifact).not.toHaveBeenCalled();
+    expect(mockedStream).not.toHaveBeenCalled();
   });
 
   it('aborts attempt on json-parse timeout after first token when JSON remains incomplete', async () => {

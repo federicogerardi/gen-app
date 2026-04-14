@@ -1,4 +1,5 @@
 import { createArtifactStream } from '@/lib/llm/streaming';
+import { db } from '@/lib/db';
 import { getRequestLogger } from '@/lib/logger';
 import {
   EXTRACTION_FIRST_TOKEN_TIMEOUT_MS,
@@ -82,6 +83,14 @@ type ExtractionAcceptanceResult = {
   acceptanceReason: AcceptanceReason;
   criticalCoverage: number;
   consistencyDecision: ConsistencyDecision;
+};
+
+type ExistingExtractionArtifact = {
+  id: string;
+  status: string;
+  content: string;
+  workflowType?: string | null;
+  failureReason?: string | null;
 };
 
 function parseSsePayload(line: string): Record<string, unknown> | null {
@@ -576,6 +585,78 @@ function replaySseChunks(chunks: Uint8Array[]): ReadableStream {
   });
 }
 
+function normalizeExtractionIdempotencyKey(rawValue: string | null): string | null {
+  if (!rawValue) {
+    return null;
+  }
+
+  const trimmed = rawValue.trim();
+  if (trimmed.length < 8 || trimmed.length > 128) {
+    return null;
+  }
+
+  return trimmed;
+}
+
+function getExtractionStreamFormat(responseMode: 'structured' | 'text'): 'json' | 'markdown' {
+  return responseMode === 'text' ? 'markdown' : 'json';
+}
+
+function createExtractionReplayStream(input: {
+  artifactId: string;
+  content: string;
+  format: 'json' | 'markdown';
+}): ReadableStream {
+  const encoder = new TextEncoder();
+
+  return new ReadableStream({
+    start(controller) {
+      controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+        type: 'start',
+        artifactId: input.artifactId,
+        workflowType: 'extraction',
+        format: input.format,
+      })}\n\n`));
+      controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+        type: 'complete',
+        artifactId: input.artifactId,
+        content: input.content,
+        workflowType: 'extraction',
+        format: input.format,
+      })}\n\n`));
+      controller.close();
+    },
+  });
+}
+
+async function findExistingExtractionArtifactByIdempotencyKey(input: {
+  userId: string;
+  projectId: string;
+  idempotencyKey: string;
+}): Promise<ExistingExtractionArtifact | null> {
+  const artifact = await db.artifact.findFirst({
+    where: {
+      userId: input.userId,
+      projectId: input.projectId,
+      type: 'extraction',
+      input: {
+        path: ['idempotencyKey'],
+        equals: input.idempotencyKey,
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+    select: {
+      id: true,
+      status: true,
+      content: true,
+      workflowType: true,
+      failureReason: true,
+    },
+  });
+
+  return artifact;
+}
+
 export async function POST(request: Request) {
   const requestId = request.headers.get('x-request-id') ?? crypto.randomUUID();
   const baseLog = getRequestLogger({
@@ -639,6 +720,7 @@ export async function POST(request: Request) {
   const payload = parsed.data;
   const startedAt = Date.now();
   const extractionResponseMode = payload.responseMode ?? 'structured';
+  const idempotencyKey = normalizeExtractionIdempotencyKey(request.headers.get('x-idempotency-key'));
   const runtimeModel = resolveExtractionRuntimeModel(payload.model);
   const attemptPlan = extractionResponseMode === 'text'
     ? getExtractionAttemptPlan({ maxAttempts: 2, attemptTimeoutMs: [18_000, 22_000] })
@@ -650,6 +732,7 @@ export async function POST(request: Request) {
       projectId: payload.projectId,
       model: payload.model,
       runtimeModel,
+      idempotencyKey,
       responseMode: extractionResponseMode,
       policyVersion: EXTRACTION_POLICY_VERSION,
     },
@@ -679,6 +762,114 @@ export async function POST(request: Request) {
     return ownershipResult.response;
   }
 
+  if (idempotencyKey) {
+    const existingArtifact = await findExistingExtractionArtifactByIdempotencyKey({
+      userId,
+      projectId: payload.projectId,
+      idempotencyKey,
+    });
+
+    if (existingArtifact) {
+      log.info(
+        {
+          workflowType: 'extraction',
+          projectId: payload.projectId,
+          artifactId: existingArtifact.id,
+          artifactStatus: existingArtifact.status,
+          idempotencyKey,
+          policyVersion: EXTRACTION_POLICY_VERSION,
+        },
+        'Extraction idempotency hit',
+      );
+
+      if (existingArtifact.status === 'completed') {
+        return sseResponse(
+          createExtractionReplayStream({
+            artifactId: existingArtifact.id,
+            content: existingArtifact.content,
+            format: getExtractionStreamFormat(extractionResponseMode),
+          }),
+          requestId,
+        );
+      }
+
+      return apiError('CONFLICT', 'Extraction request already exists for this idempotency key', 409, {
+        artifactId: existingArtifact.id,
+        status: existingArtifact.status,
+        failureReason: existingArtifact.failureReason ?? null,
+      });
+    }
+  }
+
+  let firstRunnableAttemptIndex = -1;
+  for (let index = 0; index < attemptPlan.length; index += 1) {
+    const modelResult = await requireAvailableModel(attemptPlan[index].model);
+    if (modelResult.ok) {
+      firstRunnableAttemptIndex = index;
+      break;
+    }
+
+    log.warn(
+      {
+        workflowType: 'extraction',
+        projectId: payload.projectId,
+        requestId,
+        attemptIndex: attemptPlan[index].attemptIndex,
+        runtimeModel: attemptPlan[index].model,
+        policyVersion: EXTRACTION_POLICY_VERSION,
+      },
+      'Extraction attempt skipped during preflight: runtime model unavailable',
+    );
+  }
+
+  if (firstRunnableAttemptIndex === -1) {
+    log.error(
+      {
+        workflowType: 'extraction',
+        projectId: payload.projectId,
+        requestId,
+        fallbackReason: 'provider_error',
+        responseMode: extractionResponseMode,
+        policyVersion: EXTRACTION_POLICY_VERSION,
+      },
+      'Extraction preflight exhausted: no runtime model available',
+    );
+
+    return apiError('EXTRACTION_FAILED', 'Impossibile completare l\'estrazione in modo affidabile', 503);
+  }
+
+  const usageResult = await enforceUsageGuards(userId, attemptPlan[firstRunnableAttemptIndex].model, 'extraction', {
+    incrementMonthlyUsed: true,
+  });
+  if (!usageResult.ok) {
+    return usageResult.response;
+  }
+
+  const artifactInput = {
+    rawContent: payload.rawContent,
+    fieldMap: payload.fieldMap,
+    tone: payload.tone,
+    responseMode: extractionResponseMode,
+    notes: payload.notes,
+    policyVersion: EXTRACTION_POLICY_VERSION,
+    workflowType: 'extraction',
+    outputFormat: getExtractionStreamFormat(extractionResponseMode),
+    requestId,
+    idempotencyKey,
+  };
+
+  const artifactStub = await db.artifact.create({
+    data: {
+      userId,
+      projectId: payload.projectId,
+      type: 'extraction',
+      workflowType: 'extraction',
+      model: attemptPlan[firstRunnableAttemptIndex].model,
+      input: artifactInput,
+      status: 'generating',
+    },
+  });
+
   const prompt = await buildExtractionPrompt({
     rawContent: payload.rawContent,
     fieldMap: payload.fieldMap,
@@ -688,9 +879,8 @@ export async function POST(request: Request) {
   });
 
   let lastFallbackReason = 'provider_error';
-  let usageIncrementApplied = false;
 
-  for (const attempt of attemptPlan) {
+  for (const attempt of attemptPlan.slice(firstRunnableAttemptIndex)) {
     const attemptStartedAt = Date.now();
     const modelResult = await requireAvailableModel(attempt.model);
     if (!modelResult.ok) {
@@ -726,25 +916,17 @@ export async function POST(request: Request) {
       continue;
     }
 
-    const usageResult = await enforceUsageGuards(userId, attempt.model, 'extraction', {
-      incrementMonthlyUsed: !usageIncrementApplied,
-    });
-    if (!usageResult.ok) {
-      return usageResult.response;
-    }
-    if (!usageIncrementApplied) {
-      usageIncrementApplied = true;
-    }
-
     let fallbackReason = 'provider_error';
 
     try {
       const stream = await createArtifactStream({
         userId,
         projectId: payload.projectId,
+        artifactId: artifactStub.id,
         type: 'extraction',
         workflowType: 'extraction',
         model: attempt.model,
+        persistFailure: false,
         promptOverride: prompt,
         input: {
           rawContent: payload.rawContent,
@@ -973,11 +1155,20 @@ export async function POST(request: Request) {
     }
   }
 
+  await db.artifact.update({
+    where: { id: artifactStub.id },
+    data: {
+      status: 'failed',
+      failureReason: 'error',
+    },
+  });
+
   log.error(
     {
       workflowType: 'extraction',
       projectId: payload.projectId,
       requestId,
+      artifactId: artifactStub.id,
       duration_ms: Date.now() - startedAt,
       fallbackReason: lastFallbackReason,
       responseMode: extractionResponseMode,

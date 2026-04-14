@@ -110,6 +110,31 @@ describe('createArtifactStream', () => {
     );
   });
 
+  it('reuses an existing artifact id without creating duplicates', async () => {
+    mockGenerateStream.mockReturnValue(makeTokenStream(['Hello', ' world']));
+
+    const stream = await createArtifactStream({
+      userId: 'user_1',
+      projectId: 'proj_1',
+      artifactId: 'art_existing',
+      type: 'content',
+      model: 'openai/gpt-4-turbo',
+      input: { topic: 'AI' },
+      persistFailure: false,
+    });
+
+    const lines = await readAllSse(stream);
+
+    expect(lines.some((l) => l.includes('"artifactId":"art_existing"'))).toBe(true);
+    expect(createArtifact).not.toHaveBeenCalled();
+    expect(updateArtifact).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'art_existing' },
+        data: expect.objectContaining({ status: 'generating', content: '' }),
+      }),
+    );
+  });
+
   it('marks artifact failed and emits error event when generation throws', async () => {
     mockGenerateStream.mockImplementation(() => {
       throw new Error('Provider down');

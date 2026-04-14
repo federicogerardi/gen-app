@@ -1,6 +1,6 @@
 ---
 goal: Operational tracker for extraction chain artifact-first resilience rollout
-version: 1.2
+version: 1.3
 date_created: 2026-04-14
 last_updated: 2026-04-14
 owner: Platform Engineering
@@ -117,6 +117,8 @@ Nota baseline: il dato sopra riflette il momento iniziale del tracker; l'aggiorn
 - 2026-04-14: validazione locale Sprint 0 (parziale) PASS su `tests/unit/extraction-model-policy.test.ts` e `tests/integration/extraction-route.test.ts`.
 - 2026-04-14: allineamento documentale Sprint 0 completato su API spec e runbook con contratto outcome/reason ufficiale.
 - 2026-04-14: `TASK-0001`, `TASK-0002`, `TASK-0003` aggiornati a Completed; Sprint 0 chiuso.
+- 2026-04-14: avvio implementazione Sprint 1 su route extraction con artifact stub persistito, idempotency key e riuso dello stesso artifact lungo la chain fallback.
+- 2026-04-14: validazione locale Sprint 1 PASS su `tests/integration/extraction-route.test.ts` e `tests/unit/streaming.test.ts`.
 
 ## 4. Current Phase Status
 
@@ -132,10 +134,10 @@ Nota baseline: il dato sopra riflette il momento iniziale del tracker; l'aggiorn
 
 | Task | Current Status | Date |
 | --- | --- | --- |
-| TASK-0101 | Planned | 2026-04-14 |
-| TASK-0102 | Planned | 2026-04-14 |
-| TASK-0103 | Planned | 2026-04-14 |
-| TASK-0104 | Planned | 2026-04-14 |
+| TASK-0101 | Completed | 2026-04-14 |
+| TASK-0102 | Completed | 2026-04-14 |
+| TASK-0103 | Completed | 2026-04-14 |
+| TASK-0104 | Completed | 2026-04-14 |
 
 ### Phase 2
 
@@ -193,6 +195,9 @@ Nota baseline: il dato sopra riflette il momento iniziale del tracker; l'aggiorn
 - **EVID-009**: copertura test Sprint 0 aggiornata in `tests/unit/extraction-model-policy.test.ts` e validata con suite integration route.
 - **EVID-010**: specifica API allineata al resilience contract Sprint 0 in `docs/specifications/api-specifications.md`.
 - **EVID-011**: runbook rollout aggiornato con closure Sprint 0 in `docs/review/extraction-model-policy-rollout-runbook-2026-04-12.md`.
+- **EVID-012**: artifact stub anticipato e riuso dello stesso artifact tra tentativi implementati in `src/app/api/tools/extraction/generate/route.ts` e `src/lib/llm/streaming.ts`.
+- **EVID-013**: idempotency key route-level con replay artifact completato implementata in `src/app/api/tools/extraction/generate/route.ts`.
+- **EVID-014**: copertura test Sprint 1 aggiornata in `tests/integration/extraction-route.test.ts`, `tests/unit/streaming.test.ts` e `tests/integration/db-mock.ts`.
 
 ## 6A. Pre-Production Validation Gate
 
@@ -216,8 +221,8 @@ Decisione corrente: NO-GO per produzione per KPI runtime non ancora consolidati;
 ## 7. Immediate Next Actions (operativo)
 
 1. Sprint 0 chiuso: mantenere invarianti outcome/reason e mapping terminale come baseline bloccante per le fasi successive.
-2. Avviare Sprint 1 partendo da `TASK-0102` (idempotency key) e `TASK-0101` (artifact stub), poi consolidare `TASK-0103` e `TASK-0104`.
-3. Preparare test gate Sprint 1 (idempotenza retry + guard order + single usage accounting).
+2. Sprint 1 chiuso: mantenere idempotenza route-level e single artifact chain come baseline per i timeout/atomic completion di Sprint 2.
+3. Avviare Sprint 2 su `TASK-0201`, `TASK-0202`, `TASK-0203`, poi agganciare `TASK-0301..0303`.
 4. Definire finestra KPI canary per Sprint 2/Sprint 3 con soglie e trigger rollback allineati al runbook.
 
 ## 8. Sprint Operations Board
@@ -234,10 +239,10 @@ Decisione corrente: NO-GO per produzione per KPI runtime non ancora consolidati;
 
 | Task | Owner | Status | Target | Exit gate |
 | --- | --- | --- | --- | --- |
-| TASK-0102 | Platform Engineering | Planned | 2026-04-17 | idempotency key senza duplicati su retry |
-| TASK-0101 | Platform Engineering | Planned | 2026-04-17 | artifact stub persistito su request valida |
-| TASK-0103 | Platform Engineering | Planned | 2026-04-18 | ordine guard deterministico senza duplicazioni |
-| TASK-0104 | Platform Engineering | Planned | 2026-04-18 | usage increment singolo per request |
+| TASK-0102 | Platform Engineering | Completed | 2026-04-14 | idempotency key senza duplicati su retry |
+| TASK-0101 | Platform Engineering | Completed | 2026-04-14 | artifact stub persistito su request valida |
+| TASK-0103 | Platform Engineering | Completed | 2026-04-14 | ordine guard deterministico senza duplicazioni |
+| TASK-0104 | Platform Engineering | Completed | 2026-04-14 | usage increment singolo per request |
 
 ### Sprint 2 - Timeout and Atomic Completion
 

@@ -15,6 +15,8 @@ interface StreamParams {
   input: unknown;
   workflowType?: string | null;
   promptOverride?: string;
+  artifactId?: string;
+  persistFailure?: boolean;
 }
 
 function estimateUtfAwareTokens(text: string): number {
@@ -52,18 +54,35 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
   const outputFormat = extractOutputFormat(input);
   const modelPricing = await getModelPricingForRuntime(model);
   const providerAbortController = new AbortController();
+  const persistFailure = params.persistFailure ?? true;
 
-  const artifact = await db.artifact.create({
-    data: {
-      userId,
-      projectId,
-      type,
-      workflowType,
-      model,
-      input: input as object,
-      status: 'generating',
-    },
-  });
+  const artifact = params.artifactId
+    ? { id: params.artifactId }
+    : await db.artifact.create({
+      data: {
+        userId,
+        projectId,
+        type,
+        workflowType,
+        model,
+        input: input as object,
+        status: 'generating',
+      },
+    });
+
+  if (params.artifactId) {
+    await db.artifact.update({
+      where: { id: params.artifactId },
+      data: {
+        workflowType,
+        model,
+        input: input as object,
+        content: '',
+        status: 'generating',
+        failureReason: null,
+      },
+    });
+  }
 
   let cancellationReason: 'timeout' | 'client_disconnect' | 'other' | null = null;
 
@@ -277,7 +296,7 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
               status: 'success' as QuotaEventStatus,
             },
           });
-        } else {
+        } else if (persistFailure) {
           await db.artifact.update({
             where: { id: artifact.id },
             data: { status: 'failed' },
@@ -291,6 +310,26 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
               model,
               artifactType: type,
               status: 'error' as QuotaEventStatus,
+            },
+          });
+
+          if (!providerAbortController.signal.aborted) {
+            controller.enqueue(encode({
+              type: 'error',
+              code: 'INTERNAL_ERROR',
+              message,
+              workflowType,
+              format: outputFormat,
+            }));
+          }
+        } else {
+          await db.artifact.update({
+            where: { id: artifact.id },
+            data: {
+              content: accumulated,
+              streamedAt: accumulated ? new Date() : undefined,
+              status: 'generating',
+              failureReason: null,
             },
           });
 
