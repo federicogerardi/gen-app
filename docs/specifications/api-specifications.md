@@ -1,11 +1,11 @@
 # API Specifications: LLM Artifact Generation Hub
 
-**Version**: 1.3  
+**Version**: 1.4  
 **Status**: IMPLEMENTED SUBSET + OPEN ITEMS  
 **Base URL**: `https://<your-vercel-domain>/api` (production from `main`; development/preview from PR flow on `dev`)  
 **Authentication**: NextAuth session cookie (browser). Bearer tokens solo per integrazioni server-to-server esplicite.  
 **Content-Type**: `application/json` (default), `multipart/form-data` per upload documenti funnel  
-**Last Updated**: 2026-04-13
+**Last Updated**: 2026-04-14
 
 ---
 
@@ -237,6 +237,7 @@ Policy runtime (as-is):
 - Il campo `model` nel payload e accettato per compatibilita/audit ma non decide il modello runtime di extraction.
 - La route applica chain deterministica: `anthropic/claude-3.7-sonnet` -> `openai/gpt-4.1` -> `openai/o3`.
 - Ogni tentativo viene validato server-side con parse JSON + schema (`fields`, `missingFields`, `notes`) + coerenza con `fieldMap`.
+- La coerenza e valutata sui soli campi dichiarati nel `fieldMap`: eventuali chiavi extra restituite dal modello non invalidano automaticamente il tentativo se i campi richiesti risultano coerenti (supporto output parziali).
 - Il fallback si interrompe al primo tentativo valido oppure quando il costo cumulato supera `USD 0.08`.
 - In caso di esaurimento chain/policy budget: `{ error: { code: "EXTRACTION_FAILED", message } }` con HTTP 503.
 
@@ -273,7 +274,15 @@ Il route handler accetta 3 shape compatibili:
     "business_type": "B2B",
     "sector_niche": "Servizi B2B",
     "core_problem": "Lead poco qualificati",
-    "funnel_primary_goal": "Aumentare call qualificate"
+    "funnel_primary_goal": "Aumentare call qualificate",
+    "testimonials_sources": [
+      {
+        "quote": "Abbiamo aumentato i lead qualificati del 45% in 60 giorni.",
+        "source": "Marta B., COO",
+        "achieved_result": "Pipeline commerciale piu prevedibile",
+        "measurable_results": "+45% lead qualificati, -28% CPL"
+      }
+    ]
   },
   "notes": "Vincoli brand..."
 }
@@ -281,6 +290,9 @@ Il route handler accetta 3 shape compatibili:
 
 Nota compatibilita:
 - I payload legacy V1/V2 restano supportati per backward compatibility.
+
+Nota mapping proof context (V3):
+- Quando `extractedFields.testimonials_sources` e presente, il mapping server-side verso il briefing funnel popola `proof_context.testimonials_sources` mantenendo i campi `quote`, `source`, `timestamp` e, quando disponibili, `achieved_result`, `measurable_results`.
 
 **Step-specific constraints**:
 - `step=optin`: nessun contesto precedente richiesto
