@@ -4,9 +4,12 @@ import {
   EXTRACTION_FIRST_TOKEN_TIMEOUT_MS,
   EXTRACTION_JSON_PARSE_TIMEOUT_MS,
   EXTRACTION_JSON_START_TIMEOUT_MS,
+  classifyExtractionCompletionOutcome,
   EXTRACTION_POLICY_VERSION,
   EXTRACTION_TOKEN_IDLE_TIMEOUT_MS,
   getExtractionAttemptPlan,
+  mapExtractionTerminalState,
+  resolveExtractionCompletionReason,
   resolveExtractionRuntimeModel,
   shouldEscalateExtractionAttempt,
 } from '@/lib/llm/extraction-model-policy';
@@ -574,13 +577,36 @@ function replaySseChunks(chunks: Uint8Array[]): ReadableStream {
 }
 
 export async function POST(request: Request) {
+  const requestId = request.headers.get('x-request-id') ?? crypto.randomUUID();
+  const baseLog = getRequestLogger({
+    requestId,
+    route: '/api/tools/extraction/generate',
+    method: 'POST',
+  });
+
   const authResult = await requireAuthenticatedUser();
   if (!authResult.ok) {
+    const completionOutcome = 'failed_hard' as const;
+    const completionReason = resolveExtractionCompletionReason({
+      outcome: completionOutcome,
+      hardFailReason: 'unauthorized',
+    });
+    const terminalState = mapExtractionTerminalState({ outcome: completionOutcome, reason: completionReason });
+    baseLog.warn(
+      {
+        workflowType: 'extraction',
+        completionOutcome,
+        completionReason,
+        artifactStatus: terminalState.artifactStatus,
+        httpStatus: terminalState.httpStatus,
+        policyVersion: EXTRACTION_POLICY_VERSION,
+      },
+      'Extraction request rejected before processing',
+    );
     return authResult.response;
   }
 
   const userId = authResult.data.userId;
-  const requestId = request.headers.get('x-request-id') ?? crypto.randomUUID();
   const log = getRequestLogger({
     requestId,
     route: '/api/tools/extraction/generate',
@@ -590,6 +616,23 @@ export async function POST(request: Request) {
 
   const parsed = await parseAndValidateRequest(request, extractionRequestSchema);
   if (!parsed.ok) {
+    const completionOutcome = 'failed_hard' as const;
+    const completionReason = resolveExtractionCompletionReason({
+      outcome: completionOutcome,
+      hardFailReason: 'validation_error',
+    });
+    const terminalState = mapExtractionTerminalState({ outcome: completionOutcome, reason: completionReason });
+    log.warn(
+      {
+        workflowType: 'extraction',
+        completionOutcome,
+        completionReason,
+        artifactStatus: terminalState.artifactStatus,
+        httpStatus: terminalState.httpStatus,
+        policyVersion: EXTRACTION_POLICY_VERSION,
+      },
+      'Extraction request rejected: invalid payload',
+    );
     return parsed.response;
   }
 
@@ -615,6 +658,24 @@ export async function POST(request: Request) {
 
   const ownershipResult = await requireOwnedProject(payload.projectId, userId);
   if (!ownershipResult.ok) {
+    const completionOutcome = 'failed_hard' as const;
+    const completionReason = resolveExtractionCompletionReason({
+      outcome: completionOutcome,
+      hardFailReason: ownershipResult.response.status === 404 ? 'forbidden' : 'forbidden',
+    });
+    const terminalState = mapExtractionTerminalState({ outcome: completionOutcome, reason: completionReason });
+    log.warn(
+      {
+        workflowType: 'extraction',
+        projectId: payload.projectId,
+        completionOutcome,
+        completionReason,
+        artifactStatus: terminalState.artifactStatus,
+        httpStatus: ownershipResult.response.status,
+        policyVersion: EXTRACTION_POLICY_VERSION,
+      },
+      'Extraction request rejected: project not accessible',
+    );
     return ownershipResult.response;
   }
 
@@ -841,6 +902,19 @@ export async function POST(request: Request) {
       );
 
       if (success) {
+        const completionOutcome = classifyExtractionCompletionOutcome({
+          success,
+          acceptanceDecision,
+        });
+        const completionReason = resolveExtractionCompletionReason({
+          outcome: completionOutcome,
+          acceptanceReason,
+        });
+        const terminalState = mapExtractionTerminalState({
+          outcome: completionOutcome,
+          reason: completionReason,
+        });
+
         log.info(
           {
             workflowType: 'extraction',
@@ -849,6 +923,10 @@ export async function POST(request: Request) {
             responseMode: extractionResponseMode,
             duration_ms: Date.now() - startedAt,
             requestId,
+            completionOutcome,
+            completionReason,
+            artifactStatus: terminalState.artifactStatus,
+            httpStatus: terminalState.httpStatus,
           },
           'Tool generation stream initialized',
         );
@@ -904,6 +982,10 @@ export async function POST(request: Request) {
       fallbackReason: lastFallbackReason,
       responseMode: extractionResponseMode,
       policyVersion: EXTRACTION_POLICY_VERSION,
+      completionOutcome: 'failed_hard',
+      completionReason: 'no_signal_after_chain_exhausted',
+      artifactStatus: 'failed',
+      httpStatus: 503,
     },
     'Extraction fallback chain exhausted',
   );

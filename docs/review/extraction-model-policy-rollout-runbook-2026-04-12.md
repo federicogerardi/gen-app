@@ -2,7 +2,7 @@
 goal: Rollout and rollback runbook for extraction runtime model policy
 version: 1.0
 date_created: 2026-04-12
-last_updated: 2026-04-12
+last_updated: 2026-04-14
 owner: Platform AI / Tooling
 status: Active
 tags: [runbook, extraction, llm, rollout, rollback, observability]
@@ -116,6 +116,27 @@ No-go criteria:
 - mancanza sistematica dei campi diagnostici richiesti.
 - aumento `EXTRACTION_FAILED` > 20% rispetto baseline.
 - regressioni semantiche sui codici errore o su guard route (auth/usage/ownership).
+
+## Sprint 0 Closure - Resilience Contract (2026-04-14)
+
+Obiettivo chiuso:
+- formalizzare outcome matrix unica e reason taxonomy condivisa.
+- allineare mapping outcome -> HTTP -> artifact status per il terminal path route extraction.
+
+Evidence di implementazione:
+- `src/lib/llm/extraction-model-policy.ts`: outcome classifier + reason resolver + terminal mapping.
+- `src/app/api/tools/extraction/generate/route.ts`: emissione campi terminali (`completionOutcome`, `completionReason`, `artifactStatus`, `httpStatus`) e classificazione hard-fail pre-chain.
+- `tests/unit/extraction-model-policy.test.ts`: copertura unit su classifier/reason/mapping.
+- `tests/integration/extraction-route.test.ts`: regressione route extraction verde post-integrazione.
+
+Checklist go/no-go per chiusura Sprint 0:
+1. classifier outcome coperto da test unit.
+2. mapping terminale HTTP/artifact status documentato e allineato alla route.
+3. reason taxonomy condivisa in spec/runbook/tracker.
+4. nessuna regressione su contratto errori API `{ error: { code, message } }`.
+
+Esito Sprint 0:
+- GO per passaggio operativo a Sprint 1.
 
 ## Metriche operative
 

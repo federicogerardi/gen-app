@@ -1,4 +1,5 @@
 import {
+  classifyExtractionCompletionOutcome,
   EXTRACTION_DEFAULT_ATTEMPT_TIMEOUTS_MS,
   EXTRACTION_FIRST_TOKEN_TIMEOUT_MS,
   EXTRACTION_FALLBACK_MODELS,
@@ -10,6 +11,8 @@ import {
   EXTRACTION_TIMEOUT_MS,
   getExtractionAttemptPlan,
   getExtractionModelChain,
+  mapExtractionTerminalState,
+  resolveExtractionCompletionReason,
   resolveExtractionRuntimeModel,
   shouldEscalateExtractionAttempt,
 } from '@/lib/llm/extraction-model-policy';
@@ -111,5 +114,60 @@ describe('extraction-model-policy', () => {
     );
 
     expect(decision).toEqual({ escalate: false, reason: 'max_attempts_reached' });
+  });
+
+  it('classifies hard and partial completion outcomes deterministically', () => {
+    expect(classifyExtractionCompletionOutcome({ success: true, acceptanceDecision: 'hard_accept' })).toBe('completed_full');
+    expect(classifyExtractionCompletionOutcome({ success: true, acceptanceDecision: 'soft_accept' })).toBe('completed_partial');
+    expect(classifyExtractionCompletionOutcome({ success: false, acceptanceDecision: 'reject' })).toBe('failed_hard');
+  });
+
+  it('resolves completion reason taxonomy for partial and hard-fail outcomes', () => {
+    expect(resolveExtractionCompletionReason({
+      outcome: 'completed_partial',
+      acceptanceReason: 'critical_coverage_threshold_met',
+    })).toBe('critical_coverage_threshold_met');
+
+    expect(resolveExtractionCompletionReason({
+      outcome: 'completed_partial',
+      acceptanceReason: 'something-else',
+    })).toBe('partial_useful_output');
+
+    expect(resolveExtractionCompletionReason({
+      outcome: 'failed_hard',
+      hardFailReason: 'validation_error',
+    })).toBe('validation_error');
+  });
+
+  it('maps terminal states to stable HTTP and artifact statuses', () => {
+    expect(mapExtractionTerminalState({
+      outcome: 'completed_full',
+      reason: 'known_fields_present',
+    })).toEqual({
+      outcome: 'completed_full',
+      reason: 'known_fields_present',
+      httpStatus: 200,
+      artifactStatus: 'completed',
+    });
+
+    expect(mapExtractionTerminalState({
+      outcome: 'failed_hard',
+      reason: 'unauthorized',
+    })).toEqual({
+      outcome: 'failed_hard',
+      reason: 'unauthorized',
+      httpStatus: 401,
+      artifactStatus: 'failed',
+    });
+
+    expect(mapExtractionTerminalState({
+      outcome: 'failed_hard',
+      reason: 'no_signal_after_chain_exhausted',
+    })).toEqual({
+      outcome: 'failed_hard',
+      reason: 'no_signal_after_chain_exhausted',
+      httpStatus: 503,
+      artifactStatus: 'failed',
+    });
   });
 });

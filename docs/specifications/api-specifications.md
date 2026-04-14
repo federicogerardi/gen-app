@@ -282,6 +282,32 @@ Policy runtime (as-is):
 - Il fallback si interrompe al primo tentativo valido oppure a esaurimento della chain di tentativi.
 - In caso di esaurimento chain: `{ error: { code: "EXTRACTION_FAILED", message } }` con HTTP 503.
 
+### Extraction Resilience Contract (Sprint 0)
+
+Matrice outcome canonica:
+- `completed_full`: tentativo valido con `hard_accept`.
+- `completed_partial`: tentativo valido con `soft_accept` (segnale utile ma parziale/degradato).
+- `failed_hard`: richiesta non recuperabile nel perimetro route (auth/ownership/validation) oppure chain exhausted senza segnale utile.
+
+Reason taxonomy canonica (route/policy/UI):
+- successo pieno: `known_fields_present`
+- successo parziale: `critical_coverage_threshold_met`, `no_critical_fields_defined`, `no_known_keys_but_structured_signal`, `partial_useful_output`
+- hard-fail: `unauthorized`, `forbidden`, `validation_error`, `no_signal_after_chain_exhausted`
+
+Mapping terminale centralizzato:
+- `completed_full` -> HTTP 200 -> artifact status `completed`
+- `completed_partial` -> HTTP 200 -> artifact status `completed`
+- `failed_hard` + `unauthorized` -> HTTP 401 -> artifact status `failed`
+- `failed_hard` + `forbidden` -> HTTP 403 -> artifact status `failed`
+- `failed_hard` + `validation_error` -> HTTP 400 -> artifact status `failed`
+- `failed_hard` + `no_signal_after_chain_exhausted` -> HTTP 503 (`EXTRACTION_FAILED`) -> artifact status `failed`
+
+Campi diagnostici terminali (log route extraction):
+- `completionOutcome`
+- `completionReason`
+- `artifactStatus`
+- `httpStatus`
+
 **Response**:
 - Stream SSE con eventi standard (`start`, `token`, `complete`, `error`)
 - Workflow `extraction`
