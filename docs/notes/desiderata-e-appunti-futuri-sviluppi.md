@@ -87,3 +87,23 @@ Usare questo spazio quando un input e utile per orientare le prossime decisioni,
 - Data nota: 2026-04-13.
 - Owner proposto: Platform + LLM/Tooling + Product team.
 - Nota priorita: alta importanza, da portare a pianificazione attiva il prima possibile.
+
+### Selezione modello LLM per singolo step del funnel con default e fallback
+
+- Contesto: gli step generativi del funnel (es. optin, quiz, vsl) possono avere esigenze diverse di qualita, costo e latenza, ma oggi la configurazione modello non e necessariamente differenziata per step.
+- Ipotesi: permettere all'utente di scegliere il modello LLM per ciascuno step, mantenendo default e fallback configurabili nei setting del tool per garantire continuita operativa.
+- Impatto atteso: maggiore controllo qualitativo per step, ottimizzazione costo/performance, riduzione failure percepite grazie a fallback automatico.
+- Dipendenze o vincoli noti: matrice compatibilita modelli per capability richieste, policy di fallback deterministica, validazione permessi/piano quota, tracciamento modello effettivamente usato nei metadati artifact.
+- Segnali per promuovere a planning: definizione UX/settings per mapping step->modello, strategia fallback condivisa con team LLM, test di regressione su orchestrazione/costi e coerenza reporting.
+- Data nota: 2026-04-14.
+- Owner proposto: LLM/Tooling + Product + Platform team.
+
+### Artefatti come input nei generatori (artifact-to-artifact chaining)
+
+- Contesto: i generatori accettano oggi file upload come sorgente, ma l'utente spesso dispone gia di un artefatto equivalente creato in precedenza che non dovrebbe essere necessario ricaricare.
+- Ipotesi: affiancare al file upload la possibilita di selezionare un artefatto esistente come input del generatore; in prospettiva, costruire a livello infrastrutturale un contratto di input unificato che consenta a qualsiasi tool di ricevere l'output tipizzato di un altro tool.
+- Impatto atteso: eliminazione di upload ridondanti, riutilizzo del lavoro gia fatto, abilitazione di flussi concatenati (es. estrazione -> optin -> quiz -> vsl) senza attrito, maggiore coerenza dei dati in ingresso.
+- Dipendenze o vincoli noti: ownership check sull'artefatto selezionato, tipizzazione compatibile tra output sorgente e input destinazione, versionamento artefatto, invalidazione/refresh se l'artefatto sorgente viene aggiornato, impatto sui form UI esistenti e sull'orchestratore.
+- Segnali per promuovere a planning: definizione del contratto input unificato (file vs artifact ref), mappa compatibilita tipologie output->input per ogni tool attivo, piano incrementale di adozione senza breaking change sui form esistenti.
+- Data nota: 2026-04-14.
+- Owner proposto: Platform + LLM/Tooling + Frontend + Product team.
