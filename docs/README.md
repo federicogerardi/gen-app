@@ -28,6 +28,7 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 - [feature-prisma-deploy-migrations-tracker-1.md](implementation/feature-prisma-deploy-migrations-tracker-1.md): Tracker del deploy migrations track — tutti i task completati.
 - [funnel-extraction-model-policy-plan.md](implementation/funnel-extraction-model-policy-plan.md): Piano esecutivo policy runtime extraction con fallback deterministico (fasi 1-4 completate).
 - [feature-funnel-extraction-model-policy-tracker-1.md](implementation/feature-funnel-extraction-model-policy-tracker-1.md): Tracker operativo della delivery extraction policy.
+- [gui-ux-low-impact-microtasks-sprint-plan-2026-04-14.md](implementation/gui-ux-low-impact-microtasks-sprint-plan-2026-04-14.md): Backlog microtask GUI/UX low-impact per sprint breve (estrazione 2026-04-14).
 
 ### notes/
 - [desiderata-e-appunti-futuri-sviluppi.md](notes/desiderata-e-appunti-futuri-sviluppi.md): Raccolta di idee e appunti preliminari non ancora in planning o refactoring.
@@ -62,6 +63,8 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 - [ux-strategy.md](ux/ux-strategy.md): Strategia UX e principi guida.
 
 ### Aggiornamenti recenti
+- 2026-04-14: aggiornate le specifiche funnel/API per il passaggio di testimonianze strutturate (`quote`, `source`, `achieved_result`, `measurable_results`) dal payload extraction al contesto generazione.
+- 2026-04-14: introdotto piano operativo microtask GUI/UX low-impact in `docs/implementation/gui-ux-low-impact-microtasks-sprint-plan-2026-04-14.md` e allineato `docs/implement-index.md`.
 - 2026-04-13: introdotta specifica canonica per il naming dei file documentazione in `docs/specifications/documentation-filename-naming-spec.md`.
 - 2026-04-13: riallineata la linea alta docs (`blueprint`, `progetto-overview`, `api-specifications`) allo stato as-is post PR-28 e introdotti guardrail permanenti di rigore documentale.
 - 2026-04-13: verificata e documentata la consistenza tra piano `magic-copilot` (C1..B2) e interventi PR #28 con matrice di tracciabilita nei report review/changelog.

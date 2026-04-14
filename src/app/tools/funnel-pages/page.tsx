@@ -2,7 +2,7 @@
 
 import { useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { PageShell } from '@/components/layout/PageShell';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -74,10 +74,10 @@ const TONE_HINTS: Record<(typeof TONES)[number], string> = {
 };
 
 const STEP_STATUS_BADGE_CLASS: Record<FunnelStepState['status'], string> = {
-  idle: 'border-slate-300 bg-slate-100 text-slate-700',
-  running: 'border-amber-300 bg-amber-100 text-amber-900',
-  done: 'border-emerald-300 bg-emerald-100 text-emerald-900',
-  error: 'border-rose-300 bg-rose-100 text-rose-900',
+  idle: 'border-slate-400 bg-slate-200 text-slate-950',
+  running: 'border-amber-400 bg-amber-200 text-amber-950',
+  done: 'border-emerald-400 bg-emerald-200 text-emerald-950',
+  error: 'border-rose-400 bg-rose-200 text-rose-950',
 };
 
 const STEP_STATUS_LABEL: Record<FunnelStepState['status'], string> = {
@@ -203,11 +203,16 @@ async function generateStream(request: {
 
 export default function FunnelPagesToolPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const toneFromQuery = searchParams.get('tone');
+  const initialTone = TONES.includes((toneFromQuery ?? '') as (typeof TONES)[number])
+    ? (toneFromQuery as (typeof TONES)[number])
+    : 'professional';
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [projectId, setProjectId] = useState('');
+  const [projectId, setProjectId] = useState(() => searchParams.get('projectId') ?? '');
   const [manualModel, setManualModel] = useState('');
-  const [tone, setTone] = useState<(typeof TONES)[number]>('professional');
-  const [notes, setNotes] = useState('');
+  const [tone, setTone] = useState<(typeof TONES)[number]>(initialTone);
+  const [notes, setNotes] = useState(() => searchParams.get('notes') ?? '');
   const [phase, setPhase] = useState<Phase>('idle');
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const [extractedFields, setExtractedFields] = useState<Record<string, unknown> | null>(null);
@@ -215,6 +220,7 @@ export default function FunnelPagesToolPage() {
   const [extractionError, setExtractionError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
   const [steps, setSteps] = useState<FunnelStepState[]>(initialSteps);
+  const sourceArtifactId = searchParams.get('sourceArtifactId');
 
   const { data: projectsData } = useQuery({
     queryKey: ['projects'],
@@ -400,6 +406,9 @@ export default function FunnelPagesToolPage() {
           <div>
             <h1 className="app-title text-3xl font-semibold text-slate-900">Generatore Pagine del Funnel</h1>
             <p className="text-sm text-muted-foreground">Carica un documento di briefing e genera automaticamente optin, quiz e script VSL.</p>
+            {sourceArtifactId && (
+              <p className="mt-2 text-xs text-muted-foreground">Prefill applicato da storico artefatti (ID: {sourceArtifactId}).</p>
+            )}
           </div>
           <Button variant="outline" asChild>
             <Link href="/artifacts">Vai agli artefatti</Link>
@@ -479,7 +488,7 @@ export default function FunnelPagesToolPage() {
                         id="funnel-file-input"
                         type="file"
                         accept=".docx,.txt,.md,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown"
-                        className="block w-full cursor-pointer rounded-xl border border-black/10 bg-white/60 px-3 py-2 text-sm text-foreground file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1 file:text-xs file:font-medium"
+                        className="block w-full cursor-pointer rounded-xl border border-black/10 bg-white/60 px-3 py-2 text-sm text-foreground outline-none transition-colors file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1 file:text-xs file:font-medium focus-visible:border-blue-500/60 focus-visible:ring-3 focus-visible:ring-blue-500/25"
                         onChange={handleFileChange}
                         disabled={phase === 'uploading' || phase === 'extracting' || running || !projectId || !model}
                       />
@@ -491,13 +500,13 @@ export default function FunnelPagesToolPage() {
                     {uploadedFileName && <p className="rounded-xl bg-slate-100/80 px-3 py-2 text-xs text-slate-700">File selezionato: {uploadedFileName}</p>}
 
                     {(phase === 'uploading' || phase === 'extracting') && (
-                      <div className="rounded-xl border border-black/10 bg-white/60 p-4 text-center">
+                      <div className="rounded-xl border border-black/10 bg-white/60 p-4 text-center" role="status" aria-live="polite" aria-atomic="true">
                         <p className="text-sm font-medium">{phase === 'uploading' ? 'Caricamento documento...' : 'Estrazione campi in corso...'}</p>
                       </div>
                     )}
 
                     {(uploadError || extractionError) && (
-                      <p className="rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive" role="alert">
+                      <p className="rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive" role="alert" aria-live="assertive">
                         {uploadError ?? extractionError}
                       </p>
                     )}
@@ -594,7 +603,7 @@ export default function FunnelPagesToolPage() {
                         {step.status === 'running' ? stepDisplay.text : 'Output non ancora generato.'}
                       </p>
                     )}
-                    {step.error && <p className="text-sm text-destructive" role="alert">{step.error}</p>}
+                    {step.error && <p className="text-sm text-destructive" role="alert" aria-live="assertive">{step.error}</p>}
                     {step.artifactId && (
                       <Button variant="outline" size="sm" onClick={() => router.push(`/artifacts/${step.artifactId}`)}>
                         Apri artefatto

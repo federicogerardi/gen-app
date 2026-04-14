@@ -182,6 +182,56 @@ Proposta assegnazione iniziale:
 - Nessun refactor cross-layer fuori dal perimetro GUI/UX dichiarato.
 - Se un task supera effort M, split immediato in due microtask e rinvio dello scope eccedente.
 
+## Contributo execution-ready (DoR, DoD e tracker)
+
+### Definition of Ready (obbligatoria per aprire il task)
+
+Ogni microtask entra in sviluppo solo se ha:
+
+- owner assegnato
+- pagina/componente target esplicitato
+- stato iniziale misurabile (baseline rapida)
+- criterio di accettazione verificabile in UI
+- test minimi identificati (unit/integration/smoke)
+- conferma esplicita "no schema change" e "no nuova route" (salvo eccezioni approvate)
+
+### Definition of Done operativa (uniforme per tutti i microtask)
+
+- comportamento UI validato su desktop + mobile
+- keyboard flow verificato dove presenti controlli interattivi
+- copy allineata al lessico project-first
+- test toccati in verde + nessuna regressione nei flussi auth/ownership/quota
+- nota di changelog sprint aggiornata con outcome sintetico
+
+### Tracker giornaliero suggerito (standup-ready)
+
+| ID | Owner | Stato | Inizio | Fine target | Rischio | Blocchi | Evidenza |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| MT-UX-05 | Frontend-1 | DONE | D1 | D1 | Basso | Nessuno | Implementato in UI top-level |
+| MT-UX-08 | Frontend-1 | DONE | D1 | D1 | Basso | Nessuno | Ordinamento recency esplicito + badge invariati, coperti da `tests/unit/ArtifactsClientPage.test.tsx` |
+| MT-UX-01 | Frontend-2 | DONE | D2 | D2 | Basso | Nessuno | CTA Rigenera variante + prefill query |
+| MT-UX-03 | Frontend-1 | DONE | D3 | D3 | Basso | Nessuno | Widget dashboard ultimi artefatti |
+| MT-UX-06 | QA/UX | DONE | D5 | D5 | Basso | Nessuno | Verifica manuale locale completata |
+| MT-UX-02 | Frontend-2 | DONE | D2 | D4 | Basso | Nessuno | CTA Usa come base nello storico, coperta da `tests/unit/ArtifactsClientPage.test.tsx` |
+| MT-UX-07 | QA/UX | DONE | D5 | D5 | Basso | Nessuno | Verifica manuale locale completata |
+| MT-UX-04 | FE+Platform | DONE | D4 | D5 | Medio | Nessuno | Sparkline personale 7d/30d con legenda e localizzazione italiana in `src/app/dashboard/PersonalTrendCard.tsx` + test unit `tests/unit/PersonalTrendCard.test.tsx`, suite test verde e verifica GUI locale completata |
+
+Legenda stato:
+
+- TODO: non iniziato
+- WIP: in lavorazione
+- BLOCKED: bloccato da dipendenza
+- REVIEW: in validazione
+- DONE: chiuso
+
+### Sprint cut policy (decisione rapida)
+
+Usare questa regola per evitare slittamenti:
+
+1. Se entro fine D3 Pacchetto A non e >= 60% completato, congelare Pacchetto B e C.
+2. Se MT-UX-04 supera 1 giorno effettivo, de-scope immediato a release successiva.
+3. Qualsiasi blocker su ownership/quota sospende il task e richiede fallback UX-only.
+
 ## Sequenziamento sprint raccomandato (5 giorni)
 
 1. Giorno 1: MT-UX-05, MT-UX-08 (allineamento copy/semantica e coerenza storico)
@@ -202,3 +252,211 @@ Proposta assegnazione iniziale:
 - coerenza UX project-first preservata
 - checklist accessibilita Sprint 2 chiusa sui punti dichiarati
 - test lint/typecheck e suite toccate in verde
+
+## Backlog issue-ready (copia/incolla GitHub)
+
+### Issue MT-UX-01 - Rigenera variante da dettaglio artefatto
+
+Titolo suggerito:
+
+- feat(ui): add rerun CTA with prefill from artifact detail
+
+Summary:
+
+- aggiungere CTA primaria "Rigenera variante" nel dettaglio artefatto
+- aprire tool coerente con prefill minimo da dati gia presenti
+- mantenere invariati i guardrail auth/ownership/quota
+
+Acceptance Criteria:
+
+- CTA visibile per tipologie supportate
+- redirect al tool corretto con campi precompilati essenziali
+- fallback disabilitato se mapping non disponibile
+
+Test Plan:
+
+- integration su routing e prefill params
+- smoke UI su dettaglio artefatto desktop/mobile
+
+Out of Scope:
+
+- nuovi endpoint
+- cambi schema DB
+
+### Issue MT-UX-02 - Usa come base nello storico artefatti
+
+Titolo suggerito:
+
+- feat(ui): add quick action use as base in artifacts history
+
+Summary:
+
+- aggiungere quick action "Usa come base" nelle card storico
+- riutilizzare mapping prefill di MT-UX-01
+
+Acceptance Criteria:
+
+- quick action disponibile su card supportate
+- comportamento coerente su mobile/desktop
+- stato disabled su tipologie non supportate
+
+Test Plan:
+
+- unit su rendering action condizionale
+- smoke su azione da lista storico
+
+Out of Scope:
+
+- modifica payload API
+
+### Issue MT-UX-03 - Widget ultimi artefatti in dashboard
+
+Titolo suggerito:
+
+- feat(ui): add latest artifacts widget on dashboard
+
+Summary:
+
+- introdurre blocco "Ultimi artefatti generati" in dashboard
+- mostrare titolo, tipo, stato, data, link dettaglio
+
+Acceptance Criteria:
+
+- widget popolato con N elementi recenti
+- stato empty gestito con copy chiara
+- nessun campo economico esposto
+
+Test Plan:
+
+- integration su rendering widget e stato empty
+- smoke dashboard responsive
+
+Out of Scope:
+
+- analytics avanzate
+
+### Issue MT-UX-04 - Sparkline uso personale 7d/30d
+
+Titolo suggerito:
+
+- feat(ui): add personal generation trend sparkline 7d 30d
+
+Summary:
+
+- aggiungere mini chart user-only con selettore 7d/30d
+- esporre solo serie personale (no metrica globale)
+
+Acceptance Criteria:
+
+- cambio periodo aggiorna la serie correttamente
+- visualizzazione leggibile in layout responsive
+- nessuna regressione performance percepita su dashboard
+
+Test Plan:
+
+- unit su trasformazione dataset
+- smoke su toggle periodo
+
+Out of Scope:
+
+- confronto globale vs utente
+
+### Issue MT-UX-05 - Allineamento microcopy project-first
+
+Titolo suggerito:
+
+- chore(ui): align project-first microcopy across top-level surfaces
+
+Summary:
+
+- allineare label/copy in navbar, dashboard, storico
+- rimuovere ambiguita terminologiche tra Progetti, Tools e Storico
+
+Acceptance Criteria:
+
+- lessico coerente su tutte le superfici in scope
+- nessun cambio di route o logica funzionale
+
+Test Plan:
+
+- snapshot/test UI minimi dove presenti
+- verifica manuale copy checklist
+
+Out of Scope:
+
+- redesign visuale completo
+
+### Issue MT-UX-06 - Hardening keyboard flow e focus visible
+
+Titolo suggerito:
+
+- fix(a11y): harden keyboard flow and focus visibility on core pages
+
+Summary:
+
+- chiudere gap checklist keyboard flow
+- correggere focus ring e tab order su pagine core
+
+Acceptance Criteria:
+
+- navigazione Tab/Shift+Tab consistente nei blocchi principali
+- focus visible sempre presente sui controlli interattivi
+
+Test Plan:
+
+- checklist a11y su viewport 320/375/768/1024/1280
+- smoke regressione sui percorsi core
+
+Out of Scope:
+
+- audit WCAG esteso fuori dalle pagine core
+
+### Issue MT-UX-07 - Hardening contrasto e annunci accessibili
+
+Titolo suggerito:
+
+- fix(a11y): improve contrast and status alert semantics in generation flows
+
+Summary:
+
+- rifinire contrasto badge/testi sensibili
+- verificare annunci stato/errore con semantics accessibile
+
+Acceptance Criteria:
+
+- contrasto conforme ai target interni AA nelle superfici toccate
+- messaggi errore/stato con role/aria-live coerenti dove necessario
+
+Test Plan:
+
+- checklist contrasto su componenti coinvolti
+- integration sui messaggi di errore principali
+
+Out of Scope:
+
+- revisione completa di tutto il design system
+
+### Issue MT-UX-08 - Badge stato semplificati nello storico
+
+Titolo suggerito:
+
+- chore(ui): simplify status badges and recency ordering in artifacts history
+
+Summary:
+
+- rendere piu rapida la scansione storico con badge semplificati
+- rafforzare ordinamento deterministico per recenza
+
+Acceptance Criteria:
+
+- badge piu leggibili senza cambiare stati canonici API
+- ordinamento coerente by recency in tutti i filtri supportati
+
+Test Plan:
+
+- unit su mapping badge e ordinamento
+- smoke con filtri principali
+
+Out of Scope:
+
+- nuovi stati backend

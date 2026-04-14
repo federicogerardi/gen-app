@@ -2,6 +2,13 @@
 
 _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 
+## Aggiornamento sessione (2026-04-14)
+
+- **Funnel upload-first: testimonianze strutturate propagate al contesto generazione**: completato il passaggio dati da `extractedFields.testimonials_sources` verso `proof_context.testimonials_sources` con campi estesi (`quote`, `source`, `achieved_result`, `measurable_results`).
+- **Field map extraction funnel esteso**: aggiunta voce `testimonials_sources` in `FUNNEL_EXTRACTION_FIELD_MAP` per rendere esplicita l'estrazione della social proof dal documento sorgente.
+- **Validazione recente**: test mirati `PASS` su mapping e route funnel (`tests/unit/funnel-mapping.test.ts`, `tests/unit/funnel-extraction-field-map.test.ts`, `tests/integration/funnel-pages-route.test.ts`).
+- **Sprint microtask GUI/UX low-impact**: completato il backlog MT-UX-01..08 con evidenze operative consolidate nel tracker dedicato, incluse validazioni test e verifica GUI locale.
+
 ## Aggiornamento sessione (2026-04-12)
 
 - **Verifica deploy/migrate completata**: confermato che `prisma migrate deploy` e incluso nella pipeline CI e nella catena di deploy applicativa (`db:migrate:deploy` -> `deploy:vercel` -> build).
@@ -46,6 +53,7 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
   - Completati schema unificato input, prompt/runtime parity, normalizzazione output, SSE metadata additive, consolidamento route/error mapping e hardening finale.
   - Standard output workflow tool allineato a `outputFormat: markdown` (Meta Ads + Funnel Pages).
   - Esteso il flow Funnel Pages a pipeline upload-first: upload documento inline -> extraction fields -> generazione sequenziale `optin -> quiz -> vsl`.
+  - Follow-up 2026-04-14: arricchita la propagazione delle testimonianze estratte verso il briefing funnel con campi risultato e metriche misurabili.
   - Validazione finale locale aggiornata: `npm run lint`, `npm run typecheck`, `npm run test` (30/30 suite), `npm run build` tutti `PASS`.
   - File: docs/archive/tooling-generation-refactor-plan.md
 
@@ -130,8 +138,9 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
   - Migliorare gestione quota/budget, drawer accessibile, audit timeline.
   - File: docs/ux/gui-refactor-plan.md
 
-- **Microtask GUI/UX low-impact (estrazione sprint 2026-04-14)**: `PROPOSTO`
-  - Backlog operativo di micro-interventi a basso impatto derivato da desiderata + pending UX correnti.
+- **Microtask GUI/UX low-impact (estrazione sprint 2026-04-14)**: `COMPLETATO`
+  - Backlog MT-UX-01..08 chiuso con implementazioni incrementali su dashboard, storico artefatti, rilancio con prefill e hardening accessibilita.
+  - Evidenza di validazione: suite test verde e verifica GUI locale registrate nel tracker sprint.
   - File: docs/implementation/gui-ux-low-impact-microtasks-sprint-plan-2026-04-14.md
 
 - **Projects-first navigation & IA**: `COMPLETATO (2026-04-13)`

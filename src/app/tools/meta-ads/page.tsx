@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { PageShell } from '@/components/layout/PageShell';
 import { useStreamGeneration } from '@/components/hooks/useStreamGeneration';
@@ -18,14 +18,21 @@ const TONES = ['professional', 'casual', 'formal', 'technical'] as const;
 
 export default function MetaAdsToolPage() {
   const router = useRouter();
-  const [projectId, setProjectId] = useState('');
+  const searchParams = useSearchParams();
+  const toneFromQuery = searchParams.get('tone');
+  const initialTone = TONES.includes((toneFromQuery ?? '') as (typeof TONES)[number])
+    ? (toneFromQuery as (typeof TONES)[number])
+    : 'professional';
+
+  const [projectId, setProjectId] = useState(() => searchParams.get('projectId') ?? '');
   const [manualModel, setManualModel] = useState('');
-  const [product, setProduct] = useState('');
-  const [audience, setAudience] = useState('');
-  const [offer, setOffer] = useState('');
-  const [objective, setObjective] = useState('lead generation');
-  const [tone, setTone] = useState<(typeof TONES)[number]>('professional');
-  const [angle, setAngle] = useState('');
+  const [product, setProduct] = useState(() => searchParams.get('product') ?? '');
+  const [audience, setAudience] = useState(() => searchParams.get('audience') ?? '');
+  const [offer, setOffer] = useState(() => searchParams.get('offer') ?? '');
+  const [objective, setObjective] = useState(() => searchParams.get('objective') ?? 'lead generation');
+  const [tone, setTone] = useState<(typeof TONES)[number]>(initialTone);
+  const [angle, setAngle] = useState(() => searchParams.get('angle') ?? '');
+  const sourceArtifactId = searchParams.get('sourceArtifactId');
 
   const { data: projectsData } = useQuery({
     queryKey: ['projects'],
@@ -77,6 +84,9 @@ export default function MetaAdsToolPage() {
           <div>
             <h1 className="app-title text-3xl font-semibold text-slate-900">Generatore Meta Ads</h1>
             <p className="text-sm text-muted-foreground">Tool dedicato per creare varianti ads Meta in modo modulare.</p>
+            {sourceArtifactId && (
+              <p className="mt-2 text-xs text-muted-foreground">Prefill applicato da storico artefatti (ID: {sourceArtifactId}).</p>
+            )}
           </div>
           <Button variant="outline" asChild>
             <Link href="/artifacts">Vai agli artefatti</Link>
@@ -170,11 +180,11 @@ export default function MetaAdsToolPage() {
                   <p className="text-sm leading-7 whitespace-pre-wrap break-words text-foreground">{outputDisplay.text}</p>
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-muted-foreground" role="status" aria-live="polite" aria-atomic="true">
                   {isStreaming ? outputDisplay.text : 'L\'output appare qui dopo l\'avvio della generazione.'}
                 </p>
               )}
-              {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
+              {error && <p className="text-sm text-destructive" role="alert" aria-live="assertive">{error}</p>}
               {artifactId && !isStreaming && (
                 <Button variant="outline" onClick={() => router.push(`/artifacts/${artifactId}`)}>
                   Apri artefatto completo
