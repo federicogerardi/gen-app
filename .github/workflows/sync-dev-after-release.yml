@@ -1,0 +1,22 @@
+name: Sync dev after release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  sync-dev:
+    name: Reset dev to main
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Reset dev to main
+        run: |
+          git checkout dev
+          git reset --hard origin/main
+          git push --force-with-lease origin dev
