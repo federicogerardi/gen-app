@@ -1,5 +1,6 @@
 import {
   EXTRACTION_SECTION_KEYS,
+  FUNNEL_EXTRACTION_FIELD_MAP,
   normalizeExtractedFields,
 } from '@/lib/tool-prompts/funnel-extraction-field-map';
 
@@ -9,6 +10,16 @@ describe('EXTRACTION_SECTION_KEYS', () => {
     expect(EXTRACTION_SECTION_KEYS).toContain('offer_context');
     expect(EXTRACTION_SECTION_KEYS).toContain('assumptions_and_constraints');
     expect(EXTRACTION_SECTION_KEYS).toHaveLength(10);
+  });
+});
+
+describe('FUNNEL_EXTRACTION_FIELD_MAP', () => {
+  it('includes structured testimonial extraction field', () => {
+    expect(FUNNEL_EXTRACTION_FIELD_MAP.testimonials_sources).toEqual(
+      expect.objectContaining({
+        type: 'array',
+      }),
+    );
   });
 });
 

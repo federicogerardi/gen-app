@@ -105,6 +105,23 @@ export function asLeadMagnetsByCluster(value: unknown) {
     .filter((item) => item.cluster_name !== 'Non specificato' || item.title !== 'Non specificato');
 }
 
+export function asTestimonialSources(value: unknown) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .filter((item): item is Record<string, unknown> => typeof item === 'object' && item !== null)
+    .map((item) => ({
+      quote: asNonEmptyString(item.quote ?? item.testo ?? item.text),
+      source: asNonEmptyString(item.source ?? item.name_role ?? item.testimonial_name_role),
+      timestamp: asNonEmptyString(item.timestamp, ''),
+      achieved_result: asNonEmptyString(item.achieved_result ?? item.result ?? item.specific_result, ''),
+      measurable_results: asNonEmptyString(item.measurable_results ?? item.numbers ?? item.metrics, ''),
+    }))
+    .filter((item) => item.quote !== 'Non specificato' || item.source !== 'Non specificato');
+}
+
 export function mapExtractedFieldsToBriefing(payload: FunnelPagesRequestV3): FunnelPagesRequestV2['briefing'] {
   const extracted = normalizeExtractedFields(payload.extractedFields);
   const leadMagnetSingle =
@@ -174,7 +191,7 @@ export function mapExtractedFieldsToBriefing(payload: FunnelPagesRequestV3): Fun
     },
     proof_context: {
       case_studies: [],
-      testimonials_sources: [],
+      testimonials_sources: asTestimonialSources(extracted.testimonials_sources),
       authority_assets: asNonEmptyString(extracted.authority_assets, ''),
       visual_proof_assets: [],
     },

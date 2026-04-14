@@ -178,6 +178,8 @@ const testimonialSourceSchema = z.object({
   quote: z.string().min(1),
   source: z.string().min(1),
   timestamp: z.string().optional(),
+  achieved_result: z.string().optional(),
+  measurable_results: z.string().optional(),
 });
 
 const visualProofAssetSchema = z.object({
