@@ -1,6 +1,6 @@
 ---
 goal: Operational tracker for extraction chain artifact-first resilience rollout
-version: 1.6
+version: 1.7
 date_created: 2026-04-14
 last_updated: 2026-04-14
 owner: Platform Engineering
@@ -130,6 +130,11 @@ Nota baseline: il dato sopra riflette il momento iniziale del tracker; l'aggiorn
 - 2026-04-14: `TASK-0401` e `TASK-0403` aggiornati a Completed; backlog aperto su `TASK-0402` (metriche aggregate).
 - 2026-04-14: avvio operativo `TASK-0402` con definizione query baseline e piano raccolta metriche su timeout distribution, partial rate e fallback depth.
 - 2026-04-14: `TASK-0402` aggiornato a Completed con query/runbook operative allineate e evidenze registrate.
+- 2026-04-14: avvio Sprint 5 su funnel upload-first con implementazione retry client backoff+jitter e resume da checkpoint artifact lato UI.
+- 2026-04-14: validazione regressione funnel PASS su `tests/integration/funnel-pages-route.test.ts`, `tests/unit/funnel-mapping.test.ts`, `tests/unit/funnel-extraction-field-map.test.ts`.
+- 2026-04-14: avanzamento Sprint 5 su UX recovery con lifecycle state esplicito extraction e CTA dedicate `riprendi`/`riprova`/`rigenera` nel tool funnel.
+- 2026-04-14: aggiunto test E2E dedicato retry/resume funnel in `tests/e2e/funnel-pages-retry-resume.spec.ts` con copertura feedback retry ed effettivo resume da checkpoint artifact.
+- 2026-04-14: validazione E2E retry/resume PASS e chiusura `TASK-0501`, `TASK-0502`, `TASK-0503`, `TASK-0504`.
 
 ## 4. Current Phase Status
 
@@ -179,10 +184,10 @@ Nota baseline: il dato sopra riflette il momento iniziale del tracker; l'aggiorn
 
 | Task | Current Status | Date |
 | --- | --- | --- |
-| TASK-0501 | Planned | 2026-04-14 |
-| TASK-0502 | Planned | 2026-04-14 |
-| TASK-0503 | Planned | 2026-04-14 |
-| TASK-0504 | Planned | 2026-04-14 |
+| TASK-0501 | Completed | 2026-04-14 |
+| TASK-0502 | Completed | 2026-04-14 |
+| TASK-0503 | Completed | 2026-04-14 |
+| TASK-0504 | Completed | 2026-04-14 |
 
 ### Phase 6
 
@@ -220,6 +225,12 @@ Nota baseline: il dato sopra riflette il momento iniziale del tracker; l'aggiorn
 - **EVID-023**: copertura test Sprint 4 aggiunta con scenario logger throw non-bloccante in `tests/integration/extraction-route.test.ts`.
 - **EVID-024**: query operative baseline per `TASK-0402` definite nel runbook (`timeout_distribution`, `partial_rate`, `fallback_depth`) in `docs/review/extraction-model-policy-rollout-runbook-2026-04-12.md`.
 - **EVID-025**: chiusura operativa `TASK-0402` con sezione runbook dedicata (`Baseline Queries Completed`) e allineamento tracker/index.
+- **EVID-026**: retry client con backoff+jitter e gestione errori retryable introdotti in `src/app/tools/funnel-pages/page.tsx`.
+- **EVID-027**: resume da checkpoint artifact (extraction + step funnel) introdotto in `src/app/tools/funnel-pages/page.tsx` con CTA dedicata.
+- **EVID-028**: regressione funnel validata su test integration/unit (`tests/integration/funnel-pages-route.test.ts`, `tests/unit/funnel-mapping.test.ts`, `tests/unit/funnel-extraction-field-map.test.ts`).
+- **EVID-029**: stati UX lifecycle extraction (`in_progress`, `completed_partial`, `completed_full`, `failed_hard`) esposti nel funnel tool in `src/app/tools/funnel-pages/page.tsx`.
+- **EVID-030**: CTA recovery esplicite `Riprendi da checkpoint`, `Riprova estrazione`, `Rigenera funnel` integrate in `src/app/tools/funnel-pages/page.tsx`.
+- **EVID-031**: copertura E2E dedicata retry/resume con feedback backoff e resume da checkpoint validata in `tests/e2e/funnel-pages-retry-resume.spec.ts`.
 
 ## 6A. Pre-Production Validation Gate
 
@@ -243,9 +254,9 @@ Decisione corrente: NO-GO per produzione per KPI runtime non ancora consolidati;
 ## 7. Immediate Next Actions (operativo)
 
 1. Sprint 0-4 chiusi: mantenere invarianti outcome/reason, idempotenza route-level, timeout semantics, finalizzazione atomica e logging best-effort.
-2. Eseguire raccolta KPI runtime su due finestre consecutive secondo query runbook.
-3. Validare soglie AC-040x su timeout distribution, partial rate e fallback depth.
-4. Procedere con Sprint 5 (retry/resume UX) mantenendo monitoraggio continuo dei gate KPI.
+2. Sprint 5 chiuso: mantenere stabile UX recovery funnel (`retry`/`resume`) e copertura E2E dedicata.
+3. Avviare Sprint 6 su feature flag e rollout controllato (`TASK-0601`, `TASK-0602`, `TASK-0603`).
+4. Mantenere monitoraggio KPI runtime con query `TASK-0402` durante il rollout controllato.
 
 ## 8. Sprint Operations Board
 
@@ -283,10 +294,10 @@ Decisione corrente: NO-GO per produzione per KPI runtime non ancora consolidati;
 
 | Task | Owner | Status | Target | Exit gate |
 | --- | --- | --- | --- | --- |
-| TASK-0501 | Platform + Frontend | Planned | 2026-04-25 | retry backoff+jitter senza loop infinito |
-| TASK-0502 | Platform + Frontend | Planned | 2026-04-25 | resume da checkpoint artifact |
-| TASK-0503 | Frontend | Planned | 2026-04-25 | stati UX lifecycle artifact-first esposti |
-| TASK-0504 | Frontend | Planned | 2026-04-25 | CTA riprendi/riprova/rigenera attive |
+| TASK-0501 | Platform + Frontend | Completed | 2026-04-14 | retry backoff+jitter senza loop infinito |
+| TASK-0502 | Platform + Frontend | Completed | 2026-04-14 | resume da checkpoint artifact |
+| TASK-0503 | Frontend | Completed | 2026-04-14 | stati UX lifecycle artifact-first esposti |
+| TASK-0504 | Frontend | Completed | 2026-04-14 | CTA riprendi/riprova/rigenera attive |
 | TASK-0402 | Platform Engineering | Completed | 2026-04-14 | metriche timeout/partial/fallback depth operative |
 | TASK-0601 | Platform Engineering | Planned | 2026-04-26 | feature flag route extraction attiva |
 | TASK-0602 | Platform Engineering | Planned | 2026-04-26 | rollout 10%->30%->100% con gate KPI |
