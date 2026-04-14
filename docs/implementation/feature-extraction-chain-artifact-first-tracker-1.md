@@ -1,8 +1,8 @@
 ---
 goal: Operational tracker for extraction chain artifact-first resilience rollout
-version: 1.7
+version: 1.8
 date_created: 2026-04-14
-last_updated: 2026-04-14
+last_updated: 2026-04-15
 owner: Platform Engineering
 status: In Progress
 tags: [process, tracker, extraction, artifact-first, resilience]
@@ -135,6 +135,9 @@ Nota baseline: il dato sopra riflette il momento iniziale del tracker; l'aggiorn
 - 2026-04-14: avanzamento Sprint 5 su UX recovery con lifecycle state esplicito extraction e CTA dedicate `riprendi`/`riprova`/`rigenera` nel tool funnel.
 - 2026-04-14: aggiunto test E2E dedicato retry/resume funnel in `tests/e2e/funnel-pages-retry-resume.spec.ts` con copertura feedback retry ed effettivo resume da checkpoint artifact.
 - 2026-04-14: validazione E2E retry/resume PASS e chiusura `TASK-0501`, `TASK-0502`, `TASK-0503`, `TASK-0504`.
+- 2026-04-15: avvio Sprint 6 con gate rollout route-level artifact-first (feature flag, percent gating, rollback switch) su route extraction.
+- 2026-04-15: validazione locale Sprint 6 PASS su `tests/integration/extraction-route.test.ts` (scenari `flag_disabled`, `outside_rollout`, `rollback_active`).
+- 2026-04-15: `TASK-0601`, `TASK-0602`, `TASK-0603` aggiornati a Completed con allineamento runbook rollout/rollback.
 
 ## 4. Current Phase Status
 
@@ -193,9 +196,9 @@ Nota baseline: il dato sopra riflette il momento iniziale del tracker; l'aggiorn
 
 | Task | Current Status | Date |
 | --- | --- | --- |
-| TASK-0601 | Planned | 2026-04-14 |
-| TASK-0602 | Planned | 2026-04-14 |
-| TASK-0603 | Planned | 2026-04-14 |
+| TASK-0601 | Completed | 2026-04-15 |
+| TASK-0602 | Completed | 2026-04-15 |
+| TASK-0603 | Completed | 2026-04-15 |
 | TASK-0604 | Completed | 2026-04-14 |
 
 ## 5. Evidence Register
@@ -231,6 +234,10 @@ Nota baseline: il dato sopra riflette il momento iniziale del tracker; l'aggiorn
 - **EVID-029**: stati UX lifecycle extraction (`in_progress`, `completed_partial`, `completed_full`, `failed_hard`) esposti nel funnel tool in `src/app/tools/funnel-pages/page.tsx`.
 - **EVID-030**: CTA recovery esplicite `Riprendi da checkpoint`, `Riprova estrazione`, `Rigenera funnel` integrate in `src/app/tools/funnel-pages/page.tsx`.
 - **EVID-031**: copertura E2E dedicata retry/resume con feedback backoff e resume da checkpoint validata in `tests/e2e/funnel-pages-retry-resume.spec.ts`.
+- **EVID-032**: decision engine rollout artifact-first (feature flag + cohort percentage + rollback switch) introdotto in `src/lib/tool-routes/extraction-rollout.ts`.
+- **EVID-033**: gate route-level rollout integrato in `src/app/api/tools/extraction/generate/route.ts` con mapping `SERVICE_UNAVAILABLE` e dettagli diagnostici rollout.
+- **EVID-034**: copertura integration Phase 6 (`flag_disabled`, `outside_rollout`, `rollback_active`) aggiunta in `tests/integration/extraction-route.test.ts`.
+- **EVID-035**: runbook Phase 6 aggiornato con progressione 10% -> 30% -> 100% e rollback drill in `docs/review/extraction-model-policy-rollout-runbook-2026-04-12.md`.
 
 ## 6A. Pre-Production Validation Gate
 
@@ -255,8 +262,8 @@ Decisione corrente: NO-GO per produzione per KPI runtime non ancora consolidati;
 
 1. Sprint 0-4 chiusi: mantenere invarianti outcome/reason, idempotenza route-level, timeout semantics, finalizzazione atomica e logging best-effort.
 2. Sprint 5 chiuso: mantenere stabile UX recovery funnel (`retry`/`resume`) e copertura E2E dedicata.
-3. Avviare Sprint 6 su feature flag e rollout controllato (`TASK-0601`, `TASK-0602`, `TASK-0603`).
-4. Mantenere monitoraggio KPI runtime con query `TASK-0402` durante il rollout controllato.
+3. Sprint 6 codice completato: raccogliere due finestre KPI consecutive per conferma gate `EXIT-004`.
+4. Promuovere rollout operativo progressivo 10% -> 30% -> 100% seguendo runbook Phase 6.
 
 ## 8. Sprint Operations Board
 
@@ -299,9 +306,9 @@ Decisione corrente: NO-GO per produzione per KPI runtime non ancora consolidati;
 | TASK-0503 | Frontend | Completed | 2026-04-14 | stati UX lifecycle artifact-first esposti |
 | TASK-0504 | Frontend | Completed | 2026-04-14 | CTA riprendi/riprova/rigenera attive |
 | TASK-0402 | Platform Engineering | Completed | 2026-04-14 | metriche timeout/partial/fallback depth operative |
-| TASK-0601 | Platform Engineering | Planned | 2026-04-26 | feature flag route extraction attiva |
-| TASK-0602 | Platform Engineering | Planned | 2026-04-26 | rollout 10%->30%->100% con gate KPI |
-| TASK-0603 | Platform Engineering | Planned | 2026-04-26 | rollback trigger e drill documentati |
+| TASK-0601 | Platform Engineering | Completed | 2026-04-15 | feature flag route extraction attiva |
+| TASK-0602 | Platform Engineering | Completed | 2026-04-15 | rollout 10%->30%->100% con gate KPI |
+| TASK-0603 | Platform Engineering | Completed | 2026-04-15 | rollback trigger e drill documentati |
 | TASK-0604 | Platform Engineering | Completed | 2026-04-14 | index/tracker gia allineati |
 
 ## 9. Related Documents

@@ -75,6 +75,10 @@ const baseBody = {
   },
 };
 
+const originalRolloutEnabled = process.env.EXTRACTION_ARTIFACT_FIRST_ENABLED;
+const originalRolloutPercentage = process.env.EXTRACTION_ARTIFACT_FIRST_ROLLOUT_PERCENT;
+const originalRollbackActive = process.env.EXTRACTION_ARTIFACT_FIRST_ROLLBACK_ACTIVE;
+
 const makeRequest = (payload: unknown) =>
   new Request('http://localhost/api/tools/extraction/generate', {
     method: 'POST',
@@ -96,6 +100,9 @@ function createSseStream(events: Array<Record<string, unknown>>): ReadableStream
 
 beforeEach(() => {
   jest.clearAllMocks();
+  process.env.EXTRACTION_ARTIFACT_FIRST_ENABLED = '1';
+  process.env.EXTRACTION_ARTIFACT_FIRST_ROLLBACK_ACTIVE = '0';
+  process.env.EXTRACTION_ARTIFACT_FIRST_ROLLOUT_PERCENT = '100';
   mockedGetRequestLogger.mockReturnValue(mockLogger as never);
   mockedRateLimit.mockResolvedValue({ allowed: true, remaining: 10 });
   mockedStream.mockResolvedValue(createSseStream([
@@ -130,6 +137,12 @@ beforeEach(() => {
   });
   findUser.mockResolvedValue({ id: 'user_1', monthlyUsed: 1, monthlyQuota: 100, monthlySpent: '1', monthlyBudget: '10' });
   findProject.mockResolvedValue({ id: projectId, userId: 'user_1' });
+});
+
+afterAll(() => {
+  process.env.EXTRACTION_ARTIFACT_FIRST_ENABLED = originalRolloutEnabled;
+  process.env.EXTRACTION_ARTIFACT_FIRST_ROLLOUT_PERCENT = originalRolloutPercentage;
+  process.env.EXTRACTION_ARTIFACT_FIRST_ROLLBACK_ACTIVE = originalRollbackActive;
 });
 
 function createStalledSseStream(): ReadableStream {
@@ -254,6 +267,48 @@ describe('POST /api/tools/extraction/generate', () => {
     findProject.mockResolvedValue(null);
     const res = await POST(makeRequest(baseBody));
     expect(res.status).toBe(404);
+  });
+
+  it('returns 503 when artifact-first flag is disabled', async () => {
+    mockedAuth.mockResolvedValue({ user: { id: 'user_1' } } as never);
+    process.env.EXTRACTION_ARTIFACT_FIRST_ENABLED = '0';
+
+    const res = await POST(makeRequest(baseBody));
+    const body = await res.json();
+
+    expect(res.status).toBe(503);
+    expect(body.error.code).toBe('SERVICE_UNAVAILABLE');
+    expect(body.error.details.rollout.reason).toBe('flag_disabled');
+    expect(createArtifact).not.toHaveBeenCalled();
+    expect(mockedStream).not.toHaveBeenCalled();
+  });
+
+  it('returns 503 when rollout percentage excludes current cohort', async () => {
+    mockedAuth.mockResolvedValue({ user: { id: 'user_1' } } as never);
+    process.env.EXTRACTION_ARTIFACT_FIRST_ROLLOUT_PERCENT = '0';
+
+    const res = await POST(makeRequest(baseBody));
+    const body = await res.json();
+
+    expect(res.status).toBe(503);
+    expect(body.error.code).toBe('SERVICE_UNAVAILABLE');
+    expect(body.error.details.rollout.reason).toBe('outside_rollout');
+    expect(createArtifact).not.toHaveBeenCalled();
+    expect(mockedStream).not.toHaveBeenCalled();
+  });
+
+  it('returns 503 when rollback switch is active', async () => {
+    mockedAuth.mockResolvedValue({ user: { id: 'user_1' } } as never);
+    process.env.EXTRACTION_ARTIFACT_FIRST_ROLLBACK_ACTIVE = '1';
+
+    const res = await POST(makeRequest(baseBody));
+    const body = await res.json();
+
+    expect(res.status).toBe(503);
+    expect(body.error.code).toBe('SERVICE_UNAVAILABLE');
+    expect(body.error.details.rollout.reason).toBe('rollback_active');
+    expect(createArtifact).not.toHaveBeenCalled();
+    expect(mockedStream).not.toHaveBeenCalled();
   });
 
   it('routes extraction prompt builder and stream', async () => {

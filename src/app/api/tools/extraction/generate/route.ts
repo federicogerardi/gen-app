@@ -1,5 +1,6 @@
 import { createArtifactStream, persistArtifactFailure, persistArtifactSuccess } from '@/lib/llm/streaming';
 import { db } from '@/lib/db';
+import type { Prisma } from '@/generated/prisma';
 import { getRequestLogger, logger } from '@/lib/logger';
 import {
   EXTRACTION_FIRST_TOKEN_TIMEOUT_MS,
@@ -22,6 +23,7 @@ import {
   requireAuthenticatedUser,
   requireOwnedProject,
 } from '@/lib/tool-routes/guards';
+import { resolveExtractionRolloutDecision } from '@/lib/tool-routes/extraction-rollout';
 import { apiError, sseResponse } from '@/lib/tool-routes/responses';
 import { extractionRequestSchema } from '@/lib/tool-routes/schemas';
 import { z } from 'zod';
@@ -851,6 +853,10 @@ export async function POST(request: Request) {
   const attemptPlan = extractionResponseMode === 'text'
     ? getExtractionAttemptPlan({ maxAttempts: 2, attemptTimeoutMs: [18_000, 22_000] })
     : getExtractionAttemptPlan();
+  const rolloutDecision = resolveExtractionRolloutDecision({
+    userId,
+    projectId: payload.projectId,
+  });
 
   logBestEffort(log, 'info',
     {
@@ -865,6 +871,12 @@ export async function POST(request: Request) {
       runtimeModel,
       idempotencyKey,
       responseMode: extractionResponseMode,
+      rolloutEnabled: rolloutDecision.enabled,
+      rolloutRollbackActive: rolloutDecision.rollbackActive,
+      rolloutPercentage: rolloutDecision.rolloutPercentage,
+      rolloutPhase: rolloutDecision.phase,
+      rolloutCohort: rolloutDecision.cohort,
+      rolloutReason: rolloutDecision.reason,
       policyVersion: EXTRACTION_POLICY_VERSION,
     },
     'Tool generation started',
@@ -896,6 +908,40 @@ export async function POST(request: Request) {
       'Extraction request rejected: project not accessible',
     );
     return ownershipResult.response;
+  }
+
+  if (!rolloutDecision.allowed) {
+    logBestEffort(log, 'warn',
+      {
+        workflowType: 'extraction',
+        projectId: payload.projectId,
+        requestId,
+        attemptIndex: null,
+        runtimeModel,
+        timeoutKind: null,
+        fallbackReason: rolloutDecision.reason,
+        completionReason: 'rollout_gate_blocked',
+        rolloutEnabled: rolloutDecision.enabled,
+        rolloutRollbackActive: rolloutDecision.rollbackActive,
+        rolloutPercentage: rolloutDecision.rolloutPercentage,
+        rolloutPhase: rolloutDecision.phase,
+        rolloutCohort: rolloutDecision.cohort,
+        rolloutReason: rolloutDecision.reason,
+        policyVersion: EXTRACTION_POLICY_VERSION,
+      },
+      'Extraction request blocked by rollout gate',
+    );
+
+    return apiError('SERVICE_UNAVAILABLE', 'Extraction temporaneamente non disponibile per questa coorte rollout', 503, {
+      rollout: {
+        enabled: rolloutDecision.enabled,
+        rollbackActive: rolloutDecision.rollbackActive,
+        percentage: rolloutDecision.rolloutPercentage,
+        phase: rolloutDecision.phase,
+        cohort: rolloutDecision.cohort,
+        reason: rolloutDecision.reason,
+      },
+    });
   }
 
   if (idempotencyKey) {
@@ -1308,7 +1354,7 @@ export async function POST(request: Request) {
           await db.artifact.update({
             where: { id: artifactStub.id },
             data: {
-              input: terminalInput,
+              input: terminalInput as Prisma.InputJsonValue,
               failureReason: null,
             },
           });

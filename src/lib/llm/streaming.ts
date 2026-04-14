@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import type { Prisma } from '@/generated/prisma';
 import { LLMOrchestrator } from './orchestrator';
 import type { ArtifactType, OutputFormat, QuotaEventStatus } from '@/lib/types/artifact';
 import { calculateCostWithPricing } from './costs';
@@ -127,7 +128,7 @@ export async function persistArtifactSuccess(params: PersistArtifactSuccessParam
     outputTokens: number;
     costUSD: number;
     completedAt: Date;
-    input?: Record<string, unknown>;
+    input?: Prisma.InputJsonValue;
   } = {
     content: params.content,
     status: 'completed',
@@ -142,7 +143,7 @@ export async function persistArtifactSuccess(params: PersistArtifactSuccessParam
     artifactData.input = {
       ...params.inputSnapshot,
       terminalState,
-    };
+    } as Prisma.InputJsonValue;
   }
 
   await db.$transaction(async (tx) => {
@@ -190,7 +191,7 @@ export async function persistArtifactFailure(params: PersistArtifactFailureParam
   const artifactData: {
     status: 'failed';
     failureReason: string;
-    input?: Record<string, unknown>;
+    input?: Prisma.InputJsonValue;
   } = {
     status: 'failed',
     failureReason: params.failureReason,
@@ -200,7 +201,7 @@ export async function persistArtifactFailure(params: PersistArtifactFailureParam
     artifactData.input = {
       ...params.inputSnapshot,
       terminalState,
-    };
+    } as Prisma.InputJsonValue;
   }
 
   await db.$transaction(async (tx) => {
@@ -240,7 +241,7 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
         type,
         workflowType,
         model,
-        input: input as object,
+        input: input as Prisma.InputJsonValue,
         status: 'generating',
       },
     });
@@ -251,7 +252,7 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
       data: {
         workflowType,
         model,
-        input: input as object,
+        input: input as Prisma.InputJsonValue,
         content: '',
         status: 'generating',
         failureReason: null,

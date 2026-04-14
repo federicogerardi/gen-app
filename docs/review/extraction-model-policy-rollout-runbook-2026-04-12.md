@@ -1,8 +1,8 @@
 ---
 goal: Rollout and rollback runbook for extraction runtime model policy
-version: 1.0
+version: 1.1
 date_created: 2026-04-12
-last_updated: 2026-04-14
+last_updated: 2026-04-15
 owner: Platform AI / Tooling
 status: Active
 tags: [runbook, extraction, llm, rollout, rollback, observability]
@@ -231,6 +231,42 @@ Trigger soft rollback (decisione operativa):
 - degrado prolungato sopra soglie di Fase A o Fase B per oltre 2h
 - aumento anomalo `fallback_depth_mean` > 2.2
 - `mean_cost` > 0.06 USD per oltre 2h
+
+## Phase 6 - Artifact-First Rollout Controls (2026-04-15)
+
+Stato implementazione:
+- route extraction protetta da gate rollout in `src/app/api/tools/extraction/generate/route.ts`.
+- decision engine rollout centralizzato in `src/lib/tool-routes/extraction-rollout.ts`.
+- copertura regressione route/gate in `tests/integration/extraction-route.test.ts`.
+
+Variabili operative:
+1. `EXTRACTION_ARTIFACT_FIRST_ENABLED` (`1`/`0`): feature flag globale route-level.
+2. `EXTRACTION_ARTIFACT_FIRST_ROLLOUT_PERCENT` (`0..100`): percentuale coorti abilitate con hashing deterministico `userId:projectId`.
+3. `EXTRACTION_ARTIFACT_FIRST_ROLLBACK_ACTIVE` (`1`/`0`): kill switch immediato che forza blocco richieste extraction.
+
+Semantica runtime:
+1. Se flag globale disabilitata -> risposta `503` con `SERVICE_UNAVAILABLE` e `rollout.reason=flag_disabled`.
+2. Se rollback attivo -> risposta `503` con `SERVICE_UNAVAILABLE` e `rollout.reason=rollback_active`.
+3. Se richiesta fuori coorte -> risposta `503` con `SERVICE_UNAVAILABLE` e `rollout.reason=outside_rollout`.
+4. Se richiesta in coorte -> esecuzione flow extraction invariato.
+
+Progressione consigliata (TASK-0602):
+1. Step 10%: impostare `EXTRACTION_ARTIFACT_FIRST_ROLLOUT_PERCENT=10` per 24h.
+2. Step 30%: promuovere a `30` solo con due finestre KPI consecutive in soglia.
+3. Step 100%: promuovere a `100` solo dopo stabilita step 30% su due finestre consecutive.
+
+Gate KPI per promozione step:
+1. `extraction_failed_rate <= 5%` su finestra 30 minuti.
+2. `p95_latency <= 15s` su finestra 30 minuti.
+3. `fallback_depth_mean <= 2.2` su finestra 30 minuti.
+4. completezza campi diagnostici >= 99% richieste monitorate.
+
+Rollback drill (TASK-0603):
+1. Attivare kill switch: `EXTRACTION_ARTIFACT_FIRST_ROLLBACK_ACTIVE=1`.
+2. Verificare che nuove richieste route extraction rispondano `503 SERVICE_UNAVAILABLE` con `rollout.reason=rollback_active`.
+3. Confermare riduzione `extraction_failed_rate` e `p95_latency` alla baseline del livello precedente.
+4. Disattivare kill switch (`0`) e ripristinare percentuale rollout precedente stabile.
+5. Registrare timestamp, metriche pre/post e campione requestId nel tracker operativo.
 
 ## Procedura rollback
 
