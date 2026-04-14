@@ -2,6 +2,14 @@
 
 _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 
+## Aggiornamento sessione (2026-04-15 — Operational Hardening Plan API/LLM Tooling)
+
+- **Nuova attivita pianificata (P1)**: creato piano esecutivo per hardening operativo API/LLM tooling con focus su error boundaries pre-stream, finalizzazione artifact extraction, reason taxonomy ownership e allineamento specifiche API.
+- **Documento piano**: `docs/implementation/feature-operational-hardening-api-llm-tooling-plan-1.md`.
+- **Tracker operativo**: `docs/implementation/feature-operational-hardening-api-llm-tooling-tracker-1.md`.
+- **Stato**: `Planned` (da avviare nel prossimo ciclo backend hardening).
+- **Origine**: `docs/review/operational-improvement-note-api-llm-tooling-2026-04-15.md`.
+
 ## Aggiornamento sessione (2026-04-15 — Extraction Completeness-First)
 
 - **Guardrail extraction riallineati allo scopo del tool**: rimosso il profilo text-mode a timeout stretti (18s/22s) e introdotta policy completeness-first con finestre estese.

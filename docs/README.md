@@ -29,6 +29,8 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 - [funnel-extraction-model-policy-plan.md](implementation/funnel-extraction-model-policy-plan.md): Piano esecutivo policy runtime extraction con fallback deterministico (fasi 1-4 completate).
 - [feature-funnel-extraction-model-policy-tracker-1.md](implementation/feature-funnel-extraction-model-policy-tracker-1.md): Tracker operativo della delivery extraction policy.
 - [gui-ux-low-impact-microtasks-sprint-plan-2026-04-14.md](implementation/gui-ux-low-impact-microtasks-sprint-plan-2026-04-14.md): Backlog microtask GUI/UX low-impact per sprint breve (estrazione 2026-04-14).
+- [feature-operational-hardening-api-llm-tooling-plan-1.md](implementation/feature-operational-hardening-api-llm-tooling-plan-1.md): Piano esecutivo P1 per hardening operativo API/LLM tooling (pre-stream errors, artifact lifecycle safety, taxonomy, API docs alignment).
+- [feature-operational-hardening-api-llm-tooling-tracker-1.md](implementation/feature-operational-hardening-api-llm-tooling-tracker-1.md): Tracker operativo companion del piano P1 con baseline, stato task ed evidenze di chiusura.
 
 ### notes/
 - [desiderata-e-appunti-futuri-sviluppi.md](notes/desiderata-e-appunti-futuri-sviluppi.md): Raccolta di idee e appunti preliminari non ancora in planning o refactoring.
@@ -40,6 +42,7 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 - [extraction-model-policy-rollout-runbook-2026-04-12.md](review/extraction-model-policy-rollout-runbook-2026-04-12.md): Runbook rollout/rollback e query operative per policy extraction.
 - [pr-28-dev-merge-review-2026-04-13.md](review/pr-28-dev-merge-review-2026-04-13.md): Review operativa dell'ultimo merge PR verso `dev` (PR #28), con metadati, scope e sintesi sprint.
 - [pr-28-dev-commit-changelog-2026-04-13.md](review/pr-28-dev-commit-changelog-2026-04-13.md): Changelog commit-level della PR #28 con shortstat e note di riuso per documentazione.
+- [operational-improvement-note-api-llm-tooling-2026-04-15.md](review/operational-improvement-note-api-llm-tooling-2026-04-15.md): Nota di improvement operativa che origina il piano P1 di hardening API/LLM tooling.
 
 ### archive/
 - Documenti storici e snapshot superseded (review, roadmap, follow-up PR).
