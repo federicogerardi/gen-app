@@ -58,6 +58,7 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 - [api-specifications.md](specifications/api-specifications.md): Specifiche API e contratti.
 - [documentation-filename-naming-spec.md](specifications/documentation-filename-naming-spec.md): Regole operative e pattern canonico per il naming dei file markdown in `docs/`.
 - [graphic-frameworking-spec.md](specifications/graphic-frameworking-spec.md): Specifica visual frameworking per interventi UI coerenti con shell grafica e template applicato.
+- [git-release-workflow-spec.md](specifications/git-release-workflow-spec.md): Branching policy, strategia squash-merge e sync automatico dev→main post-release.
 
 ### ux/
 - [gui-refactor-plan.md](ux/gui-refactor-plan.md): Piano di refactoring GUI.
