@@ -167,6 +167,13 @@ export const FUNNEL_EXTRACTION_FIELD_MAP = {
     description: "Array di lead magnet per cluster. Ogni elemento: cluster_name, title, format, hook, messaging, next_step",
   },
 
+  // --- proof_context ---
+  testimonials_sources: {
+    type: 'array',
+    required: false,
+    description: "Array di testimonianze reali disponibili nel documento. Ogni elemento deve includere: testo testimonianza (quote), nome testimonial e ruolo se presente (source), risultato specifico ottenuto (achieved_result) e numeri misurabili associati (measurable_results)",
+  },
+
   // --- assumptions ---
   assumptions_allowed: {
     type: 'boolean',

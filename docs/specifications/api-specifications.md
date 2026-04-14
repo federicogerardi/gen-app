@@ -1,11 +1,34 @@
 # API Specifications: LLM Artifact Generation Hub
 
-**Version**: 1.2  
+**Version**: 1.4  
 **Status**: IMPLEMENTED SUBSET + OPEN ITEMS  
 **Base URL**: `https://<your-vercel-domain>/api` (production from `main`; development/preview from PR flow on `dev`)  
 **Authentication**: NextAuth session cookie (browser). Bearer tokens solo per integrazioni server-to-server esplicite.  
 **Content-Type**: `application/json` (default), `multipart/form-data` per upload documenti funnel  
-**Last Updated**: 2026-04-12
+**Last Updated**: 2026-04-14
+
+---
+
+## Frontend Build Guardrails (Next.js App Router)
+
+Per prevenire errori CI di prerender su pagine tool (`/tools/*`) e pagine client App Router:
+
+- Se una pagina usa `useSearchParams()`, il componente che invoca l'hook deve essere renderizzato dentro un boundary `Suspense`.
+- Pattern raccomandato:
+  - `export default function Page() { return <Suspense><PageContent /></Suspense>; }`
+  - `function PageContent() { const searchParams = useSearchParams(); ... }`
+- Evitare di usare `useSearchParams()` direttamente nel componente `default export` della pagina senza `Suspense`.
+- Applicare lo stesso controllo ai nuovi tool client-side prima di aprire PR.
+
+Checklist minima pre-merge (obbligatoria per pagine tool):
+
+1. `npm run test`
+2. `npm run build`
+3. Verifica manuale GUI locale delle route toccate
+
+Errore tipico prevenuto da questo guardrail:
+
+- `useSearchParams() should be wrapped in a suspense boundary`
 
 ---
 
@@ -44,6 +67,7 @@ All errors follow this format:
 
 Implemented routes in the current codebase:
 - `POST /artifacts/generate`
+- `GET /artifacts`
 - `POST /tools/meta-ads/generate`
 - `POST /tools/extraction/generate`
 - `POST /tools/funnel-pages/generate`
@@ -64,12 +88,9 @@ Implemented routes in the current codebase:
 - `GET /admin/metrics`
 - `GET /admin/models`
 - `POST /admin/models`
-- `PUT /admin/models/{modelId}`
-- `DELETE /admin/models/{modelId}`
+- `PUT /admin/models/{id}`
+- `DELETE /admin/models/{id}`
 - `GET /models`
-
-Documented but not yet implemented:
-- `GET /artifacts` (lista con filtri avanzati server-side e paginazione)
 
 ### Model Registry (As-Is)
 
@@ -78,13 +99,27 @@ Il catalogo modelli non e piu hardcoded a livello route validation: e gestito tr
 Comportamento corrente:
 - `GET /api/admin/models`: lista completa per gestione amministrativa
 - `POST /api/admin/models`: crea nuovo modello
-- `PUT /api/admin/models/{modelId}`: aggiorna stato/costi/default
-- `DELETE /api/admin/models/{modelId}`: elimina modello non-default
+- `PUT /api/admin/models/{id}`: aggiorna stato/costi/default (il param `{id}` è la primary key CUID del DB)
+- `DELETE /api/admin/models/{id}`: elimina modello non-default
 - `GET /api/models`: espone ai client i modelli pubblici attivi
 
 Validazione runtime modello:
 - Le route di generazione validano il modello selezionato tramite availability check su registry (`requireAvailableModel`).
 - Se il registry DB non contiene righe attive, il sistema mantiene fallback statico controllato per continuita operativa.
+
+### GET /artifacts — Filtri supportati
+
+Query parameters:
+- `projectId` (cuid, opzionale): filtra per progetto; l'utente autenticato deve essere proprietario.
+- `status` (`generating` | `completed` | `failed`, opzionale)
+- `type` (`content` | `seo` | `code` | `extraction`, opzionale)
+- `limit` (1–100, default 20), `offset` (default 0)
+
+### Admin endpoints — Auth behaviour
+
+Gli endpoint `/api/admin/*` usano la guardia `requireAdminUser()`:
+- Utente non autenticato (sessione assente) → `401 UNAUTHORIZED`
+- Utente autenticato ma senza ruolo `admin` → `403 FORBIDDEN`
 
 ### Auth.js Session Endpoint
 ```
@@ -163,7 +198,6 @@ POST /tools/funnel-pages/upload
 - `file` (binary)
 
 Formati supportati:
-- PDF (`application/pdf`)
 - DOCX (`application/vnd.openxmlformats-officedocument.wordprocessingml.document`)
 - TXT (`text/plain`)
 - Markdown (`text/markdown`)
@@ -180,8 +214,8 @@ Regole principali:
   "ok": true,
   "data": {
     "text": "contenuto estratto",
-    "fileName": "briefing.pdf",
-    "mimeType": "application/pdf",
+    "fileName": "briefing.docx",
+    "mimeType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     "sizeBytes": 123456
   }
 }
@@ -210,6 +244,7 @@ POST /tools/extraction/generate
   "projectId": "proj_123",
   "model": "openai/gpt-4-turbo",
   "tone": "professional",
+  "responseMode": "text",
   "rawContent": "testo estratto dal documento",
   "fieldMap": {
     "business_type": {
@@ -222,17 +257,62 @@ POST /tools/extraction/generate
 }
 ```
 
+Nota modalita risposta:
+- `responseMode: "structured"` (default): mantiene percorso JSON strutturato con validazioni parse/schema/consistency.
+- `responseMode: "text"` (raccomandata per funnel): restituisce contesto testuale markdown pronto per i prompt downstream, riducendo la fragilita del parsing strutturato.
+
 Policy runtime (as-is):
 - Il campo `model` nel payload e accettato per compatibilita/audit ma non decide il modello runtime di extraction.
 - La route applica chain deterministica: `anthropic/claude-3.7-sonnet` -> `openai/gpt-4.1` -> `openai/o3`.
+- In `responseMode: "text"` la chain operativa usa 3 tentativi completeness-first con timeout estesi (attempt 1 = 120s, attempt 2 = 150s, attempt 3 = 180s).
 - Ogni tentativo viene validato server-side con parse JSON + schema (`fields`, `missingFields`, `notes`) + coerenza con `fieldMap`.
-- Il fallback si interrompe al primo tentativo valido oppure quando il costo cumulato supera `USD 0.08`.
-- In caso di esaurimento chain/policy budget: `{ error: { code: "EXTRACTION_FAILED", message } }` con HTTP 503.
+- Timeout per-attempt default (structured): tentativo 1 = 90s, tentativo 2 = 120s, tentativo 3 = 150s.
+- Early-abort first-token (structured): se non arriva alcun token SSE entro 45s, il tentativo viene classificato come `timeout` e si passa al fallback successivo.
+- Early-abort json-start (structured): dopo il primo token non vuoto, se non compare un inizio JSON (`{`) entro 35s, il tentativo viene classificato come `timeout` e si passa al fallback successivo.
+- Early-abort json-parse (structured): dopo il primo `{`, se l'output non diventa JSON parseable entro 30s, il tentativo viene classificato come `timeout` e si passa al fallback successivo.
+- Early-abort token-idle (structured): dopo il primo token, se lo stream resta inattivo oltre 40s, il tentativo viene classificato come `timeout` e si passa al fallback successivo.
+- In `responseMode: "text"` i guard stream aggressivi (`first_token`, `json_start`, `json_parse`, `token_idle`) sono disattivati; resta la deadline per-attempt per evitare richieste indefinite.
+- I timeout route-level propagano `AbortSignal` fino a orchestrator/provider: la cancellazione interrompe realmente la richiesta upstream evitando attese prolungate lato provider.
+- La coerenza e valutata sui soli campi dichiarati nel `fieldMap`: eventuali chiavi extra restituite dal modello non invalidano automaticamente il tentativo se i campi richiesti risultano coerenti (supporto output parziali).
+- Semantica acceptance applicativa:
+  - `hard_accept`: campi attesi/missing coerenti con `fieldMap`, nessun overlap.
+  - `soft_accept`: segnale strutturato parziale con parse/schema validi e copertura campi critici (`required`) sopra soglia.
+  - `reject`: overlap reale, assenza segnale utile, parse/schema invalidi o copertura critica sotto soglia.
+- La route emette telemetria diagnostica strutturata per tentativo con campi: `expectedFieldCount`, `knownExtractedCount`, `knownMissingCount`, `overlapCount`, `unknownExtractedSample`, `unknownMissingSample`, `consistencyDecision`, `consistencyDecisionReason`, `acceptanceDecision`, `acceptanceReason`, `criticalCoverage`.
+- In `responseMode: "text"`, in caso di timeout con contenuto gia utile (contesto testuale sostanziale), il tentativo puo essere accettato come `soft_accept` per evitare fallback/503 non necessari.
+- Il fallback si interrompe al primo tentativo valido oppure a esaurimento della chain di tentativi.
+- In caso di esaurimento chain: `{ error: { code: "EXTRACTION_FAILED", message } }` con HTTP 503.
+
+### Extraction Resilience Contract (Sprint 0)
+
+Matrice outcome canonica:
+- `completed_full`: tentativo valido con `hard_accept`.
+- `completed_partial`: tentativo valido con `soft_accept` (segnale utile ma parziale/degradato).
+- `failed_hard`: richiesta non recuperabile nel perimetro route (auth/ownership/validation) oppure chain exhausted senza segnale utile.
+
+Reason taxonomy canonica (route/policy/UI):
+- successo pieno: `known_fields_present`
+- successo parziale: `critical_coverage_threshold_met`, `no_critical_fields_defined`, `no_known_keys_but_structured_signal`, `partial_useful_output`
+- hard-fail: `unauthorized`, `forbidden`, `validation_error`, `no_signal_after_chain_exhausted`
+
+Mapping terminale centralizzato:
+- `completed_full` -> HTTP 200 -> artifact status `completed`
+- `completed_partial` -> HTTP 200 -> artifact status `completed`
+- `failed_hard` + `unauthorized` -> HTTP 401 -> artifact status `failed`
+- `failed_hard` + `forbidden` -> HTTP 403 -> artifact status `failed`
+- `failed_hard` + `validation_error` -> HTTP 400 -> artifact status `failed`
+- `failed_hard` + `no_signal_after_chain_exhausted` -> HTTP 503 (`EXTRACTION_FAILED`) -> artifact status `failed`
+
+Campi diagnostici terminali (log route extraction):
+- `completionOutcome`
+- `completionReason`
+- `artifactStatus`
+- `httpStatus`
 
 **Response**:
 - Stream SSE con eventi standard (`start`, `token`, `complete`, `error`)
 - Workflow `extraction`
-- Output richiesto al modello: JSON (consumato dal client e mappato in `extractedFields`)
+- Output workflow consigliato per Funnel Pages: testo markdown contestuale (consumato direttamente come `extractionContext` nei prompt downstream)
 
 Nota operativa:
 - La route valida internamente i tentativi e poi invia al client gli eventi SSE del tentativo valido; durante retry non e garantito passthrough token live continuo.
@@ -249,7 +329,7 @@ POST /tools/funnel-pages/generate
 Il route handler accetta 3 shape compatibili:
 - `V1` legacy (`customerContext + promise`)
 - `V2` briefing unificato (`briefing`)
-- `V3` upload-first (`extractedFields`) — shape raccomandata e usata dalla UI attuale
+- `V3` upload-first (`extractedFields` oppure `extractionContext`) — shape raccomandata
 
 **Request V3 (raccomandata)**:
 ```json
@@ -258,18 +338,17 @@ Il route handler accetta 3 shape compatibili:
   "model": "openai/gpt-4-turbo",
   "tone": "professional",
   "step": "optin",
-  "extractedFields": {
-    "business_type": "B2B",
-    "sector_niche": "Servizi B2B",
-    "core_problem": "Lead poco qualificati",
-    "funnel_primary_goal": "Aumentare call qualificate"
-  },
+  "extractionContext": "## Business\nAgenzia B2B...\n\n## Audience\nFounder PMI...\n\n## Offer\n...",
   "notes": "Vincoli brand..."
 }
 ```
 
 Nota compatibilita:
 - I payload legacy V1/V2 restano supportati per backward compatibility.
+
+Nota mapping proof context (V3):
+- Quando `extractedFields.testimonials_sources` e presente, il mapping server-side verso il briefing funnel popola `proof_context.testimonials_sources` mantenendo i campi `quote`, `source`, `timestamp` e, quando disponibili, `achieved_result`, `measurable_results`.
+- Quando `extractionContext` e presente, il route funnel usa direttamente il contesto testuale nei prompt di generazione (senza mapping strutturato intermedio).
 
 **Step-specific constraints**:
 - `step=optin`: nessun contesto precedente richiesto
@@ -282,9 +361,9 @@ Nota compatibilita:
 - Formato output workflow: `markdown` (per `optin`, `quiz`, `vsl`)
 
 Nota workflow UI Funnel Pages:
-1. upload documento (`/tools/funnel-pages/upload`)
-2. estrazione campi (`/tools/extraction/generate`)
-3. generazione sequenziale `optin -> quiz -> vsl` (`/tools/funnel-pages/generate`)
+1. upload documento (`/api/tools/funnel-pages/upload`)
+2. estrazione contesto testuale (`/api/tools/extraction/generate` con `responseMode: "text"`)
+3. generazione sequenziale `optin -> quiz -> vsl` (`/api/tools/funnel-pages/generate`)
 
 ### Generate Artifact (Streaming)
 

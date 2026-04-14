@@ -139,7 +139,7 @@ Piano esecutivo per risolvere tutti i rilievi del report copilot-audit-12042026 
 ## 8. Related Specifications / Further Reading
 
 - `docs/review/copilot-audit-2026-04-12.md`
-- `docs/archive/implement-quality-audit.completed-2026-04-11.md`
+- `docs/archive/implement-quality-audit-closure-2026-04-11.md`
 - `docs/specifications/api-specifications.md`
 - `docs/adrs/001-modular-llm-controller-architecture.md`
 - `docs/adrs/002-streaming-vs-batch-responses.md`
@@ -148,7 +148,7 @@ Piano esecutivo per risolvere tutti i rilievi del report copilot-audit-12042026 
 
 ## 9. Historical Interventions (GitHub Merge Log)
 
-Fonte primaria interventi: `docs/archive/implement-quality-audit.completed-2026-04-11.md`.
+Fonte primaria interventi: `docs/archive/implement-quality-audit-closure-2026-04-11.md`.
 Fonte di verifica cronologica: output `gh pr list --state merged` filtrato per finestre `merged:2026-04-11` e `merged:2026-04-12`.
 
 ### 9.1 Merge timeline (ieri e oggi)
@@ -172,7 +172,7 @@ Fonte di verifica cronologica: output `gh pr list --state merged` filtrato per f
 
 ### 9.3 Impatto storico sul piano corrente
 
-- **HIS-000**: La baseline ufficiale degli interventi gia completati e il documento archiviato `docs/archive/implement-quality-audit.completed-2026-04-11.md`; i log GH confermano timeline e merge commit.
+- **HIS-000**: La baseline ufficiale degli interventi gia completati e il documento archiviato `docs/archive/implement-quality-audit-closure-2026-04-11.md`; i log GH confermano timeline e merge commit.
 - **HIS-001**: Alcuni task del piano potrebbero risultare parzialmente gia coperti da PR #14, #15, #16, #17; prima di esecuzione fase 1 eseguire una verifica diff puntuale finding->file.
 - **HIS-002**: Il piano resta valido come remediation completa perché l'audit del 2026-04-12 segnala finding ancora aperti; i task non vengono marcati completati senza evidenza test aggiornata.
 - **HIS-003**: In fase esecutiva, aggiornare colonna Completed/Date solo dopo validazione automatica (lint, typecheck, test unit/integration/e2e) e mapping a ID finding.

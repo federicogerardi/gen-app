@@ -6,8 +6,8 @@ import { createArtifactStream } from '@/lib/llm/streaming';
 
 let mockGenerateStream: jest.Mock;
 
-jest.mock('@/lib/db', () => ({
-  db: {
+jest.mock('@/lib/db', () => {
+  const tx = {
     artifact: {
       create: jest.fn(),
       update: jest.fn(),
@@ -21,8 +21,15 @@ jest.mock('@/lib/db', () => ({
     quotaHistory: {
       create: jest.fn(),
     },
-  },
-}));
+  };
+
+  return {
+    db: {
+      ...tx,
+      $transaction: jest.fn(async (callback: (context: typeof tx) => Promise<unknown>) => callback(tx)),
+    },
+  };
+});
 
 jest.mock('@/lib/llm/orchestrator', () => ({
   LLMOrchestrator: jest.fn().mockImplementation(() => ({
@@ -39,6 +46,7 @@ const updateArtifact = db.artifact.update as jest.Mock;
 const findActiveModel = db.llmModel.findFirst as jest.Mock;
 const updateUser = db.user.update as jest.Mock;
 const createQuotaHistory = db.quotaHistory.create as jest.Mock;
+const runTransaction = db.$transaction as jest.Mock;
 
 async function readAllSse(stream: ReadableStream): Promise<string[]> {
   const reader = stream.getReader();
@@ -80,6 +88,7 @@ describe('createArtifactStream', () => {
     findActiveModel.mockResolvedValue(null);
     updateUser.mockResolvedValue({});
     createQuotaHistory.mockResolvedValue({});
+    runTransaction.mockImplementation(async (callback: (tx: unknown) => Promise<unknown>) => callback(db));
   });
 
   it('streams start/token/complete events and persists success metadata', async () => {
@@ -108,6 +117,103 @@ describe('createArtifactStream', () => {
     expect(createQuotaHistory).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ status: 'success' }) }),
     );
+  });
+
+  it('reuses an existing artifact id without creating duplicates', async () => {
+    mockGenerateStream.mockReturnValue(makeTokenStream(['Hello', ' world']));
+
+    const stream = await createArtifactStream({
+      userId: 'user_1',
+      projectId: 'proj_1',
+      artifactId: 'art_existing',
+      type: 'content',
+      model: 'openai/gpt-4-turbo',
+      input: { topic: 'AI' },
+      persistFailure: false,
+    });
+
+    const lines = await readAllSse(stream);
+
+    expect(lines.some((l) => l.includes('"artifactId":"art_existing"'))).toBe(true);
+    expect(createArtifact).not.toHaveBeenCalled();
+    expect(updateArtifact).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'art_existing' },
+        data: expect.objectContaining({ status: 'generating', content: '' }),
+      }),
+    );
+  });
+
+  it('does not overwrite client disconnect failure with a later non-terminal update', async () => {
+    mockGenerateStream.mockImplementation(({ abortSignal }: { abortSignal: AbortSignal }) => (async function* () {
+      yield { token: 'Hello' };
+
+      await new Promise<void>((_, reject) => {
+        abortSignal.addEventListener('abort', () => {
+          reject(new Error('aborted'));
+        }, { once: true });
+      });
+    })());
+
+    const stream = await createArtifactStream({
+      userId: 'user_1',
+      projectId: 'proj_1',
+      artifactId: 'art_existing',
+      type: 'content',
+      model: 'openai/gpt-4-turbo',
+      input: { topic: 'AI' },
+      persistFailure: false,
+    });
+
+    const reader = stream.getReader();
+    await reader.read();
+    await reader.read();
+    await reader.cancel('stream_cancelled');
+    await Promise.resolve();
+    await Promise.resolve();
+
+    const lastUpdate = updateArtifact.mock.calls.at(-1)?.[0];
+    expect(lastUpdate).toEqual(expect.objectContaining({
+      where: { id: 'art_existing' },
+      data: expect.objectContaining({ status: 'failed', failureReason: 'client_disconnect' }),
+    }));
+  });
+
+  it('does not force status generating on timeout cancel when persistFailure is disabled', async () => {
+    mockGenerateStream.mockImplementation(({ abortSignal }: { abortSignal: AbortSignal }) => (async function* () {
+      yield { token: 'Hello' };
+
+      await new Promise<void>((_, reject) => {
+        abortSignal.addEventListener('abort', () => {
+          reject(new Error('aborted'));
+        }, { once: true });
+      });
+    })());
+
+    const stream = await createArtifactStream({
+      userId: 'user_1',
+      projectId: 'proj_1',
+      artifactId: 'art_existing',
+      type: 'content',
+      model: 'openai/gpt-4-turbo',
+      input: { topic: 'AI' },
+      persistFailure: false,
+    });
+
+    const reader = stream.getReader();
+    await reader.read();
+    await reader.read();
+    await reader.cancel('timeout');
+    await Promise.resolve();
+    await Promise.resolve();
+
+    const timeoutRecoveryUpdate = updateArtifact.mock.calls.find(
+      (call) => call[0]?.data?.streamedAt && call[0]?.data?.content === 'Hello',
+    )?.[0];
+
+    expect(timeoutRecoveryUpdate).toBeDefined();
+    expect(timeoutRecoveryUpdate.data.status).toBeUndefined();
+    expect(timeoutRecoveryUpdate.data.failureReason).toBeNull();
   });
 
   it('marks artifact failed and emits error event when generation throws', async () => {

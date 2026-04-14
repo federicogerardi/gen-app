@@ -11,6 +11,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { formatArtifactContentForDisplay, getArtifactDisplayTypeLabel, getEffectiveArtifactWorkflowType } from '@/lib/artifact-preview';
 import { getArtifactStatusBadgeClass, getArtifactStatusLabel } from '@/lib/artifact-status-ui';
+import { buildArtifactRelaunchHref } from '@/lib/artifact-relaunch';
 import { isArtifactType, isArtifactStatus } from '@/lib/types/artifact';
 
 export default async function ArtifactPage({ params }: { params: Promise<{ id: string }> }) {
@@ -49,6 +50,12 @@ export default async function ArtifactPage({ params }: { params: Promise<{ id: s
     type: artifact.type,
     workflowType,
   });
+  const relaunchHref = buildArtifactRelaunchHref({
+    id: artifact.id,
+    projectId: artifact.projectId,
+    workflowType,
+    input: artifact.input,
+  });
 
   return (
     <PageShell width="workspace">
@@ -67,6 +74,11 @@ export default async function ArtifactPage({ params }: { params: Promise<{ id: s
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            {relaunchHref && (
+              <Button className="w-full sm:w-auto" asChild>
+                <Link href={relaunchHref}>Rigenera variante</Link>
+              </Button>
+            )}
             {artifact.project?.id && (
               <Button className="w-full sm:w-auto" variant="outline" asChild>
                 <Link href={`/dashboard/projects/${artifact.project.id}`}>Apri progetto</Link>
@@ -88,17 +100,17 @@ export default async function ArtifactPage({ params }: { params: Promise<{ id: s
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 components={{
-                  h1: ({ children }) => <h1 className="mb-3 text-xl font-semibold text-foreground">{children}</h1>,
-                  h2: ({ children }) => <h2 className="mb-2 text-lg font-semibold text-foreground">{children}</h2>,
-                  h3: ({ children }) => <h3 className="mb-2 text-base font-semibold text-foreground">{children}</h3>,
-                  p: ({ children }) => <p className="mb-3 text-sm leading-7 break-words text-foreground">{children}</p>,
-                  ul: ({ children }) => <ul className="mb-3 list-disc space-y-1 pl-5 text-sm text-foreground">{children}</ul>,
-                  ol: ({ children }) => <ol className="mb-3 list-decimal space-y-1 pl-5 text-sm text-foreground">{children}</ol>,
-                  li: ({ children }) => <li className="leading-7">{children}</li>,
+                  h1: ({ children }) => <h1 className="app-title mb-4 text-3xl font-semibold leading-tight tracking-tight text-foreground">{children}</h1>,
+                  h2: ({ children }) => <h2 className="app-title mb-3 mt-8 text-2xl font-semibold leading-tight text-foreground">{children}</h2>,
+                  h3: ({ children }) => <h3 className="app-title mb-2 mt-6 text-xl font-semibold leading-tight text-foreground">{children}</h3>,
+                  p: ({ children }) => <p className="app-copy mb-5 max-w-[74ch] text-base leading-8 break-words text-foreground sm:text-[1.075rem]">{children}</p>,
+                  ul: ({ children }) => <ul className="app-copy mb-5 max-w-[74ch] list-disc space-y-2 pl-6 text-base leading-8 text-foreground sm:text-[1.075rem]">{children}</ul>,
+                  ol: ({ children }) => <ol className="app-copy mb-5 max-w-[74ch] list-decimal space-y-2 pl-6 text-base leading-8 text-foreground sm:text-[1.075rem]">{children}</ol>,
+                  li: ({ children }) => <li className="leading-8">{children}</li>,
                   strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
                   em: ({ children }) => <em className="italic">{children}</em>,
-                  blockquote: ({ children }) => <blockquote className="mb-3 border-l-2 pl-3 italic text-muted-foreground">{children}</blockquote>,
-                  code: ({ children }) => <code className="rounded bg-muted px-1 py-0.5 text-xs">{children}</code>,
+                  blockquote: ({ children }) => <blockquote className="app-copy mb-5 max-w-[72ch] border-l-2 border-slate-300 pl-4 text-[1.02rem] leading-8 italic text-muted-foreground">{children}</blockquote>,
+                  code: ({ children }) => <code className="rounded bg-muted px-1.5 py-0.5 text-sm">{children}</code>,
                 }}
               >
                 {readableOutput.text}

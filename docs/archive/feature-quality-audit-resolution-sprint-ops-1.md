@@ -15,7 +15,7 @@ tags: [sprint, operations, quality, security, audit, execution]
 This runbook converts the audit execution plan into small working sessions designed to avoid monolithic implementation blocks. Each session is intentionally narrow: one objective, one bounded scope, one validation target, one explicit stop condition.
 
 Source documents:
-- docs/archive/implement-quality-audit.completed-2026-04-11.md
+- docs/archive/implement-quality-audit-closure-2026-04-11.md
 - docs/archive/feature-quality-audit-resolution-1.md
 - docs/archive/feature-quality-audit-resolution-tracker-1.md
 
@@ -31,7 +31,7 @@ Source documents:
 
 Use this checklist for each sprint session:
 
-1. Read the relevant source problem in docs/archive/implement-quality-audit.completed-2026-04-11.md.
+1. Read the relevant source problem in docs/archive/implement-quality-audit-closure-2026-04-11.md.
 2. Limit the code scope to the files listed for the selected task.
 3. Implement only the session objective.
 4. Run the smallest validation set that still proves the slice.
@@ -135,6 +135,6 @@ This sequence creates an early vertical slice with low blast radius and a clear 
 
 ## 7. Related Files
 
-- docs/archive/implement-quality-audit.completed-2026-04-11.md
+- docs/archive/implement-quality-audit-closure-2026-04-11.md
 - docs/archive/feature-quality-audit-resolution-1.md
 - docs/archive/feature-quality-audit-resolution-tracker-1.md

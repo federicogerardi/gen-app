@@ -19,6 +19,12 @@ type FunnelUnifiedBriefingInput = {
   notes?: string;
 };
 
+type FunnelExtractionContextInput = {
+  contextText: string;
+  tone: 'professional' | 'casual' | 'formal' | 'technical';
+  notes?: string;
+};
+
 function buildLegacyBriefingText(input: FunnelBriefingInput): string {
   return [
     `Prodotto/Servizio: ${input.product}`,
@@ -103,11 +109,28 @@ function buildUnifiedBriefingText(input: FunnelUnifiedBriefingInput): string {
   ].join('\n');
 }
 
-function isUnifiedBriefingInput(input: FunnelBriefingInput | FunnelUnifiedBriefingInput): input is FunnelUnifiedBriefingInput {
+function isUnifiedBriefingInput(input: FunnelBriefingInput | FunnelUnifiedBriefingInput | FunnelExtractionContextInput): input is FunnelUnifiedBriefingInput {
   return 'briefing' in input;
 }
 
-function buildBriefingText(input: FunnelBriefingInput | FunnelUnifiedBriefingInput): string {
+function isExtractionContextInput(input: FunnelBriefingInput | FunnelUnifiedBriefingInput | FunnelExtractionContextInput): input is FunnelExtractionContextInput {
+  return 'contextText' in input;
+}
+
+function buildBriefingText(input: FunnelBriefingInput | FunnelUnifiedBriefingInput | FunnelExtractionContextInput): string {
+  if (isExtractionContextInput(input)) {
+    return [
+      '### Extraction Context',
+      input.contextText.trim(),
+      '',
+      `### Tono richiesto`,
+      input.tone,
+      '',
+      `### Note aggiuntive`,
+      input.notes?.trim() || 'Nessuna',
+    ].join('\n');
+  }
+
   if (isUnifiedBriefingInput(input)) {
     return buildUnifiedBriefingText(input);
   }
@@ -115,13 +138,13 @@ function buildBriefingText(input: FunnelBriefingInput | FunnelUnifiedBriefingInp
   return buildLegacyBriefingText(input);
 }
 
-export async function buildFunnelOptinPrompt(input: FunnelBriefingInput | FunnelUnifiedBriefingInput): Promise<string> {
+export async function buildFunnelOptinPrompt(input: FunnelBriefingInput | FunnelUnifiedBriefingInput | FunnelExtractionContextInput): Promise<string> {
   const template = await loadPromptSource(TOOL_PROMPT_REGISTRY.funnel.optin);
-  return `${template}\n\n## BRIEFING OPERATIVO\n${buildBriefingText(input)}\n\nRestituisci output rigorosamente conforme alle regole del prompt.`;
+  return `${template}\n\n## BRIEFING OPERATIVO\n${buildBriefingText(input)}\n\nNota aggiuntiva per questo step:\nnell'optin page puoi usare emoji in modo persuasivo e misurato per aumentare attenzione, leggibilita e click intent, evitando abuso, tono infantile o perdita di credibilita.\n\nRestituisci output rigorosamente conforme alle regole del prompt.`;
 }
 
 export async function buildFunnelQuizPrompt(
-  input: (FunnelBriefingInput | FunnelUnifiedBriefingInput) & { optinOutput: string },
+  input: (FunnelBriefingInput | FunnelUnifiedBriefingInput | FunnelExtractionContextInput) & { optinOutput: string },
 ): Promise<string> {
   const template = await loadPromptSource(TOOL_PROMPT_REGISTRY.funnel.quiz);
   return [
@@ -135,7 +158,7 @@ export async function buildFunnelQuizPrompt(
 }
 
 export async function buildFunnelVslPrompt(
-  input: (FunnelBriefingInput | FunnelUnifiedBriefingInput) & { optinOutput: string; quizOutput: string },
+  input: (FunnelBriefingInput | FunnelUnifiedBriefingInput | FunnelExtractionContextInput) & { optinOutput: string; quizOutput: string },
 ): Promise<string> {
   const template = await loadPromptSource(TOOL_PROMPT_REGISTRY.funnel.vsl);
   return [
@@ -152,3 +175,4 @@ export async function buildFunnelVslPrompt(
 
 export type { FunnelBriefingInput };
 export type { FunnelUnifiedBriefingInput };
+export type { FunnelExtractionContextInput };

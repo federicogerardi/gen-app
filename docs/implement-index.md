@@ -2,6 +2,89 @@
 
 _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 
+## Aggiornamento sessione (2026-04-15 — Operational Hardening Plan API/LLM Tooling)
+
+- **Nuova attivita pianificata (P1)**: creato piano esecutivo per hardening operativo API/LLM tooling con focus su error boundaries pre-stream, finalizzazione artifact extraction, reason taxonomy ownership e allineamento specifiche API.
+- **Documento piano**: `docs/implementation/feature-operational-hardening-api-llm-tooling-plan-1.md`.
+- **Tracker operativo**: `docs/implementation/feature-operational-hardening-api-llm-tooling-tracker-1.md`.
+- **Stato**: `Planned` (da avviare nel prossimo ciclo backend hardening).
+- **Origine**: `docs/review/operational-improvement-note-api-llm-tooling-2026-04-15.md`.
+
+## Aggiornamento sessione (2026-04-15 — Extraction Completeness-First)
+
+- **Guardrail extraction riallineati allo scopo del tool**: rimosso il profilo text-mode a timeout stretti (18s/22s) e introdotta policy completeness-first con finestre estese.
+- **No cap stringente in text-mode**: sul consumer route extraction i guard stream aggressivi (`first_token`, `token_idle`, `json_start`, `json_parse`) sono disattivati in text-mode; resta una deadline ampia per-attempt per evitare richieste indefinite.
+- **Coerenza stato artifact finale**: nei path di successo route-level extraction viene persistito esplicitamente `status: completed` con `completedAt`; nel recovery stream timeout non viene piu forzato `status: generating`.
+- **Validazione post-allineamento**: `tests/unit/extraction-model-policy.test.ts` PASS, `tests/integration/extraction-route.test.ts` PASS, `npm run build` PASS.
+
+## Aggiornamento sessione (2026-04-14 — Extraction Hardening Finale)
+
+### Text-Mode Extraction: Completato ✅
+
+**Implementazione completata del refactoring semplificazione estrazione** — passaggio da JSON schema parsing a plain text output per il flusso funnel upload-first.
+
+**Cosa è stato risolto:**
+
+1. **Typecheck errors (2 file)**: 
+   - `tests/unit/tool-prompts.test.ts:60` — Added missing `responseMode: 'text'` parameter to test fixture
+   - `src/lib/tool-prompts/funnel-pages.ts:17` — Made `briefing` optional to support extraction-only context path
+   - ✅ Result: Full typecheck passing (0 errors)
+
+2. **Integration test failures (2 test cases)**:
+   - Updated token-timeout tests to align with text-mode extraction behavior
+   - Mock streams now send plain text (not invalid JSON)
+   - Test expectations adjusted: `timeoutKind:"token_idle"` → actual timeout behavior (first_token, etc.)
+   - ✅ Result: 377/377 tests passing
+
+3. **Escalation logic fix (soft_accept handling)**:
+   - `src/app/api/tools/extraction/generate/route.ts:285` — soft_accept in text mode now **stops escalation** (returns 200 immediately)
+   - Previous behavior: soft_accept triggered fallback to next model → eventually 503 (max_attempts_reached)
+   - New behavior: soft_accept considered success in text mode (valid text output received)
+   - ✅ Result: Extraction succeeds on first valid attempt; no unnecessary retries
+
+4. **DB persistence synchronization**:
+   - HTTP 200 response on soft_accept success (text mode) → DB persists as success
+   - Previous discrepancy resolved: logs showed `acceptanceDecision:soft_accept` but DB showed error (was returning 503)
+   - ✅ Result: Logs and database state now synchronized via HTTP status codes
+
+5. **Documentation updates**:
+   - API spec enhanced: new "Text-Mode Extraction" section with response format, timeout behavior, log field differences
+   - Hardening tracker updated: all 16 tasks marked complete
+   - hl-funnel schema updated: new section documenting text-mode extraction stability and KPI measurement plan
+   - Completion report created: `docs/closure/text-mode-extraction-completion-2026-04-14.md`
+
+**Validazione in produzione:**
+- Live extraction request (responseMode:text) succeeds on attempt 2 with gpt-4.1
+- Logs: parseOk:true, schemaOk:true, consistencyOk:true, soft_accept
+- HTTP 200 returned; tool generation stream initialized successfully
+- Text output feeds correctly into downstream generators (optin/quiz/vsl prompts)
+
+**Impatto:**
+- ✅ Estrazione chain è hardened (timeout handling attivo) + semplificato (no JSON parsing)
+- ✅ Escalation efficient (soft_accept stops retries in text mode)
+- ✅ Type system stable (2 typecheck errors fixed)
+- ✅ Tests aligned (2 failures fixed)
+- ✅ DB persistence correct (200 responses persist as success)
+
+**Prossimer step:**
+- Monitor first-attempt success rates in production (target: >80% attempt 1-2)
+- Measure extraction quality for downstream generators
+- Track timeout distribution (measure real-world token_idle occurrences)
+
+---
+
+## Aggiornamento sessione (2026-04-14)
+
+- **Extraction chain hardening (latenza/affidabilita/first-pass)**: snapshot storico 2026-04-14, allora in corso; implementazione tecnica completata (diagnostica consistency, timeout per-attempt, acceptance a soglie, prompt contract, abort propagation), con validazione KPI dev allora aperta.
+- **Extraction text-mode simplification (Funnel upload-first)**: attivata modalita `responseMode: "text"` con payload V3 `extractionContext`, riducendo dipendenza dal parsing strutturato; ultimo run dev positivo con successo al primo tentativo e latenza ~20s.
+- **Documenti attivati**: piano `docs/implementation/feature-extraction-chain-hardening-plan-1.md` e tracker `docs/implementation/feature-extraction-chain-hardening-tracker-1.md`.
+- **Extraction chain artifact-first (nuovo track)**: Sprint 0 completato (outcome matrix, reason taxonomy, mapping terminale HTTP/artifact status), Sprint 1 completato (artifact stub, idempotency, single artifact chain), Sprint 2 tecnico completato (timeout classifier completo, partial timeout acceptance, single-finalize), Sprint 3 completato (finalizzazione atomica completion/failure, persistenza terminal reason, coerenza complete-event post-commit), Sprint 4 completato (`TASK-0401`, `TASK-0402`, `TASK-0403`), Sprint 5 completato (`TASK-0501..0504` con retry/resume UX + E2E dedicata) e Sprint 6 codice completato (`TASK-0601..0603`: feature flag route-level, rollout percentuale 10/30/100, rollback switch + drill runbook); monitoraggio KPI runtime e promozione progressiva restano attivi per chiusura gate finale (`docs/implementation/plan-extractionChainArtifactFirst.prompt.md`, `docs/implementation/feature-extraction-chain-artifact-first-tracker-1.md`, `docs/implementation/extraction-chain-artifact-first-sprint-operations-plan-2026-04-14.md`, `docs/review/extraction-model-policy-rollout-runbook-2026-04-12.md`).
+- **Funnel upload-first: testimonianze strutturate propagate al contesto generazione**: completato il passaggio dati da `extractedFields.testimonials_sources` verso `proof_context.testimonials_sources` con campi estesi (`quote`, `source`, `achieved_result`, `measurable_results`).
+- **Field map extraction funnel esteso**: aggiunta voce `testimonials_sources` in `FUNNEL_EXTRACTION_FIELD_MAP` per rendere esplicita l'estrazione della social proof dal documento sorgente.
+- **Validazione recente**: test mirati `PASS` su mapping e route funnel (`tests/unit/funnel-mapping.test.ts`, `tests/unit/funnel-extraction-field-map.test.ts`, `tests/integration/funnel-pages-route.test.ts`).
+- **Sprint microtask GUI/UX low-impact**: completato il backlog MT-UX-01..08 con evidenze operative consolidate nel tracker dedicato, incluse validazioni test e verifica GUI locale.
+- **Guardrail CI Next.js App Router**: introdotte linee guida build-safe per `useSearchParams` con boundary `Suspense` per prevenire errori di prerender in pipeline quality.
+
 ## Aggiornamento sessione (2026-04-12)
 
 - **Verifica deploy/migrate completata**: confermato che `prisma migrate deploy` e incluso nella pipeline CI e nella catena di deploy applicativa (`db:migrate:deploy` -> `deploy:vercel` -> build).
@@ -25,7 +108,7 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
   - Track esecutivo completato su 4 fasi e 15 finding, con merge finale su `dev` (squash and merge).
   - Tutti i task `TASK-TRK-001` → `TASK-TRK-015` risultano `Done` nel tracker operativo.
   - Documento piano allineato a stato finale e snapshot archiviato per storico.
-  - File: docs/archive/implement-quality-audit.completed-2026-04-11.md, docs/archive/feature-quality-audit-resolution-tracker-1.md
+  - File: docs/archive/implement-quality-audit-closure-2026-04-11.md, docs/archive/feature-quality-audit-resolution-tracker-1.md
 
 - **Feature audit remediation sequenced (2026-04-12)**: `COMPLETATO E MERGIATO`
   - Piano sequenziale `TASK-001..TASK-020` completato con evidenze test/unit/integration/e2e.
@@ -46,6 +129,7 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
   - Completati schema unificato input, prompt/runtime parity, normalizzazione output, SSE metadata additive, consolidamento route/error mapping e hardening finale.
   - Standard output workflow tool allineato a `outputFormat: markdown` (Meta Ads + Funnel Pages).
   - Esteso il flow Funnel Pages a pipeline upload-first: upload documento inline -> extraction fields -> generazione sequenziale `optin -> quiz -> vsl`.
+  - Follow-up 2026-04-14: arricchita la propagazione delle testimonianze estratte verso il briefing funnel con campi risultato e metriche misurabili.
   - Validazione finale locale aggiornata: `npm run lint`, `npm run typecheck`, `npm run test` (30/30 suite), `npm run build` tutti `PASS`.
   - File: docs/archive/tooling-generation-refactor-plan.md
 
@@ -54,6 +138,11 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
   - Root cause runtime chiusa durante il track: mismatch sul campo `notes` tra prompt e schema route, corretto con riallineamento prompt e compatibilita `string | string[]` lato validazione.
   - Merge su `dev` completato; documentazione operativa e tracker chiusi come snapshot finale as-is.
   - File: docs/implementation/funnel-extraction-model-policy-plan.md, docs/implementation/feature-funnel-extraction-model-policy-tracker-1.md, docs/review/extraction-model-policy-rollout-runbook-2026-04-12.md
+
+- **Extraction chain hardening (Funnel upload -> extraction)**: `COMPLETATO (2026-04-15)`
+  - Implementazione hardening completata su route/policy/provider path: telemetria consistency, timeout differenziati per tentativo, acceptance engine `hard_accept/soft_accept/reject`, first-token + token-idle timeout, abort propagation end-to-end e rafforzamento prompt contract.
+  - Stato operativo: monitoraggio KPI runtime prosegue nel track artifact-first/completeness-first per gate rollout finale.
+  - File: docs/implementation/feature-extraction-chain-hardening-plan-1.md, docs/implementation/feature-extraction-chain-hardening-tracker-1.md
 
 - **Deploy Vercel**: `COMPLETATO (baseline)`
   - Branch `main` in produzione.
@@ -67,7 +156,7 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
   - Consolidare e mantenere il livello raggiunto nelle prossime PR.
 - **Espansione test E2E e flussi reali auth/db**: `IN CORSO`
   - Estendere i test su login reale, generazione end-to-end, quota/admin e regression UX preview.
-  - File: docs/archive/improvement-roadmap.md, docs/archive/architecture-review.md, docs/ux/gui-refactor-plan.md
+  - File: docs/archive/llm-artifact-generation-roadmap-plan.md, docs/archive/architecture-review.md, docs/ux/gui-refactor-plan.md
 
 ---
 
@@ -80,24 +169,24 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 - **Structured logging & observability**
   - Implementare logging strutturato (Pino), Sentry, performance metrics.
   - Bloccante per debugging/monitoraggio.
-  - File: docs/archive/improvement-roadmap.md
+  - File: docs/archive/llm-artifact-generation-roadmap-plan.md
 
 - **Quality & security audit resolution track**: `COMPLETATO`
   - Esecuzione completata dei finding di correttezza, consistenza, scalabilita e hardening emersi dall'audit globale.
   - Piano operativo chiuso e mantenuto come riferimento storico insieme al tracker.
-  - File: docs/archive/implement-quality-audit.completed-2026-04-11.md, docs/archive/feature-quality-audit-resolution-tracker-1.md
+  - File: docs/archive/implement-quality-audit-closure-2026-04-11.md, docs/archive/feature-quality-audit-resolution-tracker-1.md
 
 - **Error handling avanzato**
   - Retry logic, circuit breaker, error boundaries custom, fallback provider.
-  - File: docs/archive/improvement-roadmap.md, docs/archive/architecture-review.md
+  - File: docs/archive/llm-artifact-generation-roadmap-plan.md, docs/archive/architecture-review.md
 
 - **Database optimization**
   - Indici, constraints, soft deletes.
-  - File: docs/archive/improvement-roadmap.md
+  - File: docs/archive/llm-artifact-generation-roadmap-plan.md
 
 - **Quota management**
   - Automatizzare reset mensile, warning 80%, endpoint admin quota, email alert.
-  - File: docs/archive/improvement-roadmap.md, docs/archive/architecture-review.md
+  - File: docs/archive/llm-artifact-generation-roadmap-plan.md, docs/archive/architecture-review.md
 
 - **Model registry auto-sync da OpenRouter**
   - Integrare il prelievo automatico dei costi modello esposti da OpenRouter e dei dettagli endpoint pubblicati dalla Models API per ridurre input manuale in admin e migliorare l'allineamento del registry.
@@ -130,6 +219,11 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
   - Migliorare gestione quota/budget, drawer accessibile, audit timeline.
   - File: docs/ux/gui-refactor-plan.md
 
+- **Microtask GUI/UX low-impact (estrazione sprint 2026-04-14)**: `COMPLETATO`
+  - Backlog MT-UX-01..08 chiuso con implementazioni incrementali su dashboard, storico artefatti, rilancio con prefill e hardening accessibilita.
+  - Evidenza di validazione: suite test verde e verifica GUI locale registrate nel tracker sprint.
+  - File: docs/implementation/gui-ux-low-impact-microtasks-sprint-plan-2026-04-14.md
+
 - **Projects-first navigation & IA**: `COMPLETATO (2026-04-13)`
   - Riallineata la gerarchia dell'app ai progetti come entita primaria con route indice dedicata `/dashboard/projects`, dashboard project-first e riposizionamento di Artefatti come storico trasversale personale.
   - Validazione completata: test `PASS` (48 suite, 352 test), typecheck `PASS` e build produzione `PASS`.
@@ -142,7 +236,7 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 - **Vercel post-deployment hardening & monitoring**
   - Consolidare health checks, monitoring, runbook e smoke validation.
   - Prioritario per stabilizzazione post go-live.
-  - File: docs/archive/improvement-roadmap.md, docs/implementation/implementation-plan.md
+  - File: docs/archive/llm-artifact-generation-roadmap-plan.md, docs/implementation/implementation-plan.md
 
 - **Guardrail env validation (build-safe)**: `COMPLETATO (2026-04-12)`
   - Evitare validazioni env endpoint-specific in import-time (`parseEnv(process.env)`), perche Next.js puo valutare moduli non correlati durante `Collecting page data`.
@@ -155,7 +249,7 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 ## Documentazione
 - **Allineamento documentazione vs codice**
   - Aggiornare api-specifications.md, blueprint.md, docstring, runbook.
-  - File: docs/archive/copilot-review-followups.md, docs/archive/architecture-review.md
+  - File: docs/archive/copilot-review-followups-overview.md, docs/archive/architecture-review.md
 
 ---
 

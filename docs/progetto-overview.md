@@ -1,8 +1,8 @@
 # Progetto Overview: LLM Artifact Generation Hub
 
-**Versione**: 1.0  
-**Status**: APP LOCALE FUNZIONANTE + TOOL MODULARI IN EVOLUZIONE  
-**Data**: 2026-04-12  
+**Versione**: 1.1  
+**Status**: APP OPERATIVA SU DEV/PROD + TOOL MVP ATTIVI + HARDENING CONTINUO  
+**Data**: 2026-04-13  
 **Destinatario**: Stakeholder e Team di Progetto
 
 ---
@@ -67,7 +67,7 @@ Stiamo costruendo un **Hub di Generazione Artefatti con AI/LLM** che permette ai
 
 ### Modelli LLM
 - Registry modelli dinamico persistito in DB (`LlmModel`)
-- Gestione admin via GUI con CRUD (`/api/admin/models` e `/api/admin/models/{modelId}`)
+- Gestione admin via GUI con CRUD (`/api/admin/models` e `/api/admin/models/{id}`)
 - Catalogo pubblico usato dai tool tramite `GET /api/models` (solo modelli attivi)
 - Default model configurabile da admin (`isDefault`)
 - Seed/fallback statico controllato mantenuto per continuita operativa
@@ -303,23 +303,11 @@ Gli agenti potron leggere questi documenti e implementare il codice senza ambigu
 
 ## Next Steps
 
-### Immediato (Questa settimana)
-1. [ ] Review e approve documentation
-2. [x] Deploy Vercel configurato (`main` produzione, `dev` sviluppo PR)
-3. [ ] Configure Google OAuth credentials
-4. [ ] Create GitHub repository
-
-### Settimana Prossima
-1. [ ] Initialize Next.js codebase
-2. [ ] Kickoff team call
-3. [ ] Start phase 1 (foundation)
-4. [ ] Setup CI/CD pipeline
-
-### Week 3+
-1. [ ] First code review
-2. [ ] Admin dashboard prototype
-3. [ ] Early user feedback
-4. [ ] Iterate + adjust timeline se needed
+### Priorita operative (as-is)
+1. [ ] Consolidare test E2E su flussi auth/db end-to-end
+2. [ ] Estendere observability (Sentry + logging) sulle route non ancora coperte
+3. [ ] Chiudere hardening UX/accessibilita cross-device
+4. [ ] Proseguire monitoraggio costi/modelli e quality gate CI
 
 ---
 
@@ -339,8 +327,8 @@ A: Sì, copy/paste sempre disponibile. Export in bulk (CSV, ZIP) coming in phase
 **Q: Chi ha accesso ai miei artifacts?**  
 A: Solo te + admin (con audit logging). Condivisione team: future feature.
 
-**Q: Cosa succede dopo 90 giorni di storage?**  
-A: Auto-archived ma recuperabili. Admin può customizzare retention.
+**Q: Cosa succede ai dati nel tempo?**  
+A: Nel perimetro MVP attuale non e applicata una retention policy automatica sugli artifact.
 
 ---
 

@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { requireAdminUser } from '@/lib/tool-routes/guards';
 
 export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id || session.user.role !== 'admin') {
-    return NextResponse.json({ error: { code: 'FORBIDDEN', message: 'Admin access required' } }, { status: 403 });
+  const adminResult = await requireAdminUser();
+  if (!adminResult.ok) {
+    return adminResult.response;
   }
 
   const [totalUsers, totalArtifacts, completedArtifacts, failedArtifacts, userSpend] = await Promise.all([

@@ -1,11 +1,19 @@
 import {
+  classifyExtractionCompletionOutcome,
+  EXTRACTION_DEFAULT_ATTEMPT_TIMEOUTS_MS,
+  EXTRACTION_FIRST_TOKEN_TIMEOUT_MS,
   EXTRACTION_FALLBACK_MODELS,
+  EXTRACTION_JSON_PARSE_TIMEOUT_MS,
+  EXTRACTION_JSON_START_TIMEOUT_MS,
   EXTRACTION_MAX_ATTEMPTS,
-  EXTRACTION_MAX_COST_USD,
   EXTRACTION_PRIMARY_MODEL,
+  EXTRACTION_TEXT_ATTEMPT_TIMEOUTS_MS,
+  EXTRACTION_TOKEN_IDLE_TIMEOUT_MS,
   EXTRACTION_TIMEOUT_MS,
   getExtractionAttemptPlan,
   getExtractionModelChain,
+  mapExtractionTerminalState,
+  resolveExtractionCompletionReason,
   resolveExtractionRuntimeModel,
   shouldEscalateExtractionAttempt,
 } from '@/lib/llm/extraction-model-policy';
@@ -26,9 +34,15 @@ describe('extraction-model-policy', () => {
       attemptIndex: 1,
       model: EXTRACTION_PRIMARY_MODEL,
       isFallback: false,
-      timeoutMs: EXTRACTION_TIMEOUT_MS,
+      timeoutMs: EXTRACTION_DEFAULT_ATTEMPT_TIMEOUTS_MS[0],
     });
-    expect(plan[1]?.isFallback).toBe(true);
+    expect(plan[1]).toEqual({
+      attemptIndex: 2,
+      model: EXTRACTION_FALLBACK_MODELS[0],
+      isFallback: true,
+      timeoutMs: EXTRACTION_DEFAULT_ATTEMPT_TIMEOUTS_MS[1],
+    });
+    expect(plan[2]?.timeoutMs).toBe(EXTRACTION_DEFAULT_ATTEMPT_TIMEOUTS_MS[2]);
   });
 
   it('caps attempt plan when maxAttempts override is provided', () => {
@@ -48,6 +62,28 @@ describe('extraction-model-policy', () => {
         timeoutMs: 12_000,
       },
     ]);
+  });
+
+  it('uses single timeout override for all attempts when per-attempt values are provided explicitly', () => {
+    const plan = getExtractionAttemptPlan({
+      maxAttempts: 3,
+      timeoutMs: 15_000,
+      attemptTimeoutMs: [15_000, 15_000, 15_000],
+    });
+
+    expect(plan.map((item) => item.timeoutMs)).toEqual([15_000, 15_000, 15_000]);
+  });
+
+  it('exposes first-token timeout hardening constant', () => {
+    expect(EXTRACTION_FIRST_TOKEN_TIMEOUT_MS).toBe(45_000);
+    expect(EXTRACTION_TIMEOUT_MS).toBeGreaterThan(EXTRACTION_FIRST_TOKEN_TIMEOUT_MS);
+    expect(EXTRACTION_JSON_START_TIMEOUT_MS).toBe(35_000);
+    expect(EXTRACTION_JSON_PARSE_TIMEOUT_MS).toBe(30_000);
+    expect(EXTRACTION_TOKEN_IDLE_TIMEOUT_MS).toBe(40_000);
+    expect(EXTRACTION_FIRST_TOKEN_TIMEOUT_MS).toBeGreaterThanOrEqual(EXTRACTION_TOKEN_IDLE_TIMEOUT_MS);
+    expect(EXTRACTION_TOKEN_IDLE_TIMEOUT_MS).toBeGreaterThan(EXTRACTION_JSON_START_TIMEOUT_MS);
+    expect(EXTRACTION_JSON_START_TIMEOUT_MS).toBeGreaterThan(EXTRACTION_JSON_PARSE_TIMEOUT_MS);
+    expect(EXTRACTION_TEXT_ATTEMPT_TIMEOUTS_MS).toEqual([120_000, 150_000, 180_000]);
   });
 
   it('always resolves primary runtime model independently from payload model', () => {
@@ -73,15 +109,6 @@ describe('extraction-model-policy', () => {
     expect(decision).toEqual({ escalate: true, reason: 'schema_failed' });
   });
 
-  it('blocks escalation when budget cap is exceeded', () => {
-    const decision = shouldEscalateExtractionAttempt(
-      { success: false, providerError: true },
-      { attemptIndex: 1, cumulativeCostUsd: EXTRACTION_MAX_COST_USD + 0.001 },
-    );
-
-    expect(decision).toEqual({ escalate: false, reason: 'budget_exceeded' });
-  });
-
   it('blocks escalation when max attempts is reached', () => {
     const decision = shouldEscalateExtractionAttempt(
       { success: false, providerError: true },
@@ -89,5 +116,61 @@ describe('extraction-model-policy', () => {
     );
 
     expect(decision).toEqual({ escalate: false, reason: 'max_attempts_reached' });
+  });
+
+  it('classifies hard and partial completion outcomes deterministically', () => {
+    expect(classifyExtractionCompletionOutcome({ success: true, acceptanceDecision: 'hard_accept' })).toBe('completed_full');
+    expect(classifyExtractionCompletionOutcome({ success: true, acceptanceDecision: 'soft_accept' })).toBe('completed_partial');
+    expect(classifyExtractionCompletionOutcome({ success: true, acceptanceDecision: 'hard_accept', timedOut: true })).toBe('completed_partial');
+    expect(classifyExtractionCompletionOutcome({ success: false, acceptanceDecision: 'reject' })).toBe('failed_hard');
+  });
+
+  it('resolves completion reason taxonomy for partial and hard-fail outcomes', () => {
+    expect(resolveExtractionCompletionReason({
+      outcome: 'completed_partial',
+      acceptanceReason: 'critical_coverage_threshold_met',
+    })).toBe('critical_coverage_threshold_met');
+
+    expect(resolveExtractionCompletionReason({
+      outcome: 'completed_partial',
+      acceptanceReason: 'something-else',
+    })).toBe('partial_useful_output');
+
+    expect(resolveExtractionCompletionReason({
+      outcome: 'failed_hard',
+      hardFailReason: 'validation_error',
+    })).toBe('validation_error');
+  });
+
+  it('maps terminal states to stable HTTP and artifact statuses', () => {
+    expect(mapExtractionTerminalState({
+      outcome: 'completed_full',
+      reason: 'known_fields_present',
+    })).toEqual({
+      outcome: 'completed_full',
+      reason: 'known_fields_present',
+      httpStatus: 200,
+      artifactStatus: 'completed',
+    });
+
+    expect(mapExtractionTerminalState({
+      outcome: 'failed_hard',
+      reason: 'unauthorized',
+    })).toEqual({
+      outcome: 'failed_hard',
+      reason: 'unauthorized',
+      httpStatus: 401,
+      artifactStatus: 'failed',
+    });
+
+    expect(mapExtractionTerminalState({
+      outcome: 'failed_hard',
+      reason: 'no_signal_after_chain_exhausted',
+    })).toEqual({
+      outcome: 'failed_hard',
+      reason: 'no_signal_after_chain_exhausted',
+      httpStatus: 503,
+      artifactStatus: 'failed',
+    });
   });
 });

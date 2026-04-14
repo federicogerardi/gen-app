@@ -1,7 +1,7 @@
 # HL Funnel - Unified Input Schema
 
-Version: 1.1
-Date: 2026-04-11
+Version: 1.2
+Date: 2026-04-14
 Scope: contratto semantico unico dei campi input richiesti da prompt optin, quiz, vsl.
 
 ## Obiettivo
@@ -21,10 +21,12 @@ Il set e progettato per:
 
 Con il refactoring Funnel Pages del branch corrente, il flusso UI principale e:
 1. upload documento (`/api/tools/funnel-pages/upload`)
-2. extraction campi (`/api/tools/extraction/generate` + `FUNNEL_EXTRACTION_FIELD_MAP`)
-3. generazione step funnel (`/api/tools/funnel-pages/generate`, payload V3 `extractedFields`)
+2. extraction contesto testuale (`/api/tools/extraction/generate` con `responseMode: "text"`)
+3. generazione step funnel (`/api/tools/funnel-pages/generate`, payload V3 `extractionContext`)
 
-Questo documento resta il riferimento del **modello dati target** verso cui i campi estratti vengono mappati server-side prima della costruzione dei prompt.
+Questo documento resta il riferimento del **modello dati target**:
+- nel flusso text-first, guida la qualita semantica del contesto testuale passato ai prompt;
+- nei flussi strutturati/legacy, resta il modello verso cui i campi vengono mappati server-side.
 
 ## Prompt coperti
 
@@ -74,7 +76,7 @@ Questo documento resta il riferimento del **modello dati target** verso cui i ca
 | success_metrics | Metriche di successo | textarea | true | optin, quiz, vsl |
 | next_customer_journey_step | Step successivo journey | textarea | true | optin, quiz, vsl |
 | case_studies | Casi studio verificabili | repeater(object) | false | optin, quiz, vsl |
-| testimonials_sources | Fonti testimonianze | repeater(object) | false | optin, vsl |
+| testimonials_sources | Fonti testimonianze strutturate | repeater(object) | false | optin, vsl |
 | authority_assets | Asset di credibilita | textarea | false | optin, vsl |
 | visual_proof_assets | Asset prova visiva | repeater(object) | false | vsl |
 | optin_output_context | Output optin gia generato | textarea | false | vsl |
@@ -122,6 +124,8 @@ Questo documento resta il riferimento del **modello dati target** verso cui i ca
 | quote | textarea | true |
 | source | text | true |
 | timestamp | text | false |
+| achieved_result | textarea | false |
+| measurable_results | textarea | false |
 
 ### visual_proof_assets[]
 
@@ -140,6 +144,8 @@ Questo documento resta il riferimento del **modello dati target** verso cui i ca
 - if delivery_model in (fai-da-te, corso), false_belief_internal should include technical fear/motivation signals.
 - if case_studies present, each item must include source.
 - if testimonials_sources present, non verificato cannot be quoted directly.
+- if testimonials_sources present, ogni testimonianza deve includere quote testuale virgoletata e source nella stessa entry (non e valido solo il nome del testimonial).
+- if achieved_result or measurable_results are present, they must be attributable to the same testimonial source.
 - assumptions_allowed=true permits conservative fallbacks and requires assumption_notes when critical fields are missing.
 
 ## Conditional UI Logic
@@ -262,3 +268,29 @@ Per una prima release del modulo, usare almeno:
 - Per output di qualita marketing alta, raccomandato compilare sempre proof_context.
 - Nel flusso upload-first alcuni campi possono risultare mancanti/partial e vengono gestiti con fallback conservativi durante la mappatura.
 - `email_already_collected` continua a essere valorizzato automaticamente a `true` nel flusso funnel corrente.
+- Nel mapping upload-first (payload V3), `testimonials_sources` viene propagato in `proof_context` mantenendo anche `achieved_result` e `measurable_results` quando disponibili.
+
+## Updates — 2026-04-14 (Extraction Chain Hardening Complete)
+
+### Text-Mode Extraction: Stable & Production-Ready ✅
+
+La decisione strategica di semplificare da JSON schema parsing a plain text extraction è ora **completamente implementata**.
+
+**Cosa è cambiato:**
+- **extraction/generate route** (`responseMode: "text"`): soft_accept ora **arresta l'escalation** (non continua ai model successivi)
+- **HTTP status codes**: soft_accept ritorna **200** (non 503), abilitando corretta persistenza in DB
+- **Timeout handling (as-is 2026-04-15)**: in text mode sono attive deadline per-attempt estese (120s/150s/180s) senza guard stream aggressivi; in structured mode restano guard timeout (`first-token`, `token-idle`, `json-start`, `json-parse`) con soglie riallineate completeness-first.
+- **Type system**: Fixed typecheck errors; all tests passing (377/377)
+- **DB sync**: Logs e database state ora **sincronizzati** — `acceptanceDecision:soft_accept` → persiste come success
+
+**Implicazioni per questo schema:**
+- `testimonials_sources[]` con `quote` field virgoletato **è già presente e supportato** da text extraction
+- Text output flows correttamente nei 3 prompt (optin/quiz/vsl) — nessuna dipendenza da JSON parsing
+- Escalation logic ensures: attempt 1 (Claude) succeeds ~50% of time; attempt 2 (GPT-4.1) succeeds ~90%; fallback managed gracefully
+
+**Reference:**
+- Completion report: [`docs/closure/text-mode-extraction-completion-2026-04-14.md`](../closure/text-mode-extraction-completion-2026-04-14.md)
+- Hardening tracker: [`docs/implementation/feature-extraction-chain-hardening-tracker-1.md`](../implementation/feature-extraction-chain-hardening-tracker-1.md)
+- API spec: [`docs/specifications/api-specifications.md`](./api-specifications.md) — Text-Mode Extraction section added
+
+**Next phase:** Monitor first-attempt success rates in production; measure extraction quality on downstream generators.

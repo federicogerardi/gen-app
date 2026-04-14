@@ -39,14 +39,14 @@ beforeEach(() => {
 });
 
 describe('PUT /api/admin/users/[userId]/quota', () => {
-  it('returns 403 for unauthenticated request', async () => {
+  it('returns 401 for unauthenticated request', async () => {
     mockedAuth.mockResolvedValue(null as never);
 
     const res = await PUT(makePutRequest({ monthlyQuota: 200 }), makeParams());
     const data = await res.json();
 
-    expect(res.status).toBe(403);
-    expect(data.error.code).toBe('FORBIDDEN');
+    expect(res.status).toBe(401);
+    expect(data.error.code).toBe('UNAUTHORIZED');
   });
 
   it('returns 403 for non-admin user', async () => {
@@ -112,14 +112,14 @@ describe('PUT /api/admin/users/[userId]/quota', () => {
 });
 
 describe('GET /api/admin/users/[userId]/audit', () => {
-  it('returns 403 for unauthenticated request', async () => {
+  it('returns 401 for unauthenticated request', async () => {
     mockedAuth.mockResolvedValue(null as never);
 
     const res = await GET(new Request('http://localhost'), makeParams());
     const data = await res.json();
 
-    expect(res.status).toBe(403);
-    expect(data.error.code).toBe('FORBIDDEN');
+    expect(res.status).toBe(401);
+    expect(data.error.code).toBe('UNAUTHORIZED');
   });
 
   it('returns 403 for non-admin user', async () => {

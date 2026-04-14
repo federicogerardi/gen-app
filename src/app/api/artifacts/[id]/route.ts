@@ -3,16 +3,11 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { z } from 'zod';
 import { apiError } from '@/lib/tool-routes/responses';
+import { stripArtifactCost } from '@/lib/api/artifact-serializer';
 
 const updateArtifactSchema = z.object({
   content: z.string().min(1).max(100_000),
 });
-
-function stripArtifactCost<T>(artifact: T): Omit<T, 'costUSD'> {
-  const { costUSD, ...sanitizedArtifact } = artifact as T & { costUSD?: unknown };
-  void costUSD;
-  return sanitizedArtifact as Omit<T, 'costUSD'>;
-}
 
 export async function GET(
   _request: Request,
@@ -78,17 +73,9 @@ export async function PUT(
     return apiError('FORBIDDEN', 'Access denied', 403);
   }
 
-  // S1-08: Reject PUT on non-terminal artifact status
+  // Reject PUT on non-terminal artifact status
   if (['generating', 'failed'].includes(artifact.status)) {
     return apiError('CONFLICT', 'Cannot modify non-terminal artifact', 409);
-  }
-
-  // S1-08: Reject PUT on non-terminal artifact status
-  if (['generating', 'failed'].includes(artifact.status)) {
-    return NextResponse.json(
-      { error: { code: 'CONFLICT', message: 'Cannot modify non-terminal artifact' } },
-      { status: 409 },
-    );
   }
 
   const body = await request.json().catch(() => null);

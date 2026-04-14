@@ -123,6 +123,14 @@ describe('POST /api/tools/funnel-pages/generate', () => {
           sector_niche: 'Lead generation per PMI',
           offer_price_range: '2000-5000 EUR',
           target_profile: 'Founder PMI',
+          testimonials_sources: [
+            {
+              quote: 'Abbiamo aumentato i lead qualificati del 45% in 60 giorni.',
+              source: 'Marta B., COO',
+              achieved_result: 'Pipeline piu prevedibile',
+              measurable_results: '+45% lead qualificati, -28% CPL',
+            },
+          ],
         },
       })
     );
@@ -133,6 +141,16 @@ describe('POST /api/tools/funnel-pages/generate', () => {
         briefing: expect.objectContaining({
           business_context: expect.objectContaining({
             sector_niche: 'Lead generation per PMI',
+          }),
+          proof_context: expect.objectContaining({
+            testimonials_sources: expect.arrayContaining([
+              expect.objectContaining({
+                quote: 'Abbiamo aumentato i lead qualificati del 45% in 60 giorni.',
+                source: 'Marta B., COO',
+                achieved_result: 'Pipeline piu prevedibile',
+                measurable_results: '+45% lead qualificati, -28% CPL',
+              }),
+            ]),
           }),
         }),
       })

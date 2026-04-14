@@ -7,7 +7,7 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 - [blueprint.md](blueprint.md): Blueprint architetturale e overview del progetto.
 - [progetto-overview.md](progetto-overview.md): Descrizione generale e obiettivi del progetto per Stakeholder e Team.
 - [implement-index.md](implement-index.md): Indice operativo delle priorità correnti e stato di avanzamento.
-- [archive/implement-quality-audit.completed-2026-04-11.md](archive/implement-quality-audit.completed-2026-04-11.md): Snapshot storico finale dei finding quality/security dell'audit globale.
+- [archive/implement-quality-audit-closure-2026-04-11.md](archive/implement-quality-audit-closure-2026-04-11.md): Snapshot storico finale dei finding quality/security dell'audit globale.
 
 ### accessibility/
 - [accessibility.md](accessibility/accessibility.md): Linee guida e strategie per l’accessibilità.
@@ -28,6 +28,9 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 - [feature-prisma-deploy-migrations-tracker-1.md](implementation/feature-prisma-deploy-migrations-tracker-1.md): Tracker del deploy migrations track — tutti i task completati.
 - [funnel-extraction-model-policy-plan.md](implementation/funnel-extraction-model-policy-plan.md): Piano esecutivo policy runtime extraction con fallback deterministico (fasi 1-4 completate).
 - [feature-funnel-extraction-model-policy-tracker-1.md](implementation/feature-funnel-extraction-model-policy-tracker-1.md): Tracker operativo della delivery extraction policy.
+- [gui-ux-low-impact-microtasks-sprint-plan-2026-04-14.md](implementation/gui-ux-low-impact-microtasks-sprint-plan-2026-04-14.md): Backlog microtask GUI/UX low-impact per sprint breve (estrazione 2026-04-14).
+- [feature-operational-hardening-api-llm-tooling-plan-1.md](implementation/feature-operational-hardening-api-llm-tooling-plan-1.md): Piano esecutivo P1 per hardening operativo API/LLM tooling (pre-stream errors, artifact lifecycle safety, taxonomy, API docs alignment).
+- [feature-operational-hardening-api-llm-tooling-tracker-1.md](implementation/feature-operational-hardening-api-llm-tooling-tracker-1.md): Tracker operativo companion del piano P1 con baseline, stato task ed evidenze di chiusura.
 
 ### notes/
 - [desiderata-e-appunti-futuri-sviluppi.md](notes/desiderata-e-appunti-futuri-sviluppi.md): Raccolta di idee e appunti preliminari non ancora in planning o refactoring.
@@ -37,6 +40,9 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 - [feature-audit-remediation-gap-analysis-2026-04-12.md](review/feature-audit-remediation-gap-analysis-2026-04-12.md): Gap analysis del track audit remediation (2026-04-12).
 - [copilot-audit-2026-04-12.md](review/copilot-audit-2026-04-12.md): Report qualità e sicurezza Copilot (12 aprile 2026) — sorgente dei finding del track remediation.
 - [extraction-model-policy-rollout-runbook-2026-04-12.md](review/extraction-model-policy-rollout-runbook-2026-04-12.md): Runbook rollout/rollback e query operative per policy extraction.
+- [pr-28-dev-merge-review-2026-04-13.md](review/pr-28-dev-merge-review-2026-04-13.md): Review operativa dell'ultimo merge PR verso `dev` (PR #28), con metadati, scope e sintesi sprint.
+- [pr-28-dev-commit-changelog-2026-04-13.md](review/pr-28-dev-commit-changelog-2026-04-13.md): Changelog commit-level della PR #28 con shortstat e note di riuso per documentazione.
+- [operational-improvement-note-api-llm-tooling-2026-04-15.md](review/operational-improvement-note-api-llm-tooling-2026-04-15.md): Nota di improvement operativa che origina il piano P1 di hardening API/LLM tooling.
 
 ### archive/
 - Documenti storici e snapshot superseded (review, roadmap, follow-up PR).
@@ -50,6 +56,7 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 
 ### specifications/
 - [api-specifications.md](specifications/api-specifications.md): Specifiche API e contratti.
+- [documentation-filename-naming-spec.md](specifications/documentation-filename-naming-spec.md): Regole operative e pattern canonico per il naming dei file markdown in `docs/`.
 - [graphic-frameworking-spec.md](specifications/graphic-frameworking-spec.md): Specifica visual frameworking per interventi UI coerenti con shell grafica e template applicato.
 
 ### ux/
@@ -59,6 +66,13 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 - [ux-strategy.md](ux/ux-strategy.md): Strategia UX e principi guida.
 
 ### Aggiornamenti recenti
+- 2026-04-14: aggiunto guardrail build-safe Next.js App Router in `docs/specifications/api-specifications.md` per evitare errori CI su `useSearchParams` senza boundary `Suspense`.
+- 2026-04-14: aggiornate le specifiche funnel/API per il passaggio di testimonianze strutturate (`quote`, `source`, `achieved_result`, `measurable_results`) dal payload extraction al contesto generazione.
+- 2026-04-14: introdotto piano operativo microtask GUI/UX low-impact in `docs/implementation/gui-ux-low-impact-microtasks-sprint-plan-2026-04-14.md` e allineato `docs/implement-index.md`.
+- 2026-04-13: introdotta specifica canonica per il naming dei file documentazione in `docs/specifications/documentation-filename-naming-spec.md`.
+- 2026-04-13: riallineata la linea alta docs (`blueprint`, `progetto-overview`, `api-specifications`) allo stato as-is post PR-28 e introdotti guardrail permanenti di rigore documentale.
+- 2026-04-13: verificata e documentata la consistenza tra piano `magic-copilot` (C1..B2) e interventi PR #28 con matrice di tracciabilita nei report review/changelog.
+- 2026-04-13: aggiunti report review/changelog dell'ultimo merge PR -> `dev` (PR #28) per tracciabilita interventi e base documentale locale.
 - 2026-04-13: validazione finale completata dopo il refactor width policy shared shell: test PASS (48 suite, 352 test), typecheck PASS e build PASS.
 - 2026-04-13: estesa la copertura d'integrazione del track projects-first alla pagina dettaglio progetto, con suite completa PASS (48 suite, 352 test).
 - 2026-04-13: completata implementazione del track projects-first (fasi 1-4) con validazione completata: test PASS (48 suite, 352 test), typecheck PASS e build PASS.

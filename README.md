@@ -1,100 +1,105 @@
 # gen-app — LLM Artifact Generation Hub
 
-A modular web application that lets internal users (MediaBuyers, SEO Specialists) generate professional AI artifacts through dedicated workflows powered by multiple LLM models via OpenRouter.
+Hub interno per la generazione di contenuti marketing con AI. Permette a MediaBuyer e SEO Specialist di creare copy, varianti e funnel in pochi minuti, partendo da un brief o da un documento esistente.
 
 ---
 
-## Table of Contents
+## A cosa serve
 
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Architecture Overview](#architecture-overview)
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-  - [Environment Variables](#environment-variables)
-  - [Database Setup](#database-setup)
-  - [Running the App](#running-the-app)
-- [Project Structure](#project-structure)
-- [Available Scripts](#available-scripts)
-- [Testing](#testing)
-- [Deployment](#deployment)
+gen-app mette a disposizione workflow guidati per generare artefatti di alta qualità direttamente dall'interfaccia web, senza dover scrivere prompt manualmente o gestire account LLM separati.
+
+Ogni artefatto generato viene salvato automaticamente e organizzato in progetti, così è sempre rintracciabile e riutilizzabile.
 
 ---
 
-## Features
+## Accesso
 
-- 🤖 **Multi-model LLM generation** via [OpenRouter](https://openrouter.ai) (GPT-4 Turbo, Claude 3 Opus, Mistral Large)
-- ⚡ **Real-time streaming** responses using Server-Sent Events (SSE)
-- 🛠️ **Tool-specific workflows** — Meta Ads and Funnel Pages generation with dedicated prompt templates
-- 🔐 **Google OAuth** authentication via NextAuth.js v5 (restricted to company domain)
-- 👥 **Per-user quota & budget tracking** with monthly resets
-- 🗂️ **Project management** — organise artifacts into projects
-- 🛡️ **Admin dashboard** — manage users, view usage, adjust quotas
-- 🔒 **Rate limiting** via Upstash Redis
-- 📊 **Audit trail** — full quota history and cost tracking per artifact
+L'app è riservata agli utenti interni. Si accede tramite il proprio account Google aziendale — non è necessaria nessuna registrazione separata.
 
 ---
 
-## Tech Stack
+## Tool disponibili
 
-| Layer | Technology |
+### Meta Ads
+
+Genera varianti complete di annunci pubblicitari a partire da un brief testuale.
+
+**Output prodotto:**
+- Hook (apertura dell'annuncio)
+- Body copy
+- Headline
+- Call to action
+
+Utile per creare rapidamente più varianti da testare in A/B, o per iterare su un copy esistente cambiando angoli e messaggi.
+
+---
+
+### Funnel Pages
+
+Genera i testi di un funnel completo in tre step sequenziali, a partire da un documento di riferimento caricato dall'utente (es. brief di prodotto, deck commerciale, trascrizione intervista).
+
+**Pipeline:**
+1. **Caricamento documento** — si carica il materiale di riferimento
+2. **Estrazione automatica** — l'AI estrae le informazioni chiave (prodotto, target, benefici, angoli di comunicazione)
+3. **Generazione sequenziale:**
+   - Optin page
+   - Quiz (domande di qualificazione)
+   - VSL script (Video Sales Letter)
+
+Ogni step è revisionabile prima di procedere al successivo.
+
+---
+
+## Progetti e artefatti
+
+Gli artefatti generati si organizzano in **progetti**. Un progetto raggruppa tutti i materiali relativi a una campagna o iniziativa.
+
+Dal dashboard è possibile:
+- Creare e rinominare progetti
+- Consultare lo storico degli artefatti generati
+- Riaprire e leggere qualsiasi artefatto precedente
+
+---
+
+## Quota e utilizzo
+
+Ogni utente dispone di una **quota mensile di generazioni** (default: 1000/mese). La quota si azzera automaticamente a inizio mese.
+
+Quando la quota è esaurita, non è possibile avviare nuove generazioni fino al reset mensile o fino a quando l'amministratore non aggiorna il limite.
+
+---
+
+## Area Admin
+
+Gli amministratori hanno accesso a un pannello dedicato per:
+- Visualizzare e modificare le quote degli utenti
+- Consultare le metriche di utilizzo aggregate
+- Gestire il catalogo dei modelli LLM disponibili (aggiungere, disabilitare, impostare il modello di default)
+- Accedere all'audit trail per utente
+
+---
+
+## Per i developer
+
+### Stack
+
+| Layer | Tecnologia |
 |---|---|
-| **Frontend** | React 19 · TypeScript · shadcn/ui v4 · Tailwind CSS |
-| **Forms & Validation** | React Hook Form · Zod |
-| **Server State** | TanStack Query v5 |
+| **Frontend** | React 19 · TypeScript · shadcn/ui v4 · Tailwind CSS v4 |
+| **Forms & Validazione** | React Hook Form · Zod v4 |
+| **Server state** | TanStack Query v5 |
 | **Backend** | Next.js 16 (App Router, Route Handlers) |
 | **Database** | PostgreSQL 16 · Prisma 7 |
 | **Auth** | NextAuth.js v5 · Google OAuth · `@auth/prisma-adapter` |
 | **LLM** | OpenRouter (OpenAI-compatible SDK) |
-| **Rate Limiting** | `@upstash/ratelimit` · `@upstash/redis` |
-| **Testing** | Jest · Testing Library · Playwright |
-| **Deployment** | Vercel |
+| **Rate limiting** | `@upstash/ratelimit` · `@upstash/redis` |
+| **Monitoring** | Sentry · Pino (structured logging) |
+| **Test** | Jest · Testing Library · Playwright |
+| **Deploy** | Vercel (`main` → produzione, `dev` → PR flow) |
 
----
+### Setup locale
 
-## Architecture Overview
-
-```
-Browser (React 19 + shadcn/ui)
-        │  REST + SSE
-        ▼
-Next.js 16 Route Handlers
-  /api/artifacts/generate
-  /api/tools/meta-ads/generate
-  /api/tools/funnel-pages/generate
-  /api/projects/*  /api/users/*  /api/admin/*
-        │
-        ▼
-LLM Orchestrator + Tool Prompt Layer
-  ├── Content Agent
-  ├── SEO Agent
-  ├── Code Agent
-  └── Custom Tool Agents (Meta Ads, Funnel Pages)
-        │
-        ▼
-OpenRouter Provider (multi-model, streaming)
-        │
-   ┌────┴────────────────────┐
-   ▼                         ▼
-PostgreSQL + Prisma     NextAuth.js v5
-(Users, Projects,       (Google OAuth,
- Artifacts, Quotas)      sessions, CSRF)
-```
-
----
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 22 LTS
-- PostgreSQL 16
-- An [OpenRouter](https://openrouter.ai) API key
-- A Google OAuth app (Client ID + Secret)
-- An [Upstash](https://upstash.com) Redis database
-
-### Installation
+**Prerequisiti:** Node.js 22 LTS, PostgreSQL 16, chiave API OpenRouter, app Google OAuth, database Upstash Redis.
 
 ```bash
 git clone https://github.com/federicogerardi/gen-app.git
@@ -102,169 +107,41 @@ cd gen-app
 npm install
 ```
 
-### Environment Variables
-
-Copy the example below into a `.env.local` file at the root of the project and fill in your values:
+Crea un file `.env.local` alla root con le seguenti variabili:
 
 ```bash
-# Database
 DATABASE_URL=postgresql://user:password@localhost:5432/genapp
-
-# NextAuth
-NEXTAUTH_SECRET=your-secret-min-32-chars   # generate with: openssl rand -base64 32
-
-# Google OAuth
+NEXTAUTH_SECRET=             # openssl rand -base64 32
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
-
-# OpenRouter
 OPENROUTER_API_KEY=
-
-# Upstash Redis (rate limiting)
 UPSTASH_REDIS_REST_URL=
 UPSTASH_REDIS_REST_TOKEN=
-
-# Cron endpoint auth (required on production deployments)
-VERCEL_CRON_SECRET=
-
-# App
+VERCEL_CRON_SECRET=          # richiesto in produzione
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
-### Database Setup
-
 ```bash
-# Apply migrations and generate the Prisma client
-npx prisma migrate dev
+npx prisma generate          # genera il client Prisma (⚠️ richiede DATABASE_URL)
+npx prisma migrate dev       # applica le migrazioni
+npm run dev                  # avvia il server di sviluppo
 ```
 
-### Running the App
+### Script disponibili
 
-```bash
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) in your browser.
-
----
-
-## Project Structure
-
-```
-src/
-├── app/
-│   ├── api/
-│   │   ├── artifacts/          # Artifact CRUD + SSE generation endpoint
-│   │   ├── tools/              # Tool-specific generation endpoints
-│   │   ├── projects/           # Project management
-│   │   ├── users/              # User profile & quota
-│   │   ├── admin/              # Admin-only endpoints
-│   │   └── auth/               # NextAuth handlers
-│   ├── dashboard/              # User dashboard
-│   ├── artifacts/              # Artifact detail pages
-│   ├── tools/                  # Tool workflow pages (Meta Ads, Funnel Pages)
-│   └── admin/                  # Admin panel
-├── lib/
-│   ├── auth.ts                 # NextAuth configuration
-│   ├── db.ts                   # Prisma client singleton
-│   ├── rate-limit.ts           # Upstash rate limiter
-│   ├── llm/
-│   │   ├── orchestrator.ts     # Routes requests to agents/providers
-│   │   ├── streaming.ts        # SSE streaming helpers
-│   │   ├── providers/          # OpenRouter provider
-│   │   └── agents/             # Content, SEO, Code agents (BaseAgent)
-│   └── tool-prompts/           # Runtime markdown prompt templates
-│       ├── registry.ts
-│       ├── loader.ts
-│       ├── meta-ads.ts
-│       └── funnel-pages.ts
-├── components/
-│   ├── ui/                     # shadcn/ui components
-│   ├── layout/                 # Layout components
-│   └── hooks/                  # useStreamGeneration, useArtifacts, useQuota
-└── types/                      # TypeScript type augmentations (NextAuth, etc.)
-prisma/
-└── schema.prisma               # Database schema
-```
-
----
-
-## Available Scripts
-
-| Command | Description |
+| Comando | Descrizione |
 |---|---|
-| `npm run dev` | Start development server |
-| `npm run build` | Production build |
-| `npm run db:migrate:deploy` | Apply pending Prisma migrations (idempotent) |
-| `npm run deploy:vercel` | Run migrations first, then build |
-| `npm start` | Start production server |
-| `npm run lint` | Run ESLint |
-| `npm run typecheck` | TypeScript type-check without emit |
-| `npm run test` | Run Jest unit/integration tests |
-| `npm run test:watch` | Jest in watch mode |
-| `npm run test:e2e` | Run Playwright end-to-end tests |
+| `npm run dev` | Server di sviluppo |
+| `npm run build` | Build di produzione |
+| `npm run typecheck` | Type-check TypeScript senza emit |
+| `npm run lint` | ESLint |
+| `npm run test` | Test Jest (unit + integration) |
+| `npm run test:e2e` | Test Playwright end-to-end |
+| `npm run db:migrate:deploy` | Applica migrazioni pending (idempotente) |
+| `npm run deploy:vercel` | Migrazioni + build (comando deploy completo) |
 
----
+### Deploy
 
-## Testing
+Il deploy avviene su Vercel tramite `npm run deploy:vercel`, che esegue `prisma migrate deploy` prima del build. Il branch `main` è il ramo di produzione; le PR vanno aperte su `dev`.
 
-The project uses **Jest** for unit and integration tests and **Playwright** for end-to-end tests.
-
-```bash
-# Unit & integration tests
-npm run test
-
-# E2E tests (requires a running dev server)
-npm run test:e2e
-```
-
-Coverage target: **>80%** across all modules.
-
-Key test scenarios:
-- Google OAuth login → dashboard redirect
-- Artifact generation with SSE streaming
-- Admin quota management
-
----
-
-## Deployment
-
-The app is deployed on Vercel.
-
-Current branch strategy:
-- `main` -> production deployment
-- `dev` -> development branch for pull requests
-
-**Build command:**
-```bash
-npm run deploy:vercel
-```
-
-**Deploy script order:**
-```bash
-npm run db:migrate:deploy
-npm run build
-```
-
-`npm run deploy:vercel` enforces this order in a single command and keeps migration execution deterministic for both Preview and Production deployments.
-
-### DATABASE_URL Change Procedure
-
-1. Update `DATABASE_URL` in the correct Vercel scope (Preview or Production).
-2. Confirm the Build Command remains `npm run deploy:vercel` in that scope.
-3. Trigger a redeploy and verify logs show `prisma migrate deploy` before the Next.js build output.
-4. Do not add runtime schema initialization in API routes or auth callbacks.
-
-### Mandatory Post-Deploy Checks
-
-1. Verify table `_prisma_migrations` exists.
-2. Verify auth tables exist (`User`, `Account`, `Session`, plus other Prisma baseline tables).
-3. Execute login smoke test (Google sign-in -> dashboard redirect with no server error).
-4. Confirm redeploy with no new migrations completes cleanly (idempotency check).
-
-### Rollback Note
-
-If deployment fails during migration, fix environment configuration or migration state first, then redeploy.
-Do not introduce runtime schema workarounds in application routes.
-
-A GitHub Actions CI pipeline runs lint, typecheck, tests, and build on every push to `main` and on all pull requests. Vercel handles production deployment from `main` and preview/development workflows from PRs against `dev`.
+Riferimenti architetturali: [`docs/adrs/`](docs/adrs/), [`docs/specifications/api-specifications.md`](docs/specifications/api-specifications.md).

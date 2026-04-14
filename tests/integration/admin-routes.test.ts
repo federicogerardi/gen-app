@@ -51,14 +51,14 @@ beforeEach(() => {
 });
 
 describe('GET /api/admin/users', () => {
-  it('returns 403 for unauthenticated request', async () => {
+  it('returns 401 for unauthenticated request', async () => {
     mockedAuth.mockResolvedValue(null as never);
 
     const res = await getUsers(createRequest());
     const data = await res.json();
 
-    expect(res.status).toBe(403);
-    expect(data.error.code).toBe('FORBIDDEN');
+    expect(res.status).toBe(401);
+    expect(data.error.code).toBe('UNAUTHORIZED');
   });
 
   it('returns 403 for non-admin user', async () => {
@@ -140,14 +140,14 @@ describe('GET /api/admin/users', () => {
 });
 
 describe('GET /api/admin/metrics', () => {
-  it('returns 403 for unauthenticated request', async () => {
+  it('returns 401 for unauthenticated request', async () => {
     mockedAuth.mockResolvedValue(null as never);
 
     const res = await getMetrics();
     const data = await res.json();
 
-    expect(res.status).toBe(403);
-    expect(data.error.code).toBe('FORBIDDEN');
+    expect(res.status).toBe(401);
+    expect(data.error.code).toBe('UNAUTHORIZED');
   });
 
   it('returns 403 for non-admin user', async () => {
