@@ -33,6 +33,11 @@ type AttemptStreamResult = {
   timedOut: boolean;
 };
 
+type ExtractionConsistencyResult = {
+  consistent: boolean;
+  softAccepted: boolean;
+};
+
 function parseSsePayload(line: string): Record<string, unknown> | null {
   if (!line.startsWith('data: ')) {
     return null;
@@ -126,34 +131,92 @@ async function consumeAttemptStream(stream: ReadableStream, timeoutMs: number): 
   };
 }
 
-function isFieldMapConsistent(
+function tryParseExtractionJson(raw: string): unknown {
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(trimmed);
+  } catch {
+    // Continue with tolerant extraction.
+  }
+
+  const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  if (fenced?.[1]) {
+    try {
+      return JSON.parse(fenced[1]);
+    } catch {
+      // Continue with brace extraction.
+    }
+  }
+
+  const firstBrace = trimmed.indexOf('{');
+  const lastBrace = trimmed.lastIndexOf('}');
+  if (firstBrace >= 0 && lastBrace > firstBrace) {
+    const candidate = trimmed.slice(firstBrace, lastBrace + 1);
+    try {
+      return JSON.parse(candidate);
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
+}
+
+function assessFieldMapConsistency(
   parsed: z.infer<typeof extractionOutputSchema>,
   fieldMap: Record<string, unknown>,
-): boolean {
+): ExtractionConsistencyResult {
+  function toExpectedKey(value: string): string {
+    const normalized = value.replace(/\[(\w+)\]/g, '.$1').trim();
+    const segments = normalized.split('.').filter(Boolean);
+    return (segments[segments.length - 1] ?? normalized).trim();
+  }
+
+  function hasNotesContent(notes: z.infer<typeof extractionOutputSchema>['notes']): boolean {
+    if (typeof notes === 'string') {
+      return notes.trim().length > 0;
+    }
+
+    if (Array.isArray(notes)) {
+      return notes.some((item) => typeof item === 'string' && item.trim().length > 0);
+    }
+
+    return false;
+  }
+
   const expectedFields = new Set(Object.keys(fieldMap));
   if (expectedFields.size === 0) {
-    return false;
+    return { consistent: false, softAccepted: false };
   }
 
   const extractedFields = Object.keys(parsed.fields);
   const missingFields = parsed.missingFields;
 
-  const unknownExtracted = extractedFields.some((field) => !expectedFields.has(field));
-  if (unknownExtracted) {
-    return false;
-  }
+  // Partial-friendly consistency: ignore unknown keys returned by the model
+  // and evaluate coherence only on fields declared by the requested fieldMap.
+  const knownExtracted = extractedFields.filter((field) => expectedFields.has(field) || expectedFields.has(toExpectedKey(field)));
+  const knownMissing = missingFields.filter((field) => expectedFields.has(field) || expectedFields.has(toExpectedKey(field)));
 
-  const unknownMissing = missingFields.some((field) => !expectedFields.has(field));
-  if (unknownMissing) {
-    return false;
-  }
-
-  const overlap = missingFields.some((field) => extractedFields.includes(field));
+  const overlap = knownMissing.some((field) => knownExtracted.includes(field));
   if (overlap) {
-    return false;
+    return { consistent: false, softAccepted: false };
   }
 
-  return extractedFields.length > 0 || missingFields.length > 0;
+  if (knownExtracted.length > 0 || knownMissing.length > 0) {
+    return { consistent: true, softAccepted: false };
+  }
+
+  // Soft acceptance path: if schema is valid and the model still produced
+  // structured fields, accept partial output to avoid hard failures.
+  if (extractedFields.length > 0 || missingFields.length > 0 || hasNotesContent(parsed.notes)) {
+    return { consistent: true, softAccepted: true };
+  }
+
+  return { consistent: false, softAccepted: false };
 }
 
 function replaySseChunks(chunks: Uint8Array[]): ReadableStream {
@@ -296,6 +359,7 @@ export async function POST(request: Request) {
       let parseOk = false;
       let schemaOk = false;
       let consistencyOk = false;
+      let consistencySoftAccepted = false;
       let success = false;
       let providerError = false;
 
@@ -305,12 +369,7 @@ export async function POST(request: Request) {
         providerError = true;
         fallbackReason = 'provider_error';
       } else {
-        let parsedObject: unknown;
-        try {
-          parsedObject = JSON.parse(consumed.tokenContent || '{}');
-        } catch {
-          parsedObject = null;
-        }
+        const parsedObject = tryParseExtractionJson(consumed.tokenContent || '{}');
 
         const jsonParsed = z.record(z.string(), z.unknown()).safeParse(parsedObject);
 
@@ -325,7 +384,9 @@ export async function POST(request: Request) {
             fallbackReason = 'schema_failed';
           } else {
             schemaOk = true;
-            consistencyOk = isFieldMapConsistent(schemaParsed.data, payload.fieldMap);
+            const consistencyResult = assessFieldMapConsistency(schemaParsed.data, payload.fieldMap);
+            consistencyOk = consistencyResult.consistent;
+            consistencySoftAccepted = consistencyResult.softAccepted;
             if (!consistencyOk) {
               fallbackReason = 'consistency_failed';
             } else {
@@ -384,6 +445,7 @@ export async function POST(request: Request) {
           parseOk,
           schemaOk,
           consistencyOk,
+          consistencySoftAccepted,
           policyVersion: EXTRACTION_POLICY_VERSION,
         },
         success ? 'Extraction attempt succeeded' : 'Extraction attempt failed',

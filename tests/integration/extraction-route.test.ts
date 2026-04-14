@@ -155,6 +155,112 @@ describe('POST /api/tools/extraction/generate', () => {
     expect(mockedStream).toHaveBeenCalledTimes(1);
   });
 
+  it('accepts fenced json output without triggering fallback', async () => {
+    mockedAuth.mockResolvedValue({ user: { id: 'user_1' } } as never);
+    mockedStream.mockResolvedValueOnce(createSseStream([
+      { type: 'start', artifactId: 'art_1', workflowType: 'extraction', format: 'json' },
+      {
+        type: 'token',
+        token: '```json\n{"fields":{"business_type":"B2B"},"missingFields":["testimonials_sources"],"notes":"partial"}\n```',
+        sequence: 1,
+      },
+      {
+        type: 'complete',
+        artifactId: 'art_1',
+        content: '```json\n{"fields":{"business_type":"B2B"},"missingFields":["testimonials_sources"],"notes":"partial"}\n```',
+        cost: 0.01,
+      },
+    ]));
+
+    const res = await POST(makeRequest({
+      ...baseBody,
+      fieldMap: {
+        business_type: {
+          type: 'select',
+          required: true,
+          description: 'Tipo business',
+        },
+        testimonials_sources: {
+          type: 'array',
+          required: false,
+          description: 'Testimonianze estratte',
+        },
+      },
+    }));
+
+    expect(res.status).toBe(200);
+    expect(mockedStream).toHaveBeenCalledTimes(1);
+  });
+
+  it('accepts partial extraction output when unknown keys are returned', async () => {
+    mockedAuth.mockResolvedValue({ user: { id: 'user_1' } } as never);
+    mockedStream.mockResolvedValueOnce(createSseStream([
+      { type: 'start', artifactId: 'art_1', workflowType: 'extraction', format: 'json' },
+      {
+        type: 'token',
+        token: '{"fields":{"business_type":"B2B","proof_context":{"testimonials_sources":[]}},"missingFields":["testimonials_sources","extra_field"],"notes":"partial"}',
+        sequence: 1,
+      },
+      {
+        type: 'complete',
+        artifactId: 'art_1',
+        content: '{"fields":{"business_type":"B2B","proof_context":{"testimonials_sources":[]}},"missingFields":["testimonials_sources","extra_field"],"notes":"partial"}',
+        cost: 0.01,
+      },
+    ]));
+
+    const res = await POST(makeRequest({
+      ...baseBody,
+      fieldMap: {
+        business_type: {
+          type: 'select',
+          required: true,
+          description: 'Tipo business',
+        },
+        testimonials_sources: {
+          type: 'array',
+          required: false,
+          description: 'Testimonianze estratte',
+        },
+      },
+    }));
+
+    expect(res.status).toBe(200);
+    expect(mockedStream).toHaveBeenCalledTimes(1);
+  });
+
+  it('accepts schema-valid output with empty fields when missingFields or notes provide partial signal', async () => {
+    mockedAuth.mockResolvedValue({ user: { id: 'user_1' } } as never);
+    mockedStream.mockResolvedValueOnce(createSseStream([
+      { type: 'start', artifactId: 'art_1', workflowType: 'extraction', format: 'json' },
+      {
+        type: 'token',
+        token: '{"fields":{},"missingFields":["business.context","offer.price"],"notes":"dati parziali nel documento"}',
+        sequence: 1,
+      },
+      {
+        type: 'complete',
+        artifactId: 'art_1',
+        content: '{"fields":{},"missingFields":["business.context","offer.price"],"notes":"dati parziali nel documento"}',
+        cost: 0.01,
+      },
+    ]));
+
+    const res = await POST(makeRequest({
+      ...baseBody,
+      fieldMap: {
+        business_type: {
+          type: 'select',
+          required: true,
+          description: 'Tipo business',
+        },
+      },
+    }));
+
+    expect(res.status).toBe(200);
+    expect(mockedStream).toHaveBeenCalledTimes(1);
+  });
+
   it('falls back to second model when first attempt returns invalid JSON', async () => {
     mockedAuth.mockResolvedValue({ user: { id: 'user_1' } } as never);
     mockedStream

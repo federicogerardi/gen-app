@@ -10,6 +10,10 @@ Regole:
 - Se un valore non e presente, usa `null`.
 - Non inventare dati.
 - Mantieni i tipi coerenti con la mappa.
+- Usa esclusivamente chiavi flat presenti nella field map (non creare sezioni annidate come `business_context.*`).
+- Compila sempre `fields` con tutte le chiavi della field map: valore estratto oppure `null`.
+- Inserisci in `missingFields` solo chiavi della field map con valore mancante/non verificabile.
+- Se il documento non contiene informazioni sufficienti, non fallire il formato: restituisci comunque JSON valido con `fields` parziali/null e `notes` sintetiche.
 
 ## Contesto
 {{context}}
