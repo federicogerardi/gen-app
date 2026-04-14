@@ -13,14 +13,25 @@ import {
   EXTRACTION_JSON_PARSE_TIMEOUT_MS,
   EXTRACTION_JSON_START_TIMEOUT_MS,
   EXTRACTION_PRIMARY_MODEL,
+  EXTRACTION_TEXT_ATTEMPT_TIMEOUTS_MS,
   EXTRACTION_TOKEN_IDLE_TIMEOUT_MS,
 } from '@/lib/llm/extraction-model-policy';
 
 jest.mock('@/lib/auth', () => ({ auth: jest.fn() }));
 jest.mock('@/lib/rate-limit', () => ({ rateLimit: jest.fn() }));
-jest.mock('@/lib/llm/streaming', () => ({ createArtifactStream: jest.fn() }));
+jest.mock('@/lib/llm/streaming', () => ({
+  ...jest.requireActual('@/lib/llm/streaming'),
+  createArtifactStream: jest.fn(),
+}));
 jest.mock('@/lib/tool-prompts/extraction', () => ({ buildExtractionPrompt: jest.fn() }));
-jest.mock('@/lib/logger', () => ({ getRequestLogger: jest.fn() }));
+jest.mock('@/lib/logger', () => ({
+  getRequestLogger: jest.fn(),
+  logger: {
+    warn: jest.fn(),
+    info: jest.fn(),
+    error: jest.fn(),
+  },
+}));
 
 jest.mock('@/lib/db', () => jest.requireActual('./db-mock').createDbMock());
 
@@ -33,6 +44,12 @@ const mockedGetRequestLogger = getRequestLogger as jest.MockedFunction<typeof ge
 const findUser = (db as any).user.findUnique as jest.Mock;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const findProject = (db as any).project.findUnique as jest.Mock;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const createArtifact = (db as any).artifact.create as jest.Mock;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const findArtifact = (db as any).artifact.findFirst as jest.Mock;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const updateArtifact = (db as any).artifact.update as jest.Mock;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const findActiveModel = (db as any).llmModel.findFirst as jest.Mock;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -59,6 +76,10 @@ const baseBody = {
   },
 };
 
+const originalRolloutEnabled = process.env.EXTRACTION_ARTIFACT_FIRST_ENABLED;
+const originalRolloutPercentage = process.env.EXTRACTION_ARTIFACT_FIRST_ROLLOUT_PERCENT;
+const originalRollbackActive = process.env.EXTRACTION_ARTIFACT_FIRST_ROLLBACK_ACTIVE;
+
 const makeRequest = (payload: unknown) =>
   new Request('http://localhost/api/tools/extraction/generate', {
     method: 'POST',
@@ -80,6 +101,9 @@ function createSseStream(events: Array<Record<string, unknown>>): ReadableStream
 
 beforeEach(() => {
   jest.clearAllMocks();
+  process.env.EXTRACTION_ARTIFACT_FIRST_ENABLED = '1';
+  process.env.EXTRACTION_ARTIFACT_FIRST_ROLLBACK_ACTIVE = '0';
+  process.env.EXTRACTION_ARTIFACT_FIRST_ROLLOUT_PERCENT = '100';
   mockedGetRequestLogger.mockReturnValue(mockLogger as never);
   mockedRateLimit.mockResolvedValue({ allowed: true, remaining: 10 });
   mockedStream.mockResolvedValue(createSseStream([
@@ -97,6 +121,9 @@ beforeEach(() => {
     },
   ]));
   mockedBuildExtractionPrompt.mockResolvedValue('EXTRACTION PROMPT');
+  createArtifact.mockResolvedValue({ id: 'artifact_stub_1' });
+  findArtifact.mockResolvedValue(null);
+  updateArtifact.mockResolvedValue({});
   findActiveModel.mockImplementation(async ({ where }: { where?: { modelId?: string } }) => {
     const modelId = where?.modelId;
     const allowedModels = [
@@ -111,6 +138,12 @@ beforeEach(() => {
   });
   findUser.mockResolvedValue({ id: 'user_1', monthlyUsed: 1, monthlyQuota: 100, monthlySpent: '1', monthlyBudget: '10' });
   findProject.mockResolvedValue({ id: projectId, userId: 'user_1' });
+});
+
+afterAll(() => {
+  process.env.EXTRACTION_ARTIFACT_FIRST_ENABLED = originalRolloutEnabled;
+  process.env.EXTRACTION_ARTIFACT_FIRST_ROLLOUT_PERCENT = originalRolloutPercentage;
+  process.env.EXTRACTION_ARTIFACT_FIRST_ROLLBACK_ACTIVE = originalRollbackActive;
 });
 
 function createStalledSseStream(): ReadableStream {
@@ -169,6 +202,54 @@ function createJsonStartButUnparseableThenStallSseStream(): ReadableStream {
   });
 }
 
+function createParseableJsonThenStallSseStream(): ReadableStream {
+  return new ReadableStream({
+    start(controller) {
+      const encoder = new TextEncoder();
+      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'start', artifactId: 'art_1', workflowType: 'extraction', format: 'json' })}\n\n`));
+      controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+        type: 'token',
+        token: '{"fields":{"business_type":"B2B"},"missingFields":[],"notes":"timeout utile ma riusabile"}',
+        sequence: 1,
+      })}\n\n`));
+      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'progress', costEstimate: 0.01 })}\n\n`));
+      // Keep stream open so token-idle fires after parseable JSON has already been emitted.
+    },
+  });
+}
+
+function createTextHeartbeatSseStream(): ReadableStream {
+  return new ReadableStream({
+    start(controller) {
+      const encoder = new TextEncoder();
+      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'start', artifactId: 'art_text_1', workflowType: 'extraction', format: 'markdown' })}\n\n`));
+
+      let tick = 0;
+      let cancelled = false;
+      const emit = () => {
+        if (cancelled) {
+          return;
+        }
+
+        tick += 1;
+        try {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'token', token: 'a', sequence: tick })}\n\n`));
+        } catch {
+          cancelled = true;
+          return;
+        }
+
+        setTimeout(emit, 1_000);
+      };
+
+      emit();
+    },
+    cancel() {
+      // Stop scheduled heartbeats after the consumer aborts the stream.
+    },
+  });
+}
+
 describe('POST /api/tools/extraction/generate', () => {
   it('returns 401 when unauthenticated', async () => {
     mockedAuth.mockResolvedValue(null as never);
@@ -187,6 +268,48 @@ describe('POST /api/tools/extraction/generate', () => {
     findProject.mockResolvedValue(null);
     const res = await POST(makeRequest(baseBody));
     expect(res.status).toBe(404);
+  });
+
+  it('returns 503 when artifact-first flag is disabled', async () => {
+    mockedAuth.mockResolvedValue({ user: { id: 'user_1' } } as never);
+    process.env.EXTRACTION_ARTIFACT_FIRST_ENABLED = '0';
+
+    const res = await POST(makeRequest(baseBody));
+    const body = await res.json();
+
+    expect(res.status).toBe(503);
+    expect(body.error.code).toBe('SERVICE_UNAVAILABLE');
+    expect(body.error.details.rollout.reason).toBe('flag_disabled');
+    expect(createArtifact).not.toHaveBeenCalled();
+    expect(mockedStream).not.toHaveBeenCalled();
+  });
+
+  it('returns 503 when rollout percentage excludes current cohort', async () => {
+    mockedAuth.mockResolvedValue({ user: { id: 'user_1' } } as never);
+    process.env.EXTRACTION_ARTIFACT_FIRST_ROLLOUT_PERCENT = '0';
+
+    const res = await POST(makeRequest(baseBody));
+    const body = await res.json();
+
+    expect(res.status).toBe(503);
+    expect(body.error.code).toBe('SERVICE_UNAVAILABLE');
+    expect(body.error.details.rollout.reason).toBe('outside_rollout');
+    expect(createArtifact).not.toHaveBeenCalled();
+    expect(mockedStream).not.toHaveBeenCalled();
+  });
+
+  it('returns 503 when rollback switch is active', async () => {
+    mockedAuth.mockResolvedValue({ user: { id: 'user_1' } } as never);
+    process.env.EXTRACTION_ARTIFACT_FIRST_ROLLBACK_ACTIVE = '1';
+
+    const res = await POST(makeRequest(baseBody));
+    const body = await res.json();
+
+    expect(res.status).toBe(503);
+    expect(body.error.code).toBe('SERVICE_UNAVAILABLE');
+    expect(body.error.details.rollout.reason).toBe('rollback_active');
+    expect(createArtifact).not.toHaveBeenCalled();
+    expect(mockedStream).not.toHaveBeenCalled();
   });
 
   it('routes extraction prompt builder and stream', async () => {
@@ -211,6 +334,49 @@ describe('POST /api/tools/extraction/generate', () => {
       }),
       'Extraction attempt succeeded',
     );
+    expect(createArtifact).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          type: 'extraction',
+          status: 'generating',
+        }),
+      }),
+    );
+    expect(updateArtifact).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'artifact_stub_1' },
+        data: expect.objectContaining({
+          status: 'completed',
+          failureReason: null,
+          input: expect.objectContaining({
+            terminalState: expect.objectContaining({
+              completionOutcome: 'completed_full',
+              completionReason: 'known_fields_present',
+            }),
+          }),
+        }),
+      }),
+    );
+  });
+
+  it('does not fail user path when request logger methods throw', async () => {
+    mockedAuth.mockResolvedValue({ user: { id: 'user_1' } } as never);
+    mockedGetRequestLogger.mockReturnValue({
+      info: jest.fn(() => {
+        throw new Error('logger sink down');
+      }),
+      warn: jest.fn(() => {
+        throw new Error('logger sink down');
+      }),
+      error: jest.fn(() => {
+        throw new Error('logger sink down');
+      }),
+    } as never);
+
+    const res = await POST(makeRequest(baseBody));
+
+    expect(res.status).toBe(200);
+    expect(mockedStream).toHaveBeenCalledTimes(1);
   });
 
   it('accepts extraction output when notes is returned as array', async () => {
@@ -378,6 +544,8 @@ describe('POST /api/tools/extraction/generate', () => {
     expect(mockedStream).toHaveBeenCalledTimes(2);
     expect(mockedStream).toHaveBeenNthCalledWith(1, expect.objectContaining({ model: EXTRACTION_PRIMARY_MODEL }));
     expect(mockedStream).toHaveBeenNthCalledWith(2, expect.objectContaining({ model: EXTRACTION_FALLBACK_MODELS[0] }));
+    expect(mockedStream).toHaveBeenNthCalledWith(1, expect.objectContaining({ artifactId: 'artifact_stub_1', persistFailure: false }));
+    expect(mockedStream).toHaveBeenNthCalledWith(2, expect.objectContaining({ artifactId: 'artifact_stub_1', persistFailure: false }));
     expect(mockLogger.info).toHaveBeenCalledWith(
       expect.objectContaining({
         attemptIndex: 1,
@@ -391,6 +559,7 @@ describe('POST /api/tools/extraction/generate', () => {
     expect(updateUser).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({ monthlyUsed: expect.objectContaining({ increment: 1 }) }),
     }));
+    expect(createArtifact).toHaveBeenCalledTimes(1);
   });
 
   it('returns EXTRACTION_FAILED when fallback chain is exhausted', async () => {
@@ -423,6 +592,22 @@ describe('POST /api/tools/extraction/generate', () => {
     }));
     expect(mockedStream).toHaveBeenCalledTimes(3);
     expect(updateUser).toHaveBeenCalledTimes(1);
+    expect(updateArtifact).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'artifact_stub_1' },
+        data: expect.objectContaining({
+          status: 'failed',
+          failureReason: 'max_attempts_reached',
+          input: expect.objectContaining({
+            terminalState: expect.objectContaining({
+              completionOutcome: 'failed_hard',
+              completionReason: 'no_signal_after_chain_exhausted',
+              fallbackReason: 'max_attempts_reached',
+            }),
+          }),
+        }),
+      }),
+    );
   });
 
   it('aborts stalled first attempt on first-token timeout and falls back quickly', async () => {
@@ -465,6 +650,34 @@ describe('POST /api/tools/extraction/generate', () => {
       }),
       'Extraction attempt failed',
     );
+  });
+
+  it('replays completed artifact on idempotency hit without creating duplicates', async () => {
+    mockedAuth.mockResolvedValue({ user: { id: 'user_1' } } as never);
+    findArtifact.mockResolvedValue({
+          id: 'art_existing',
+          status: 'completed',
+          content: 'contenuto gia generato',
+          workflowType: 'extraction',
+          failureReason: null,
+    });
+
+    const res = await POST(new Request('http://localhost/api/tools/extraction/generate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-idempotency-key': 'idem-key-12345',
+      },
+      body: JSON.stringify(baseBody),
+    }));
+
+    const body = await res.text();
+
+    expect(res.status).toBe(200);
+    expect(body).toContain('art_existing');
+    expect(body).toContain('contenuto gia generato');
+    expect(createArtifact).not.toHaveBeenCalled();
+    expect(mockedStream).not.toHaveBeenCalled();
   });
 
   it('aborts attempt on json-parse timeout after first token when JSON remains incomplete', async () => {
@@ -632,6 +845,73 @@ describe('POST /api/tools/extraction/generate', () => {
         timeoutKind: 'json_parse',
       }),
       'Extraction attempt failed',
+    );
+  });
+
+  it('accepts parseable structured output on timeout as completed_partial without fallback', async () => {
+    mockedAuth.mockResolvedValue({ user: { id: 'user_1' } } as never);
+    jest.useFakeTimers();
+
+    mockedStream.mockResolvedValueOnce(createParseableJsonThenStallSseStream());
+
+    let res: Response | null = null;
+    let body = '';
+    try {
+      const pendingResponse = POST(makeRequest(baseBody));
+      await jest.advanceTimersByTimeAsync(EXTRACTION_TOKEN_IDLE_TIMEOUT_MS + 100);
+      res = await pendingResponse;
+      body = await res.text();
+    } finally {
+      jest.useRealTimers();
+    }
+
+    expect(res?.status).toBe(200);
+    expect(mockedStream).toHaveBeenCalledTimes(1);
+    expect(body).toContain('"type":"complete"');
+    expect(body).toContain('timeout utile ma riusabile');
+    expect(updateArtifact).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'artifact_stub_1' },
+        data: expect.objectContaining({ status: 'completed' }),
+      }),
+    );
+    expect(mockLogger.info).toHaveBeenCalledWith(
+      expect.objectContaining({
+        completionOutcome: 'completed_partial',
+        completionReason: 'partial_useful_output',
+      }),
+      'Tool generation stream initialized',
+    );
+  });
+
+  it('accepts deadline-driven timeout in text mode as completed_partial without forced fallback', async () => {
+    mockedAuth.mockResolvedValue({ user: { id: 'user_1' } } as never);
+    jest.useFakeTimers();
+
+    mockedStream.mockResolvedValueOnce(createTextHeartbeatSseStream());
+
+    let res: Response | null = null;
+    try {
+      const pendingResponse = POST(makeRequest({
+        ...baseBody,
+        responseMode: 'text',
+      }));
+      await jest.advanceTimersByTimeAsync(EXTRACTION_TEXT_ATTEMPT_TIMEOUTS_MS[0] + 500);
+      res = await pendingResponse;
+    } finally {
+      jest.useRealTimers();
+    }
+
+    expect(res?.status).toBe(200);
+    expect(mockedStream).toHaveBeenCalledTimes(1);
+    expect(mockLogger.info).toHaveBeenCalledWith(
+      expect.objectContaining({
+        attemptIndex: 1,
+        completionOutcome: 'completed_partial',
+        completionReason: 'no_critical_fields_defined',
+        timeoutKind: 'route_deadline',
+      }),
+      'Tool generation stream initialized',
     );
   });
 

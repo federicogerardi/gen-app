@@ -1,12 +1,19 @@
-import { createArtifactStream } from '@/lib/llm/streaming';
-import { getRequestLogger } from '@/lib/logger';
+import { createArtifactStream, persistArtifactFailure, persistArtifactSuccess } from '@/lib/llm/streaming';
+import { db } from '@/lib/db';
+import type { Prisma } from '@/generated/prisma';
+import { getRequestLogger, logger } from '@/lib/logger';
 import {
   EXTRACTION_FIRST_TOKEN_TIMEOUT_MS,
   EXTRACTION_JSON_PARSE_TIMEOUT_MS,
   EXTRACTION_JSON_START_TIMEOUT_MS,
+  classifyExtractionCompletionOutcome,
+  EXTRACTION_MAX_ATTEMPTS,
   EXTRACTION_POLICY_VERSION,
+  EXTRACTION_TEXT_ATTEMPT_TIMEOUTS_MS,
   EXTRACTION_TOKEN_IDLE_TIMEOUT_MS,
   getExtractionAttemptPlan,
+  mapExtractionTerminalState,
+  resolveExtractionCompletionReason,
   resolveExtractionRuntimeModel,
   shouldEscalateExtractionAttempt,
 } from '@/lib/llm/extraction-model-policy';
@@ -18,6 +25,7 @@ import {
   requireAuthenticatedUser,
   requireOwnedProject,
 } from '@/lib/tool-routes/guards';
+import { resolveExtractionRolloutDecision } from '@/lib/tool-routes/extraction-rollout';
 import { apiError, sseResponse } from '@/lib/tool-routes/responses';
 import { extractionRequestSchema } from '@/lib/tool-routes/schemas';
 import { z } from 'zod';
@@ -34,7 +42,10 @@ type AttemptStreamResult = {
   costEstimate: number;
   errorMessage?: string;
   timedOut: boolean;
-  timeoutKind?: 'first_token' | 'json_start' | 'json_parse' | 'token_idle' | 'overall';
+  timeoutKind?: 'first_token' | 'json_start' | 'json_parse' | 'token_idle' | 'route_deadline';
+  artifactId?: string;
+  format?: 'json' | 'markdown';
+  didComplete: boolean;
 };
 
 type ConsistencyDecision = 'hard_accept' | 'soft_accept' | 'reject';
@@ -81,6 +92,47 @@ type ExtractionAcceptanceResult = {
   consistencyDecision: ConsistencyDecision;
 };
 
+type ExistingExtractionArtifact = {
+  id: string;
+  status: string;
+  content: string;
+  workflowType?: string | null;
+  failureReason?: string | null;
+};
+
+type RouteLogger = {
+  info: (payload: Record<string, unknown>, message: string) => void;
+  warn: (payload: Record<string, unknown>, message: string) => void;
+  error: (payload: Record<string, unknown>, message: string) => void;
+};
+
+function logBestEffort(
+  log: RouteLogger,
+  level: 'info' | 'warn' | 'error',
+  payload: Record<string, unknown>,
+  message: string,
+) {
+  try {
+    log[level](payload, message);
+  } catch (err) {
+    try {
+      logger.warn(
+        {
+          workflowType: 'extraction',
+          requestId: typeof payload.requestId === 'string' ? payload.requestId : null,
+          logLevel: level,
+          logMessage: message,
+          policyVersion: EXTRACTION_POLICY_VERSION,
+          logError: err instanceof Error ? err.message : String(err),
+        },
+        'Extraction observability failure suppressed',
+      );
+    } catch {
+      // Never block user path because observability sinks fail.
+    }
+  }
+}
+
 function parseSsePayload(line: string): Record<string, unknown> | null {
   if (!line.startsWith('data: ')) {
     return null;
@@ -100,7 +152,7 @@ async function consumeAttemptStream(
   jsonStartTimeoutMs: number,
   jsonParseTimeoutMs: number,
   tokenIdleTimeoutMs: number,
-  options?: { enableJsonGuards?: boolean },
+  options?: { enableJsonGuards?: boolean; enableStreamGuards?: boolean },
 ): Promise<AttemptStreamResult> {
   const reader = stream.getReader();
   const decoder = new TextDecoder();
@@ -110,11 +162,15 @@ async function consumeAttemptStream(
   let costEstimate = 0;
   let errorMessage: string | undefined;
   let timedOut = false;
-  let timeoutKind: 'first_token' | 'json_start' | 'json_parse' | 'token_idle' | 'overall' | undefined;
+  let timeoutKind: 'first_token' | 'json_start' | 'json_parse' | 'token_idle' | 'route_deadline' | undefined;
+  let artifactId: string | undefined;
+  let format: 'json' | 'markdown' | undefined;
+  let didComplete = false;
   let hasReceivedToken = false;
   let hasSeenJsonStart = false;
   let hasSeenParseableJson = false;
   const enableJsonGuards = options?.enableJsonGuards ?? true;
+  const enableStreamGuards = options?.enableStreamGuards ?? true;
   let tokenIdleTimeout: ReturnType<typeof setTimeout> | null = null;
   let jsonStartTimeout: ReturnType<typeof setTimeout> | null = null;
   let jsonParseTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -127,7 +183,7 @@ async function consumeAttemptStream(
   };
 
   const armTokenIdleTimeout = () => {
-    if (!hasReceivedToken || timedOut) {
+    if (!enableStreamGuards || !hasReceivedToken || timedOut) {
       return;
     }
 
@@ -147,7 +203,7 @@ async function consumeAttemptStream(
   };
 
   const armJsonStartTimeout = () => {
-    if (!hasReceivedToken || hasSeenJsonStart || timedOut) {
+    if (!enableStreamGuards || !hasReceivedToken || hasSeenJsonStart || timedOut) {
       return;
     }
 
@@ -170,7 +226,7 @@ async function consumeAttemptStream(
   };
 
   const armJsonParseTimeout = () => {
-    if (!hasSeenJsonStart || hasSeenParseableJson || timedOut || jsonParseTimeout) {
+    if (!enableStreamGuards || !hasSeenJsonStart || hasSeenParseableJson || timedOut || jsonParseTimeout) {
       return;
     }
 
@@ -183,19 +239,21 @@ async function consumeAttemptStream(
 
   const overallTimeout = setTimeout(async () => {
     timedOut = true;
-    timeoutKind = 'overall';
+    timeoutKind = 'route_deadline';
     await reader.cancel('timeout').catch(() => undefined);
   }, timeoutMs);
 
-  const firstTokenTimeout = setTimeout(async () => {
-    if (hasReceivedToken) {
-      return;
-    }
+  const firstTokenTimeout = enableStreamGuards
+    ? setTimeout(async () => {
+      if (hasReceivedToken) {
+        return;
+      }
 
-    timedOut = true;
-    timeoutKind = 'first_token';
-    await reader.cancel('timeout').catch(() => undefined);
-  }, firstTokenTimeoutMs);
+      timedOut = true;
+      timeoutKind = 'first_token';
+      await reader.cancel('timeout').catch(() => undefined);
+    }, firstTokenTimeoutMs)
+    : null;
 
   try {
     while (true) {
@@ -219,7 +277,9 @@ async function consumeAttemptStream(
           // Consider first-token received only when the chunk carries textual signal.
           if (tokenChunk.trim().length > 0) {
             hasReceivedToken = true;
-            clearTimeout(firstTokenTimeout);
+            if (firstTokenTimeout) {
+              clearTimeout(firstTokenTimeout);
+            }
             armTokenIdleTimeout();
             if (enableJsonGuards) {
               armJsonStartTimeout();
@@ -247,13 +307,29 @@ async function consumeAttemptStream(
         }
 
         if (payload.type === 'complete') {
+          didComplete = true;
           clearTokenIdleTimeout();
           clearJsonStartTimeout();
           clearJsonParseTimeout();
+          if (typeof payload.artifactId === 'string') {
+            artifactId = payload.artifactId;
+          }
+          if (payload.format === 'json' || payload.format === 'markdown') {
+            format = payload.format;
+          }
           if (typeof payload.cost === 'number') {
             costEstimate = payload.cost;
           }
           continue;
+        }
+
+        if (payload.type === 'start') {
+          if (typeof payload.artifactId === 'string') {
+            artifactId = payload.artifactId;
+          }
+          if (payload.format === 'json' || payload.format === 'markdown') {
+            format = payload.format;
+          }
         }
 
         if (payload.type === 'error') {
@@ -266,7 +342,9 @@ async function consumeAttemptStream(
     }
   } finally {
     clearTimeout(overallTimeout);
-    clearTimeout(firstTokenTimeout);
+    if (firstTokenTimeout) {
+      clearTimeout(firstTokenTimeout);
+    }
     clearTokenIdleTimeout();
     clearJsonStartTimeout();
     clearJsonParseTimeout();
@@ -279,6 +357,9 @@ async function consumeAttemptStream(
     errorMessage,
     timedOut,
     timeoutKind,
+    artifactId,
+    format,
+    didComplete,
   };
 }
 
@@ -573,14 +654,172 @@ function replaySseChunks(chunks: Uint8Array[]): ReadableStream {
   });
 }
 
+function createResolvedExtractionStream(input: {
+  chunks: Uint8Array[];
+  artifactId: string;
+  content: string;
+  format: 'json' | 'markdown';
+  cost?: number;
+  tokens?: { input: number; output: number };
+  appendCompleteEvent: boolean;
+}): ReadableStream {
+  const encoder = new TextEncoder();
+
+  return new ReadableStream({
+    start(controller) {
+      for (const chunk of input.chunks) {
+        controller.enqueue(chunk);
+      }
+
+      if (input.appendCompleteEvent) {
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+          type: 'complete',
+          artifactId: input.artifactId,
+          content: input.content,
+          workflowType: 'extraction',
+          format: input.format,
+          ...(input.tokens ? { tokens: input.tokens } : {}),
+          ...(typeof input.cost === 'number' ? { cost: input.cost } : {}),
+        })}\n\n`));
+      }
+
+      controller.close();
+    },
+  });
+}
+
+function buildExtractionTerminalInput(input: {
+  attemptInput: Record<string, unknown>;
+  completionOutcome: string;
+  completionReason: string;
+  fallbackReason: string | null;
+  timeoutKind: AttemptStreamResult['timeoutKind'] | null;
+  attemptIndex: number;
+  runtimeModel: string;
+}): Record<string, unknown> {
+  return {
+    ...input.attemptInput,
+    terminalState: {
+      completionOutcome: input.completionOutcome,
+      completionReason: input.completionReason,
+      fallbackReason: input.fallbackReason,
+      timeoutKind: input.timeoutKind,
+      attemptIndex: input.attemptIndex,
+      runtimeModel: input.runtimeModel,
+      policyVersion: EXTRACTION_POLICY_VERSION,
+      finalizedAt: new Date().toISOString(),
+    },
+  };
+}
+
+function normalizeExtractionIdempotencyKey(rawValue: string | null): string | null {
+  if (!rawValue) {
+    return null;
+  }
+
+  const trimmed = rawValue.trim();
+  if (trimmed.length < 8 || trimmed.length > 128) {
+    return null;
+  }
+
+  return trimmed;
+}
+
+function getExtractionStreamFormat(responseMode: 'structured' | 'text'): 'json' | 'markdown' {
+  return responseMode === 'text' ? 'markdown' : 'json';
+}
+
+function createExtractionReplayStream(input: {
+  artifactId: string;
+  content: string;
+  format: 'json' | 'markdown';
+}): ReadableStream {
+  const encoder = new TextEncoder();
+
+  return new ReadableStream({
+    start(controller) {
+      controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+        type: 'start',
+        artifactId: input.artifactId,
+        workflowType: 'extraction',
+        format: input.format,
+      })}\n\n`));
+      controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+        type: 'complete',
+        artifactId: input.artifactId,
+        content: input.content,
+        workflowType: 'extraction',
+        format: input.format,
+      })}\n\n`));
+      controller.close();
+    },
+  });
+}
+
+async function findExistingExtractionArtifactByIdempotencyKey(input: {
+  userId: string;
+  projectId: string;
+  idempotencyKey: string;
+}): Promise<ExistingExtractionArtifact | null> {
+  const artifact = await db.artifact.findFirst({
+    where: {
+      userId: input.userId,
+      projectId: input.projectId,
+      type: 'extraction',
+      input: {
+        path: ['idempotencyKey'],
+        equals: input.idempotencyKey,
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+    select: {
+      id: true,
+      status: true,
+      content: true,
+      workflowType: true,
+      failureReason: true,
+    },
+  });
+
+  return artifact;
+}
+
 export async function POST(request: Request) {
+  const requestId = request.headers.get('x-request-id') ?? crypto.randomUUID();
+  const baseLog = getRequestLogger({
+    requestId,
+    route: '/api/tools/extraction/generate',
+    method: 'POST',
+  });
+
   const authResult = await requireAuthenticatedUser();
   if (!authResult.ok) {
+    const completionOutcome = 'failed_hard' as const;
+    const completionReason = resolveExtractionCompletionReason({
+      outcome: completionOutcome,
+      hardFailReason: 'unauthorized',
+    });
+    const terminalState = mapExtractionTerminalState({ outcome: completionOutcome, reason: completionReason });
+    logBestEffort(baseLog, 'warn',
+      {
+        workflowType: 'extraction',
+        requestId,
+        attemptIndex: null,
+        runtimeModel: null,
+        timeoutKind: null,
+        fallbackReason: null,
+        completionOutcome,
+        completionReason,
+        artifactStatus: terminalState.artifactStatus,
+        httpStatus: terminalState.httpStatus,
+        policyVersion: EXTRACTION_POLICY_VERSION,
+      },
+      'Extraction request rejected before processing',
+    );
     return authResult.response;
   }
 
   const userId = authResult.data.userId;
-  const requestId = request.headers.get('x-request-id') ?? crypto.randomUUID();
   const log = getRequestLogger({
     requestId,
     route: '/api/tools/extraction/generate',
@@ -590,24 +829,66 @@ export async function POST(request: Request) {
 
   const parsed = await parseAndValidateRequest(request, extractionRequestSchema);
   if (!parsed.ok) {
+    const completionOutcome = 'failed_hard' as const;
+    const completionReason = resolveExtractionCompletionReason({
+      outcome: completionOutcome,
+      hardFailReason: 'validation_error',
+    });
+    const terminalState = mapExtractionTerminalState({ outcome: completionOutcome, reason: completionReason });
+    logBestEffort(log, 'warn',
+      {
+        workflowType: 'extraction',
+        requestId,
+        attemptIndex: null,
+        runtimeModel: null,
+        timeoutKind: null,
+        fallbackReason: null,
+        completionOutcome,
+        completionReason,
+        artifactStatus: terminalState.artifactStatus,
+        httpStatus: terminalState.httpStatus,
+        policyVersion: EXTRACTION_POLICY_VERSION,
+      },
+      'Extraction request rejected: invalid payload',
+    );
     return parsed.response;
   }
 
   const payload = parsed.data;
   const startedAt = Date.now();
   const extractionResponseMode = payload.responseMode ?? 'structured';
+  const idempotencyKey = normalizeExtractionIdempotencyKey(request.headers.get('x-idempotency-key'));
   const runtimeModel = resolveExtractionRuntimeModel(payload.model);
   const attemptPlan = extractionResponseMode === 'text'
-    ? getExtractionAttemptPlan({ maxAttempts: 2, attemptTimeoutMs: [18_000, 22_000] })
+    ? getExtractionAttemptPlan({
+      maxAttempts: EXTRACTION_MAX_ATTEMPTS,
+      attemptTimeoutMs: [...EXTRACTION_TEXT_ATTEMPT_TIMEOUTS_MS],
+    })
     : getExtractionAttemptPlan();
+  const rolloutDecision = resolveExtractionRolloutDecision({
+    userId,
+    projectId: payload.projectId,
+  });
 
-  log.info(
+  logBestEffort(log, 'info',
     {
       workflowType: 'extraction',
+      requestId,
+      attemptIndex: null,
+      timeoutKind: null,
+      fallbackReason: null,
+      completionReason: null,
       projectId: payload.projectId,
       model: payload.model,
       runtimeModel,
+      idempotencyKey,
       responseMode: extractionResponseMode,
+      rolloutEnabled: rolloutDecision.enabled,
+      rolloutRollbackActive: rolloutDecision.rollbackActive,
+      rolloutPercentage: rolloutDecision.rolloutPercentage,
+      rolloutPhase: rolloutDecision.phase,
+      rolloutCohort: rolloutDecision.cohort,
+      rolloutReason: rolloutDecision.reason,
       policyVersion: EXTRACTION_POLICY_VERSION,
     },
     'Tool generation started',
@@ -615,8 +896,183 @@ export async function POST(request: Request) {
 
   const ownershipResult = await requireOwnedProject(payload.projectId, userId);
   if (!ownershipResult.ok) {
+    const completionOutcome = 'failed_hard' as const;
+    const completionReason = resolveExtractionCompletionReason({
+      outcome: completionOutcome,
+      hardFailReason: ownershipResult.response.status === 404 ? 'forbidden' : 'forbidden',
+    });
+    const terminalState = mapExtractionTerminalState({ outcome: completionOutcome, reason: completionReason });
+    logBestEffort(log, 'warn',
+      {
+        workflowType: 'extraction',
+        projectId: payload.projectId,
+        completionOutcome,
+        completionReason,
+        requestId,
+        attemptIndex: null,
+        runtimeModel: null,
+        timeoutKind: null,
+        fallbackReason: null,
+        artifactStatus: terminalState.artifactStatus,
+        httpStatus: ownershipResult.response.status,
+        policyVersion: EXTRACTION_POLICY_VERSION,
+      },
+      'Extraction request rejected: project not accessible',
+    );
     return ownershipResult.response;
   }
+
+  if (!rolloutDecision.allowed) {
+    logBestEffort(log, 'warn',
+      {
+        workflowType: 'extraction',
+        projectId: payload.projectId,
+        requestId,
+        attemptIndex: null,
+        runtimeModel,
+        timeoutKind: null,
+        fallbackReason: rolloutDecision.reason,
+        completionReason: 'rollout_gate_blocked',
+        rolloutEnabled: rolloutDecision.enabled,
+        rolloutRollbackActive: rolloutDecision.rollbackActive,
+        rolloutPercentage: rolloutDecision.rolloutPercentage,
+        rolloutPhase: rolloutDecision.phase,
+        rolloutCohort: rolloutDecision.cohort,
+        rolloutReason: rolloutDecision.reason,
+        policyVersion: EXTRACTION_POLICY_VERSION,
+      },
+      'Extraction request blocked by rollout gate',
+    );
+
+    return apiError('SERVICE_UNAVAILABLE', 'Extraction temporaneamente non disponibile per questa coorte rollout', 503, {
+      rollout: {
+        enabled: rolloutDecision.enabled,
+        rollbackActive: rolloutDecision.rollbackActive,
+        percentage: rolloutDecision.rolloutPercentage,
+        phase: rolloutDecision.phase,
+        cohort: rolloutDecision.cohort,
+        reason: rolloutDecision.reason,
+      },
+    });
+  }
+
+  if (idempotencyKey) {
+    const existingArtifact = await findExistingExtractionArtifactByIdempotencyKey({
+      userId,
+      projectId: payload.projectId,
+      idempotencyKey,
+    });
+
+    if (existingArtifact) {
+      logBestEffort(log, 'info',
+        {
+          workflowType: 'extraction',
+          projectId: payload.projectId,
+          requestId,
+          attemptIndex: null,
+          runtimeModel: null,
+          timeoutKind: null,
+          completionReason: null,
+          fallbackReason: null,
+          artifactId: existingArtifact.id,
+          artifactStatus: existingArtifact.status,
+          idempotencyKey,
+          policyVersion: EXTRACTION_POLICY_VERSION,
+        },
+        'Extraction idempotency hit',
+      );
+
+      if (existingArtifact.status === 'completed') {
+        return sseResponse(
+          createExtractionReplayStream({
+            artifactId: existingArtifact.id,
+            content: existingArtifact.content,
+            format: getExtractionStreamFormat(extractionResponseMode),
+          }),
+          requestId,
+        );
+      }
+
+      return apiError('CONFLICT', 'Extraction request already exists for this idempotency key', 409, {
+        artifactId: existingArtifact.id,
+        status: existingArtifact.status,
+        failureReason: existingArtifact.failureReason ?? null,
+      });
+    }
+  }
+
+  let firstRunnableAttemptIndex = -1;
+  for (let index = 0; index < attemptPlan.length; index += 1) {
+    const modelResult = await requireAvailableModel(attemptPlan[index].model);
+    if (modelResult.ok) {
+      firstRunnableAttemptIndex = index;
+      break;
+    }
+
+    logBestEffort(log, 'warn',
+      {
+        workflowType: 'extraction',
+        projectId: payload.projectId,
+        requestId,
+        attemptIndex: attemptPlan[index].attemptIndex,
+        runtimeModel: attemptPlan[index].model,
+        policyVersion: EXTRACTION_POLICY_VERSION,
+      },
+      'Extraction attempt skipped during preflight: runtime model unavailable',
+    );
+  }
+
+  if (firstRunnableAttemptIndex === -1) {
+    logBestEffort(log, 'error',
+      {
+        workflowType: 'extraction',
+        projectId: payload.projectId,
+        requestId,
+        attemptIndex: null,
+        runtimeModel: null,
+        timeoutKind: null,
+        completionReason: 'no_signal_after_chain_exhausted',
+        fallbackReason: 'provider_error',
+        responseMode: extractionResponseMode,
+        policyVersion: EXTRACTION_POLICY_VERSION,
+      },
+      'Extraction preflight exhausted: no runtime model available',
+    );
+
+    return apiError('EXTRACTION_FAILED', 'Impossibile completare l\'estrazione in modo affidabile', 503);
+  }
+
+  const usageResult = await enforceUsageGuards(userId, attemptPlan[firstRunnableAttemptIndex].model, 'extraction', {
+    incrementMonthlyUsed: true,
+  });
+  if (!usageResult.ok) {
+    return usageResult.response;
+  }
+
+  const artifactInput = {
+    rawContent: payload.rawContent,
+    fieldMap: payload.fieldMap,
+    tone: payload.tone,
+    responseMode: extractionResponseMode,
+    notes: payload.notes,
+    policyVersion: EXTRACTION_POLICY_VERSION,
+    workflowType: 'extraction',
+    outputFormat: getExtractionStreamFormat(extractionResponseMode),
+    requestId,
+    idempotencyKey,
+  };
+
+  const artifactStub = await db.artifact.create({
+    data: {
+      userId,
+      projectId: payload.projectId,
+      type: 'extraction',
+      workflowType: 'extraction',
+      model: attemptPlan[firstRunnableAttemptIndex].model,
+      input: artifactInput,
+      status: 'generating',
+    },
+  });
 
   const prompt = await buildExtractionPrompt({
     rawContent: payload.rawContent,
@@ -627,15 +1083,22 @@ export async function POST(request: Request) {
   });
 
   let lastFallbackReason = 'provider_error';
-  let usageIncrementApplied = false;
+  let lastTimeoutKind: AttemptStreamResult['timeoutKind'] | null = null;
+  let lastAttemptIndex = attemptPlan[firstRunnableAttemptIndex]?.attemptIndex ?? 1;
+  let lastAttemptModel = attemptPlan[firstRunnableAttemptIndex]?.model ?? runtimeModel;
+  let lastAttemptInput: Record<string, unknown> = {
+    ...artifactInput,
+    extractionAttempt: lastAttemptIndex,
+    payloadModel: payload.model,
+  };
 
-  for (const attempt of attemptPlan) {
+  for (const attempt of attemptPlan.slice(firstRunnableAttemptIndex)) {
     const attemptStartedAt = Date.now();
     const modelResult = await requireAvailableModel(attempt.model);
     if (!modelResult.ok) {
       lastFallbackReason = 'provider_error';
 
-      log.warn(
+      logBestEffort(log, 'warn',
         {
           workflowType: 'extraction',
           projectId: payload.projectId,
@@ -665,37 +1128,36 @@ export async function POST(request: Request) {
       continue;
     }
 
-    const usageResult = await enforceUsageGuards(userId, attempt.model, 'extraction', {
-      incrementMonthlyUsed: !usageIncrementApplied,
-    });
-    if (!usageResult.ok) {
-      return usageResult.response;
-    }
-    if (!usageIncrementApplied) {
-      usageIncrementApplied = true;
-    }
-
     let fallbackReason = 'provider_error';
 
     try {
+      const attemptInput: Record<string, unknown> = {
+        rawContent: payload.rawContent,
+        fieldMap: payload.fieldMap,
+        tone: payload.tone,
+        outputFormat: extractionResponseMode === 'text' ? 'markdown' : 'json',
+        workflowType: 'extraction',
+        extractionAttempt: attempt.attemptIndex,
+        policyVersion: EXTRACTION_POLICY_VERSION,
+        fallbackFromModel: attempt.isFallback ? attemptPlan[attempt.attemptIndex - 2]?.model ?? null : null,
+        payloadModel: payload.model,
+      };
+
+      lastAttemptIndex = attempt.attemptIndex;
+      lastAttemptModel = attempt.model;
+      lastAttemptInput = attemptInput;
+
       const stream = await createArtifactStream({
         userId,
         projectId: payload.projectId,
+        artifactId: artifactStub.id,
         type: 'extraction',
         workflowType: 'extraction',
         model: attempt.model,
+        persistFailure: false,
+        persistPartialOnTimeout: false,
         promptOverride: prompt,
-        input: {
-          rawContent: payload.rawContent,
-          fieldMap: payload.fieldMap,
-          tone: payload.tone,
-          outputFormat: extractionResponseMode === 'text' ? 'markdown' : 'json',
-          workflowType: 'extraction',
-          extractionAttempt: attempt.attemptIndex,
-          policyVersion: EXTRACTION_POLICY_VERSION,
-          fallbackFromModel: attempt.isFallback ? attemptPlan[attempt.attemptIndex - 2]?.model ?? null : null,
-          payloadModel: payload.model,
-        },
+        input: attemptInput,
       });
 
       const consumed = await consumeAttemptStream(
@@ -705,7 +1167,10 @@ export async function POST(request: Request) {
         EXTRACTION_JSON_START_TIMEOUT_MS,
         EXTRACTION_JSON_PARSE_TIMEOUT_MS,
         EXTRACTION_TOKEN_IDLE_TIMEOUT_MS,
-        { enableJsonGuards: extractionResponseMode !== 'text' },
+        {
+          enableJsonGuards: extractionResponseMode !== 'text',
+          enableStreamGuards: extractionResponseMode !== 'text',
+        },
       );
 
       let parseOk = false;
@@ -732,8 +1197,6 @@ export async function POST(request: Request) {
         acceptanceReason = 'no_critical_fields_defined';
         criticalCoverage = 1;
         success = true;
-      } else if (consumed.timedOut) {
-        fallbackReason = 'timeout';
       } else if (consumed.errorMessage) {
         providerError = true;
         fallbackReason = 'provider_error';
@@ -807,8 +1270,9 @@ export async function POST(request: Request) {
         fallbackReason = policyDecision.reason;
       }
       lastFallbackReason = fallbackReason;
+      lastTimeoutKind = consumed.timeoutKind ?? null;
 
-      log.info(
+      logBestEffort(log, 'info',
         {
           workflowType: 'extraction',
           projectId: payload.projectId,
@@ -817,6 +1281,7 @@ export async function POST(request: Request) {
           attemptIndex: attempt.attemptIndex,
           runtimeModel: attempt.model,
           fallbackReason: success ? null : fallbackReason,
+          completionReason: null,
           duration_ms: Date.now() - attemptStartedAt,
           costEstimate: consumed.costEstimate,
           parseOk,
@@ -841,7 +1306,88 @@ export async function POST(request: Request) {
       );
 
       if (success) {
-        log.info(
+        let responseStream: ReadableStream = replaySseChunks(consumed.chunks);
+        let completeTokens: { input: number; output: number } | undefined;
+        let completeCost: number | undefined;
+
+        const completionOutcome = classifyExtractionCompletionOutcome({
+          success,
+          acceptanceDecision,
+          timedOut: consumed.timedOut,
+        });
+        const completionReason = resolveExtractionCompletionReason({
+          outcome: completionOutcome,
+          acceptanceReason,
+        });
+        const terminalState = mapExtractionTerminalState({
+          outcome: completionOutcome,
+          reason: completionReason,
+        });
+
+        const terminalInput = buildExtractionTerminalInput({
+          attemptInput,
+          completionOutcome,
+          completionReason,
+          fallbackReason: consumed.timedOut ? 'timeout' : null,
+          timeoutKind: consumed.timeoutKind ?? null,
+          attemptIndex: attempt.attemptIndex,
+          runtimeModel: attempt.model,
+        });
+
+        if (consumed.timedOut) {
+          const completedContent = trimmedTokenContent;
+
+          const persisted = await persistArtifactSuccess({
+            artifactId: artifactStub.id,
+            userId,
+            type: 'extraction',
+            model: attempt.model,
+            workflowType: 'extraction',
+            content: completedContent,
+            promptSource: prompt,
+            inputSnapshot: terminalInput,
+            completionOutcome,
+            completionReason,
+            fallbackReason: 'timeout',
+            timeoutKind: consumed.timeoutKind ?? null,
+            attemptIndex: attempt.attemptIndex,
+          });
+
+          completeTokens = { input: persisted.inputTokens, output: persisted.outputTokens };
+          completeCost = persisted.cost;
+
+          responseStream = createResolvedExtractionStream({
+            chunks: consumed.chunks,
+            artifactId: consumed.artifactId ?? artifactStub.id,
+            content: completedContent,
+            format: consumed.format ?? getExtractionStreamFormat(extractionResponseMode),
+            cost: completeCost,
+            tokens: completeTokens,
+            appendCompleteEvent: !consumed.didComplete,
+          });
+        } else {
+          await db.artifact.update({
+            where: { id: artifactStub.id },
+            data: {
+              input: terminalInput as Prisma.InputJsonValue,
+              status: 'completed',
+              completedAt: new Date(),
+              failureReason: null,
+            },
+          });
+
+          if (!consumed.didComplete) {
+            responseStream = createResolvedExtractionStream({
+              chunks: consumed.chunks,
+              artifactId: consumed.artifactId ?? artifactStub.id,
+              content: consumed.tokenContent,
+              format: consumed.format ?? getExtractionStreamFormat(extractionResponseMode),
+              appendCompleteEvent: true,
+            });
+          }
+        }
+
+        logBestEffort(log, 'info',
           {
             workflowType: 'extraction',
             projectId: payload.projectId,
@@ -849,11 +1395,19 @@ export async function POST(request: Request) {
             responseMode: extractionResponseMode,
             duration_ms: Date.now() - startedAt,
             requestId,
+            attemptIndex: attempt.attemptIndex,
+            runtimeModel: attempt.model,
+            timeoutKind: consumed.timeoutKind ?? null,
+            fallbackReason: consumed.timedOut ? 'timeout' : null,
+            completionOutcome,
+            completionReason,
+            artifactStatus: terminalState.artifactStatus,
+            httpStatus: terminalState.httpStatus,
           },
           'Tool generation stream initialized',
         );
 
-        return sseResponse(replaySseChunks(consumed.chunks), requestId);
+        return sseResponse(responseStream, requestId);
       }
 
       if (!policyDecision.escalate) {
@@ -864,7 +1418,7 @@ export async function POST(request: Request) {
         ? { name: error.name, message: error.message }
         : { message: String(error) };
 
-      log.error(
+      logBestEffort(log, 'error',
         {
           workflowType: 'extraction',
           projectId: payload.projectId,
@@ -895,15 +1449,52 @@ export async function POST(request: Request) {
     }
   }
 
-  log.error(
+  const completionOutcome = 'failed_hard' as const;
+  const completionReason = resolveExtractionCompletionReason({
+    outcome: completionOutcome,
+    hardFailReason: 'no_signal_after_chain_exhausted',
+  });
+  const terminalInput = buildExtractionTerminalInput({
+    attemptInput: lastAttemptInput,
+    completionOutcome,
+    completionReason,
+    fallbackReason: lastFallbackReason,
+    timeoutKind: lastTimeoutKind,
+    attemptIndex: lastAttemptIndex,
+    runtimeModel: lastAttemptModel,
+  });
+
+  await persistArtifactFailure({
+    artifactId: artifactStub.id,
+    userId,
+    type: 'extraction',
+    model: lastAttemptModel,
+    failureReason: lastFallbackReason,
+    inputSnapshot: terminalInput,
+    completionOutcome,
+    completionReason,
+    fallbackReason: lastFallbackReason,
+    timeoutKind: lastTimeoutKind,
+    attemptIndex: lastAttemptIndex,
+  });
+
+  logBestEffort(log, 'error',
     {
       workflowType: 'extraction',
       projectId: payload.projectId,
       requestId,
+      artifactId: artifactStub.id,
+      attemptIndex: lastAttemptIndex,
+      runtimeModel: lastAttemptModel,
+      timeoutKind: lastTimeoutKind,
       duration_ms: Date.now() - startedAt,
       fallbackReason: lastFallbackReason,
       responseMode: extractionResponseMode,
       policyVersion: EXTRACTION_POLICY_VERSION,
+      completionOutcome,
+      completionReason,
+      artifactStatus: 'failed',
+      httpStatus: 503,
     },
     'Extraction fallback chain exhausted',
   );

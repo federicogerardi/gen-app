@@ -279,7 +279,7 @@ La decisione strategica di semplificare da JSON schema parsing a plain text extr
 **Cosa è cambiato:**
 - **extraction/generate route** (`responseMode: "text"`): soft_accept ora **arresta l'escalation** (non continua ai model successivi)
 - **HTTP status codes**: soft_accept ritorna **200** (non 503), abilitando corretta persistenza in DB
-- **Timeout handling**: first-token (12s), token-idle (10s), overall timeout (35s/attempt) rimangono attivi per robustezza
+- **Timeout handling (as-is 2026-04-15)**: in text mode sono attive deadline per-attempt estese (120s/150s/180s) senza guard stream aggressivi; in structured mode restano guard timeout (`first-token`, `token-idle`, `json-start`, `json-parse`) con soglie riallineate completeness-first.
 - **Type system**: Fixed typecheck errors; all tests passing (377/377)
 - **DB sync**: Logs e database state ora **sincronizzati** — `acceptanceDecision:soft_accept` → persiste come success
 

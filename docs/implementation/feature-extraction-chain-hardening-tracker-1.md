@@ -73,7 +73,7 @@ Status legend:
 - 2026-04-14: Completate Phase 1-3 con diagnostica tipizzata, acceptance engine e timeout hardening + test unit/integration.
 - 2026-04-14: Completata documentazione prompt/spec e aggiornata checklist runbook hardening acceptance-timeout (Phase 4 parziale, rollout dev in corso).
 - 2026-04-14: Esteso hardening timeout con token-idle guard (10s) e test integration dedicato; aggiunta propagazione `AbortSignal` end-to-end per interrompere realmente le richieste provider su timeout route-level.
-- 2026-04-14: Introdotta semplificazione text-first per funnel (`responseMode: text` + `extractionContext`) con tuning timeout 18s/22s e accettazione contenuto utile anche su timeout stream; validazione dev positiva su run reale (successo al primo tentativo, ~20s).
+- 2026-04-14: Introdotta semplificazione text-first per funnel (`responseMode: text` + `extractionContext`) con tuning timeout 18s/22s e accettazione contenuto utile anche su timeout stream; validazione dev positiva su run reale (successo al primo tentativo, ~20s). Nota storica: tuning 18s/22s superseded da policy completeness-first 2026-04-15.
 - **2026-04-14 — FINAL FIXES (TASK-016 completed)**:
   - ✅ Typecheck errors fixed (2 files): `tests/unit/tool-prompts.test.ts` + `src/lib/tool-prompts/funnel-pages.ts` 
   - ✅ Integration tests fixed (2 test cases): token-timeout tests aligned with text-mode extraction behavior (377/377 passing)

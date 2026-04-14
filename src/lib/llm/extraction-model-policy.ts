@@ -4,12 +4,39 @@ export const EXTRACTION_PRIMARY_MODEL = 'anthropic/claude-3.7-sonnet';
 export const EXTRACTION_FALLBACK_MODELS = ['openai/gpt-4.1', 'openai/o3'] as const;
 
 export const EXTRACTION_MAX_ATTEMPTS = 3;
-export const EXTRACTION_TIMEOUT_MS = 45_000;
-export const EXTRACTION_FIRST_TOKEN_TIMEOUT_MS = 12_000;
-export const EXTRACTION_TOKEN_IDLE_TIMEOUT_MS = 10_000;
-export const EXTRACTION_JSON_START_TIMEOUT_MS = 8_000;
-export const EXTRACTION_JSON_PARSE_TIMEOUT_MS = 7_000;
-export const EXTRACTION_DEFAULT_ATTEMPT_TIMEOUTS_MS = [35_000, 25_000, 30_000] as const;
+export const EXTRACTION_TIMEOUT_MS = 180_000;
+export const EXTRACTION_FIRST_TOKEN_TIMEOUT_MS = 45_000;
+export const EXTRACTION_TOKEN_IDLE_TIMEOUT_MS = 40_000;
+export const EXTRACTION_JSON_START_TIMEOUT_MS = 35_000;
+export const EXTRACTION_JSON_PARSE_TIMEOUT_MS = 30_000;
+export const EXTRACTION_DEFAULT_ATTEMPT_TIMEOUTS_MS = [90_000, 120_000, 150_000] as const;
+export const EXTRACTION_TEXT_ATTEMPT_TIMEOUTS_MS = [120_000, 150_000, 180_000] as const;
+
+export const EXTRACTION_COMPLETION_OUTCOMES = ['completed_full', 'completed_partial', 'failed_hard'] as const;
+
+export const EXTRACTION_COMPLETION_REASONS = [
+  'known_fields_present',
+  'critical_coverage_threshold_met',
+  'no_critical_fields_defined',
+  'no_known_keys_but_structured_signal',
+  'partial_useful_output',
+  'unauthorized',
+  'forbidden',
+  'validation_error',
+  'no_signal_after_chain_exhausted',
+] as const;
+
+export type ExtractionCompletionOutcome = (typeof EXTRACTION_COMPLETION_OUTCOMES)[number];
+export type ExtractionCompletionReason = (typeof EXTRACTION_COMPLETION_REASONS)[number];
+
+export type ExtractionTerminalState = {
+  outcome: ExtractionCompletionOutcome;
+  reason: ExtractionCompletionReason;
+  httpStatus: number;
+  artifactStatus: 'completed' | 'failed';
+};
+
+type ExtractionRouteHardFailReason = 'unauthorized' | 'forbidden' | 'validation_error' | 'no_signal_after_chain_exhausted';
 
 export type ExtractionEscalationReason =
   | 'parse_failed'
@@ -66,6 +93,102 @@ export function getExtractionAttemptPlan(config?: {
 export function resolveExtractionRuntimeModel(payloadModel: string): string {
   void payloadModel;
   return EXTRACTION_PRIMARY_MODEL;
+}
+
+export function classifyExtractionCompletionOutcome(input: {
+  success: boolean;
+  acceptanceDecision?: 'hard_accept' | 'soft_accept' | 'reject';
+  timedOut?: boolean;
+}): ExtractionCompletionOutcome {
+  if (!input.success) {
+    return 'failed_hard';
+  }
+
+  if (input.timedOut) {
+    return 'completed_partial';
+  }
+
+  if (input.acceptanceDecision === 'soft_accept') {
+    return 'completed_partial';
+  }
+
+  return 'completed_full';
+}
+
+export function resolveExtractionCompletionReason(input: {
+  outcome: ExtractionCompletionOutcome;
+  acceptanceReason?: string;
+  hardFailReason?: ExtractionRouteHardFailReason;
+}): ExtractionCompletionReason {
+  if (input.outcome === 'failed_hard') {
+    return input.hardFailReason ?? 'no_signal_after_chain_exhausted';
+  }
+
+  if (input.outcome === 'completed_full') {
+    return 'known_fields_present';
+  }
+
+  if (input.acceptanceReason === 'critical_coverage_threshold_met') {
+    return 'critical_coverage_threshold_met';
+  }
+
+  if (input.acceptanceReason === 'no_critical_fields_defined') {
+    return 'no_critical_fields_defined';
+  }
+
+  if (input.acceptanceReason === 'no_known_keys_but_structured_signal') {
+    return 'no_known_keys_but_structured_signal';
+  }
+
+  return 'partial_useful_output';
+}
+
+export function mapExtractionTerminalState(input: {
+  outcome: ExtractionCompletionOutcome;
+  reason: ExtractionCompletionReason;
+}): ExtractionTerminalState {
+  if (input.outcome !== 'failed_hard') {
+    return {
+      outcome: input.outcome,
+      reason: input.reason,
+      httpStatus: 200,
+      artifactStatus: 'completed',
+    };
+  }
+
+  if (input.reason === 'unauthorized') {
+    return {
+      outcome: input.outcome,
+      reason: input.reason,
+      httpStatus: 401,
+      artifactStatus: 'failed',
+    };
+  }
+
+  if (input.reason === 'forbidden') {
+    return {
+      outcome: input.outcome,
+      reason: input.reason,
+      httpStatus: 403,
+      artifactStatus: 'failed',
+    };
+  }
+
+  if (input.reason === 'validation_error') {
+    return {
+      outcome: input.outcome,
+      reason: input.reason,
+      httpStatus: 400,
+      artifactStatus: 'failed',
+    };
+  }
+
+  return {
+    outcome: input.outcome,
+    reason: input.reason,
+    httpStatus: 503,
+    artifactStatus: 'failed',
+  };
 }
 
 function resolveEscalationReason(result: ExtractionAttemptResult): ExtractionEscalationReason {

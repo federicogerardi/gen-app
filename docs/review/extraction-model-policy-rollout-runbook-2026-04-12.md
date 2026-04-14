@@ -1,8 +1,8 @@
 ---
 goal: Rollout and rollback runbook for extraction runtime model policy
-version: 1.0
+version: 1.1
 date_created: 2026-04-12
-last_updated: 2026-04-12
+last_updated: 2026-04-15
 owner: Platform AI / Tooling
 status: Active
 tags: [runbook, extraction, llm, rollout, rollback, observability]
@@ -90,7 +90,8 @@ Obiettivo:
 
 Nota perimetro attuale Funnel:
 - il flusso UI usa `responseMode: text` con payload V3 `extractionContext`.
-- in text mode la chain e ridotta a 2 tentativi (18s / 22s).
+- in text mode la chain usa 3 tentativi completeness-first (120s / 150s / 180s).
+- in text mode i guard stream aggressivi (`first_token`, `json_start`, `json_parse`, `token_idle`) sono disattivati; resta la deadline per-attempt.
 - in text mode, timeout con contenuto gia utile puo essere accettato come `soft_accept` per evitare `EXTRACTION_FAILED` non necessari.
 
 Checklist operativa dev (go/no-go):
@@ -99,10 +100,10 @@ Checklist operativa dev (go/no-go):
    - `hard_accept` con campi attesi coerenti
    - `soft_accept` con output parziale e copertura critica sopra soglia
    - `reject` con overlap reale o copertura critica insufficiente
-3. Validare fallback anticipato su stream stall (assenza token entro 12s) con `fallbackReason=timeout` e `timeoutKind=first_token`.
-4. Validare fallback anticipato su stream senza inizio JSON (`{`) entro 8s dal primo token non vuoto con `fallbackReason=timeout` e `timeoutKind=json_start`.
-5. Validare fallback anticipato su stream con `{` ma senza JSON parseable entro 7s con `fallbackReason=timeout` e `timeoutKind=json_parse`.
-6. Validare fallback anticipato su stream idle post-primo token (assenza token successivi oltre 10s) con `fallbackReason=timeout` e `timeoutKind=token_idle`.
+3. Validare fallback anticipato su stream stall in `responseMode: structured` (assenza token entro 45s) con `fallbackReason=timeout` e `timeoutKind=first_token`.
+4. Validare fallback anticipato su stream structured senza inizio JSON (`{`) entro 35s dal primo token non vuoto con `fallbackReason=timeout` e `timeoutKind=json_start`.
+5. Validare fallback anticipato su stream structured con `{` ma senza JSON parseable entro 30s con `fallbackReason=timeout` e `timeoutKind=json_parse`.
+6. Validare fallback anticipato su stream structured idle post-primo token (assenza token successivi oltre 40s) con `fallbackReason=timeout` e `timeoutKind=token_idle`.
 7. Verificare che i timeout route-level propaghino cancellazione upstream (`AbortSignal`) fino al provider per evitare timeout effettivi oltre soglia.
 8. Confermare assenza regressioni su contratto errori API `{ error: { code, message } }`.
 
@@ -116,6 +117,27 @@ No-go criteria:
 - mancanza sistematica dei campi diagnostici richiesti.
 - aumento `EXTRACTION_FAILED` > 20% rispetto baseline.
 - regressioni semantiche sui codici errore o su guard route (auth/usage/ownership).
+
+## Sprint 0 Closure - Resilience Contract (2026-04-14)
+
+Obiettivo chiuso:
+- formalizzare outcome matrix unica e reason taxonomy condivisa.
+- allineare mapping outcome -> HTTP -> artifact status per il terminal path route extraction.
+
+Evidence di implementazione:
+- `src/lib/llm/extraction-model-policy.ts`: outcome classifier + reason resolver + terminal mapping.
+- `src/app/api/tools/extraction/generate/route.ts`: emissione campi terminali (`completionOutcome`, `completionReason`, `artifactStatus`, `httpStatus`) e classificazione hard-fail pre-chain.
+- `tests/unit/extraction-model-policy.test.ts`: copertura unit su classifier/reason/mapping.
+- `tests/integration/extraction-route.test.ts`: regressione route extraction verde post-integrazione.
+
+Checklist go/no-go per chiusura Sprint 0:
+1. classifier outcome coperto da test unit.
+2. mapping terminale HTTP/artifact status documentato e allineato alla route.
+3. reason taxonomy condivisa in spec/runbook/tracker.
+4. nessuna regressione su contratto errori API `{ error: { code, message } }`.
+
+Esito Sprint 0:
+- GO per passaggio operativo a Sprint 1.
 
 ## Metriche operative
 
@@ -143,10 +165,61 @@ Campi minimi da aggregare:
 - `requestId`
 - `attemptIndex`
 - `runtimeModel`
+- `timeoutKind`
+- `completionReason`
 - `fallbackReason`
 - `duration_ms`
 - `costEstimate`
 - `parseOk`, `schemaOk`, `consistencyOk`
+
+Nota Sprint 4 (2026-04-14):
+- la route extraction applica logging best-effort; failure dei sink osservabilita non devono bloccare il path utente.
+- i log terminali includono in modo uniforme `completionReason`, `fallbackReason`, `timeoutKind`, `attemptIndex`, `runtimeModel`.
+
+## TASK-0402 Baseline Queries (Completed)
+
+Obiettivo operativo:
+- raccogliere baseline numerica su due finestre consecutive per `timeout_distribution`, `partial_rate`, `fallback_depth_mean`.
+
+Finestra consigliata:
+- 30 minuti (rolling), con confronto su due finestre consecutive prima di promuovere il gate AC-040x.
+
+Query 1 - Timeout distribution:
+1. Filtrare eventi `Extraction attempt failed` con `fallbackReason = timeout`.
+2. Raggruppare per `timeoutKind` (`first_token`, `json_start`, `json_parse`, `token_idle`, `route_deadline`).
+3. Calcolare percentuale su totale timeout della finestra.
+
+Output atteso:
+- tabella per finestra con colonne `timeoutKind`, `count`, `ratio`.
+
+Query 2 - Partial rate:
+1. Filtrare eventi terminali route extraction (`Tool generation stream initialized`).
+2. Calcolare `partial_rate = count(completionOutcome = completed_partial) / count(all completionOutcome)`.
+3. Segmentare per `responseMode` (`structured`, `text`) per evitare bias di mix traffico.
+
+Output atteso:
+- tabella per finestra con colonne `responseMode`, `completed_full`, `completed_partial`, `partial_rate`.
+
+Query 3 - Fallback depth mean:
+1. Per ogni `requestId` prendere il massimo `attemptIndex` osservato.
+2. Calcolare `fallback_depth_mean = avg(max_attemptIndex_per_request)`.
+3. Evidenziare anche p95 di attempt depth per intercettare code patologiche.
+
+Output atteso:
+- tabella per finestra con colonne `request_count`, `fallback_depth_mean`, `fallback_depth_p95`.
+
+Checklist di validazione operativa:
+1. Completezza campi log minimi >= 99% richieste della finestra (`requestId`, `attemptIndex`, `runtimeModel`, `timeoutKind`, `completionReason`, `fallbackReason`).
+2. Nessun incremento error rate attribuibile alla pipeline osservabilita (best-effort invariato).
+3. Baseline consolidata su due finestre consecutive e allegata al tracker prima della chiusura `TASK-0402`.
+
+Esito operativo TASK-0402 (2026-04-14):
+- query baseline definite e rese operative nel runbook;
+- metriche aggregate coperte: `timeout_distribution`, `partial_rate`, `fallback_depth_mean` (+ p95 depth);
+- integrazione tracker/index completata.
+
+Nota:
+- la promozione produzione resta vincolata ai gate KPI runtime su finestre consecutive; questa condizione non blocca la chiusura del task di strumentazione/query operative.
 
 ## Criteri di rollback
 
@@ -159,6 +232,42 @@ Trigger soft rollback (decisione operativa):
 - degrado prolungato sopra soglie di Fase A o Fase B per oltre 2h
 - aumento anomalo `fallback_depth_mean` > 2.2
 - `mean_cost` > 0.06 USD per oltre 2h
+
+## Phase 6 - Artifact-First Rollout Controls (2026-04-15)
+
+Stato implementazione:
+- route extraction protetta da gate rollout in `src/app/api/tools/extraction/generate/route.ts`.
+- decision engine rollout centralizzato in `src/lib/tool-routes/extraction-rollout.ts`.
+- copertura regressione route/gate in `tests/integration/extraction-route.test.ts`.
+
+Variabili operative:
+1. `EXTRACTION_ARTIFACT_FIRST_ENABLED` (`1`/`0`): feature flag globale route-level.
+2. `EXTRACTION_ARTIFACT_FIRST_ROLLOUT_PERCENT` (`0..100`): percentuale coorti abilitate con hashing deterministico `userId:projectId`.
+3. `EXTRACTION_ARTIFACT_FIRST_ROLLBACK_ACTIVE` (`1`/`0`): kill switch immediato che forza blocco richieste extraction.
+
+Semantica runtime:
+1. Se flag globale disabilitata -> risposta `503` con `SERVICE_UNAVAILABLE` e `rollout.reason=flag_disabled`.
+2. Se rollback attivo -> risposta `503` con `SERVICE_UNAVAILABLE` e `rollout.reason=rollback_active`.
+3. Se richiesta fuori coorte -> risposta `503` con `SERVICE_UNAVAILABLE` e `rollout.reason=outside_rollout`.
+4. Se richiesta in coorte -> esecuzione flow extraction invariato.
+
+Progressione consigliata (TASK-0602):
+1. Step 10%: impostare `EXTRACTION_ARTIFACT_FIRST_ROLLOUT_PERCENT=10` per 24h.
+2. Step 30%: promuovere a `30` solo con due finestre KPI consecutive in soglia.
+3. Step 100%: promuovere a `100` solo dopo stabilita step 30% su due finestre consecutive.
+
+Gate KPI per promozione step:
+1. `extraction_failed_rate <= 5%` su finestra 30 minuti.
+2. `p95_latency <= 15s` su finestra 30 minuti.
+3. `fallback_depth_mean <= 2.2` su finestra 30 minuti.
+4. completezza campi diagnostici >= 99% richieste monitorate.
+
+Rollback drill (TASK-0603):
+1. Attivare kill switch: `EXTRACTION_ARTIFACT_FIRST_ROLLBACK_ACTIVE=1`.
+2. Verificare che nuove richieste route extraction rispondano `503 SERVICE_UNAVAILABLE` con `rollout.reason=rollback_active`.
+3. Confermare riduzione `extraction_failed_rate` e `p95_latency` alla baseline del livello precedente.
+4. Disattivare kill switch (`0`) e ripristinare percentuale rollout precedente stabile.
+5. Registrare timestamp, metriche pre/post e campione requestId nel tracker operativo.
 
 ## Procedura rollback
 

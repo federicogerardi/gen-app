@@ -1,16 +1,16 @@
 ---
 goal: Hardening della chain di estrazione per latenza, affidabilita e first-pass success
-version: 1.0
+version: 1.1
 date_created: 2026-04-14
-last_updated: 2026-04-14
+last_updated: 2026-04-15
 owner: Platform Engineering
-status: In Progress
+status: Completed
 tags: [feature, hardening, extraction, reliability, latency]
 ---
 
 # Introduction
 
-![Status: In Progress](https://img.shields.io/badge/status-In%20Progress-yellow)
+![Status: Completed](https://img.shields.io/badge/status-Completed-green)
 
 Piano operativo per hardening della chain di estrazione `POST /api/tools/extraction/generate` con focus su latenza, affidabilita e riduzione dei fallback non necessari. Il piano esclude ottimizzazioni di costo e definisce task eseguibili con criteri di verifica misurabili.
 
@@ -50,8 +50,8 @@ Piano operativo per hardening della chain di estrazione `POST /api/tools/extract
 | Task     | Description | Completed | Date |
 | -------- | ----------- | --------- | ---- |
 | TASK-005 | Estendere `src/lib/llm/extraction-model-policy.ts` per supportare timeout per-attempt (`attemptTimeoutMs[]`) mantenendo backward compatibility con valore unico corrente. | Yes | 2026-04-14 |
-| TASK-006 | Impostare piano timeout default: attempt 1 = 35s, attempt 2 = 25s, attempt 3 = 30s e aggiungere test in `tests/unit/extraction-model-policy.test.ts` per verificare applicazione corretta. | Yes | 2026-04-14 |
-| TASK-007 | Implementare early-abort nel consumer SSE in `src/app/api/tools/extraction/generate/route.ts` quando non arrivano token entro soglia `firstTokenTimeoutMs` (default 12s) o in caso di token-idle post-primo token oltre soglia (`tokenIdleTimeoutMs`, default 10s), classificando `fallbackReason` come `timeout`. | Yes | 2026-04-14 |
+| TASK-006 | Impostare piano timeout default: attempt 1 = 35s, attempt 2 = 25s, attempt 3 = 30s e aggiungere test in `tests/unit/extraction-model-policy.test.ts` per verificare applicazione corretta. Nota storica: valori superseded da policy completeness-first del 2026-04-15. | Yes | 2026-04-14 |
+| TASK-007 | Implementare early-abort nel consumer SSE in `src/app/api/tools/extraction/generate/route.ts` quando non arrivano token entro soglia `firstTokenTimeoutMs` (default 12s) o in caso di token-idle post-primo token oltre soglia (`tokenIdleTimeoutMs`, default 10s), classificando `fallbackReason` come `timeout`. Nota storica: soglie superseded da policy completeness-first del 2026-04-15. | Yes | 2026-04-14 |
 | TASK-008 | Aggiungere test integration per scenario stallo stream con assenza token e verifica passaggio rapido al fallback successivo in `tests/integration/extraction-route.test.ts`. | Yes | 2026-04-14 |
 | TASK-008A | Propagare cancellazione timeout route-level via `AbortSignal` fino a orchestrator/provider (`src/lib/llm/streaming.ts`, `src/lib/llm/orchestrator.ts`, `src/lib/llm/providers/*`) per rendere effettivo l'interrupt upstream. | Yes | 2026-04-14 |
 
@@ -75,7 +75,7 @@ Piano operativo per hardening della chain di estrazione `POST /api/tools/extract
 | TASK-013 | Aggiornare `src/lib/tool-prompts/prompts/tools/extraction/prompt_generation.md` con blocco esplicito "Critical fields first" ordinando estrazione prioritaria dei required fields della field map. | Yes | 2026-04-14 |
 | TASK-014 | Aggiungere test contract prompt in `tests/unit/tool-prompts.test.ts` per verificare presenza regole: chiavi flat, compilazione completa, critical fields first, JSON valido anche parziale. | Yes | 2026-04-14 |
 | TASK-015 | Aggiornare documentazione operativa in `docs/specifications/api-specifications.md` con semantica acceptance (`hard_accept`, `soft_accept`, `reject`) e nuove metriche di diagnostica. | Yes | 2026-04-14 |
-| TASK-016 | Eseguire rollout controllato su dev con checklist runbook in `docs/review/extraction-model-policy-rollout-runbook-2026-04-12.md` aggiungendo sezione hardening acceptance-timeout e criteri go/no-go. | In Progress | 2026-04-14 |
+| TASK-016 | Eseguire rollout controllato su dev con checklist runbook in `docs/review/extraction-model-policy-rollout-runbook-2026-04-12.md` aggiungendo sezione hardening acceptance-timeout e criteri go/no-go. | Yes | 2026-04-14 |
 
 ## 3. Contribution Added In This Iteration
 

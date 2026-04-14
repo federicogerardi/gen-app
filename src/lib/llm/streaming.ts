@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import type { Prisma } from '@/generated/prisma';
 import { LLMOrchestrator } from './orchestrator';
 import type { ArtifactType, OutputFormat, QuotaEventStatus } from '@/lib/types/artifact';
 import { calculateCostWithPricing } from './costs';
@@ -15,6 +16,41 @@ interface StreamParams {
   input: unknown;
   workflowType?: string | null;
   promptOverride?: string;
+  artifactId?: string;
+  persistFailure?: boolean;
+  persistPartialOnTimeout?: boolean;
+}
+
+interface PersistArtifactSuccessParams {
+  artifactId: string;
+  userId: string;
+  type: ArtifactType;
+  model: string;
+  workflowType: string | null;
+  content: string;
+  promptSource: string;
+  inputSnapshot?: Record<string, unknown>;
+  completionOutcome?: string;
+  completionReason?: string;
+  fallbackReason?: string | null;
+  timeoutKind?: string | null;
+  attemptIndex?: number;
+  providerInputTokens?: number | null;
+  providerOutputTokens?: number | null;
+}
+
+interface PersistArtifactFailureParams {
+  artifactId: string;
+  userId: string;
+  type: ArtifactType;
+  model: string;
+  failureReason: string;
+  inputSnapshot?: Record<string, unknown>;
+  completionOutcome?: string;
+  completionReason?: string;
+  fallbackReason?: string | null;
+  timeoutKind?: string | null;
+  attemptIndex?: number;
 }
 
 function estimateUtfAwareTokens(text: string): number {
@@ -46,26 +82,187 @@ function extractOutputFormat(input: unknown): OutputFormat {
   return 'plain';
 }
 
+export async function persistArtifactSuccess(params: PersistArtifactSuccessParams): Promise<{
+  inputTokens: number;
+  outputTokens: number;
+  cost: number;
+}> {
+  const modelPricing = await getModelPricingForRuntime(params.model);
+  const fallbackInputTokenCount = estimateUtfAwareTokens(params.promptSource);
+  const fallbackOutputTokenCount = estimateUtfAwareTokens(params.content);
+  const resolvedInputTokens = resolveTokenCount(params.providerInputTokens ?? null, fallbackInputTokenCount);
+  const resolvedOutputTokens = resolveTokenCount(params.providerOutputTokens ?? null, fallbackOutputTokenCount);
+  const cost = calculateCostWithPricing(modelPricing, resolvedInputTokens, resolvedOutputTokens);
+  const safeInputTokens = Math.max(resolvedInputTokens, 1);
+  const safeOutputTokens = Math.max(resolvedOutputTokens, 1);
+
+  if (resolvedInputTokens < 1 || resolvedOutputTokens < 1) {
+    logger.warn(
+      {
+        artifactId: params.artifactId,
+        inputTokenCount: resolvedInputTokens,
+        outputTokenCount: resolvedOutputTokens,
+        fallbackInputTokenCount,
+        fallbackOutputTokenCount,
+        providerInputTokenCount: params.providerInputTokens ?? null,
+        providerOutputTokenCount: params.providerOutputTokens ?? null,
+      },
+      'Token count invariant violation: clamping to 1 before completed persist',
+    );
+  }
+
+  const terminalState: Record<string, unknown> = {
+    completionOutcome: params.completionOutcome ?? 'completed_full',
+    completionReason: params.completionReason ?? null,
+    fallbackReason: params.fallbackReason ?? null,
+    timeoutKind: params.timeoutKind ?? null,
+    attemptIndex: params.attemptIndex ?? null,
+    finalizedAt: new Date().toISOString(),
+  };
+
+  const artifactData: {
+    content: string;
+    status: 'completed';
+    failureReason: null;
+    inputTokens: number;
+    outputTokens: number;
+    costUSD: number;
+    completedAt: Date;
+    input?: Prisma.InputJsonValue;
+  } = {
+    content: params.content,
+    status: 'completed',
+    failureReason: null,
+    inputTokens: safeInputTokens,
+    outputTokens: safeOutputTokens,
+    costUSD: cost,
+    completedAt: new Date(),
+  };
+
+  if (params.inputSnapshot) {
+    artifactData.input = {
+      ...params.inputSnapshot,
+      terminalState,
+    } as Prisma.InputJsonValue;
+  }
+
+  await db.$transaction(async (tx) => {
+    await tx.artifact.update({
+      where: { id: params.artifactId },
+      data: artifactData,
+    });
+
+    await tx.user.update({
+      where: { id: params.userId },
+      data: {
+        monthlySpent: { increment: cost },
+      },
+    });
+
+    await tx.quotaHistory.create({
+      data: {
+        userId: params.userId,
+        requestCount: 1,
+        costUSD: cost,
+        model: params.model,
+        artifactType: params.type,
+        status: 'success' as QuotaEventStatus,
+      },
+    });
+  });
+
+  return {
+    inputTokens: safeInputTokens,
+    outputTokens: safeOutputTokens,
+    cost,
+  };
+}
+
+export async function persistArtifactFailure(params: PersistArtifactFailureParams): Promise<void> {
+  const terminalState: Record<string, unknown> = {
+    completionOutcome: params.completionOutcome ?? 'failed_hard',
+    completionReason: params.completionReason ?? null,
+    fallbackReason: params.fallbackReason ?? params.failureReason,
+    timeoutKind: params.timeoutKind ?? null,
+    attemptIndex: params.attemptIndex ?? null,
+    finalizedAt: new Date().toISOString(),
+  };
+
+  const artifactData: {
+    status: 'failed';
+    failureReason: string;
+    input?: Prisma.InputJsonValue;
+  } = {
+    status: 'failed',
+    failureReason: params.failureReason,
+  };
+
+  if (params.inputSnapshot) {
+    artifactData.input = {
+      ...params.inputSnapshot,
+      terminalState,
+    } as Prisma.InputJsonValue;
+  }
+
+  await db.$transaction(async (tx) => {
+    await tx.artifact.update({
+      where: { id: params.artifactId },
+      data: artifactData,
+    });
+
+    await tx.quotaHistory.create({
+      data: {
+        userId: params.userId,
+        requestCount: 1,
+        costUSD: 0,
+        model: params.model,
+        artifactType: params.type,
+        status: 'error' as QuotaEventStatus,
+      },
+    });
+  });
+}
+
 export async function createArtifactStream(params: StreamParams): Promise<ReadableStream> {
   const { userId, projectId, type, model, input, promptOverride } = params;
   const workflowType = params.workflowType ?? extractWorkflowType(input);
   const outputFormat = extractOutputFormat(input);
   const modelPricing = await getModelPricingForRuntime(model);
   const providerAbortController = new AbortController();
+  const persistFailure = params.persistFailure ?? true;
+  const persistPartialOnTimeout = params.persistPartialOnTimeout ?? true;
 
-  const artifact = await db.artifact.create({
-    data: {
-      userId,
-      projectId,
-      type,
-      workflowType,
-      model,
-      input: input as object,
-      status: 'generating',
-    },
-  });
+  const artifact = params.artifactId
+    ? { id: params.artifactId }
+    : await db.artifact.create({
+      data: {
+        userId,
+        projectId,
+        type,
+        workflowType,
+        model,
+        input: input as Prisma.InputJsonValue,
+        status: 'generating',
+      },
+    });
+
+  if (params.artifactId) {
+    await db.artifact.update({
+      where: { id: params.artifactId },
+      data: {
+        workflowType,
+        model,
+        input: input as Prisma.InputJsonValue,
+        content: '',
+        status: 'generating',
+        failureReason: null,
+      },
+    });
+  }
 
   let cancellationReason: 'timeout' | 'client_disconnect' | 'other' | null = null;
+  let terminalState: 'open' | 'completed' | 'failed' = 'open';
+  let controllerClosed = false;
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -74,12 +271,38 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
         return new TextEncoder().encode(line);
       };
 
-      controller.enqueue(encode({
+      const transitionTerminalState = (nextState: 'completed' | 'failed') => {
+        if (terminalState !== 'open') {
+          return false;
+        }
+
+        terminalState = nextState;
+        return true;
+      };
+
+      const enqueueEvent = (payload: object) => {
+        if (controllerClosed) {
+          return;
+        }
+
+        controller.enqueue(encode(payload));
+      };
+
+      const closeController = () => {
+        if (controllerClosed) {
+          return;
+        }
+
+        controllerClosed = true;
+        controller.close();
+      };
+
+      enqueueEvent({
         type: 'start',
         artifactId: artifact.id,
         workflowType,
         format: outputFormat,
-      }));
+      });
 
       let accumulated = '';
       let fallbackOutputTokenCount = 0;
@@ -114,16 +337,16 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
           const estimatedOutputTokens = resolveTokenCount(providerOutputTokenCount, fallbackOutputTokenCount);
           const costEstimate = calculateCostWithPricing(modelPricing, estimatedInputTokens, estimatedOutputTokens);
 
-          controller.enqueue(encode({
+          enqueueEvent({
             type: 'token',
             token: chunk.token,
             sequence: tokenSequence,
             workflowType,
             format: outputFormat,
-          }));
+          });
 
           if (tokenSequence % 20 === 0) {
-            controller.enqueue(encode({
+            enqueueEvent({
               type: 'progress',
               workflowType,
               format: outputFormat,
@@ -132,7 +355,7 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
                 output: estimatedOutputTokens,
               },
               costEstimate,
-            }));
+            });
           }
 
           // S3-02: Batch database writes every 50 tokens to reduce DB pressure
@@ -156,9 +379,6 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
           await pendingUpdate;
         }
 
-        const resolvedInputTokens = resolveTokenCount(providerInputTokenCount, fallbackInputTokenCount);
-        const resolvedOutputTokens = resolveTokenCount(providerOutputTokenCount, fallbackOutputTokenCount);
-        const cost = calculateCostWithPricing(modelPricing, resolvedInputTokens, resolvedOutputTokens);
         const normalized = orchestrator.normalizeOutput({
           rawContent: accumulated,
           type,
@@ -176,137 +396,105 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
           );
         }
 
-        // Invariant: completed artifacts must have positive token counts.
-        // Clamp to 1 rather than persisting zeros that would corrupt cost accounting.
-        const safeInputTokens = Math.max(resolvedInputTokens, 1);
-        const safeOutputTokens = Math.max(resolvedOutputTokens, 1);
-        if (resolvedInputTokens < 1 || resolvedOutputTokens < 1) {
-          logger.warn(
-            {
-              artifactId: artifact.id,
-              inputTokenCount: resolvedInputTokens,
-              outputTokenCount: resolvedOutputTokens,
-              fallbackInputTokenCount,
-              fallbackOutputTokenCount,
-              providerInputTokenCount,
-              providerOutputTokenCount,
-            },
-            'Token count invariant violation: clamping to 1 before completed persist',
-          );
+        if (!transitionTerminalState('completed')) {
+          return;
         }
 
-        await db.artifact.update({
-          where: { id: artifact.id },
-          data: {
-            content: normalized.content,
-            status: 'completed',
-            inputTokens: safeInputTokens,
-            outputTokens: safeOutputTokens,
-            costUSD: cost,
-            completedAt: new Date(),
-          },
+        const persisted = await persistArtifactSuccess({
+          artifactId: artifact.id,
+          userId,
+          type,
+          model,
+          workflowType,
+          content: normalized.content,
+          promptSource: sourcePrompt,
+          providerInputTokens: providerInputTokenCount,
+          providerOutputTokens: providerOutputTokenCount,
         });
 
-        // Note: monthlyUsed increment now happens atomically inside enforceUsageGuards (guards.ts)
-        // Only update monthlySpent here (already persisted in artifact, cost already calculated)
-        await db.user.update({
-          where: { id: userId },
-          data: {
-            monthlySpent: { increment: cost },
-          },
-        });
-
-        await db.quotaHistory.create({
-          data: {
-            userId,
-            requestCount: 1,
-            costUSD: cost,
-            model,
-            artifactType: type,
-            status: 'success' as QuotaEventStatus,
-          },
-        });
-
-        controller.enqueue(encode({
+        enqueueEvent({
           type: 'complete',
           artifactId: artifact.id,
           content: normalized.content,
           workflowType,
           format: normalized.format,
-          tokens: { input: safeInputTokens, output: safeOutputTokens },
-          cost,
-        }));
+          tokens: { input: persisted.inputTokens, output: persisted.outputTokens },
+          cost: persisted.cost,
+        });
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Generation failed';
 
-        const resolvedInputTokens = resolveTokenCount(providerInputTokenCount, fallbackInputTokenCount);
-        const resolvedOutputTokens = resolveTokenCount(providerOutputTokenCount, fallbackOutputTokenCount);
         const hasUsefulPartialContent = accumulated.trim().length >= 120;
         const canPersistPartialTimeout = providerAbortController.signal.aborted
           && cancellationReason === 'timeout'
           && hasUsefulPartialContent;
 
-        if (canPersistPartialTimeout) {
-          const cost = calculateCostWithPricing(modelPricing, resolvedInputTokens, resolvedOutputTokens);
-          await db.artifact.update({
-            where: { id: artifact.id },
-            data: {
-              content: accumulated,
-              status: 'completed',
-              inputTokens: Math.max(resolvedInputTokens, 1),
-              outputTokens: Math.max(resolvedOutputTokens, 1),
-              costUSD: cost,
-              completedAt: new Date(),
-            },
-          });
+        if (canPersistPartialTimeout && persistPartialOnTimeout) {
+          if (!transitionTerminalState('completed')) {
+            return;
+          }
 
-          await db.user.update({
-            where: { id: userId },
-            data: {
-              monthlySpent: { increment: cost },
-            },
+          await persistArtifactSuccess({
+            artifactId: artifact.id,
+            userId,
+            type,
+            model,
+            workflowType,
+            content: accumulated,
+            promptSource: sourcePrompt,
+            providerInputTokens: providerInputTokenCount,
+            providerOutputTokens: providerOutputTokenCount,
           });
+        } else if (cancellationReason === 'client_disconnect') {
+          return;
+        } else if (persistFailure) {
+          if (!transitionTerminalState('failed')) {
+            return;
+          }
 
-          await db.quotaHistory.create({
-            data: {
-              userId,
-              requestCount: 1,
-              costUSD: cost,
-              model,
-              artifactType: type,
-              status: 'success' as QuotaEventStatus,
-            },
-          });
-        } else {
-          await db.artifact.update({
-            where: { id: artifact.id },
-            data: { status: 'failed' },
-          });
-
-          await db.quotaHistory.create({
-            data: {
-              userId,
-              requestCount: 1,
-              costUSD: 0,
-              model,
-              artifactType: type,
-              status: 'error' as QuotaEventStatus,
-            },
+          await persistArtifactFailure({
+            artifactId: artifact.id,
+            userId,
+            type,
+            model,
+            failureReason: providerAbortController.signal.aborted && cancellationReason === 'timeout'
+              ? 'timeout'
+              : 'error',
+            inputSnapshot: input as Record<string, unknown>,
           });
 
           if (!providerAbortController.signal.aborted) {
-            controller.enqueue(encode({
+            enqueueEvent({
               type: 'error',
               code: 'INTERNAL_ERROR',
               message,
               workflowType,
               format: outputFormat,
-            }));
+            });
+          }
+        } else {
+          await db.artifact.update({
+            where: { id: artifact.id },
+            data: {
+              content: accumulated,
+              streamedAt: accumulated ? new Date() : undefined,
+              failureReason: null,
+            },
+          });
+
+          if (!providerAbortController.signal.aborted) {
+            enqueueEvent({
+              type: 'error',
+              code: 'INTERNAL_ERROR',
+              message,
+              workflowType,
+              format: outputFormat,
+            });
           }
         }
       } finally {
         try {
-          controller.close();
+          closeController();
         } catch {
           // Stream may already be cancelled by caller timeout handling.
         }
@@ -334,6 +522,12 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
       if (cancellationReason !== 'client_disconnect') {
         return;
       }
+
+      if (terminalState !== 'open') {
+        return;
+      }
+
+      terminalState = 'failed';
 
       db.artifact.update({
         where: { id: artifact.id },
