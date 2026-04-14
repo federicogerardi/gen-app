@@ -7,7 +7,9 @@ import {
   EXTRACTION_JSON_PARSE_TIMEOUT_MS,
   EXTRACTION_JSON_START_TIMEOUT_MS,
   classifyExtractionCompletionOutcome,
+  EXTRACTION_MAX_ATTEMPTS,
   EXTRACTION_POLICY_VERSION,
+  EXTRACTION_TEXT_ATTEMPT_TIMEOUTS_MS,
   EXTRACTION_TOKEN_IDLE_TIMEOUT_MS,
   getExtractionAttemptPlan,
   mapExtractionTerminalState,
@@ -150,7 +152,7 @@ async function consumeAttemptStream(
   jsonStartTimeoutMs: number,
   jsonParseTimeoutMs: number,
   tokenIdleTimeoutMs: number,
-  options?: { enableJsonGuards?: boolean },
+  options?: { enableJsonGuards?: boolean; enableStreamGuards?: boolean },
 ): Promise<AttemptStreamResult> {
   const reader = stream.getReader();
   const decoder = new TextDecoder();
@@ -168,6 +170,7 @@ async function consumeAttemptStream(
   let hasSeenJsonStart = false;
   let hasSeenParseableJson = false;
   const enableJsonGuards = options?.enableJsonGuards ?? true;
+  const enableStreamGuards = options?.enableStreamGuards ?? true;
   let tokenIdleTimeout: ReturnType<typeof setTimeout> | null = null;
   let jsonStartTimeout: ReturnType<typeof setTimeout> | null = null;
   let jsonParseTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -180,7 +183,7 @@ async function consumeAttemptStream(
   };
 
   const armTokenIdleTimeout = () => {
-    if (!hasReceivedToken || timedOut) {
+    if (!enableStreamGuards || !hasReceivedToken || timedOut) {
       return;
     }
 
@@ -200,7 +203,7 @@ async function consumeAttemptStream(
   };
 
   const armJsonStartTimeout = () => {
-    if (!hasReceivedToken || hasSeenJsonStart || timedOut) {
+    if (!enableStreamGuards || !hasReceivedToken || hasSeenJsonStart || timedOut) {
       return;
     }
 
@@ -223,7 +226,7 @@ async function consumeAttemptStream(
   };
 
   const armJsonParseTimeout = () => {
-    if (!hasSeenJsonStart || hasSeenParseableJson || timedOut || jsonParseTimeout) {
+    if (!enableStreamGuards || !hasSeenJsonStart || hasSeenParseableJson || timedOut || jsonParseTimeout) {
       return;
     }
 
@@ -240,15 +243,17 @@ async function consumeAttemptStream(
     await reader.cancel('timeout').catch(() => undefined);
   }, timeoutMs);
 
-  const firstTokenTimeout = setTimeout(async () => {
-    if (hasReceivedToken) {
-      return;
-    }
+  const firstTokenTimeout = enableStreamGuards
+    ? setTimeout(async () => {
+      if (hasReceivedToken) {
+        return;
+      }
 
-    timedOut = true;
-    timeoutKind = 'first_token';
-    await reader.cancel('timeout').catch(() => undefined);
-  }, firstTokenTimeoutMs);
+      timedOut = true;
+      timeoutKind = 'first_token';
+      await reader.cancel('timeout').catch(() => undefined);
+    }, firstTokenTimeoutMs)
+    : null;
 
   try {
     while (true) {
@@ -272,7 +277,9 @@ async function consumeAttemptStream(
           // Consider first-token received only when the chunk carries textual signal.
           if (tokenChunk.trim().length > 0) {
             hasReceivedToken = true;
-            clearTimeout(firstTokenTimeout);
+            if (firstTokenTimeout) {
+              clearTimeout(firstTokenTimeout);
+            }
             armTokenIdleTimeout();
             if (enableJsonGuards) {
               armJsonStartTimeout();
@@ -335,7 +342,9 @@ async function consumeAttemptStream(
     }
   } finally {
     clearTimeout(overallTimeout);
-    clearTimeout(firstTokenTimeout);
+    if (firstTokenTimeout) {
+      clearTimeout(firstTokenTimeout);
+    }
     clearTokenIdleTimeout();
     clearJsonStartTimeout();
     clearJsonParseTimeout();
@@ -851,7 +860,10 @@ export async function POST(request: Request) {
   const idempotencyKey = normalizeExtractionIdempotencyKey(request.headers.get('x-idempotency-key'));
   const runtimeModel = resolveExtractionRuntimeModel(payload.model);
   const attemptPlan = extractionResponseMode === 'text'
-    ? getExtractionAttemptPlan({ maxAttempts: 2, attemptTimeoutMs: [18_000, 22_000] })
+    ? getExtractionAttemptPlan({
+      maxAttempts: EXTRACTION_MAX_ATTEMPTS,
+      attemptTimeoutMs: [...EXTRACTION_TEXT_ATTEMPT_TIMEOUTS_MS],
+    })
     : getExtractionAttemptPlan();
   const rolloutDecision = resolveExtractionRolloutDecision({
     userId,
@@ -1155,7 +1167,10 @@ export async function POST(request: Request) {
         EXTRACTION_JSON_START_TIMEOUT_MS,
         EXTRACTION_JSON_PARSE_TIMEOUT_MS,
         EXTRACTION_TOKEN_IDLE_TIMEOUT_MS,
-        { enableJsonGuards: extractionResponseMode !== 'text' },
+        {
+          enableJsonGuards: extractionResponseMode !== 'text',
+          enableStreamGuards: extractionResponseMode !== 'text',
+        },
       );
 
       let parseOk = false;
@@ -1355,6 +1370,8 @@ export async function POST(request: Request) {
             where: { id: artifactStub.id },
             data: {
               input: terminalInput as Prisma.InputJsonValue,
+              status: 'completed',
+              completedAt: new Date(),
               failureReason: null,
             },
           });

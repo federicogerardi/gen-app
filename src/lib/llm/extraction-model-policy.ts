@@ -4,12 +4,13 @@ export const EXTRACTION_PRIMARY_MODEL = 'anthropic/claude-3.7-sonnet';
 export const EXTRACTION_FALLBACK_MODELS = ['openai/gpt-4.1', 'openai/o3'] as const;
 
 export const EXTRACTION_MAX_ATTEMPTS = 3;
-export const EXTRACTION_TIMEOUT_MS = 45_000;
-export const EXTRACTION_FIRST_TOKEN_TIMEOUT_MS = 12_000;
-export const EXTRACTION_TOKEN_IDLE_TIMEOUT_MS = 10_000;
-export const EXTRACTION_JSON_START_TIMEOUT_MS = 8_000;
-export const EXTRACTION_JSON_PARSE_TIMEOUT_MS = 7_000;
-export const EXTRACTION_DEFAULT_ATTEMPT_TIMEOUTS_MS = [35_000, 25_000, 30_000] as const;
+export const EXTRACTION_TIMEOUT_MS = 180_000;
+export const EXTRACTION_FIRST_TOKEN_TIMEOUT_MS = 45_000;
+export const EXTRACTION_TOKEN_IDLE_TIMEOUT_MS = 40_000;
+export const EXTRACTION_JSON_START_TIMEOUT_MS = 35_000;
+export const EXTRACTION_JSON_PARSE_TIMEOUT_MS = 30_000;
+export const EXTRACTION_DEFAULT_ATTEMPT_TIMEOUTS_MS = [90_000, 120_000, 150_000] as const;
+export const EXTRACTION_TEXT_ATTEMPT_TIMEOUTS_MS = [120_000, 150_000, 180_000] as const;
 
 export const EXTRACTION_COMPLETION_OUTCOMES = ['completed_full', 'completed_partial', 'failed_hard'] as const;
 

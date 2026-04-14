@@ -2,6 +2,13 @@
 
 _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 
+## Aggiornamento sessione (2026-04-15 — Extraction Completeness-First)
+
+- **Guardrail extraction riallineati allo scopo del tool**: rimosso il profilo text-mode a timeout stretti (18s/22s) e introdotta policy completeness-first con finestre estese.
+- **No cap stringente in text-mode**: sul consumer route extraction i guard stream aggressivi (`first_token`, `token_idle`, `json_start`, `json_parse`) sono disattivati in text-mode; resta una deadline ampia per-attempt per evitare richieste indefinite.
+- **Coerenza stato artifact finale**: nei path di successo route-level extraction viene persistito esplicitamente `status: completed` con `completedAt`; nel recovery stream timeout non viene piu forzato `status: generating`.
+- **Validazione post-allineamento**: `tests/unit/extraction-model-policy.test.ts` PASS, `tests/integration/extraction-route.test.ts` PASS, `npm run build` PASS.
+
 ## Aggiornamento sessione (2026-04-14 — Extraction Hardening Finale)
 
 ### Text-Mode Extraction: Completato ✅
@@ -60,7 +67,7 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 
 ## Aggiornamento sessione (2026-04-14)
 
-- **Extraction chain hardening (latenza/affidabilita/first-pass)**: track operativo in corso; implementazione tecnica completata (diagnostica consistency, timeout per-attempt, acceptance a soglie, prompt contract, abort propagation), con validazione KPI dev ancora aperta.
+- **Extraction chain hardening (latenza/affidabilita/first-pass)**: snapshot storico 2026-04-14, allora in corso; implementazione tecnica completata (diagnostica consistency, timeout per-attempt, acceptance a soglie, prompt contract, abort propagation), con validazione KPI dev allora aperta.
 - **Extraction text-mode simplification (Funnel upload-first)**: attivata modalita `responseMode: "text"` con payload V3 `extractionContext`, riducendo dipendenza dal parsing strutturato; ultimo run dev positivo con successo al primo tentativo e latenza ~20s.
 - **Documenti attivati**: piano `docs/implementation/feature-extraction-chain-hardening-plan-1.md` e tracker `docs/implementation/feature-extraction-chain-hardening-tracker-1.md`.
 - **Extraction chain artifact-first (nuovo track)**: Sprint 0 completato (outcome matrix, reason taxonomy, mapping terminale HTTP/artifact status), Sprint 1 completato (artifact stub, idempotency, single artifact chain), Sprint 2 tecnico completato (timeout classifier completo, partial timeout acceptance, single-finalize), Sprint 3 completato (finalizzazione atomica completion/failure, persistenza terminal reason, coerenza complete-event post-commit), Sprint 4 completato (`TASK-0401`, `TASK-0402`, `TASK-0403`), Sprint 5 completato (`TASK-0501..0504` con retry/resume UX + E2E dedicata) e Sprint 6 codice completato (`TASK-0601..0603`: feature flag route-level, rollout percentuale 10/30/100, rollback switch + drill runbook); monitoraggio KPI runtime e promozione progressiva restano attivi per chiusura gate finale (`docs/implementation/plan-extractionChainArtifactFirst.prompt.md`, `docs/implementation/feature-extraction-chain-artifact-first-tracker-1.md`, `docs/implementation/extraction-chain-artifact-first-sprint-operations-plan-2026-04-14.md`, `docs/review/extraction-model-policy-rollout-runbook-2026-04-12.md`).
@@ -124,9 +131,9 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
   - Merge su `dev` completato; documentazione operativa e tracker chiusi come snapshot finale as-is.
   - File: docs/implementation/funnel-extraction-model-policy-plan.md, docs/implementation/feature-funnel-extraction-model-policy-tracker-1.md, docs/review/extraction-model-policy-rollout-runbook-2026-04-12.md
 
-- **Extraction chain hardening (Funnel upload -> extraction)**: `IN CORSO (2026-04-14)`
+- **Extraction chain hardening (Funnel upload -> extraction)**: `COMPLETATO (2026-04-15)`
   - Implementazione hardening completata su route/policy/provider path: telemetria consistency, timeout differenziati per tentativo, acceptance engine `hard_accept/soft_accept/reject`, first-token + token-idle timeout, abort propagation end-to-end e rafforzamento prompt contract.
-  - Stato operativo: aperta validazione KPI su dev (first-attempt success, p95 latenza, tasso `EXTRACTION_FAILED`) secondo runbook.
+  - Stato operativo: monitoraggio KPI runtime prosegue nel track artifact-first/completeness-first per gate rollout finale.
   - File: docs/implementation/feature-extraction-chain-hardening-plan-1.md, docs/implementation/feature-extraction-chain-hardening-tracker-1.md
 
 - **Deploy Vercel**: `COMPLETATO (baseline)`

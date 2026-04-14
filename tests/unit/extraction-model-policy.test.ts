@@ -7,6 +7,7 @@ import {
   EXTRACTION_JSON_START_TIMEOUT_MS,
   EXTRACTION_MAX_ATTEMPTS,
   EXTRACTION_PRIMARY_MODEL,
+  EXTRACTION_TEXT_ATTEMPT_TIMEOUTS_MS,
   EXTRACTION_TOKEN_IDLE_TIMEOUT_MS,
   EXTRACTION_TIMEOUT_MS,
   getExtractionAttemptPlan,
@@ -74,14 +75,15 @@ describe('extraction-model-policy', () => {
   });
 
   it('exposes first-token timeout hardening constant', () => {
-    expect(EXTRACTION_FIRST_TOKEN_TIMEOUT_MS).toBe(12_000);
+    expect(EXTRACTION_FIRST_TOKEN_TIMEOUT_MS).toBe(45_000);
     expect(EXTRACTION_TIMEOUT_MS).toBeGreaterThan(EXTRACTION_FIRST_TOKEN_TIMEOUT_MS);
-    expect(EXTRACTION_JSON_START_TIMEOUT_MS).toBe(8_000);
-    expect(EXTRACTION_JSON_PARSE_TIMEOUT_MS).toBe(7_000);
-    expect(EXTRACTION_TOKEN_IDLE_TIMEOUT_MS).toBe(10_000);
+    expect(EXTRACTION_JSON_START_TIMEOUT_MS).toBe(35_000);
+    expect(EXTRACTION_JSON_PARSE_TIMEOUT_MS).toBe(30_000);
+    expect(EXTRACTION_TOKEN_IDLE_TIMEOUT_MS).toBe(40_000);
     expect(EXTRACTION_FIRST_TOKEN_TIMEOUT_MS).toBeGreaterThanOrEqual(EXTRACTION_TOKEN_IDLE_TIMEOUT_MS);
     expect(EXTRACTION_TOKEN_IDLE_TIMEOUT_MS).toBeGreaterThan(EXTRACTION_JSON_START_TIMEOUT_MS);
     expect(EXTRACTION_JSON_START_TIMEOUT_MS).toBeGreaterThan(EXTRACTION_JSON_PARSE_TIMEOUT_MS);
+    expect(EXTRACTION_TEXT_ATTEMPT_TIMEOUTS_MS).toEqual([120_000, 150_000, 180_000]);
   });
 
   it('always resolves primary runtime model independently from payload model', () => {

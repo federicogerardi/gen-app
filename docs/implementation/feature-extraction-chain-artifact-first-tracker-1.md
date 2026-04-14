@@ -1,6 +1,6 @@
 ---
 goal: Operational tracker for extraction chain artifact-first resilience rollout
-version: 1.8
+version: 1.9
 date_created: 2026-04-14
 last_updated: 2026-04-15
 owner: Platform Engineering
@@ -138,6 +138,10 @@ Nota baseline: il dato sopra riflette il momento iniziale del tracker; l'aggiorn
 - 2026-04-15: avvio Sprint 6 con gate rollout route-level artifact-first (feature flag, percent gating, rollback switch) su route extraction.
 - 2026-04-15: validazione locale Sprint 6 PASS su `tests/integration/extraction-route.test.ts` (scenari `flag_disabled`, `outside_rollout`, `rollback_active`).
 - 2026-04-15: `TASK-0601`, `TASK-0602`, `TASK-0603` aggiornati a Completed con allineamento runbook rollout/rollback.
+- 2026-04-15: applicata salvaguardia completeness-first sul path extraction text-mode: rimossi cap stretti per-attempt (18s/22s), estesi timeout policy e disattivati guard stream aggressivi in text-mode.
+- 2026-04-15: allineata finalizzazione artifact su successo route-level (`status: completed`, `completedAt`) e rimosso override `status: generating` nel recovery update stream timeout.
+- 2026-04-15: validazione post-hardening PASS su `tests/unit/extraction-model-policy.test.ts`, `tests/integration/extraction-route.test.ts` e `npm run build`.
+- 2026-04-15: conferma manuale frontend su flusso funnel upload-first: generazione completa verificata, output non troncato e patch completeness-first confermata efficace.
 
 ## 4. Current Phase Status
 
@@ -238,6 +242,11 @@ Nota baseline: il dato sopra riflette il momento iniziale del tracker; l'aggiorn
 - **EVID-033**: gate route-level rollout integrato in `src/app/api/tools/extraction/generate/route.ts` con mapping `SERVICE_UNAVAILABLE` e dettagli diagnostici rollout.
 - **EVID-034**: copertura integration Phase 6 (`flag_disabled`, `outside_rollout`, `rollback_active`) aggiunta in `tests/integration/extraction-route.test.ts`.
 - **EVID-035**: runbook Phase 6 aggiornato con progressione 10% -> 30% -> 100% e rollback drill in `docs/review/extraction-model-policy-rollout-runbook-2026-04-12.md`.
+- **EVID-036**: policy timeout extraction riallineata in modalita completeness-first con soglie estese e profilo text-mode dedicato in `src/lib/llm/extraction-model-policy.ts`.
+- **EVID-037**: route extraction text-mode senza cap stringenti per-attempt e senza guard stream aggressivi (`enableStreamGuards: false`) in `src/app/api/tools/extraction/generate/route.ts`.
+- **EVID-038**: coerenza stato artifact post-success hardening (chiusura esplicita a `completed` + `completedAt`, rimozione ripristino forzato `generating`) in `src/app/api/tools/extraction/generate/route.ts` e `src/lib/llm/streaming.ts`.
+- **EVID-039**: test e build di regressione aggiornati e validati in `tests/unit/extraction-model-policy.test.ts`, `tests/integration/extraction-route.test.ts`, `tests/unit/streaming.test.ts`.
+- **EVID-040**: verifica funzionale frontend completata su generazione funnel con output completo e senza missing content dopo patch completeness-first (evidenza operativa sessione 2026-04-15).
 
 ## 6A. Pre-Production Validation Gate
 

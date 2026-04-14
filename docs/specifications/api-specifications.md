@@ -264,13 +264,14 @@ Nota modalita risposta:
 Policy runtime (as-is):
 - Il campo `model` nel payload e accettato per compatibilita/audit ma non decide il modello runtime di extraction.
 - La route applica chain deterministica: `anthropic/claude-3.7-sonnet` -> `openai/gpt-4.1` -> `openai/o3`.
-- In `responseMode: "text"` la chain operativa e ridotta a 2 tentativi con timeout piu brevi (attempt 1 = 18s, attempt 2 = 22s) per minimizzare latenza.
+- In `responseMode: "text"` la chain operativa usa 3 tentativi completeness-first con timeout estesi (attempt 1 = 120s, attempt 2 = 150s, attempt 3 = 180s).
 - Ogni tentativo viene validato server-side con parse JSON + schema (`fields`, `missingFields`, `notes`) + coerenza con `fieldMap`.
-- Timeout per-attempt default: tentativo 1 = 35s, tentativo 2 = 25s, tentativo 3 = 30s.
-- Early-abort first-token: se non arriva alcun token SSE entro 12s, il tentativo viene classificato come `timeout` e si passa al fallback successivo.
-- Early-abort json-start: dopo il primo token non vuoto, se non compare un inizio JSON (`{`) entro 8s, il tentativo viene classificato come `timeout` e si passa al fallback successivo.
-- Early-abort json-parse: dopo il primo `{`, se l'output non diventa JSON parseable entro 7s, il tentativo viene classificato come `timeout` e si passa al fallback successivo.
-- Early-abort token-idle: dopo il primo token, se lo stream resta inattivo oltre 10s, il tentativo viene classificato come `timeout` e si passa al fallback successivo.
+- Timeout per-attempt default (structured): tentativo 1 = 90s, tentativo 2 = 120s, tentativo 3 = 150s.
+- Early-abort first-token (structured): se non arriva alcun token SSE entro 45s, il tentativo viene classificato come `timeout` e si passa al fallback successivo.
+- Early-abort json-start (structured): dopo il primo token non vuoto, se non compare un inizio JSON (`{`) entro 35s, il tentativo viene classificato come `timeout` e si passa al fallback successivo.
+- Early-abort json-parse (structured): dopo il primo `{`, se l'output non diventa JSON parseable entro 30s, il tentativo viene classificato come `timeout` e si passa al fallback successivo.
+- Early-abort token-idle (structured): dopo il primo token, se lo stream resta inattivo oltre 40s, il tentativo viene classificato come `timeout` e si passa al fallback successivo.
+- In `responseMode: "text"` i guard stream aggressivi (`first_token`, `json_start`, `json_parse`, `token_idle`) sono disattivati; resta la deadline per-attempt per evitare richieste indefinite.
 - I timeout route-level propagano `AbortSignal` fino a orchestrator/provider: la cancellazione interrompe realmente la richiesta upstream evitando attese prolungate lato provider.
 - La coerenza e valutata sui soli campi dichiarati nel `fieldMap`: eventuali chiavi extra restituite dal modello non invalidano automaticamente il tentativo se i campi richiesti risultano coerenti (supporto output parziali).
 - Semantica acceptance applicativa:
@@ -360,9 +361,9 @@ Nota mapping proof context (V3):
 - Formato output workflow: `markdown` (per `optin`, `quiz`, `vsl`)
 
 Nota workflow UI Funnel Pages:
-1. upload documento (`/tools/funnel-pages/upload`)
-2. estrazione contesto testuale (`/tools/extraction/generate` con `responseMode: "text"`)
-3. generazione sequenziale `optin -> quiz -> vsl` (`/tools/funnel-pages/generate`)
+1. upload documento (`/api/tools/funnel-pages/upload`)
+2. estrazione contesto testuale (`/api/tools/extraction/generate` con `responseMode: "text"`)
+3. generazione sequenziale `optin -> quiz -> vsl` (`/api/tools/funnel-pages/generate`)
 
 ### Generate Artifact (Streaming)
 

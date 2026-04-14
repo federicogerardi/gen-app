@@ -478,7 +478,6 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
             data: {
               content: accumulated,
               streamedAt: accumulated ? new Date() : undefined,
-              status: 'generating',
               failureReason: null,
             },
           });

@@ -13,6 +13,7 @@ import {
   EXTRACTION_JSON_PARSE_TIMEOUT_MS,
   EXTRACTION_JSON_START_TIMEOUT_MS,
   EXTRACTION_PRIMARY_MODEL,
+  EXTRACTION_TEXT_ATTEMPT_TIMEOUTS_MS,
   EXTRACTION_TOKEN_IDLE_TIMEOUT_MS,
 } from '@/lib/llm/extraction-model-policy';
 
@@ -345,6 +346,7 @@ describe('POST /api/tools/extraction/generate', () => {
       expect.objectContaining({
         where: { id: 'artifact_stub_1' },
         data: expect.objectContaining({
+          status: 'completed',
           failureReason: null,
           input: expect.objectContaining({
             terminalState: expect.objectContaining({
@@ -882,27 +884,11 @@ describe('POST /api/tools/extraction/generate', () => {
     );
   });
 
-  it('classifies deadline-driven timeout as route_deadline when heartbeats prevent narrower guards', async () => {
+  it('accepts deadline-driven timeout in text mode as completed_partial without forced fallback', async () => {
     mockedAuth.mockResolvedValue({ user: { id: 'user_1' } } as never);
     jest.useFakeTimers();
 
-    mockedStream
-      .mockResolvedValueOnce(createTextHeartbeatSseStream())
-      .mockResolvedValueOnce(createSseStream([
-        { type: 'start', artifactId: 'art_2', workflowType: 'extraction', format: 'markdown' },
-        {
-          type: 'token',
-          token: 'Contenuto finale sufficiente per chiudere il fallback con successo.',
-          sequence: 1,
-        },
-        {
-          type: 'complete',
-          artifactId: 'art_2',
-          content: 'Contenuto finale sufficiente per chiudere il fallback con successo.',
-          cost: 0.02,
-          format: 'markdown',
-        },
-      ]));
+    mockedStream.mockResolvedValueOnce(createTextHeartbeatSseStream());
 
     let res: Response | null = null;
     try {
@@ -910,21 +896,22 @@ describe('POST /api/tools/extraction/generate', () => {
         ...baseBody,
         responseMode: 'text',
       }));
-      await jest.advanceTimersByTimeAsync(18_500);
+      await jest.advanceTimersByTimeAsync(EXTRACTION_TEXT_ATTEMPT_TIMEOUTS_MS[0] + 500);
       res = await pendingResponse;
     } finally {
       jest.useRealTimers();
     }
 
     expect(res?.status).toBe(200);
-    expect(mockedStream).toHaveBeenCalledTimes(2);
+    expect(mockedStream).toHaveBeenCalledTimes(1);
     expect(mockLogger.info).toHaveBeenCalledWith(
       expect.objectContaining({
         attemptIndex: 1,
-        fallbackReason: 'timeout',
+        completionOutcome: 'completed_partial',
+        completionReason: 'no_critical_fields_defined',
         timeoutKind: 'route_deadline',
       }),
-      'Extraction attempt failed',
+      'Tool generation stream initialized',
     );
   });
 

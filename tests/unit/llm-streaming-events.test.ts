@@ -3,14 +3,21 @@
 import { createArtifactStream } from '@/lib/llm/streaming';
 import { db } from '@/lib/db';
 
-jest.mock('@/lib/db', () => ({
-  db: {
+jest.mock('@/lib/db', () => {
+  const tx = {
     artifact: { create: jest.fn(), update: jest.fn() },
     llmModel: { findFirst: jest.fn() },
     user: { update: jest.fn() },
     quotaHistory: { create: jest.fn() },
-  },
-}));
+  };
+
+  return {
+    db: {
+      ...tx,
+      $transaction: jest.fn(async (callback: (client: typeof tx) => Promise<unknown>) => callback(tx)),
+    },
+  };
+});
 
 jest.mock('@/lib/llm/orchestrator', () => {
   return {
@@ -32,6 +39,7 @@ const mockedDb = db as unknown as {
   llmModel: { findFirst: jest.Mock };
   user: { update: jest.Mock };
   quotaHistory: { create: jest.Mock };
+  $transaction: jest.Mock;
 };
 
 describe('createArtifactStream SSE contract', () => {
@@ -43,6 +51,7 @@ describe('createArtifactStream SSE contract', () => {
     mockedDb.llmModel.findFirst.mockResolvedValue(null);
     mockedDb.user.update.mockResolvedValue({});
     mockedDb.quotaHistory.create.mockResolvedValue({});
+    mockedDb.$transaction.mockImplementation(async (callback: (client: typeof mockedDb) => Promise<unknown>) => callback(mockedDb));
   });
 
   it('emits start/token/progress/complete events with additive metadata', async () => {

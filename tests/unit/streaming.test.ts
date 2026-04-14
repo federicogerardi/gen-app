@@ -179,6 +179,43 @@ describe('createArtifactStream', () => {
     }));
   });
 
+  it('does not force status generating on timeout cancel when persistFailure is disabled', async () => {
+    mockGenerateStream.mockImplementation(({ abortSignal }: { abortSignal: AbortSignal }) => (async function* () {
+      yield { token: 'Hello' };
+
+      await new Promise<void>((_, reject) => {
+        abortSignal.addEventListener('abort', () => {
+          reject(new Error('aborted'));
+        }, { once: true });
+      });
+    })());
+
+    const stream = await createArtifactStream({
+      userId: 'user_1',
+      projectId: 'proj_1',
+      artifactId: 'art_existing',
+      type: 'content',
+      model: 'openai/gpt-4-turbo',
+      input: { topic: 'AI' },
+      persistFailure: false,
+    });
+
+    const reader = stream.getReader();
+    await reader.read();
+    await reader.read();
+    await reader.cancel('timeout');
+    await Promise.resolve();
+    await Promise.resolve();
+
+    const timeoutRecoveryUpdate = updateArtifact.mock.calls.find(
+      (call) => call[0]?.data?.streamedAt && call[0]?.data?.content === 'Hello',
+    )?.[0];
+
+    expect(timeoutRecoveryUpdate).toBeDefined();
+    expect(timeoutRecoveryUpdate.data.status).toBeUndefined();
+    expect(timeoutRecoveryUpdate.data.failureReason).toBeNull();
+  });
+
   it('marks artifact failed and emits error event when generation throws', async () => {
     mockGenerateStream.mockImplementation(() => {
       throw new Error('Provider down');

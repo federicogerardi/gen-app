@@ -90,7 +90,8 @@ Obiettivo:
 
 Nota perimetro attuale Funnel:
 - il flusso UI usa `responseMode: text` con payload V3 `extractionContext`.
-- in text mode la chain e ridotta a 2 tentativi (18s / 22s).
+- in text mode la chain usa 3 tentativi completeness-first (120s / 150s / 180s).
+- in text mode i guard stream aggressivi (`first_token`, `json_start`, `json_parse`, `token_idle`) sono disattivati; resta la deadline per-attempt.
 - in text mode, timeout con contenuto gia utile puo essere accettato come `soft_accept` per evitare `EXTRACTION_FAILED` non necessari.
 
 Checklist operativa dev (go/no-go):
@@ -99,10 +100,10 @@ Checklist operativa dev (go/no-go):
    - `hard_accept` con campi attesi coerenti
    - `soft_accept` con output parziale e copertura critica sopra soglia
    - `reject` con overlap reale o copertura critica insufficiente
-3. Validare fallback anticipato su stream stall (assenza token entro 12s) con `fallbackReason=timeout` e `timeoutKind=first_token`.
-4. Validare fallback anticipato su stream senza inizio JSON (`{`) entro 8s dal primo token non vuoto con `fallbackReason=timeout` e `timeoutKind=json_start`.
-5. Validare fallback anticipato su stream con `{` ma senza JSON parseable entro 7s con `fallbackReason=timeout` e `timeoutKind=json_parse`.
-6. Validare fallback anticipato su stream idle post-primo token (assenza token successivi oltre 10s) con `fallbackReason=timeout` e `timeoutKind=token_idle`.
+3. Validare fallback anticipato su stream stall in `responseMode: structured` (assenza token entro 45s) con `fallbackReason=timeout` e `timeoutKind=first_token`.
+4. Validare fallback anticipato su stream structured senza inizio JSON (`{`) entro 35s dal primo token non vuoto con `fallbackReason=timeout` e `timeoutKind=json_start`.
+5. Validare fallback anticipato su stream structured con `{` ma senza JSON parseable entro 30s con `fallbackReason=timeout` e `timeoutKind=json_parse`.
+6. Validare fallback anticipato su stream structured idle post-primo token (assenza token successivi oltre 40s) con `fallbackReason=timeout` e `timeoutKind=token_idle`.
 7. Verificare che i timeout route-level propaghino cancellazione upstream (`AbortSignal`) fino al provider per evitare timeout effettivi oltre soglia.
 8. Confermare assenza regressioni su contratto errori API `{ error: { code, message } }`.
 
