@@ -202,6 +202,18 @@ describe('tool route schemas', () => {
     expect(parsed.data.schemaVersion).toBe('v3');
   });
 
+  it('accepts funnel V3 payload with extractionContext', () => {
+    const parsed = funnelPagesRequestSchema.safeParse({
+      ...base,
+      step: 'optin',
+      extractionContext: '## Business\nAgenzia B2B\n\n## Audience\nFounder PMI',
+    });
+
+    expect(parsed.success).toBe(true);
+    if (!parsed.success) return;
+    expect(parsed.data.schemaVersion).toBe('v3');
+  });
+
   it('assigns schemaVersion v1 for legacy payload without discriminant', () => {
     const parsed = funnelPagesRequestSchema.safeParse({
       ...base,
@@ -267,6 +279,23 @@ describe('tool route schemas', () => {
           type: 'textarea',
           required: true,
           description: 'Profilo target ideale',
+        },
+      },
+    });
+
+    expect(parsed.success).toBe(true);
+  });
+
+  it('accepts extraction request with text response mode', () => {
+    const parsed = extractionRequestSchema.safeParse({
+      ...base,
+      responseMode: 'text',
+      rawContent: 'Azienda B2B, target founder PMI, obiettivo aumentare lead qualificati.',
+      fieldMap: {
+        business_type: {
+          type: 'select',
+          required: true,
+          description: 'Tipo di business B2B o B2C',
         },
       },
     });

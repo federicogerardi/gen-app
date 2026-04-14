@@ -244,6 +244,7 @@ POST /tools/extraction/generate
   "projectId": "proj_123",
   "model": "openai/gpt-4-turbo",
   "tone": "professional",
+  "responseMode": "text",
   "rawContent": "testo estratto dal documento",
   "fieldMap": {
     "business_type": {
@@ -256,18 +257,35 @@ POST /tools/extraction/generate
 }
 ```
 
+Nota modalita risposta:
+- `responseMode: "structured"` (default): mantiene percorso JSON strutturato con validazioni parse/schema/consistency.
+- `responseMode: "text"` (raccomandata per funnel): restituisce contesto testuale markdown pronto per i prompt downstream, riducendo la fragilita del parsing strutturato.
+
 Policy runtime (as-is):
 - Il campo `model` nel payload e accettato per compatibilita/audit ma non decide il modello runtime di extraction.
 - La route applica chain deterministica: `anthropic/claude-3.7-sonnet` -> `openai/gpt-4.1` -> `openai/o3`.
+- In `responseMode: "text"` la chain operativa e ridotta a 2 tentativi con timeout piu brevi (attempt 1 = 18s, attempt 2 = 22s) per minimizzare latenza.
 - Ogni tentativo viene validato server-side con parse JSON + schema (`fields`, `missingFields`, `notes`) + coerenza con `fieldMap`.
+- Timeout per-attempt default: tentativo 1 = 35s, tentativo 2 = 25s, tentativo 3 = 30s.
+- Early-abort first-token: se non arriva alcun token SSE entro 12s, il tentativo viene classificato come `timeout` e si passa al fallback successivo.
+- Early-abort json-start: dopo il primo token non vuoto, se non compare un inizio JSON (`{`) entro 8s, il tentativo viene classificato come `timeout` e si passa al fallback successivo.
+- Early-abort json-parse: dopo il primo `{`, se l'output non diventa JSON parseable entro 7s, il tentativo viene classificato come `timeout` e si passa al fallback successivo.
+- Early-abort token-idle: dopo il primo token, se lo stream resta inattivo oltre 10s, il tentativo viene classificato come `timeout` e si passa al fallback successivo.
+- I timeout route-level propagano `AbortSignal` fino a orchestrator/provider: la cancellazione interrompe realmente la richiesta upstream evitando attese prolungate lato provider.
 - La coerenza e valutata sui soli campi dichiarati nel `fieldMap`: eventuali chiavi extra restituite dal modello non invalidano automaticamente il tentativo se i campi richiesti risultano coerenti (supporto output parziali).
-- Il fallback si interrompe al primo tentativo valido oppure quando il costo cumulato supera `USD 0.08`.
-- In caso di esaurimento chain/policy budget: `{ error: { code: "EXTRACTION_FAILED", message } }` con HTTP 503.
+- Semantica acceptance applicativa:
+  - `hard_accept`: campi attesi/missing coerenti con `fieldMap`, nessun overlap.
+  - `soft_accept`: segnale strutturato parziale con parse/schema validi e copertura campi critici (`required`) sopra soglia.
+  - `reject`: overlap reale, assenza segnale utile, parse/schema invalidi o copertura critica sotto soglia.
+- La route emette telemetria diagnostica strutturata per tentativo con campi: `expectedFieldCount`, `knownExtractedCount`, `knownMissingCount`, `overlapCount`, `unknownExtractedSample`, `unknownMissingSample`, `consistencyDecision`, `consistencyDecisionReason`, `acceptanceDecision`, `acceptanceReason`, `criticalCoverage`.
+- In `responseMode: "text"`, in caso di timeout con contenuto gia utile (contesto testuale sostanziale), il tentativo puo essere accettato come `soft_accept` per evitare fallback/503 non necessari.
+- Il fallback si interrompe al primo tentativo valido oppure a esaurimento della chain di tentativi.
+- In caso di esaurimento chain: `{ error: { code: "EXTRACTION_FAILED", message } }` con HTTP 503.
 
 **Response**:
 - Stream SSE con eventi standard (`start`, `token`, `complete`, `error`)
 - Workflow `extraction`
-- Output richiesto al modello: JSON (consumato dal client e mappato in `extractedFields`)
+- Output workflow consigliato per Funnel Pages: testo markdown contestuale (consumato direttamente come `extractionContext` nei prompt downstream)
 
 Nota operativa:
 - La route valida internamente i tentativi e poi invia al client gli eventi SSE del tentativo valido; durante retry non e garantito passthrough token live continuo.
@@ -284,7 +302,7 @@ POST /tools/funnel-pages/generate
 Il route handler accetta 3 shape compatibili:
 - `V1` legacy (`customerContext + promise`)
 - `V2` briefing unificato (`briefing`)
-- `V3` upload-first (`extractedFields`) — shape raccomandata e usata dalla UI attuale
+- `V3` upload-first (`extractedFields` oppure `extractionContext`) — shape raccomandata
 
 **Request V3 (raccomandata)**:
 ```json
@@ -293,20 +311,7 @@ Il route handler accetta 3 shape compatibili:
   "model": "openai/gpt-4-turbo",
   "tone": "professional",
   "step": "optin",
-  "extractedFields": {
-    "business_type": "B2B",
-    "sector_niche": "Servizi B2B",
-    "core_problem": "Lead poco qualificati",
-    "funnel_primary_goal": "Aumentare call qualificate",
-    "testimonials_sources": [
-      {
-        "quote": "Abbiamo aumentato i lead qualificati del 45% in 60 giorni.",
-        "source": "Marta B., COO",
-        "achieved_result": "Pipeline commerciale piu prevedibile",
-        "measurable_results": "+45% lead qualificati, -28% CPL"
-      }
-    ]
-  },
+  "extractionContext": "## Business\nAgenzia B2B...\n\n## Audience\nFounder PMI...\n\n## Offer\n...",
   "notes": "Vincoli brand..."
 }
 ```
@@ -316,6 +321,7 @@ Nota compatibilita:
 
 Nota mapping proof context (V3):
 - Quando `extractedFields.testimonials_sources` e presente, il mapping server-side verso il briefing funnel popola `proof_context.testimonials_sources` mantenendo i campi `quote`, `source`, `timestamp` e, quando disponibili, `achieved_result`, `measurable_results`.
+- Quando `extractionContext` e presente, il route funnel usa direttamente il contesto testuale nei prompt di generazione (senza mapping strutturato intermedio).
 
 **Step-specific constraints**:
 - `step=optin`: nessun contesto precedente richiesto
@@ -329,7 +335,7 @@ Nota mapping proof context (V3):
 
 Nota workflow UI Funnel Pages:
 1. upload documento (`/tools/funnel-pages/upload`)
-2. estrazione campi (`/tools/extraction/generate`)
+2. estrazione contesto testuale (`/tools/extraction/generate` con `responseMode: "text"`)
 3. generazione sequenziale `optin -> quiz -> vsl` (`/tools/funnel-pages/generate`)
 
 ### Generate Artifact (Streaming)

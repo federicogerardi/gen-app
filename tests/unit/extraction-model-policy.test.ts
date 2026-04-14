@@ -1,8 +1,12 @@
 import {
+  EXTRACTION_DEFAULT_ATTEMPT_TIMEOUTS_MS,
+  EXTRACTION_FIRST_TOKEN_TIMEOUT_MS,
   EXTRACTION_FALLBACK_MODELS,
+  EXTRACTION_JSON_PARSE_TIMEOUT_MS,
+  EXTRACTION_JSON_START_TIMEOUT_MS,
   EXTRACTION_MAX_ATTEMPTS,
-  EXTRACTION_MAX_COST_USD,
   EXTRACTION_PRIMARY_MODEL,
+  EXTRACTION_TOKEN_IDLE_TIMEOUT_MS,
   EXTRACTION_TIMEOUT_MS,
   getExtractionAttemptPlan,
   getExtractionModelChain,
@@ -26,9 +30,15 @@ describe('extraction-model-policy', () => {
       attemptIndex: 1,
       model: EXTRACTION_PRIMARY_MODEL,
       isFallback: false,
-      timeoutMs: EXTRACTION_TIMEOUT_MS,
+      timeoutMs: EXTRACTION_DEFAULT_ATTEMPT_TIMEOUTS_MS[0],
     });
-    expect(plan[1]?.isFallback).toBe(true);
+    expect(plan[1]).toEqual({
+      attemptIndex: 2,
+      model: EXTRACTION_FALLBACK_MODELS[0],
+      isFallback: true,
+      timeoutMs: EXTRACTION_DEFAULT_ATTEMPT_TIMEOUTS_MS[1],
+    });
+    expect(plan[2]?.timeoutMs).toBe(EXTRACTION_DEFAULT_ATTEMPT_TIMEOUTS_MS[2]);
   });
 
   it('caps attempt plan when maxAttempts override is provided', () => {
@@ -48,6 +58,27 @@ describe('extraction-model-policy', () => {
         timeoutMs: 12_000,
       },
     ]);
+  });
+
+  it('uses single timeout override for all attempts when per-attempt values are provided explicitly', () => {
+    const plan = getExtractionAttemptPlan({
+      maxAttempts: 3,
+      timeoutMs: 15_000,
+      attemptTimeoutMs: [15_000, 15_000, 15_000],
+    });
+
+    expect(plan.map((item) => item.timeoutMs)).toEqual([15_000, 15_000, 15_000]);
+  });
+
+  it('exposes first-token timeout hardening constant', () => {
+    expect(EXTRACTION_FIRST_TOKEN_TIMEOUT_MS).toBe(12_000);
+    expect(EXTRACTION_TIMEOUT_MS).toBeGreaterThan(EXTRACTION_FIRST_TOKEN_TIMEOUT_MS);
+    expect(EXTRACTION_JSON_START_TIMEOUT_MS).toBe(8_000);
+    expect(EXTRACTION_JSON_PARSE_TIMEOUT_MS).toBe(7_000);
+    expect(EXTRACTION_TOKEN_IDLE_TIMEOUT_MS).toBe(10_000);
+    expect(EXTRACTION_FIRST_TOKEN_TIMEOUT_MS).toBeGreaterThanOrEqual(EXTRACTION_TOKEN_IDLE_TIMEOUT_MS);
+    expect(EXTRACTION_TOKEN_IDLE_TIMEOUT_MS).toBeGreaterThan(EXTRACTION_JSON_START_TIMEOUT_MS);
+    expect(EXTRACTION_JSON_START_TIMEOUT_MS).toBeGreaterThan(EXTRACTION_JSON_PARSE_TIMEOUT_MS);
   });
 
   it('always resolves primary runtime model independently from payload model', () => {
@@ -71,15 +102,6 @@ describe('extraction-model-policy', () => {
     );
 
     expect(decision).toEqual({ escalate: true, reason: 'schema_failed' });
-  });
-
-  it('blocks escalation when budget cap is exceeded', () => {
-    const decision = shouldEscalateExtractionAttempt(
-      { success: false, providerError: true },
-      { attemptIndex: 1, cumulativeCostUsd: EXTRACTION_MAX_COST_USD + 0.001 },
-    );
-
-    expect(decision).toEqual({ escalate: false, reason: 'budget_exceeded' });
   });
 
   it('blocks escalation when max attempts is reached', () => {

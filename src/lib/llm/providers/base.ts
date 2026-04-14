@@ -3,6 +3,7 @@ export interface GenerateRequest {
   prompt: string;
   temperature?: number;
   maxTokens?: number;
+  abortSignal?: AbortSignal;
 }
 
 export interface GenerateResponse {

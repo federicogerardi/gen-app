@@ -5,6 +5,7 @@ import {
   buildFunnelQuizPrompt,
   buildFunnelVslPrompt,
   type FunnelBriefingInput,
+  type FunnelExtractionContextInput,
   type FunnelUnifiedBriefingInput,
 } from '@/lib/tool-prompts/funnel-pages';
 import {
@@ -25,14 +26,14 @@ import {
 } from '@/lib/tool-routes/schemas';
 
 function isFunnelV2Payload(payload: FunnelPagesRequest): payload is FunnelPagesRequestV2 {
-  return 'briefing' in payload;
+  return payload.schemaVersion === 'v2';
 }
 
 function isFunnelV3Payload(payload: FunnelPagesRequest): payload is FunnelPagesRequestV3 {
-  return 'extractedFields' in payload;
+  return payload.schemaVersion === 'v3';
 }
 
-function buildPromptBriefing(payload: FunnelPagesRequest): FunnelBriefingInput | FunnelUnifiedBriefingInput {
+function buildPromptBriefing(payload: FunnelPagesRequest): FunnelBriefingInput | FunnelUnifiedBriefingInput | FunnelExtractionContextInput {
   if (isFunnelV2Payload(payload)) {
     return {
       briefing: payload.briefing,
@@ -42,6 +43,14 @@ function buildPromptBriefing(payload: FunnelPagesRequest): FunnelBriefingInput |
   }
 
   if (isFunnelV3Payload(payload)) {
+    if (payload.extractionContext && payload.extractionContext.trim().length > 0) {
+      return {
+        contextText: payload.extractionContext,
+        tone: payload.tone,
+        notes: payload.notes,
+      };
+    }
+
     return {
       briefing: mapExtractedFieldsToBriefing(payload),
       tone: payload.tone,
@@ -61,7 +70,7 @@ function buildPromptBriefing(payload: FunnelPagesRequest): FunnelBriefingInput |
 
 async function buildFunnelPrompt(payload: {
   step: 'optin' | 'quiz' | 'vsl';
-  briefing: FunnelBriefingInput | FunnelUnifiedBriefingInput;
+  briefing: FunnelBriefingInput | FunnelUnifiedBriefingInput | FunnelExtractionContextInput;
   optinOutput?: string;
   quizOutput?: string;
 }) {

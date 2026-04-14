@@ -1,8 +1,11 @@
 import { createArtifactStream } from '@/lib/llm/streaming';
 import { getRequestLogger } from '@/lib/logger';
 import {
-  EXTRACTION_MAX_COST_USD,
+  EXTRACTION_FIRST_TOKEN_TIMEOUT_MS,
+  EXTRACTION_JSON_PARSE_TIMEOUT_MS,
+  EXTRACTION_JSON_START_TIMEOUT_MS,
   EXTRACTION_POLICY_VERSION,
+  EXTRACTION_TOKEN_IDLE_TIMEOUT_MS,
   getExtractionAttemptPlan,
   resolveExtractionRuntimeModel,
   shouldEscalateExtractionAttempt,
@@ -31,11 +34,51 @@ type AttemptStreamResult = {
   costEstimate: number;
   errorMessage?: string;
   timedOut: boolean;
+  timeoutKind?: 'first_token' | 'json_start' | 'json_parse' | 'token_idle' | 'overall';
 };
 
-type ExtractionConsistencyResult = {
-  consistent: boolean;
-  softAccepted: boolean;
+type ConsistencyDecision = 'hard_accept' | 'soft_accept' | 'reject';
+
+type ConsistencyDecisionReason =
+  | 'known_fields_present'
+  | 'no_known_keys_but_structured_signal'
+  | 'overlap_detected'
+  | 'no_signal'
+  | 'no_expected_fields';
+
+type AcceptanceDecision = 'hard_accept' | 'soft_accept' | 'reject';
+
+type AcceptanceReason =
+  | 'parse_invalid'
+  | 'schema_invalid'
+  | 'overlap_detected'
+  | 'critical_coverage_below_threshold'
+  | 'critical_coverage_threshold_met'
+  | 'no_critical_fields_defined'
+  | 'known_fields_present'
+  | 'no_known_keys_but_structured_signal'
+  | 'no_signal'
+  | 'no_expected_fields';
+
+type ExtractionConsistencyDiagnostics = {
+  expectedFieldCount: number;
+  knownExtractedCount: number;
+  knownMissingCount: number;
+  overlapCount: number;
+  unknownExtractedSample: string[];
+  unknownMissingSample: string[];
+  consistencyDecision: ConsistencyDecision;
+  consistencyDecisionReason: ConsistencyDecisionReason;
+  criticalFieldCount: number;
+  criticalExtractedCount: number;
+  criticalCoverage: number;
+};
+
+type ExtractionAcceptanceResult = {
+  acceptance: AcceptanceDecision;
+  acceptanceReason: AcceptanceReason;
+  criticalCoverage: number;
+  consistencyDecision: ConsistencyDecision;
 };
 
 function parseSsePayload(line: string): Record<string, unknown> | null {
@@ -50,7 +93,15 @@ function parseSsePayload(line: string): Record<string, unknown> | null {
   }
 }
 
-async function consumeAttemptStream(stream: ReadableStream, timeoutMs: number): Promise<AttemptStreamResult> {
+async function consumeAttemptStream(
+  stream: ReadableStream,
+  timeoutMs: number,
+  firstTokenTimeoutMs: number,
+  jsonStartTimeoutMs: number,
+  jsonParseTimeoutMs: number,
+  tokenIdleTimeoutMs: number,
+  options?: { enableJsonGuards?: boolean },
+): Promise<AttemptStreamResult> {
   const reader = stream.getReader();
   const decoder = new TextDecoder();
   const chunks: Uint8Array[] = [];
@@ -59,8 +110,94 @@ async function consumeAttemptStream(stream: ReadableStream, timeoutMs: number): 
   let costEstimate = 0;
   let errorMessage: string | undefined;
   let timedOut = false;
+  let timeoutKind: 'first_token' | 'json_start' | 'json_parse' | 'token_idle' | 'overall' | undefined;
+  let hasReceivedToken = false;
+  let hasSeenJsonStart = false;
+  let hasSeenParseableJson = false;
+  const enableJsonGuards = options?.enableJsonGuards ?? true;
+  let tokenIdleTimeout: ReturnType<typeof setTimeout> | null = null;
+  let jsonStartTimeout: ReturnType<typeof setTimeout> | null = null;
+  let jsonParseTimeout: ReturnType<typeof setTimeout> | null = null;
 
-  const readPromise = (async () => {
+  const clearTokenIdleTimeout = () => {
+    if (tokenIdleTimeout) {
+      clearTimeout(tokenIdleTimeout);
+      tokenIdleTimeout = null;
+    }
+  };
+
+  const armTokenIdleTimeout = () => {
+    if (!hasReceivedToken || timedOut) {
+      return;
+    }
+
+    clearTokenIdleTimeout();
+    tokenIdleTimeout = setTimeout(async () => {
+      timedOut = true;
+      timeoutKind = 'token_idle';
+      await reader.cancel('timeout').catch(() => undefined);
+    }, tokenIdleTimeoutMs);
+  };
+
+  const clearJsonStartTimeout = () => {
+    if (jsonStartTimeout) {
+      clearTimeout(jsonStartTimeout);
+      jsonStartTimeout = null;
+    }
+  };
+
+  const armJsonStartTimeout = () => {
+    if (!hasReceivedToken || hasSeenJsonStart || timedOut) {
+      return;
+    }
+
+    if (jsonStartTimeout) {
+      return;
+    }
+
+    jsonStartTimeout = setTimeout(async () => {
+      timedOut = true;
+      timeoutKind = 'json_start';
+      await reader.cancel('timeout').catch(() => undefined);
+    }, jsonStartTimeoutMs);
+  };
+
+  const clearJsonParseTimeout = () => {
+    if (jsonParseTimeout) {
+      clearTimeout(jsonParseTimeout);
+      jsonParseTimeout = null;
+    }
+  };
+
+  const armJsonParseTimeout = () => {
+    if (!hasSeenJsonStart || hasSeenParseableJson || timedOut || jsonParseTimeout) {
+      return;
+    }
+
+    jsonParseTimeout = setTimeout(async () => {
+      timedOut = true;
+      timeoutKind = 'json_parse';
+      await reader.cancel('timeout').catch(() => undefined);
+    }, jsonParseTimeoutMs);
+  };
+
+  const overallTimeout = setTimeout(async () => {
+    timedOut = true;
+    timeoutKind = 'overall';
+    await reader.cancel('timeout').catch(() => undefined);
+  }, timeoutMs);
+
+  const firstTokenTimeout = setTimeout(async () => {
+    if (hasReceivedToken) {
+      return;
+    }
+
+    timedOut = true;
+    timeoutKind = 'first_token';
+    await reader.cancel('timeout').catch(() => undefined);
+  }, firstTokenTimeoutMs);
+
+  try {
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
@@ -76,7 +213,29 @@ async function consumeAttemptStream(stream: ReadableStream, timeoutMs: number): 
         if (!payload) continue;
 
         if (payload.type === 'token') {
-          tokenContent += typeof payload.token === 'string' ? payload.token : '';
+          const tokenChunk = typeof payload.token === 'string' ? payload.token : '';
+          tokenContent += tokenChunk;
+
+          // Consider first-token received only when the chunk carries textual signal.
+          if (tokenChunk.trim().length > 0) {
+            hasReceivedToken = true;
+            clearTimeout(firstTokenTimeout);
+            armTokenIdleTimeout();
+            if (enableJsonGuards) {
+              armJsonStartTimeout();
+            }
+          }
+
+          if (enableJsonGuards && !hasSeenJsonStart && tokenContent.includes('{')) {
+            hasSeenJsonStart = true;
+            clearJsonStartTimeout();
+            armJsonParseTimeout();
+          }
+
+          if (enableJsonGuards && hasSeenJsonStart && !hasSeenParseableJson && tryParseExtractionJson(tokenContent) !== null) {
+            hasSeenParseableJson = true;
+            clearJsonParseTimeout();
+          }
           continue;
         }
 
@@ -88,6 +247,9 @@ async function consumeAttemptStream(stream: ReadableStream, timeoutMs: number): 
         }
 
         if (payload.type === 'complete') {
+          clearTokenIdleTimeout();
+          clearJsonStartTimeout();
+          clearJsonParseTimeout();
           if (typeof payload.cost === 'number') {
             costEstimate = payload.cost;
           }
@@ -95,31 +257,19 @@ async function consumeAttemptStream(stream: ReadableStream, timeoutMs: number): 
         }
 
         if (payload.type === 'error') {
+          clearTokenIdleTimeout();
+          clearJsonStartTimeout();
+          clearJsonParseTimeout();
           errorMessage = typeof payload.message === 'string' ? payload.message : 'Generation failed';
         }
       }
     }
-  })();
-
-  const timeoutPromise = new Promise<void>((resolve) => {
-    const timer = setTimeout(async () => {
-      timedOut = true;
-      await reader.cancel('timeout').catch(() => undefined);
-      resolve();
-    }, timeoutMs);
-
-    readPromise.finally(() => {
-      clearTimeout(timer);
-      resolve();
-    }).catch(() => {
-      clearTimeout(timer);
-      resolve();
-    });
-  });
-
-  await Promise.race([readPromise, timeoutPromise]);
-  if (!timedOut) {
-    await readPromise;
+  } finally {
+    clearTimeout(overallTimeout);
+    clearTimeout(firstTokenTimeout);
+    clearTokenIdleTimeout();
+    clearJsonStartTimeout();
+    clearJsonParseTimeout();
   }
 
   return {
@@ -128,6 +278,7 @@ async function consumeAttemptStream(stream: ReadableStream, timeoutMs: number): 
     costEstimate,
     errorMessage,
     timedOut,
+    timeoutKind,
   };
 }
 
@@ -166,57 +317,249 @@ function tryParseExtractionJson(raw: string): unknown {
   return null;
 }
 
-function assessFieldMapConsistency(
+function toExpectedKey(value: string): string {
+  const normalized = value.replace(/\[(\w+)\]/g, '.$1').trim();
+  const segments = normalized.split('.').filter(Boolean);
+  return (segments[segments.length - 1] ?? normalized).trim();
+}
+
+function hasNotesContent(notes: z.infer<typeof extractionOutputSchema>['notes']): boolean {
+  if (typeof notes === 'string') {
+    return notes.trim().length > 0;
+  }
+
+  if (Array.isArray(notes)) {
+    return notes.some((item) => typeof item === 'string' && item.trim().length > 0);
+  }
+
+  return false;
+}
+
+function resolveKnownKey(value: string, expectedFields: Set<string>): string | null {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  if (expectedFields.has(trimmed)) {
+    return trimmed;
+  }
+
+  const normalized = toExpectedKey(trimmed);
+  if (expectedFields.has(normalized)) {
+    return normalized;
+  }
+
+  return null;
+}
+
+function getCriticalFieldSet(fieldMap: Record<string, unknown>): Set<string> {
+  const entries = Object.entries(fieldMap).filter(([, definition]) => {
+    if (!definition || typeof definition !== 'object') {
+      return false;
+    }
+
+    return Boolean((definition as { required?: unknown }).required);
+  });
+
+  return new Set(entries.map(([fieldName]) => fieldName));
+}
+
+export function summarizeConsistencyDiagnostics(
   parsed: z.infer<typeof extractionOutputSchema>,
   fieldMap: Record<string, unknown>,
-): ExtractionConsistencyResult {
-  function toExpectedKey(value: string): string {
-    const normalized = value.replace(/\[(\w+)\]/g, '.$1').trim();
-    const segments = normalized.split('.').filter(Boolean);
-    return (segments[segments.length - 1] ?? normalized).trim();
-  }
-
-  function hasNotesContent(notes: z.infer<typeof extractionOutputSchema>['notes']): boolean {
-    if (typeof notes === 'string') {
-      return notes.trim().length > 0;
-    }
-
-    if (Array.isArray(notes)) {
-      return notes.some((item) => typeof item === 'string' && item.trim().length > 0);
-    }
-
-    return false;
-  }
-
+): ExtractionConsistencyDiagnostics {
   const expectedFields = new Set(Object.keys(fieldMap));
-  if (expectedFields.size === 0) {
-    return { consistent: false, softAccepted: false };
-  }
-
   const extractedFields = Object.keys(parsed.fields);
   const missingFields = parsed.missingFields;
 
-  // Partial-friendly consistency: ignore unknown keys returned by the model
-  // and evaluate coherence only on fields declared by the requested fieldMap.
-  const knownExtracted = extractedFields.filter((field) => expectedFields.has(field) || expectedFields.has(toExpectedKey(field)));
-  const knownMissing = missingFields.filter((field) => expectedFields.has(field) || expectedFields.has(toExpectedKey(field)));
+  const knownExtracted = Array.from(
+    new Set(
+      extractedFields
+        .map((field) => resolveKnownKey(field, expectedFields))
+        .filter((field): field is string => Boolean(field)),
+    ),
+  );
 
-  const overlap = knownMissing.some((field) => knownExtracted.includes(field));
-  if (overlap) {
-    return { consistent: false, softAccepted: false };
+  const knownMissing = Array.from(
+    new Set(
+      missingFields
+        .map((field) => resolveKnownKey(field, expectedFields))
+        .filter((field): field is string => Boolean(field)),
+    ),
+  );
+
+  const overlapCount = knownMissing.filter((field) => knownExtracted.includes(field)).length;
+  const unknownExtractedSample = extractedFields
+    .filter((field) => !resolveKnownKey(field, expectedFields))
+    .slice(0, 10);
+  const unknownMissingSample = missingFields
+    .filter((field) => !resolveKnownKey(field, expectedFields))
+    .slice(0, 10);
+
+  const criticalFields = getCriticalFieldSet(fieldMap);
+  const criticalExtractedCount = knownExtracted.filter((field) => criticalFields.has(field)).length;
+  const criticalCoverage = criticalFields.size > 0
+    ? Number((criticalExtractedCount / criticalFields.size).toFixed(4))
+    : 1;
+
+  if (expectedFields.size === 0) {
+    return {
+      expectedFieldCount: 0,
+      knownExtractedCount: knownExtracted.length,
+      knownMissingCount: knownMissing.length,
+      overlapCount,
+      unknownExtractedSample,
+      unknownMissingSample,
+      consistencyDecision: 'reject',
+      consistencyDecisionReason: 'no_expected_fields',
+      criticalFieldCount: criticalFields.size,
+      criticalExtractedCount,
+      criticalCoverage,
+    };
+  }
+
+  if (overlapCount > 0) {
+    return {
+      expectedFieldCount: expectedFields.size,
+      knownExtractedCount: knownExtracted.length,
+      knownMissingCount: knownMissing.length,
+      overlapCount,
+      unknownExtractedSample,
+      unknownMissingSample,
+      consistencyDecision: 'reject',
+      consistencyDecisionReason: 'overlap_detected',
+      criticalFieldCount: criticalFields.size,
+      criticalExtractedCount,
+      criticalCoverage,
+    };
   }
 
   if (knownExtracted.length > 0 || knownMissing.length > 0) {
-    return { consistent: true, softAccepted: false };
+    return {
+      expectedFieldCount: expectedFields.size,
+      knownExtractedCount: knownExtracted.length,
+      knownMissingCount: knownMissing.length,
+      overlapCount,
+      unknownExtractedSample,
+      unknownMissingSample,
+      consistencyDecision: 'hard_accept',
+      consistencyDecisionReason: 'known_fields_present',
+      criticalFieldCount: criticalFields.size,
+      criticalExtractedCount,
+      criticalCoverage,
+    };
   }
 
-  // Soft acceptance path: if schema is valid and the model still produced
-  // structured fields, accept partial output to avoid hard failures.
   if (extractedFields.length > 0 || missingFields.length > 0 || hasNotesContent(parsed.notes)) {
-    return { consistent: true, softAccepted: true };
+    return {
+      expectedFieldCount: expectedFields.size,
+      knownExtractedCount: 0,
+      knownMissingCount: 0,
+      overlapCount,
+      unknownExtractedSample,
+      unknownMissingSample,
+      consistencyDecision: 'soft_accept',
+      consistencyDecisionReason: 'no_known_keys_but_structured_signal',
+      criticalFieldCount: criticalFields.size,
+      criticalExtractedCount,
+      criticalCoverage,
+    };
   }
 
-  return { consistent: false, softAccepted: false };
+  return {
+    expectedFieldCount: expectedFields.size,
+    knownExtractedCount: 0,
+    knownMissingCount: 0,
+    overlapCount,
+    unknownExtractedSample,
+    unknownMissingSample,
+    consistencyDecision: 'reject',
+    consistencyDecisionReason: 'no_signal',
+    criticalFieldCount: criticalFields.size,
+    criticalExtractedCount,
+    criticalCoverage,
+  };
+}
+
+export function evaluateExtractionAcceptance(input: {
+  parseOk: boolean;
+  schemaOk: boolean;
+  diagnostics: ExtractionConsistencyDiagnostics;
+  criticalFieldCoverageThreshold?: number;
+}): ExtractionAcceptanceResult {
+  const { parseOk, schemaOk, diagnostics } = input;
+  const threshold = input.criticalFieldCoverageThreshold ?? 0.6;
+
+  if (!parseOk) {
+    return {
+      acceptance: 'reject',
+      acceptanceReason: 'parse_invalid',
+      criticalCoverage: diagnostics.criticalCoverage,
+      consistencyDecision: diagnostics.consistencyDecision,
+    };
+  }
+
+  if (!schemaOk) {
+    return {
+      acceptance: 'reject',
+      acceptanceReason: 'schema_invalid',
+      criticalCoverage: diagnostics.criticalCoverage,
+      consistencyDecision: diagnostics.consistencyDecision,
+    };
+  }
+
+  if (diagnostics.overlapCount > 0) {
+    return {
+      acceptance: 'reject',
+      acceptanceReason: 'overlap_detected',
+      criticalCoverage: diagnostics.criticalCoverage,
+      consistencyDecision: diagnostics.consistencyDecision,
+    };
+  }
+
+  if (diagnostics.consistencyDecision === 'hard_accept') {
+    return {
+      acceptance: 'hard_accept',
+      acceptanceReason: 'known_fields_present',
+      criticalCoverage: diagnostics.criticalCoverage,
+      consistencyDecision: diagnostics.consistencyDecision,
+    };
+  }
+
+  if (diagnostics.consistencyDecision === 'soft_accept') {
+    if (diagnostics.criticalFieldCount === 0) {
+      return {
+        acceptance: 'soft_accept',
+        acceptanceReason: 'no_critical_fields_defined',
+        criticalCoverage: diagnostics.criticalCoverage,
+        consistencyDecision: diagnostics.consistencyDecision,
+      };
+    }
+
+    if (diagnostics.criticalCoverage >= threshold) {
+      return {
+        acceptance: 'soft_accept',
+        acceptanceReason: 'critical_coverage_threshold_met',
+        criticalCoverage: diagnostics.criticalCoverage,
+        consistencyDecision: diagnostics.consistencyDecision,
+      };
+    }
+
+    return {
+      acceptance: 'reject',
+      acceptanceReason: 'critical_coverage_below_threshold',
+      criticalCoverage: diagnostics.criticalCoverage,
+      consistencyDecision: diagnostics.consistencyDecision,
+    };
+  }
+
+  return {
+    acceptance: 'reject',
+    acceptanceReason: diagnostics.consistencyDecisionReason,
+    criticalCoverage: diagnostics.criticalCoverage,
+    consistencyDecision: diagnostics.consistencyDecision,
+  };
 }
 
 function replaySseChunks(chunks: Uint8Array[]): ReadableStream {
@@ -252,8 +595,11 @@ export async function POST(request: Request) {
 
   const payload = parsed.data;
   const startedAt = Date.now();
+  const extractionResponseMode = payload.responseMode ?? 'structured';
   const runtimeModel = resolveExtractionRuntimeModel(payload.model);
-  const attemptPlan = getExtractionAttemptPlan();
+  const attemptPlan = extractionResponseMode === 'text'
+    ? getExtractionAttemptPlan({ maxAttempts: 2, attemptTimeoutMs: [18_000, 22_000] })
+    : getExtractionAttemptPlan();
 
   log.info(
     {
@@ -261,6 +607,7 @@ export async function POST(request: Request) {
       projectId: payload.projectId,
       model: payload.model,
       runtimeModel,
+      responseMode: extractionResponseMode,
       policyVersion: EXTRACTION_POLICY_VERSION,
     },
     'Tool generation started',
@@ -276,9 +623,9 @@ export async function POST(request: Request) {
     fieldMap: payload.fieldMap,
     tone: payload.tone,
     notes: payload.notes,
+    responseMode: extractionResponseMode,
   });
 
-  let cumulativeCost = 0;
   let lastFallbackReason = 'provider_error';
   let usageIncrementApplied = false;
 
@@ -308,8 +655,6 @@ export async function POST(request: Request) {
         },
         {
           attemptIndex: attempt.attemptIndex,
-          cumulativeCostUsd: cumulativeCost,
-          maxCostUsd: EXTRACTION_MAX_COST_USD,
         },
       );
 
@@ -344,7 +689,7 @@ export async function POST(request: Request) {
           rawContent: payload.rawContent,
           fieldMap: payload.fieldMap,
           tone: payload.tone,
-          outputFormat: 'json',
+          outputFormat: extractionResponseMode === 'text' ? 'markdown' : 'json',
           workflowType: 'extraction',
           extractionAttempt: attempt.attemptIndex,
           policyVersion: EXTRACTION_POLICY_VERSION,
@@ -353,8 +698,15 @@ export async function POST(request: Request) {
         },
       });
 
-      const consumed = await consumeAttemptStream(stream, attempt.timeoutMs);
-      cumulativeCost += consumed.costEstimate;
+      const consumed = await consumeAttemptStream(
+        stream,
+        attempt.timeoutMs,
+        EXTRACTION_FIRST_TOKEN_TIMEOUT_MS,
+        EXTRACTION_JSON_START_TIMEOUT_MS,
+        EXTRACTION_JSON_PARSE_TIMEOUT_MS,
+        EXTRACTION_TOKEN_IDLE_TIMEOUT_MS,
+        { enableJsonGuards: extractionResponseMode !== 'text' },
+      );
 
       let parseOk = false;
       let schemaOk = false;
@@ -362,12 +714,43 @@ export async function POST(request: Request) {
       let consistencySoftAccepted = false;
       let success = false;
       let providerError = false;
+      let acceptanceDecision: AcceptanceDecision = 'reject';
+      let acceptanceReason: AcceptanceReason = 'no_signal';
+      let consistencyDiagnostics: ExtractionConsistencyDiagnostics | null = null;
+      let criticalCoverage = 0;
+      const trimmedTokenContent = consumed.tokenContent.trim();
+      const canAcceptTimedOutText = extractionResponseMode === 'text'
+        && consumed.timedOut
+        && trimmedTokenContent.length >= 120;
 
-      if (consumed.timedOut) {
+      if (canAcceptTimedOutText) {
+        parseOk = true;
+        schemaOk = true;
+        consistencyOk = true;
+        consistencySoftAccepted = true;
+        acceptanceDecision = 'soft_accept';
+        acceptanceReason = 'no_critical_fields_defined';
+        criticalCoverage = 1;
+        success = true;
+      } else if (consumed.timedOut) {
         fallbackReason = 'timeout';
       } else if (consumed.errorMessage) {
         providerError = true;
         fallbackReason = 'provider_error';
+      } else if (extractionResponseMode === 'text') {
+        const hasUsefulText = trimmedTokenContent.length >= 40;
+        parseOk = hasUsefulText;
+        schemaOk = hasUsefulText;
+        consistencyOk = hasUsefulText;
+        consistencySoftAccepted = hasUsefulText;
+        acceptanceDecision = hasUsefulText ? 'soft_accept' : 'reject';
+        acceptanceReason = hasUsefulText ? 'no_critical_fields_defined' : 'no_signal';
+        criticalCoverage = hasUsefulText ? 1 : 0;
+        success = hasUsefulText;
+
+        if (!success) {
+          fallbackReason = 'parse_failed';
+        }
       } else {
         const parsedObject = tryParseExtractionJson(consumed.tokenContent || '{}');
 
@@ -384,9 +767,19 @@ export async function POST(request: Request) {
             fallbackReason = 'schema_failed';
           } else {
             schemaOk = true;
-            const consistencyResult = assessFieldMapConsistency(schemaParsed.data, payload.fieldMap);
-            consistencyOk = consistencyResult.consistent;
-            consistencySoftAccepted = consistencyResult.softAccepted;
+            consistencyDiagnostics = summarizeConsistencyDiagnostics(schemaParsed.data, payload.fieldMap);
+            const acceptance = evaluateExtractionAcceptance({
+              parseOk,
+              schemaOk,
+              diagnostics: consistencyDiagnostics,
+            });
+
+            acceptanceDecision = acceptance.acceptance;
+            acceptanceReason = acceptance.acceptanceReason;
+            criticalCoverage = acceptance.criticalCoverage;
+            consistencyOk = acceptance.acceptance !== 'reject';
+            consistencySoftAccepted = acceptance.acceptance === 'soft_accept';
+
             if (!consistencyOk) {
               fallbackReason = 'consistency_failed';
             } else {
@@ -407,8 +800,6 @@ export async function POST(request: Request) {
         },
         {
           attemptIndex: attempt.attemptIndex,
-          cumulativeCostUsd: cumulativeCost,
-          maxCostUsd: EXTRACTION_MAX_COST_USD,
         },
       );
 
@@ -417,26 +808,12 @@ export async function POST(request: Request) {
       }
       lastFallbackReason = fallbackReason;
 
-      if (fallbackReason === 'budget_exceeded') {
-        log.warn(
-          {
-            workflowType: 'extraction',
-            projectId: payload.projectId,
-            requestId,
-            cumulativeCostUsd: cumulativeCost,
-            maxCostUsd: EXTRACTION_MAX_COST_USD,
-            attemptIndex: attempt.attemptIndex,
-            runtimeModel: attempt.model,
-          },
-          'Extraction attempt chain stopped by budget policy',
-        );
-      }
-
       log.info(
         {
           workflowType: 'extraction',
           projectId: payload.projectId,
           requestId,
+          responseMode: extractionResponseMode,
           attemptIndex: attempt.attemptIndex,
           runtimeModel: attempt.model,
           fallbackReason: success ? null : fallbackReason,
@@ -446,6 +823,18 @@ export async function POST(request: Request) {
           schemaOk,
           consistencyOk,
           consistencySoftAccepted,
+          acceptanceDecision,
+          acceptanceReason,
+          criticalCoverage,
+          timeoutKind: consumed.timeoutKind ?? null,
+          expectedFieldCount: consistencyDiagnostics?.expectedFieldCount ?? null,
+          knownExtractedCount: consistencyDiagnostics?.knownExtractedCount ?? null,
+          knownMissingCount: consistencyDiagnostics?.knownMissingCount ?? null,
+          overlapCount: consistencyDiagnostics?.overlapCount ?? null,
+          unknownExtractedSample: consistencyDiagnostics?.unknownExtractedSample ?? null,
+          unknownMissingSample: consistencyDiagnostics?.unknownMissingSample ?? null,
+          consistencyDecision: consistencyDiagnostics?.consistencyDecision ?? null,
+          consistencyDecisionReason: consistencyDiagnostics?.consistencyDecisionReason ?? null,
           policyVersion: EXTRACTION_POLICY_VERSION,
         },
         success ? 'Extraction attempt succeeded' : 'Extraction attempt failed',
@@ -457,6 +846,7 @@ export async function POST(request: Request) {
             workflowType: 'extraction',
             projectId: payload.projectId,
             model: attempt.model,
+            responseMode: extractionResponseMode,
             duration_ms: Date.now() - startedAt,
             requestId,
           },
@@ -496,8 +886,6 @@ export async function POST(request: Request) {
         },
         {
           attemptIndex: attempt.attemptIndex,
-          cumulativeCostUsd: cumulativeCost,
-          maxCostUsd: EXTRACTION_MAX_COST_USD,
         },
       );
 
@@ -514,23 +902,11 @@ export async function POST(request: Request) {
       requestId,
       duration_ms: Date.now() - startedAt,
       fallbackReason: lastFallbackReason,
+      responseMode: extractionResponseMode,
       policyVersion: EXTRACTION_POLICY_VERSION,
     },
     'Extraction fallback chain exhausted',
   );
-
-  if (lastFallbackReason === 'budget_exceeded') {
-    return apiError(
-      'EXTRACTION_FAILED',
-      'Estrazione interrotta: budget massimo per richiesta superato',
-      503,
-      {
-        reason: 'budget_exceeded',
-        maxCostUsd: EXTRACTION_MAX_COST_USD,
-        cumulativeCostUsd: Number(cumulativeCost.toFixed(6)),
-      },
-    );
-  }
 
   return apiError('EXTRACTION_FAILED', 'Impossibile completare l\'estrazione in modo affidabile', 503);
 }

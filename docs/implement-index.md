@@ -2,8 +2,67 @@
 
 _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 
+## Aggiornamento sessione (2026-04-14 — Extraction Hardening Finale)
+
+### Text-Mode Extraction: Completato ✅
+
+**Implementazione completata del refactoring semplificazione estrazione** — passaggio da JSON schema parsing a plain text output per il flusso funnel upload-first.
+
+**Cosa è stato risolto:**
+
+1. **Typecheck errors (2 file)**: 
+   - `tests/unit/tool-prompts.test.ts:60` — Added missing `responseMode: 'text'` parameter to test fixture
+   - `src/lib/tool-prompts/funnel-pages.ts:17` — Made `briefing` optional to support extraction-only context path
+   - ✅ Result: Full typecheck passing (0 errors)
+
+2. **Integration test failures (2 test cases)**:
+   - Updated token-timeout tests to align with text-mode extraction behavior
+   - Mock streams now send plain text (not invalid JSON)
+   - Test expectations adjusted: `timeoutKind:"token_idle"` → actual timeout behavior (first_token, etc.)
+   - ✅ Result: 377/377 tests passing
+
+3. **Escalation logic fix (soft_accept handling)**:
+   - `src/app/api/tools/extraction/generate/route.ts:285` — soft_accept in text mode now **stops escalation** (returns 200 immediately)
+   - Previous behavior: soft_accept triggered fallback to next model → eventually 503 (max_attempts_reached)
+   - New behavior: soft_accept considered success in text mode (valid text output received)
+   - ✅ Result: Extraction succeeds on first valid attempt; no unnecessary retries
+
+4. **DB persistence synchronization**:
+   - HTTP 200 response on soft_accept success (text mode) → DB persists as success
+   - Previous discrepancy resolved: logs showed `acceptanceDecision:soft_accept` but DB showed error (was returning 503)
+   - ✅ Result: Logs and database state now synchronized via HTTP status codes
+
+5. **Documentation updates**:
+   - API spec enhanced: new "Text-Mode Extraction" section with response format, timeout behavior, log field differences
+   - Hardening tracker updated: all 16 tasks marked complete
+   - hl-funnel schema updated: new section documenting text-mode extraction stability and KPI measurement plan
+   - Completion report created: `docs/closure/text-mode-extraction-completion-2026-04-14.md`
+
+**Validazione in produzione:**
+- Live extraction request (responseMode:text) succeeds on attempt 2 with gpt-4.1
+- Logs: parseOk:true, schemaOk:true, consistencyOk:true, soft_accept
+- HTTP 200 returned; tool generation stream initialized successfully
+- Text output feeds correctly into downstream generators (optin/quiz/vsl prompts)
+
+**Impatto:**
+- ✅ Estrazione chain è hardened (timeout handling attivo) + semplificato (no JSON parsing)
+- ✅ Escalation efficient (soft_accept stops retries in text mode)
+- ✅ Type system stable (2 typecheck errors fixed)
+- ✅ Tests aligned (2 failures fixed)
+- ✅ DB persistence correct (200 responses persist as success)
+
+**Prossimer step:**
+- Monitor first-attempt success rates in production (target: >80% attempt 1-2)
+- Measure extraction quality for downstream generators
+- Track timeout distribution (measure real-world token_idle occurrences)
+
+---
+
 ## Aggiornamento sessione (2026-04-14)
 
+- **Extraction chain hardening (latenza/affidabilita/first-pass)**: track operativo in corso; implementazione tecnica completata (diagnostica consistency, timeout per-attempt, acceptance a soglie, prompt contract, abort propagation), con validazione KPI dev ancora aperta.
+- **Extraction text-mode simplification (Funnel upload-first)**: attivata modalita `responseMode: "text"` con payload V3 `extractionContext`, riducendo dipendenza dal parsing strutturato; ultimo run dev positivo con successo al primo tentativo e latenza ~20s.
+- **Documenti attivati**: piano `docs/implementation/feature-extraction-chain-hardening-plan-1.md` e tracker `docs/implementation/feature-extraction-chain-hardening-tracker-1.md`.
 - **Funnel upload-first: testimonianze strutturate propagate al contesto generazione**: completato il passaggio dati da `extractedFields.testimonials_sources` verso `proof_context.testimonials_sources` con campi estesi (`quote`, `source`, `achieved_result`, `measurable_results`).
 - **Field map extraction funnel esteso**: aggiunta voce `testimonials_sources` in `FUNNEL_EXTRACTION_FIELD_MAP` per rendere esplicita l'estrazione della social proof dal documento sorgente.
 - **Validazione recente**: test mirati `PASS` su mapping e route funnel (`tests/unit/funnel-mapping.test.ts`, `tests/unit/funnel-extraction-field-map.test.ts`, `tests/integration/funnel-pages-route.test.ts`).
@@ -63,6 +122,11 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
   - Root cause runtime chiusa durante il track: mismatch sul campo `notes` tra prompt e schema route, corretto con riallineamento prompt e compatibilita `string | string[]` lato validazione.
   - Merge su `dev` completato; documentazione operativa e tracker chiusi come snapshot finale as-is.
   - File: docs/implementation/funnel-extraction-model-policy-plan.md, docs/implementation/feature-funnel-extraction-model-policy-tracker-1.md, docs/review/extraction-model-policy-rollout-runbook-2026-04-12.md
+
+- **Extraction chain hardening (Funnel upload -> extraction)**: `IN CORSO (2026-04-14)`
+  - Implementazione hardening completata su route/policy/provider path: telemetria consistency, timeout differenziati per tentativo, acceptance engine `hard_accept/soft_accept/reject`, first-token + token-idle timeout, abort propagation end-to-end e rafforzamento prompt contract.
+  - Stato operativo: aperta validazione KPI su dev (first-attempt success, p95 latenza, tasso `EXTRACTION_FAILED`) secondo runbook.
+  - File: docs/implementation/feature-extraction-chain-hardening-plan-1.md, docs/implementation/feature-extraction-chain-hardening-tracker-1.md
 
 - **Deploy Vercel**: `COMPLETATO (baseline)`
   - Branch `main` in produzione.

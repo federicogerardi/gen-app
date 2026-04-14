@@ -27,6 +27,7 @@ export interface ArtifactRequest {
   input: unknown;
   promptOverride?: string;
   temperature?: number;
+  abortSignal?: AbortSignal;
 }
 
 export interface ArtifactStreamEvent {
@@ -88,6 +89,7 @@ export class LLMOrchestrator {
       model: request.model,
       prompt,
       temperature: request.temperature,
+      abortSignal: request.abortSignal,
     });
 
     const rawContent = request.promptOverride ? response.content.trim() : (agent.parseResponse(response.content) as string);
@@ -111,6 +113,7 @@ export class LLMOrchestrator {
       model: request.model,
       prompt,
       temperature: request.temperature,
+      abortSignal: request.abortSignal,
     })) {
       yield {
         token: chunk.token,

@@ -69,6 +69,7 @@ export const extractionFieldDefinitionSchema = z.object({
 
 export const extractionRequestSchema = toolSharedSchema.extend({
   rawContent: z.string().min(20),
+  responseMode: z.enum(['structured', 'text']).optional().default('structured'),
   fieldMap: z
     .record(z.string(), extractionFieldDefinitionSchema)
     .refine((value) => Object.keys(value).length > 0, { message: 'fieldMap must contain at least one field' }),
@@ -92,7 +93,7 @@ function normalizeFunnelSchemaVersion(value: unknown): unknown {
     return value;
   }
 
-  if ('extractedFields' in asRecord) {
+  if ('extractedFields' in asRecord || 'extractionContext' in asRecord) {
     return { ...asRecord, schemaVersion: 'v3' };
   }
 
@@ -299,12 +300,25 @@ const funnelPagesRequestSchemaV3Object = toolSharedSchema
     step: funnelStepSchema,
     extractedFields: z
       .record(z.string(), z.unknown())
-      .refine((value) => Object.keys(value).length > 0, { message: 'extractedFields must contain at least one field' }),
+      .refine((value) => Object.keys(value).length > 0, { message: 'extractedFields must contain at least one field' })
+      .optional(),
+    extractionContext: z.string().min(20).optional(),
     notes: z.string().optional(),
     optinOutput: z.string().optional(),
     quizOutput: z.string().optional(),
   })
   .superRefine((value, ctx) => {
+    const hasExtractedFields = Boolean(value.extractedFields && Object.keys(value.extractedFields).length > 0);
+    const hasExtractionContext = Boolean(value.extractionContext && value.extractionContext.trim().length >= 20);
+
+    if (!hasExtractedFields && !hasExtractionContext) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['extractedFields'],
+        message: 'Provide extractedFields or extractionContext',
+      });
+    }
+
     if (value.step === 'quiz' && !value.optinOutput) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

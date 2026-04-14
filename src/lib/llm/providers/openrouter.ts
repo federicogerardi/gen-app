@@ -17,12 +17,17 @@ const client = new OpenAI({
 
 export class OpenRouterProvider implements LLMProvider {
   async generateText(request: GenerateRequest): Promise<GenerateResponse> {
-    const response = await client.chat.completions.create({
-      model: request.model,
-      messages: [{ role: 'user', content: request.prompt }],
-      temperature: request.temperature ?? 0.7,
-      max_tokens: request.maxTokens,
-    });
+    const response = await client.chat.completions.create(
+      {
+        model: request.model,
+        messages: [{ role: 'user', content: request.prompt }],
+        temperature: request.temperature ?? 0.7,
+        max_tokens: request.maxTokens,
+      },
+      {
+        signal: request.abortSignal,
+      },
+    );
 
     const choice = response.choices[0];
     return {
@@ -33,14 +38,19 @@ export class OpenRouterProvider implements LLMProvider {
   }
 
   async *generateStream(request: GenerateRequest): AsyncGenerator<StreamChunk> {
-    const stream = await client.chat.completions.create({
-      model: request.model,
-      messages: [{ role: 'user', content: request.prompt }],
-      temperature: request.temperature ?? 0.7,
-      max_tokens: request.maxTokens,
-      stream: true,
-      stream_options: { include_usage: true },
-    });
+    const stream = await client.chat.completions.create(
+      {
+        model: request.model,
+        messages: [{ role: 'user', content: request.prompt }],
+        temperature: request.temperature ?? 0.7,
+        max_tokens: request.maxTokens,
+        stream: true,
+        stream_options: { include_usage: true },
+      },
+      {
+        signal: request.abortSignal,
+      },
+    );
 
     for await (const chunk of stream) {
       const token = chunk.choices[0]?.delta?.content ?? '';

@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatArtifactContentForDisplay } from '@/lib/artifact-preview';
-import { FUNNEL_EXTRACTION_FIELD_MAP, normalizeExtractedFields } from '@/lib/tool-prompts/funnel-extraction-field-map';
+import { FUNNEL_EXTRACTION_FIELD_MAP } from '@/lib/tool-prompts/funnel-extraction-field-map';
 
 type FunnelStepKey = 'optin' | 'quiz' | 'vsl';
 
@@ -127,20 +127,6 @@ async function streamToText(response: Response): Promise<string> {
   return content;
 }
 
-function parseJsonFromLLMOutput(rawOutput: string): Record<string, unknown> {
-  const fencedMatch = rawOutput.match(/```json\s*([\s\S]*?)```/);
-  if (fencedMatch) {
-    return JSON.parse(fencedMatch[1].trim()) as Record<string, unknown>;
-  }
-
-  const objectMatch = rawOutput.match(/\{[\s\S]*\}/);
-  if (objectMatch) {
-    return JSON.parse(objectMatch[0]) as Record<string, unknown>;
-  }
-
-  throw new Error('Nessun JSON trovato nella risposta del modello di estrazione');
-}
-
 function getExtractionErrorMessage(errorPayload: ApiErrorPayload | null): string {
   const code = errorPayload?.error?.code;
   const reason = errorPayload?.error?.details?.reason;
@@ -157,7 +143,7 @@ async function generateStream(request: {
   model: string;
   tone: (typeof TONES)[number];
   step: FunnelStepKey;
-  extractedFields: Record<string, unknown>;
+  extractionContext: string;
   notes?: string;
   optinOutput?: string;
   quizOutput?: string;
@@ -215,7 +201,7 @@ function FunnelPagesToolContent() {
   const [notes, setNotes] = useState(() => searchParams.get('notes') ?? '');
   const [phase, setPhase] = useState<Phase>('idle');
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
-  const [extractedFields, setExtractedFields] = useState<Record<string, unknown> | null>(null);
+  const [extractionContext, setExtractionContext] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [extractionError, setExtractionError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
@@ -250,7 +236,7 @@ function FunnelPagesToolContent() {
   function resetAll() {
     setPhase('idle');
     setUploadedFileName(null);
-    setExtractedFields(null);
+    setExtractionContext(null);
     setUploadError(null);
     setExtractionError(null);
     setNotes('');
@@ -283,7 +269,7 @@ function FunnelPagesToolContent() {
 
     setUploadError(null);
     setExtractionError(null);
-    setExtractedFields(null);
+    setExtractionContext(null);
     setUploadedFileName(file.name);
     setPhase('uploading');
 
@@ -312,6 +298,7 @@ function FunnelPagesToolContent() {
           projectId,
           model,
           tone,
+          responseMode: 'text',
           rawContent: uploadData.data.text,
           fieldMap: FUNNEL_EXTRACTION_FIELD_MAP,
         }),
@@ -323,8 +310,7 @@ function FunnelPagesToolContent() {
       }
 
       const rawOutput = await streamToText(extractionRes);
-      const parsed = parseJsonFromLLMOutput(rawOutput);
-      setExtractedFields(normalizeExtractedFields(parsed));
+      setExtractionContext(rawOutput.trim());
       setPhase('review');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Errore inatteso';
@@ -334,7 +320,7 @@ function FunnelPagesToolContent() {
   }
 
   async function handleRunProcess() {
-    if (!projectId || !extractedFields) return;
+    if (!projectId || !extractionContext) return;
 
     setSteps(initialSteps);
     setRunning(true);
@@ -349,7 +335,7 @@ function FunnelPagesToolContent() {
         model,
         tone,
         step: 'optin',
-        extractedFields,
+        extractionContext,
         notes: notes || undefined,
       });
       updateStep('optin', { status: 'done', content: optin.content, artifactId: optin.artifactId });
@@ -361,7 +347,7 @@ function FunnelPagesToolContent() {
         model,
         tone,
         step: 'quiz',
-        extractedFields,
+        extractionContext,
         notes: notes || undefined,
         optinOutput: optin.content,
       });
@@ -374,7 +360,7 @@ function FunnelPagesToolContent() {
         model,
         tone,
         step: 'vsl',
-        extractedFields,
+        extractionContext,
         notes: notes || undefined,
         optinOutput: optin.content,
         quizOutput: quiz.content,
@@ -388,16 +374,9 @@ function FunnelPagesToolContent() {
     }
   }
 
-  const reviewFields = extractedFields
-    ? [
-        ['Tipo business', extractedFields.business_type],
-        ['Settore/Nicchia', extractedFields.sector_niche],
-        ['Target', extractedFields.target_profile],
-        ['Problema principale', extractedFields.core_problem],
-        ['Promessa optin', extractedFields.optin_title_promise],
-        ['Obiettivo funnel', extractedFields.funnel_primary_goal],
-      ].filter((entry): entry is [string, unknown] => Boolean(entry[1]))
-    : [];
+  const reviewContextPreview = extractionContext
+    ? extractionContext.slice(0, 1200)
+    : '';
 
   return (
     <PageShell width="workspace">
@@ -514,25 +493,16 @@ function FunnelPagesToolContent() {
                 </section>
               </div>
 
-              {phase === 'review' && extractedFields && (
+              {phase === 'review' && extractionContext && (
                 <>
                   <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4 space-y-3">
                     <div className="flex items-center justify-between gap-3">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">Campi estratti</p>
-                      <Badge variant="secondary">{Object.keys(extractedFields).length}</Badge>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">Contesto estratto</p>
+                      <Badge variant="secondary">{Math.ceil(extractionContext.length / 6)} token stimati</Badge>
                     </div>
-                    <dl className="space-y-2">
-                      {reviewFields.length > 0 ? (
-                        reviewFields.map(([label, value]) => (
-                          <div key={label} className="flex flex-col gap-0.5">
-                            <dt className="text-xs font-medium text-muted-foreground">{label}</dt>
-                            <dd className="text-sm text-foreground line-clamp-2">{String(value)}</dd>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-sm text-muted-foreground">Il modello non ha restituito campi riassuntivi leggibili. Puoi comunque avviare la generazione.</p>
-                      )}
-                    </dl>
+                    <p className="max-h-52 overflow-y-auto whitespace-pre-wrap rounded-lg border border-emerald-200/70 bg-white/70 p-3 text-sm text-foreground">
+                      {reviewContextPreview}
+                    </p>
                   </div>
 
                   <div className="space-y-1.5">
