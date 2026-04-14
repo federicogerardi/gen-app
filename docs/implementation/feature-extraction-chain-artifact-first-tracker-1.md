@@ -1,6 +1,6 @@
 ---
 goal: Operational tracker for extraction chain artifact-first resilience rollout
-version: 1.3
+version: 1.4
 date_created: 2026-04-14
 last_updated: 2026-04-14
 owner: Platform Engineering
@@ -119,6 +119,9 @@ Nota baseline: il dato sopra riflette il momento iniziale del tracker; l'aggiorn
 - 2026-04-14: `TASK-0001`, `TASK-0002`, `TASK-0003` aggiornati a Completed; Sprint 0 chiuso.
 - 2026-04-14: avvio implementazione Sprint 1 su route extraction con artifact stub persistito, idempotency key e riuso dello stesso artifact lungo la chain fallback.
 - 2026-04-14: validazione locale Sprint 1 PASS su `tests/integration/extraction-route.test.ts` e `tests/unit/streaming.test.ts`.
+- 2026-04-14: avvio implementazione Sprint 2 su route extraction e streaming con timeout classifier completo, acceptance di partial-useful timeout e guard single-finalize sui race path di cancellazione.
+- 2026-04-14: validazione locale Sprint 2 PASS su `tests/unit/extraction-model-policy.test.ts`, `tests/unit/streaming.test.ts` e `tests/integration/extraction-route.test.ts`.
+- 2026-04-14: `TASK-0201`, `TASK-0202`, `TASK-0203` aggiornati a Completed; ingresso operativo su Fase 3 pronto.
 
 ## 4. Current Phase Status
 
@@ -143,9 +146,9 @@ Nota baseline: il dato sopra riflette il momento iniziale del tracker; l'aggiorn
 
 | Task | Current Status | Date |
 | --- | --- | --- |
-| TASK-0201 | Planned | 2026-04-14 |
-| TASK-0202 | Planned | 2026-04-14 |
-| TASK-0203 | Planned | 2026-04-14 |
+| TASK-0201 | Completed | 2026-04-14 |
+| TASK-0202 | Completed | 2026-04-14 |
+| TASK-0203 | Completed | 2026-04-14 |
 | TASK-0204 | Completed | 2026-04-14 |
 
 ### Phase 3
@@ -198,6 +201,9 @@ Nota baseline: il dato sopra riflette il momento iniziale del tracker; l'aggiorn
 - **EVID-012**: artifact stub anticipato e riuso dello stesso artifact tra tentativi implementati in `src/app/api/tools/extraction/generate/route.ts` e `src/lib/llm/streaming.ts`.
 - **EVID-013**: idempotency key route-level con replay artifact completato implementata in `src/app/api/tools/extraction/generate/route.ts`.
 - **EVID-014**: copertura test Sprint 1 aggiornata in `tests/integration/extraction-route.test.ts`, `tests/unit/streaming.test.ts` e `tests/integration/db-mock.ts`.
+- **EVID-015**: timeout classifier completo (`first_token`, `json_start`, `json_parse`, `token_idle`, `route_deadline`) e partial timeout acceptance cross-mode implementati in `src/app/api/tools/extraction/generate/route.ts` e `src/lib/llm/extraction-model-policy.ts`.
+- **EVID-016**: single-finalize sui path di cancel/abort e helper di persistenza completion riusabile introdotti in `src/lib/llm/streaming.ts`.
+- **EVID-017**: copertura test Sprint 2 aggiornata in `tests/integration/extraction-route.test.ts`, `tests/unit/streaming.test.ts` e `tests/unit/extraction-model-policy.test.ts`.
 
 ## 6A. Pre-Production Validation Gate
 
@@ -206,10 +212,10 @@ Nota baseline: il dato sopra riflette il momento iniziale del tracker; l'aggiorn
 | Contratti resilience Fase 0 definiti e approvati | GO | `TASK-0001..TASK-0003` completati con evidenze codice + documentazione + test. |
 | Coerenza stato tracker/index | GO | allineamento completato con `TASK-0604` Completed e evidenza registrata. |
 | Abort propagation end-to-end | GO | copertura gia presente e riallineata a `TASK-0204` Completed. |
-| Piano test minimo pre-rollout | GO | validazione minima Sprint 0 eseguita (`tests/unit/extraction-model-policy.test.ts`, `tests/integration/extraction-route.test.ts`). |
+| Piano test minimo pre-rollout | GO | validazione Sprint 0-2 eseguita (`tests/unit/extraction-model-policy.test.ts`, `tests/unit/streaming.test.ts`, `tests/integration/extraction-route.test.ts`). |
 | KPI runtime artifact-first misurati su finestra minima | NO-GO | metriche target definite nel piano ma non ancora raccolte su finestra valida. |
 
-Decisione corrente: NO-GO per produzione per KPI runtime non ancora consolidati; GO operativo per ingresso Sprint 1.
+Decisione corrente: NO-GO per produzione per KPI runtime non ancora consolidati; GO operativo per ingresso Fase 3 / Sprint successivo.
 
 ## 6. Exit Criteria
 
@@ -220,10 +226,10 @@ Decisione corrente: NO-GO per produzione per KPI runtime non ancora consolidati;
 
 ## 7. Immediate Next Actions (operativo)
 
-1. Sprint 0 chiuso: mantenere invarianti outcome/reason e mapping terminale come baseline bloccante per le fasi successive.
-2. Sprint 1 chiuso: mantenere idempotenza route-level e single artifact chain come baseline per i timeout/atomic completion di Sprint 2.
-3. Avviare Sprint 2 su `TASK-0201`, `TASK-0202`, `TASK-0203`, poi agganciare `TASK-0301..0303`.
-4. Definire finestra KPI canary per Sprint 2/Sprint 3 con soglie e trigger rollback allineati al runbook.
+1. Sprint 0-2 chiusi: mantenere invarianti outcome/reason, idempotenza route-level e timeout semantics come baseline bloccante.
+2. Avviare `TASK-0301`, `TASK-0302`, `TASK-0303` per chiusura atomica artifact/costi/quota e reason persistence finale.
+3. Agganciare `TASK-0401` e `TASK-0403` senza introdurre blocchi sul path critico di completamento.
+4. Definire finestra KPI canary per Fase 3/Fase 4 con soglie e trigger rollback allineati al runbook.
 
 ## 8. Sprint Operations Board
 
@@ -248,9 +254,9 @@ Decisione corrente: NO-GO per produzione per KPI runtime non ancora consolidati;
 
 | Task | Owner | Status | Target | Exit gate |
 | --- | --- | --- | --- | --- |
-| TASK-0201 | Platform Engineering | Planned | 2026-04-22 | timeout classifier completo |
-| TASK-0202 | Platform Engineering | Planned | 2026-04-22 | timeout utile chiuso in completed_partial |
-| TASK-0203 | Platform Engineering | Planned | 2026-04-22 | single-finalize garantito |
+| TASK-0201 | Platform Engineering | Completed | 2026-04-14 | timeout classifier completo |
+| TASK-0202 | Platform Engineering | Completed | 2026-04-14 | timeout utile chiuso in completed_partial |
+| TASK-0203 | Platform Engineering | Completed | 2026-04-14 | single-finalize garantito |
 | TASK-0301 | Platform Engineering | Planned | 2026-04-23 | chiusura atomica artifact/costi/quota |
 | TASK-0302 | Platform Engineering | Planned | 2026-04-23 | reason persistita su ogni terminal state |
 | TASK-0303 | Platform Engineering | Planned | 2026-04-23 | evento complete solo post-commit |

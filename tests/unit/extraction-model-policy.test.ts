@@ -119,6 +119,7 @@ describe('extraction-model-policy', () => {
   it('classifies hard and partial completion outcomes deterministically', () => {
     expect(classifyExtractionCompletionOutcome({ success: true, acceptanceDecision: 'hard_accept' })).toBe('completed_full');
     expect(classifyExtractionCompletionOutcome({ success: true, acceptanceDecision: 'soft_accept' })).toBe('completed_partial');
+    expect(classifyExtractionCompletionOutcome({ success: true, acceptanceDecision: 'hard_accept', timedOut: true })).toBe('completed_partial');
     expect(classifyExtractionCompletionOutcome({ success: false, acceptanceDecision: 'reject' })).toBe('failed_hard');
   });
 

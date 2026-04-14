@@ -135,6 +135,41 @@ describe('createArtifactStream', () => {
     );
   });
 
+  it('does not overwrite client disconnect failure with a later non-terminal update', async () => {
+    mockGenerateStream.mockImplementation(({ abortSignal }: { abortSignal: AbortSignal }) => (async function* () {
+      yield { token: 'Hello' };
+
+      await new Promise<void>((_, reject) => {
+        abortSignal.addEventListener('abort', () => {
+          reject(new Error('aborted'));
+        }, { once: true });
+      });
+    })());
+
+    const stream = await createArtifactStream({
+      userId: 'user_1',
+      projectId: 'proj_1',
+      artifactId: 'art_existing',
+      type: 'content',
+      model: 'openai/gpt-4-turbo',
+      input: { topic: 'AI' },
+      persistFailure: false,
+    });
+
+    const reader = stream.getReader();
+    await reader.read();
+    await reader.read();
+    await reader.cancel('stream_cancelled');
+    await Promise.resolve();
+    await Promise.resolve();
+
+    const lastUpdate = updateArtifact.mock.calls.at(-1)?.[0];
+    expect(lastUpdate).toEqual(expect.objectContaining({
+      where: { id: 'art_existing' },
+      data: expect.objectContaining({ status: 'failed', failureReason: 'client_disconnect' }),
+    }));
+  });
+
   it('marks artifact failed and emits error event when generation throws', async () => {
     mockGenerateStream.mockImplementation(() => {
       throw new Error('Provider down');

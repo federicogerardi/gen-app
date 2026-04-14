@@ -97,9 +97,14 @@ export function resolveExtractionRuntimeModel(payloadModel: string): string {
 export function classifyExtractionCompletionOutcome(input: {
   success: boolean;
   acceptanceDecision?: 'hard_accept' | 'soft_accept' | 'reject';
+  timedOut?: boolean;
 }): ExtractionCompletionOutcome {
   if (!input.success) {
     return 'failed_hard';
+  }
+
+  if (input.timedOut) {
+    return 'completed_partial';
   }
 
   if (input.acceptanceDecision === 'soft_accept') {

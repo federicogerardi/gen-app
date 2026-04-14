@@ -1,4 +1,4 @@
-import { createArtifactStream } from '@/lib/llm/streaming';
+import { createArtifactStream, persistArtifactSuccess } from '@/lib/llm/streaming';
 import { db } from '@/lib/db';
 import { getRequestLogger } from '@/lib/logger';
 import {
@@ -38,7 +38,10 @@ type AttemptStreamResult = {
   costEstimate: number;
   errorMessage?: string;
   timedOut: boolean;
-  timeoutKind?: 'first_token' | 'json_start' | 'json_parse' | 'token_idle' | 'overall';
+  timeoutKind?: 'first_token' | 'json_start' | 'json_parse' | 'token_idle' | 'route_deadline';
+  artifactId?: string;
+  format?: 'json' | 'markdown';
+  didComplete: boolean;
 };
 
 type ConsistencyDecision = 'hard_accept' | 'soft_accept' | 'reject';
@@ -122,7 +125,10 @@ async function consumeAttemptStream(
   let costEstimate = 0;
   let errorMessage: string | undefined;
   let timedOut = false;
-  let timeoutKind: 'first_token' | 'json_start' | 'json_parse' | 'token_idle' | 'overall' | undefined;
+  let timeoutKind: 'first_token' | 'json_start' | 'json_parse' | 'token_idle' | 'route_deadline' | undefined;
+  let artifactId: string | undefined;
+  let format: 'json' | 'markdown' | undefined;
+  let didComplete = false;
   let hasReceivedToken = false;
   let hasSeenJsonStart = false;
   let hasSeenParseableJson = false;
@@ -195,7 +201,7 @@ async function consumeAttemptStream(
 
   const overallTimeout = setTimeout(async () => {
     timedOut = true;
-    timeoutKind = 'overall';
+    timeoutKind = 'route_deadline';
     await reader.cancel('timeout').catch(() => undefined);
   }, timeoutMs);
 
@@ -259,13 +265,29 @@ async function consumeAttemptStream(
         }
 
         if (payload.type === 'complete') {
+          didComplete = true;
           clearTokenIdleTimeout();
           clearJsonStartTimeout();
           clearJsonParseTimeout();
+          if (typeof payload.artifactId === 'string') {
+            artifactId = payload.artifactId;
+          }
+          if (payload.format === 'json' || payload.format === 'markdown') {
+            format = payload.format;
+          }
           if (typeof payload.cost === 'number') {
             costEstimate = payload.cost;
           }
           continue;
+        }
+
+        if (payload.type === 'start') {
+          if (typeof payload.artifactId === 'string') {
+            artifactId = payload.artifactId;
+          }
+          if (payload.format === 'json' || payload.format === 'markdown') {
+            format = payload.format;
+          }
         }
 
         if (payload.type === 'error') {
@@ -291,6 +313,9 @@ async function consumeAttemptStream(
     errorMessage,
     timedOut,
     timeoutKind,
+    artifactId,
+    format,
+    didComplete,
   };
 }
 
@@ -580,6 +605,38 @@ function replaySseChunks(chunks: Uint8Array[]): ReadableStream {
       for (const chunk of chunks) {
         controller.enqueue(chunk);
       }
+      controller.close();
+    },
+  });
+}
+
+function createResolvedExtractionStream(input: {
+  chunks: Uint8Array[];
+  artifactId: string;
+  content: string;
+  format: 'json' | 'markdown';
+  cost?: number;
+  appendCompleteEvent: boolean;
+}): ReadableStream {
+  const encoder = new TextEncoder();
+
+  return new ReadableStream({
+    start(controller) {
+      for (const chunk of input.chunks) {
+        controller.enqueue(chunk);
+      }
+
+      if (input.appendCompleteEvent) {
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+          type: 'complete',
+          artifactId: input.artifactId,
+          content: input.content,
+          workflowType: 'extraction',
+          format: input.format,
+          ...(typeof input.cost === 'number' ? { cost: input.cost } : {}),
+        })}\n\n`));
+      }
+
       controller.close();
     },
   });
@@ -927,6 +984,7 @@ export async function POST(request: Request) {
         workflowType: 'extraction',
         model: attempt.model,
         persistFailure: false,
+        persistPartialOnTimeout: false,
         promptOverride: prompt,
         input: {
           rawContent: payload.rawContent,
@@ -975,8 +1033,6 @@ export async function POST(request: Request) {
         acceptanceReason = 'no_critical_fields_defined';
         criticalCoverage = 1;
         success = true;
-      } else if (consumed.timedOut) {
-        fallbackReason = 'timeout';
       } else if (consumed.errorMessage) {
         providerError = true;
         fallbackReason = 'provider_error';
@@ -1084,9 +1140,35 @@ export async function POST(request: Request) {
       );
 
       if (success) {
+        let responseStream: ReadableStream = replaySseChunks(consumed.chunks);
+
+        if (consumed.timedOut) {
+          const completedContent = trimmedTokenContent;
+
+          await persistArtifactSuccess({
+            artifactId: artifactStub.id,
+            userId,
+            type: 'extraction',
+            model: attempt.model,
+            workflowType: 'extraction',
+            content: completedContent,
+            promptSource: prompt,
+          });
+
+          responseStream = createResolvedExtractionStream({
+            chunks: consumed.chunks,
+            artifactId: consumed.artifactId ?? artifactStub.id,
+            content: completedContent,
+            format: consumed.format ?? getExtractionStreamFormat(extractionResponseMode),
+            cost: consumed.costEstimate > 0 ? consumed.costEstimate : undefined,
+            appendCompleteEvent: !consumed.didComplete,
+          });
+        }
+
         const completionOutcome = classifyExtractionCompletionOutcome({
           success,
           acceptanceDecision,
+          timedOut: consumed.timedOut,
         });
         const completionReason = resolveExtractionCompletionReason({
           outcome: completionOutcome,
@@ -1113,7 +1195,7 @@ export async function POST(request: Request) {
           'Tool generation stream initialized',
         );
 
-        return sseResponse(replaySseChunks(consumed.chunks), requestId);
+        return sseResponse(responseStream, requestId);
       }
 
       if (!policyDecision.escalate) {
