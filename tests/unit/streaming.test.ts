@@ -6,8 +6,8 @@ import { createArtifactStream } from '@/lib/llm/streaming';
 
 let mockGenerateStream: jest.Mock;
 
-jest.mock('@/lib/db', () => ({
-  db: {
+jest.mock('@/lib/db', () => {
+  const tx = {
     artifact: {
       create: jest.fn(),
       update: jest.fn(),
@@ -21,8 +21,15 @@ jest.mock('@/lib/db', () => ({
     quotaHistory: {
       create: jest.fn(),
     },
-  },
-}));
+  };
+
+  return {
+    db: {
+      ...tx,
+      $transaction: jest.fn(async (callback: (context: typeof tx) => Promise<unknown>) => callback(tx)),
+    },
+  };
+});
 
 jest.mock('@/lib/llm/orchestrator', () => ({
   LLMOrchestrator: jest.fn().mockImplementation(() => ({
@@ -39,6 +46,7 @@ const updateArtifact = db.artifact.update as jest.Mock;
 const findActiveModel = db.llmModel.findFirst as jest.Mock;
 const updateUser = db.user.update as jest.Mock;
 const createQuotaHistory = db.quotaHistory.create as jest.Mock;
+const runTransaction = db.$transaction as jest.Mock;
 
 async function readAllSse(stream: ReadableStream): Promise<string[]> {
   const reader = stream.getReader();
@@ -80,6 +88,7 @@ describe('createArtifactStream', () => {
     findActiveModel.mockResolvedValue(null);
     updateUser.mockResolvedValue({});
     createQuotaHistory.mockResolvedValue({});
+    runTransaction.mockImplementation(async (callback: (tx: unknown) => Promise<unknown>) => callback(db));
   });
 
   it('streams start/token/complete events and persists success metadata', async () => {

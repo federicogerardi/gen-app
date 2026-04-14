@@ -279,6 +279,20 @@ describe('POST /api/tools/extraction/generate', () => {
         }),
       }),
     );
+    expect(updateArtifact).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'artifact_stub_1' },
+        data: expect.objectContaining({
+          failureReason: null,
+          input: expect.objectContaining({
+            terminalState: expect.objectContaining({
+              completionOutcome: 'completed_full',
+              completionReason: 'known_fields_present',
+            }),
+          }),
+        }),
+      }),
+    );
   });
 
   it('accepts extraction output when notes is returned as array', async () => {
@@ -497,7 +511,17 @@ describe('POST /api/tools/extraction/generate', () => {
     expect(updateArtifact).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: 'artifact_stub_1' },
-        data: expect.objectContaining({ status: 'failed', failureReason: 'error' }),
+        data: expect.objectContaining({
+          status: 'failed',
+          failureReason: 'max_attempts_reached',
+          input: expect.objectContaining({
+            terminalState: expect.objectContaining({
+              completionOutcome: 'failed_hard',
+              completionReason: 'no_signal_after_chain_exhausted',
+              fallbackReason: 'max_attempts_reached',
+            }),
+          }),
+        }),
       }),
     );
   });

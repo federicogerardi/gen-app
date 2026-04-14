@@ -28,8 +28,28 @@ interface PersistArtifactSuccessParams {
   workflowType: string | null;
   content: string;
   promptSource: string;
+  inputSnapshot?: Record<string, unknown>;
+  completionOutcome?: string;
+  completionReason?: string;
+  fallbackReason?: string | null;
+  timeoutKind?: string | null;
+  attemptIndex?: number;
   providerInputTokens?: number | null;
   providerOutputTokens?: number | null;
+}
+
+interface PersistArtifactFailureParams {
+  artifactId: string;
+  userId: string;
+  type: ArtifactType;
+  model: string;
+  failureReason: string;
+  inputSnapshot?: Record<string, unknown>;
+  completionOutcome?: string;
+  completionReason?: string;
+  fallbackReason?: string | null;
+  timeoutKind?: string | null;
+  attemptIndex?: number;
 }
 
 function estimateUtfAwareTokens(text: string): number {
@@ -90,34 +110,64 @@ export async function persistArtifactSuccess(params: PersistArtifactSuccessParam
     );
   }
 
-  await db.artifact.update({
-    where: { id: params.artifactId },
-    data: {
-      content: params.content,
-      status: 'completed',
-      inputTokens: safeInputTokens,
-      outputTokens: safeOutputTokens,
-      costUSD: cost,
-      completedAt: new Date(),
-    },
-  });
+  const terminalState: Record<string, unknown> = {
+    completionOutcome: params.completionOutcome ?? 'completed_full',
+    completionReason: params.completionReason ?? null,
+    fallbackReason: params.fallbackReason ?? null,
+    timeoutKind: params.timeoutKind ?? null,
+    attemptIndex: params.attemptIndex ?? null,
+    finalizedAt: new Date().toISOString(),
+  };
 
-  await db.user.update({
-    where: { id: params.userId },
-    data: {
-      monthlySpent: { increment: cost },
-    },
-  });
+  const artifactData: {
+    content: string;
+    status: 'completed';
+    failureReason: null;
+    inputTokens: number;
+    outputTokens: number;
+    costUSD: number;
+    completedAt: Date;
+    input?: Record<string, unknown>;
+  } = {
+    content: params.content,
+    status: 'completed',
+    failureReason: null,
+    inputTokens: safeInputTokens,
+    outputTokens: safeOutputTokens,
+    costUSD: cost,
+    completedAt: new Date(),
+  };
 
-  await db.quotaHistory.create({
-    data: {
-      userId: params.userId,
-      requestCount: 1,
-      costUSD: cost,
-      model: params.model,
-      artifactType: params.type,
-      status: 'success' as QuotaEventStatus,
-    },
+  if (params.inputSnapshot) {
+    artifactData.input = {
+      ...params.inputSnapshot,
+      terminalState,
+    };
+  }
+
+  await db.$transaction(async (tx) => {
+    await tx.artifact.update({
+      where: { id: params.artifactId },
+      data: artifactData,
+    });
+
+    await tx.user.update({
+      where: { id: params.userId },
+      data: {
+        monthlySpent: { increment: cost },
+      },
+    });
+
+    await tx.quotaHistory.create({
+      data: {
+        userId: params.userId,
+        requestCount: 1,
+        costUSD: cost,
+        model: params.model,
+        artifactType: params.type,
+        status: 'success' as QuotaEventStatus,
+      },
+    });
   });
 
   return {
@@ -125,6 +175,51 @@ export async function persistArtifactSuccess(params: PersistArtifactSuccessParam
     outputTokens: safeOutputTokens,
     cost,
   };
+}
+
+export async function persistArtifactFailure(params: PersistArtifactFailureParams): Promise<void> {
+  const terminalState: Record<string, unknown> = {
+    completionOutcome: params.completionOutcome ?? 'failed_hard',
+    completionReason: params.completionReason ?? null,
+    fallbackReason: params.fallbackReason ?? params.failureReason,
+    timeoutKind: params.timeoutKind ?? null,
+    attemptIndex: params.attemptIndex ?? null,
+    finalizedAt: new Date().toISOString(),
+  };
+
+  const artifactData: {
+    status: 'failed';
+    failureReason: string;
+    input?: Record<string, unknown>;
+  } = {
+    status: 'failed',
+    failureReason: params.failureReason,
+  };
+
+  if (params.inputSnapshot) {
+    artifactData.input = {
+      ...params.inputSnapshot,
+      terminalState,
+    };
+  }
+
+  await db.$transaction(async (tx) => {
+    await tx.artifact.update({
+      where: { id: params.artifactId },
+      data: artifactData,
+    });
+
+    await tx.quotaHistory.create({
+      data: {
+        userId: params.userId,
+        requestCount: 1,
+        costUSD: 0,
+        model: params.model,
+        artifactType: params.type,
+        status: 'error' as QuotaEventStatus,
+      },
+    });
+  });
 }
 
 export async function createArtifactStream(params: StreamParams): Promise<ReadableStream> {
@@ -356,20 +451,15 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
             return;
           }
 
-          await db.artifact.update({
-            where: { id: artifact.id },
-            data: { status: 'failed' },
-          });
-
-          await db.quotaHistory.create({
-            data: {
-              userId,
-              requestCount: 1,
-              costUSD: 0,
-              model,
-              artifactType: type,
-              status: 'error' as QuotaEventStatus,
-            },
+          await persistArtifactFailure({
+            artifactId: artifact.id,
+            userId,
+            type,
+            model,
+            failureReason: providerAbortController.signal.aborted && cancellationReason === 'timeout'
+              ? 'timeout'
+              : 'error',
+            inputSnapshot: input as Record<string, unknown>,
           });
 
           if (!providerAbortController.signal.aborted) {
