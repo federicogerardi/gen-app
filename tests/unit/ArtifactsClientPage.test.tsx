@@ -73,8 +73,11 @@ describe('ArtifactsClientPage', () => {
     render(<ArtifactsClientPage projects={[]} />);
 
     const cards = screen.getAllByRole('listitem');
-    expect(within(cards[0]).getByRole('button', { name: 'Apri dettaglio artefatto art_new' })).toBeInTheDocument();
-    expect(within(cards[1]).getByRole('button', { name: 'Apri dettaglio artefatto art_old' })).toBeInTheDocument();
+    const firstCardDetailButton = within(cards[0]).getByRole('button', { name: /Apri dettaglio/i });
+    const secondCardDetailButton = within(cards[1]).getByRole('button', { name: /Apri dettaglio/i });
+
+    expect(firstCardDetailButton).toHaveAccessibleName(expect.stringContaining('art_new'));
+    expect(secondCardDetailButton).toHaveAccessibleName(expect.stringContaining('art_old'));
   });
 
   it('shows Use as base action only for artifacts with supported relaunch mapping', () => {

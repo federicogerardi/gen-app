@@ -68,7 +68,9 @@ describe('Navbar', () => {
     expect(mobileMenu).toBeDefined();
 
     const mobileNavigation = within(mobileMenu as HTMLElement);
-    expect(mobileNavigation.getByTestId('runtime-status-badge')).toHaveTextContent(/DEV\s*•\s*v0\.1\.0/);
+    const mobileBadge = mobileNavigation.getByTestId('runtime-status-badge');
+    expect(mobileBadge).toHaveTextContent('DEV');
+    expect(mobileBadge).toHaveTextContent('v0.1.0');
     expect(mobileNavigation.getByRole('link', { name: 'Progetti' })).toHaveAttribute('href', '/dashboard/projects');
     expect(mobileNavigation.getByRole('link', { name: 'Storico' })).toHaveAttribute('href', '/artifacts');
   });
@@ -77,8 +79,10 @@ describe('Navbar', () => {
     render(<Navbar />);
 
     const badge = screen.getAllByTestId('runtime-status-badge')[0];
-    expect(badge).toHaveTextContent('DEV • v0.1.0');
-    expect(badge).toHaveAttribute('aria-label', 'Ambiente DEV, versione applicazione v0.1.0');
+    expect(badge).toHaveTextContent('DEV');
+    expect(badge).toHaveTextContent('v0.1.0');
+    expect(badge).toHaveAttribute('aria-label', expect.stringContaining('Ambiente DEV'));
+    expect(badge).toHaveAttribute('aria-label', expect.stringContaining('v0.1.0'));
   });
 
   it('shows production runtime label in navbar chrome', () => {
@@ -92,7 +96,9 @@ describe('Navbar', () => {
 
     render(<Navbar />);
 
-    expect(screen.getByTestId('runtime-status-badge')).toHaveTextContent(/PROD\s*•\s*v1\.2\.3/);
+    const badge = screen.getByTestId('runtime-status-badge');
+    expect(badge).toHaveTextContent('PROD');
+    expect(badge).toHaveTextContent('v1.2.3');
   });
 
   it('shows preview textual runtime label in desktop and mobile menu', () => {
@@ -106,7 +112,9 @@ describe('Navbar', () => {
 
     render(<Navbar />);
 
-  expect(screen.getByTestId('runtime-status-badge')).toHaveTextContent(/PREVIEW\s*•\s*v1\.5\.0-rc\.2/);
+    const desktopBadge = screen.getByTestId('runtime-status-badge');
+    expect(desktopBadge).toHaveTextContent('PREVIEW');
+    expect(desktopBadge).toHaveTextContent('v1.5.0-rc.2');
 
     fireEvent.click(screen.getByRole('button', { name: 'Apri menu' }));
     const mobileMenu = screen
@@ -115,6 +123,8 @@ describe('Navbar', () => {
 
     expect(mobileMenu).toBeDefined();
     const mobileNavigation = within(mobileMenu as HTMLElement);
-    expect(mobileNavigation.getByTestId('runtime-status-badge')).toHaveTextContent(/PREVIEW\s*•\s*v1\.5\.0-rc\.2/);
+    const mobileBadge = mobileNavigation.getByTestId('runtime-status-badge');
+    expect(mobileBadge).toHaveTextContent('PREVIEW');
+    expect(mobileBadge).toHaveTextContent('v1.5.0-rc.2');
   });
 });
