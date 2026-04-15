@@ -216,6 +216,35 @@ describe('createArtifactStream', () => {
     expect(timeoutRecoveryUpdate.data.failureReason).toBeNull();
   });
 
+  it('persists failed(timeout) when stream deadline aborts before completion', async () => {
+    mockGenerateStream.mockImplementation(({ abortSignal }: { abortSignal: AbortSignal }) => (async function* () {
+      await new Promise<void>((_, reject) => {
+        abortSignal.addEventListener('abort', () => {
+          reject(new Error('aborted'));
+        }, { once: true });
+      });
+    })());
+
+    const stream = await createArtifactStream({
+      userId: 'user_1',
+      projectId: 'proj_1',
+      artifactId: 'art_existing',
+      type: 'content',
+      model: 'openai/gpt-4-turbo',
+      input: { topic: 'AI' },
+      streamDeadlineMs: 5,
+    });
+
+    await readAllSse(stream);
+
+    expect(updateArtifact).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'art_existing' },
+        data: expect.objectContaining({ status: 'failed', failureReason: 'timeout' }),
+      }),
+    );
+  });
+
   it('marks artifact failed and emits error event when generation throws', async () => {
     mockGenerateStream.mockImplementation(() => {
       throw new Error('Provider down');

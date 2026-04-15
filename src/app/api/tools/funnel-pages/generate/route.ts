@@ -104,6 +104,8 @@ export async function POST(request: Request) {
     userId,
   });
 
+  const FUNNEL_STREAM_DEADLINE_MS = 270_000;
+
   const parsed = await parseAndValidateRequest(request, funnelPagesRequestSchema);
   if (!parsed.ok) {
     return parsed.response;
@@ -152,6 +154,7 @@ export async function POST(request: Request) {
       workflowType: 'funnel_pages',
       model: payload.model,
       promptOverride: prompt,
+        streamDeadlineMs: FUNNEL_STREAM_DEADLINE_MS,
       input: {
         topic: `funnel_${payload.step}`,
         tone: payload.tone,
@@ -167,6 +170,7 @@ export async function POST(request: Request) {
         projectId: payload.projectId,
         model: payload.model,
         step: payload.step,
+        streamDeadlineMs: FUNNEL_STREAM_DEADLINE_MS,
         duration_ms: Date.now() - startedAt,
       },
       'Tool generation stream initialized',

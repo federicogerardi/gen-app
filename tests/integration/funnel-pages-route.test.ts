@@ -104,10 +104,15 @@ describe('POST /api/tools/funnel-pages/generate', () => {
     expect(res.status).toBe(200);
     expect(mockedOptinPrompt).toHaveBeenCalled();
 
-    const streamArgs = mockedStream.mock.calls[0][0] as { input: { topic?: string }; promptOverride?: string };
+    const streamArgs = mockedStream.mock.calls[0][0] as {
+      input: { topic?: string };
+      promptOverride?: string;
+      streamDeadlineMs?: number;
+    };
     expect(streamArgs.promptOverride).toBe('OPTIN PROMPT');
     expect(streamArgs.input.topic).toBe('funnel_optin');
     expect(streamArgs.input.topic).not.toBe('OPTIN PROMPT');
+    expect(streamArgs.streamDeadlineMs).toBe(270000);
   });
 
   it('routes prompt builder for optin step from extracted fields payload', async () => {

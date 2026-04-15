@@ -75,3 +75,49 @@ Rendere piu robusto il comportamento operativo dei flussi di generation evitando
 - Priority: P1 (stabilita operativa + riduzione incident triage time)
 - Blast radius: tool generation endpoints
 - Recommended execution window: prossimo ciclo di hardening backend
+
+---
+
+## Hotfix Applicato (2026-04-15)
+
+### Root cause confermata — artifact status stuck `generating`
+
+Da log runtime Vercel produzione (`dpl_29aKsX6qxUMiqunjAn8QmDSfiEzu`, fra1, iad1):
+
+- `POST /api/tools/funnel-pages/generate` → HTTP 200, durata `300001ms` (Vercel hard kill a 300s).
+- OpenRouter ha risposto in ~6.5s; i restanti ~293s erano idle Vercel-side (stream aperto, nessun token in arrivo dal provider lento o nessun cleanup forzato).
+- Il processo Node viene terminato dal platform a 300s prima che il `db.artifact.update({ status: 'completed'|'failed' })` venga eseguito.
+- Risultato: l'artefatto resta bloccato in stato `generating` nel DB, mentre il frontend ha già mostrato il contenuto ricevuto via SSE.
+
+### Fix — `streamDeadlineMs` in `createArtifactStream`
+
+**Parametro aggiunto**: `streamDeadlineMs?: number` nell'interfaccia `StreamParams` di `src/lib/llm/streaming.ts`.
+
+Logica:
+- Se configurato, arma un `setTimeout` applicativo all'interno dello stream `ReadableStream.start`.
+- Alla scadenza: imposta `cancellationReason = 'timeout'` e chiama `providerAbortController.abort()`.
+- Il generatore lancia, il path catch valuta `canPersistPartialTimeout`: se il contenuto accumulato è ≥ 120 chars → `persistArtifactSuccess` (partial); altrimenti → `persistArtifactFailure(failureReason: 'timeout')`.
+- In entrambi i casi lo stato DB viene finalizzato con `status: 'completed'` o `status: 'failed'` **prima** del kill Vercel.
+- Il timer viene cancellato nel `finally` alla chiusura regolare dello stream.
+
+**Route `funnel-pages/generate`**: imposta `FUNNEL_STREAM_DEADLINE_MS = 270_000` (30s di margine sul limite Vercel 300s).
+
+### File modificati
+
+| File | Modifica |
+|---|---|
+| `src/lib/llm/streaming.ts` | Aggiunto parametro `streamDeadlineMs`, timer interno con abort anticipato, cleanup nel `finally` |
+| `src/app/api/tools/funnel-pages/generate/route.ts` | Passa `streamDeadlineMs: 270_000` a `createArtifactStream` |
+| `tests/unit/streaming.test.ts` | Nuovo test: `persists failed(timeout) when stream deadline aborts before completion` |
+| `tests/integration/funnel-pages-route.test.ts` | Asserzione `streamDeadlineMs: 270000` su optin step |
+
+### Validazione post-fix
+
+- `npm run typecheck` → PASS
+- `npm run test -- tests/unit/streaming.test.ts tests/integration/funnel-pages-route.test.ts` → **23/23 PASS**
+- `npm run lint` → PASS
+
+### Scope residuo
+
+- Verificare se applicare `streamDeadlineMs` anche a `meta-ads/generate` (stesso limite runtime Vercel 300s).
+- I finding originali di questa nota (TASK-001..013) rimangono aperti nel tracker operativo.

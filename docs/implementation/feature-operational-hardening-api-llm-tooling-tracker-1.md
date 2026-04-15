@@ -67,6 +67,7 @@ Status legend:
 
 - 2026-04-15: creato tracker operativo e baseline iniziale allineata al piano.
 - 2026-04-15: collegato tracker agli indici documentali come attivita pianificata.
+- 2026-04-15: hotfix `streamDeadlineMs` applicato a `funnel-pages/generate` dopo conferma root cause da runtime log Vercel (artifact status stuck `generating` su timeout hard 300s). Dettagli: `docs/review/operational-improvement-note-api-llm-tooling-2026-04-15.md § Hotfix Applicato`. Validazione: typecheck + jest target (23/23) + lint PASS.
 
 ## 4. Current Phase Status
 
@@ -109,6 +110,7 @@ Status legend:
 - **EVID-002**: nota improvement sorgente in `docs/review/operational-improvement-note-api-llm-tooling-2026-04-15.md`.
 - **EVID-003**: indice operativo aggiornato in `docs/implement-index.md`.
 - **EVID-004**: indice docs aggiornato in `docs/README.md`.
+- **EVID-005**: hotfix `streamDeadlineMs` applicato — `src/lib/llm/streaming.ts` + `src/app/api/tools/funnel-pages/generate/route.ts` + test aggiornati. Sezione `§ Hotfix Applicato` in EVID-002. Root cause confermata da log runtime Vercel produzione.
 
 ## 6. Exit Criteria
 
