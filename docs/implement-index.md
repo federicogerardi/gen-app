@@ -2,6 +2,25 @@
 
 _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 
+## Aggiornamento sessione (2026-04-15 — Test Fragility Hardening: prompt/UI)
+
+- **Obiettivo completato**: ridotta la fragilita dei test su prompt markdown e copy UI non critico, mantenendo invariati i test ad alto valore sicurezza/contratto API.
+- **Interventi eseguiti**:
+  - `tool-prompts-parity`: sostituito il confronto byte-to-byte con parity strutturale (headings) + guardrail di parita grossolana lunghezza.
+  - `tool-prompts`: sostituite asserzioni su frasi letterali con invarianti a token in punti non critici.
+  - `Navbar`, `RuntimeInfoProvider`, `PersonalTrendCard`, `ArtifactsClientPage`: ridotta dipendenza da stringhe complete e rafforzate asserzioni su comportamento/semantica/accessibilita.
+- **File test aggiornati**:
+  - `tests/unit/tool-prompts-parity.test.ts`
+  - `tests/unit/tool-prompts.test.ts`
+  - `tests/unit/Navbar.test.tsx`
+  - `tests/unit/RuntimeInfoProvider.test.tsx`
+  - `tests/unit/PersonalTrendCard.test.tsx`
+  - `tests/unit/ArtifactsClientPage.test.tsx`
+- **Conferma sicurezza**:
+  - Nessuna modifica ai test integration di auth/ownership/rate-limit/error-code.
+  - Strategia confermata: rigidita alta sui contratti sicurezza, elasticita controllata su copy e wording.
+- **Riferimento review**: `docs/code-review/2026-04-15-test-suite-security-balance-review.md`.
+
 ## Aggiornamento sessione (2026-04-15 — Hotfix: stream deadline funnel-pages)
 
 - **Root cause identificata in produzione**: artefatto con id `cmnzviexu000004ib6p23z621` restava in stato `generating` a frontend completato. Causa confermata da runtime log Vercel: invocazione `POST /api/tools/funnel-pages/generate` con durata `300001ms`, corrispondente al kill hard del runtime Vercel a 300s; la persistenza terminale DB saltava per interruzione forzata del processo Node prima del `db.artifact.update(status: completed|failed)`.

@@ -44,6 +44,9 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 - [pr-28-dev-commit-changelog-2026-04-13.md](review/pr-28-dev-commit-changelog-2026-04-13.md): Changelog commit-level della PR #28 con shortstat e note di riuso per documentazione.
 - [operational-improvement-note-api-llm-tooling-2026-04-15.md](review/operational-improvement-note-api-llm-tooling-2026-04-15.md): Nota di improvement operativa che origina il piano P1 di hardening API/LLM tooling.
 
+### code-review/
+- [2026-04-15-test-suite-security-balance-review.md](code-review/2026-04-15-test-suite-security-balance-review.md): Valutazione del bilanciamento sicurezza pre-deploy vs delivery e stato remediation iniziale dei test fragili prompt/UI.
+
 ### archive/
 - Documenti storici e snapshot superseded (review, roadmap, follow-up PR).
 
@@ -67,6 +70,7 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 - [ux-strategy.md](ux/ux-strategy.md): Strategia UX e principi guida.
 
 ### Aggiornamenti recenti
+- 2026-04-15: completata remediation iniziale dei test fragili prompt/UI (riduzione assert copy-level, mantenimento test sicurezza/contratti), con report operativo in `docs/code-review/2026-04-15-test-suite-security-balance-review.md`.
 - 2026-04-14: aggiunto guardrail build-safe Next.js App Router in `docs/specifications/api-specifications.md` per evitare errori CI su `useSearchParams` senza boundary `Suspense`.
 - 2026-04-14: aggiornate le specifiche funnel/API per il passaggio di testimonianze strutturate (`quote`, `source`, `achieved_result`, `measurable_results`) dal payload extraction al contesto generazione.
 - 2026-04-14: introdotto piano operativo microtask GUI/UX low-impact in `docs/implementation/gui-ux-low-impact-microtasks-sprint-plan-2026-04-14.md` e allineato `docs/implement-index.md`.
