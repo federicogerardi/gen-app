@@ -5,6 +5,7 @@ import { Navbar } from '@/components/layout/Navbar';
 const mockUsePathname = jest.fn();
 const mockUseSession = jest.fn();
 const mockSignOut = jest.fn();
+const mockUseRuntimeInfo = jest.fn();
 
 jest.mock('next/navigation', () => ({
   usePathname: () => mockUsePathname(),
@@ -13,6 +14,10 @@ jest.mock('next/navigation', () => ({
 jest.mock('next-auth/react', () => ({
   useSession: () => mockUseSession(),
   signOut: (...args: unknown[]) => mockSignOut(...args),
+}));
+
+jest.mock('@/components/layout/RuntimeInfoProvider', () => ({
+  useRuntimeInfo: () => mockUseRuntimeInfo(),
 }));
 
 describe('Navbar', () => {
@@ -25,6 +30,13 @@ describe('Navbar', () => {
           role: 'user',
         },
       },
+    });
+    mockUseRuntimeInfo.mockReturnValue({
+      channel: 'development',
+      channelLabel: 'DEV',
+      appVersion: '0.1.0',
+      versionLabel: 'v0.1.0',
+      isNonProduction: true,
     });
     mockSignOut.mockReset();
   });
@@ -56,7 +68,53 @@ describe('Navbar', () => {
     expect(mobileMenu).toBeDefined();
 
     const mobileNavigation = within(mobileMenu as HTMLElement);
+    expect(mobileNavigation.getByTestId('runtime-status-badge')).toHaveTextContent(/DEV\s*•\s*v0\.1\.0/);
     expect(mobileNavigation.getByRole('link', { name: 'Progetti' })).toHaveAttribute('href', '/dashboard/projects');
     expect(mobileNavigation.getByRole('link', { name: 'Storico' })).toHaveAttribute('href', '/artifacts');
+  });
+
+  it('shows textual runtime label in desktop user area for non-production', () => {
+    render(<Navbar />);
+
+    const badge = screen.getAllByTestId('runtime-status-badge')[0];
+    expect(badge).toHaveTextContent('DEV • v0.1.0');
+    expect(badge).toHaveAttribute('aria-label', 'Ambiente DEV, versione applicazione v0.1.0');
+  });
+
+  it('shows production runtime label in navbar chrome', () => {
+    mockUseRuntimeInfo.mockReturnValue({
+      channel: 'production',
+      channelLabel: 'PROD',
+      appVersion: '1.2.3',
+      versionLabel: 'v1.2.3',
+      isNonProduction: false,
+    });
+
+    render(<Navbar />);
+
+    expect(screen.getByTestId('runtime-status-badge')).toHaveTextContent(/PROD\s*•\s*v1\.2\.3/);
+  });
+
+  it('shows preview textual runtime label in desktop and mobile menu', () => {
+    mockUseRuntimeInfo.mockReturnValue({
+      channel: 'preview',
+      channelLabel: 'PREVIEW',
+      appVersion: '1.5.0-rc.2',
+      versionLabel: 'v1.5.0-rc.2',
+      isNonProduction: true,
+    });
+
+    render(<Navbar />);
+
+  expect(screen.getByTestId('runtime-status-badge')).toHaveTextContent(/PREVIEW\s*•\s*v1\.5\.0-rc\.2/);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Apri menu' }));
+    const mobileMenu = screen
+      .getAllByRole('list', { name: 'Sezioni applicazione' })
+      .find((element) => element.id === 'mobile-menu');
+
+    expect(mobileMenu).toBeDefined();
+    const mobileNavigation = within(mobileMenu as HTMLElement);
+    expect(mobileNavigation.getByTestId('runtime-status-badge')).toHaveTextContent(/PREVIEW\s*•\s*v1\.5\.0-rc\.2/);
   });
 });

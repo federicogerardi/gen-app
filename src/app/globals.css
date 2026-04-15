@@ -206,3 +206,43 @@
   border-color: rgba(37, 99, 235, 0.45);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
 }
+
+body[data-runtime-env='development'],
+body[data-runtime-env='preview'],
+body[data-runtime-env='test'] {
+  --app-layer-warm: rgba(245, 208, 116, 0.25);
+  --app-layer-cool: rgba(99, 102, 241, 0.205);
+  --app-grid-line: rgba(15, 23, 42, 0.051);
+  --app-surface: rgba(255, 255, 255, 0.895);
+  --app-border-soft: rgba(15, 23, 42, 0.138);
+}
+
+body[data-runtime-env='development'] .runtime-chrome-navbar,
+body[data-runtime-env='preview'] .runtime-chrome-navbar,
+body[data-runtime-env='test'] .runtime-chrome-navbar {
+  position: sticky;
+}
+
+body[data-runtime-env='development'] .runtime-chrome-navbar::before,
+body[data-runtime-env='preview'] .runtime-chrome-navbar::before,
+body[data-runtime-env='test'] .runtime-chrome-navbar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(249, 115, 22, 0.95), rgba(245, 158, 11, 0.95));
+  box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.18), 0 4px 10px -6px rgba(249, 115, 22, 0.8);
+}
+
+body[data-runtime-env='development'] .runtime-chrome-navbar::before {
+  background: linear-gradient(
+    90deg,
+    rgba(234, 88, 12, 1) 0%,
+    rgba(249, 115, 22, 1) 38%,
+    rgba(251, 146, 60, 1) 72%,
+    rgba(217, 119, 6, 1) 100%
+  );
+  box-shadow: 0 0 0 1px rgba(234, 88, 12, 0.28), 0 6px 12px -6px rgba(234, 88, 12, 0.95);
+}

@@ -7,6 +7,7 @@ import { signOut, useSession } from 'next-auth/react';
 import { ChevronDown, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { RuntimeStatusBadge } from './RuntimeStatusBadge';
 import { NAVBAR_WIDTH_CLASS } from './shell-width';
 
 const toolLinks = [
@@ -47,7 +48,7 @@ export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <nav className="sticky top-0 z-30 border-b border-black/10 bg-[#fbf8f2]/90 backdrop-blur px-4 py-3 app-copy" aria-label="Navigazione principale">
+    <nav className="runtime-chrome-navbar sticky top-0 z-30 border-b border-black/10 bg-[#fbf8f2]/90 backdrop-blur px-4 py-3 app-copy" aria-label="Navigazione principale">
       <div className={`${NAVBAR_WIDTH_CLASS} mx-auto`}>
         {/* Top bar */}
         <div className="flex items-center justify-between">
@@ -112,6 +113,7 @@ export function Navbar() {
           {/* Desktop user area */}
           <div className="hidden md:flex items-center gap-3">
             {session?.user?.role === 'admin' && <Badge variant="secondary">Admin</Badge>}
+            <RuntimeStatusBadge />
             <span className="text-sm text-muted-foreground max-w-[20vw] truncate" title={session?.user?.email ?? undefined}>{session?.user?.email}</span>
             <Button
               variant="outline"
@@ -155,6 +157,9 @@ export function Navbar() {
         {/* Mobile menu */}
         {menuOpen && (
           <div id="mobile-menu" className="md:hidden pt-3 pb-1 flex flex-col gap-2 text-sm border-t border-black/10 mt-3" role="list" aria-label="Sezioni applicazione">
+            <div className="pb-1 border-b border-black/10">
+              <RuntimeStatusBadge />
+            </div>
             <Link
               href="/dashboard"
               className={`${linkClass(isDashboardActive(pathname))} py-1`}
