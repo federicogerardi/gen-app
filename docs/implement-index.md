@@ -2,6 +2,15 @@
 
 _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 
+## Aggiornamento sessione (2026-04-15 — Hotfix: stream deadline funnel-pages)
+
+- **Root cause identificata in produzione**: artefatto con id `cmnzviexu000004ib6p23z621` restava in stato `generating` a frontend completato. Causa confermata da runtime log Vercel: invocazione `POST /api/tools/funnel-pages/generate` con durata `300001ms`, corrispondente al kill hard del runtime Vercel a 300s; la persistenza terminale DB saltava per interruzione forzata del processo Node prima del `db.artifact.update(status: completed|failed)`.
+- **Fix applicato**: introdotto parametro `streamDeadlineMs` in `createArtifactStream` (`src/lib/llm/streaming.ts`) che, se configurato, arma un timer applicativo che aborta il provider anticipatamente rispetto al limite piattaforma. Il route `funnel-pages/generate` imposta `FUNNEL_STREAM_DEADLINE_MS = 270_000` (30s di margine rispetto al limite Vercel 300s), garantendo che la finalizzazione stato DB sia sempre completata prima del kill.
+- **Comportamento post-fix**: timeout applicativo → `cancellationReason = 'timeout'` → se contenuto accumulato >= 120 chars persiste come `completed` (partial); altrimenti `failed(timeout)`. Nessuna build/API change breaking.
+- **Validazione**: `typecheck` PASS, `tests/unit/streaming.test.ts` (nuovo test `persists failed(timeout) when stream deadline aborts`) PASS, `tests/integration/funnel-pages-route.test.ts` (asserzione `streamDeadlineMs: 270000`) PASS, `lint` PASS. Suite: 23/23.
+- **File toccati**: `src/lib/llm/streaming.ts`, `src/app/api/tools/funnel-pages/generate/route.ts`, `tests/unit/streaming.test.ts`, `tests/integration/funnel-pages-route.test.ts`.
+- **Scope da fare**: valutare applicazione analoga a `meta-ads/generate` se esposta allo stesso limite runtime.
+
 ## Aggiornamento sessione (2026-04-15 — Operational Hardening Plan API/LLM Tooling)
 
 - **Nuova attivita pianificata (P1)**: creato piano esecutivo per hardening operativo API/LLM tooling con focus su error boundaries pre-stream, finalizzazione artifact extraction, reason taxonomy ownership e allineamento specifiche API.

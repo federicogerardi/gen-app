@@ -19,6 +19,7 @@ interface StreamParams {
   artifactId?: string;
   persistFailure?: boolean;
   persistPartialOnTimeout?: boolean;
+  streamDeadlineMs?: number;
 }
 
 interface PersistArtifactSuccessParams {
@@ -297,6 +298,29 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
         controller.close();
       };
 
+      const streamDeadlineMs = params.streamDeadlineMs ?? null;
+      let streamDeadlineTimer: ReturnType<typeof setTimeout> | null = null;
+
+      const clearStreamDeadlineTimer = () => {
+        if (!streamDeadlineTimer) {
+          return;
+        }
+
+        clearTimeout(streamDeadlineTimer);
+        streamDeadlineTimer = null;
+      };
+
+      if (streamDeadlineMs !== null && streamDeadlineMs > 0) {
+        streamDeadlineTimer = setTimeout(() => {
+          if (terminalState !== 'open') {
+            return;
+          }
+
+          cancellationReason = 'timeout';
+          providerAbortController.abort(new Error('timeout'));
+        }, streamDeadlineMs);
+      }
+
       enqueueEvent({
         type: 'start',
         artifactId: artifact.id,
@@ -493,6 +517,8 @@ export async function createArtifactStream(params: StreamParams): Promise<Readab
           }
         }
       } finally {
+        clearStreamDeadlineTimer();
+
         try {
           closeController();
         } catch {
