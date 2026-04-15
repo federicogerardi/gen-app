@@ -23,7 +23,9 @@ describe('RuntimeInfoProvider', () => {
       </RuntimeInfoProvider>,
     );
 
-    expect(screen.getByText('PREVIEW • v1.4.0-rc.1')).toBeInTheDocument();
+    const runtimeBadge = screen.getByText('PREVIEW • v1.4.0-rc.1', { selector: 'span' });
+
+    expect(runtimeBadge).toBeInTheDocument();
   });
 
   it('throws when useRuntimeInfo is called outside provider', () => {

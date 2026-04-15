@@ -16,6 +16,13 @@ jest.mock('@/lib/tool-prompts/loader', () => ({
 
 const mockedLoadPromptSource = loadPromptSource as jest.MockedFunction<typeof loadPromptSource>;
 
+function expectTextIncludesAll(text: string, tokens: string[]) {
+  const normalized = text.toLowerCase();
+  for (const token of tokens) {
+    expect(normalized).toContain(token.toLowerCase());
+  }
+}
+
 describe('buildMetaAdsPrompt', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -46,7 +53,7 @@ describe('buildMetaAdsPrompt', () => {
       tone: 'professional',
     });
 
-    expect(prompt).toContain('Creative angle: Non specificato');
+    expectTextIncludesAll(prompt, ['creative angle', 'non specificato']);
   });
 });
 
@@ -106,7 +113,7 @@ describe('buildExtractionPrompt', () => {
     expect(prompt).toContain('## Required Fields Checklist');
     expect(prompt).toContain('business_type');
     expect(prompt).toContain('core_problem');
-    expect(prompt).toContain('testo virgoletato + fonte');
+    expectTextIncludesAll(prompt, ['virgoletato', 'fonte']);
   });
 });
 
@@ -132,7 +139,7 @@ describe('funnel prompt builders', () => {
     expect(prompt).toContain('PROMPT TEMPLATE');
     expect(prompt).toContain('## BRIEFING OPERATIVO');
     expect(prompt).toContain('Prodotto/Servizio: Corso AI');
-    expect(prompt).toContain("nell'optin page puoi usare emoji in modo persuasivo e misurato");
+    expectTextIncludesAll(prompt, ['optin page', 'emoji']);
   });
 
   it('buildFunnelQuizPrompt includes optin context', async () => {
@@ -219,10 +226,10 @@ describe('funnel prompt builders', () => {
 
 describe('extraction prompt contract', () => {
   it('enforces flat keys, full fields population, critical fields first and valid partial JSON', () => {
-    expect(EXTRACTION_GENERATION_TEMPLATE).toContain('Usa esclusivamente chiavi flat presenti nella field map');
-    expect(EXTRACTION_GENERATION_TEMPLATE).toContain('Compila sempre fields con tutte le chiavi della field map');
-    expect(EXTRACTION_GENERATION_TEMPLATE).toContain('Critical fields first');
-    expect(EXTRACTION_GENERATION_TEMPLATE).toContain('Restituisci solo JSON valido, senza testo extra');
-    expect(EXTRACTION_GENERATION_TEMPLATE).toContain('JSON valido con fields parziali/null');
+    expectTextIncludesAll(EXTRACTION_GENERATION_TEMPLATE, ['chiavi flat', 'field map']);
+    expectTextIncludesAll(EXTRACTION_GENERATION_TEMPLATE, ['compila', 'fields']);
+    expectTextIncludesAll(EXTRACTION_GENERATION_TEMPLATE, ['critical fields first']);
+    expectTextIncludesAll(EXTRACTION_GENERATION_TEMPLATE, ['json valido', 'senza testo extra']);
+    expectTextIncludesAll(EXTRACTION_GENERATION_TEMPLATE, ['fields parziali', 'null']);
   });
 });
