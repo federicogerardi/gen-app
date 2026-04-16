@@ -38,6 +38,9 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Validate release app version contract
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: npm run check:app-version
       - run: npx prisma migrate deploy
       - run: npx prisma generate
       - run: npm run lint

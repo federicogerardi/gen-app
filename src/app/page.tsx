@@ -46,14 +46,14 @@ export default async function HomePage() {
             className="mt-6 max-w-xl text-base leading-relaxed text-slate-700 sm:text-lg"
             style={{ fontFamily: 'var(--font-login-body)' }}
           >
-            Gen App aiuta il tuo team a produrre copy Meta Ads e Funnel Pages pronti all&apos;uso, mantenendo coerenza di tono,
+            Gen App aiuta il tuo team a produrre Funnel Pages pronte all&apos;uso, mantenendo coerenza di tono,
             velocita di iterazione e controllo sui costi.
           </p>
 
           <div className="mt-8 grid gap-3 sm:grid-cols-3" style={{ fontFamily: 'var(--font-login-body)' }}>
             <div className="rounded-2xl border border-slate-900/10 bg-white/80 p-4">
               <p className="text-xs uppercase tracking-wider text-slate-500">Focus</p>
-              <p className="mt-1 text-sm font-semibold text-slate-900">Meta Ads + Funnel Pages</p>
+              <p className="mt-1 text-sm font-semibold text-slate-900">Funnel Pages</p>
             </div>
             <div className="rounded-2xl border border-slate-900/10 bg-white/80 p-4">
               <p className="text-xs uppercase tracking-wider text-slate-500">Workflow</p>

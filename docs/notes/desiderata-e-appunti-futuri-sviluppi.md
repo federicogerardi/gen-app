@@ -27,25 +27,15 @@ Usare questo spazio quando un input e utile per orientare le prossime decisioni,
 
 ## Appunti aperti
 
-### Batch multistep resiliente per funnel generation
+### Job batch asincroni persistenti per funnel generation
 
-- Contesto: il flusso step-by-step di generazione funnel puo interrompersi se l'utente cambia pagina o chiude la view durante l'esecuzione.
-- Ipotesi: introdurre una operazione batch server-side che orchestri l'intero ciclo multistep (es. optin -> quiz -> vsl) in modo asincrono e ripristinabile.
-- Impatto atteso: maggiore completion rate del ciclo completo, minori artefatti parziali, UX piu robusta in presenza di navigazione utente.
-- Dipendenze o vincoli noti: stato job persistente, idempotenza step, gestione retry/failure per step, endpoint di polling o stream di stato, ownership e quota enforcement per job.
-- Segnali per promuovere a planning: metriche che mostrano drop durante navigazione, definizione chiara del contratto API job-based, validazione impatto su costi e rate limit.
+- Contesto: il flusso step-by-step di generazione funnel puo interrompersi se l'utente cambia pagina o chiude la view durante l'esecuzione; oggi la continuita puo ancora dipendere dalla permanenza nella pagina tool.
+- Ipotesi: introdurre job batch asincroni server-side che orchestrino l'intero ciclo multistep (es. optin -> quiz -> vsl), continuino anche se l'utente naviga altrove e siano ripristinabili/monitorabili.
+- Impatto atteso: maggiore completion rate del ciclo completo, minori artefatti parziali, maggiore affidabilita operativa e UX piu robusta in presenza di navigazione utente o run lunghi.
+- Dipendenze o vincoli noti: stato job persistente, coda job, idempotenza step, gestione retry/failure per step, endpoint di polling o stream di stato, ownership e quota/rate limit enforcement per job.
+- Segnali per promuovere a planning: metriche che mostrano drop durante navigazione, definizione chiara del contratto API job-based (submit/status/cancel), validazione impatto su costi e rate limit, conferma requisiti infrastrutturali e piano rollout incrementale con osservabilita.
 - Data nota: 2026-04-12.
-- Owner proposto: Platform + LLM/Tooling team.
-
-### Rilancio generazione da dettaglio artefatto
-
-- Contesto: dalla pagina dettaglio artefatto manca un percorso rapido per rilanciare una nuova generazione partendo dai dati gia disponibili.
-- Ipotesi: valutare due UX alternative: form embedded nella pagina dettaglio oppure CTA verso pagina generazione con campi precompilati (invece di nuovo upload file), con comportamento differenziato tra artefatto di estrazione e artefatti funnel (optin, quiz, vsl).
-- Impatto atteso: riduzione del tempo di reiterazione, minore frizione operativa, migliore continuita del flusso di lavoro quando serve rigenerare varianti.
-- Dipendenze o vincoli noti: mappatura affidabile dei campi riusabili, gestione dei default e delle override utente, differenze di input tra extraction e funnel, ownership check e quota/rate limit invariati nel rilancio.
-- Segnali per promuovere a planning: decisione esplicita su pattern UX (embedded vs redirect prefill), contratto tecnico per prefill per ogni tipologia artefatto, conferma che il rilancio non introduce regressioni sui controlli di sicurezza e billing.
-- Data nota: 2026-04-13.
-- Owner proposto: Product + Frontend + Tooling team.
+- Owner proposto: Platform + LLM/Tooling + Product team.
 
 ### Vista aggregata artefatti funnel nella pagina dettaglio
 
@@ -59,34 +49,13 @@ Usare questo spazio quando un input e utile per orientare le prossime decisioni,
 
 ### Trend generazioni in dashboard con confronto globale vs utente
 
-- Contesto: nella dashboard manca una vista immediata dell'andamento nel tempo delle generazioni, sia a livello app sia a livello del singolo utente autenticato.
+- Contesto: nella dashboard esiste ora un trend personale MVP, ma manca ancora una vista comparativa dell'andamento nel tempo tra uso del singolo utente e andamento globale dell'app.
 - Ipotesi: introdurre un grafico a linea time-series con due serie sovrapposte: totale generazioni globali dell'app e totale generazioni dell'utente che ha accesso alla dashboard.
 - Impatto atteso: maggiore visibilita sull'adozione complessiva, auto-valutazione dell'utilizzo personale rispetto al contesto generale, supporto a decisioni su quota e priorita operative.
 - Dipendenze o vincoli noti: definizione finestra temporale e granularita (giorno/settimana), coerenza timezone, policy privacy per esposizione metrica globale, endpoint analytics con filtri sicuri e performance adeguata.
-- Segnali per promuovere a planning: allineamento su metriche e definizioni (cosa conta come generazione), bozza UX approvata per chart e filtri periodo, verifica carico query e strategia cache.
+- Segnali per promuovere a planning: allineamento su metriche e definizioni (cosa conta come generazione), bozza UX approvata per chart e filtri periodo, decisione esplicita su policy/privacy della metrica globale, verifica carico query e strategia cache.
 - Data nota: 2026-04-13.
 - Owner proposto: Product + Analytics + Frontend team.
-
-### Vista ultimi artefatti generati in dashboard
-
-- Contesto: la dashboard non mostra in modo diretto gli artefatti piu recenti, costringendo a navigare in sezioni dedicate per recuperare il lavoro appena prodotto.
-- Ipotesi: aggiungere un blocco "ultimi artefatti generati" con elenco ordinato per recenza, stato e accesso rapido al dettaglio.
-- Impatto atteso: riduzione del tempo di accesso ai contenuti recenti, miglior continuita operativa, maggiore percezione di controllo del flusso di lavoro.
-- Dipendenze o vincoli noti: query ottimizzata per ultime N generazioni, filtri coerenti con ownership, gestione stati parziali/falliti, fallback UI in assenza di dati.
-- Segnali per promuovere a planning: definizione del set minimo campi mostrati, validazione UX del componente dashboard, verifica performance query e strategia paginazione/limite.
-- Data nota: 2026-04-13.
-- Owner proposto: Product + Frontend + Platform team.
-
-### Esecuzione batch asincrona delle generazioni svincolata dalla pagina tool
-
-- Contesto: oggi la continuita della generazione puo dipendere dalla permanenza dell'utente nella pagina del tool, con rischio di interruzione percepita o perdita di controllo quando cambia view.
-- Ipotesi: introdurre job batch asincroni server-side che continuino anche se l'utente naviga altrove, con stato persistito e possibilita di monitoraggio da dashboard o area job.
-- Impatto atteso: maggiore affidabilita operativa, meno abbandoni durante run lunghi, UX piu robusta e adatta a cicli multi-step.
-- Dipendenze o vincoli noti: coda job persistente, idempotenza e retry per step, tracciamento stato/progress, notifica completamento, enforcement ownership/quota/rate limit durante tutta l'esecuzione.
-- Segnali per promuovere a planning: definizione contratto API job-based (submit/status/cancel), conferma requisiti infrastrutturali e costi, piano rollout incrementale con osservabilita.
-- Data nota: 2026-04-13.
-- Owner proposto: Platform + LLM/Tooling + Product team.
-- Nota priorita: alta importanza, da portare a pianificazione attiva il prima possibile.
 
 ### Selezione modello LLM per singolo step del funnel con default e fallback
 
@@ -107,3 +76,31 @@ Usare questo spazio quando un input e utile per orientare le prossime decisioni,
 - Segnali per promuovere a planning: definizione del contratto input unificato (file vs artifact ref), mappa compatibilita tipologie output->input per ogni tool attivo, piano incrementale di adozione senza breaking change sui form esistenti.
 - Data nota: 2026-04-14.
 - Owner proposto: Platform + LLM/Tooling + Frontend + Product team.
+
+### RAG locale con MCP per ricerca semantica su artefatti e template
+
+- Contesto: gli orchestratori e gli agenti LLM del progetto gestiscono molteplici tool-prompt template e artefatti generati storicamente, ma l'accesso al contesto passato e limitato dalla dimensione della finestra di contesto LLM e dalla necessità di letture file manuali o pesanti caricamenti di dati nel prompt. Gli agenti potrebbero beneficiare di accesso efficiente e semantico alla base di knowledge locale (template, artefatti storici, pattern di generazione precedenti). Allo stesso tempo, la memoria di progetto distribuita in docs/ (adrs, implementation, specifications, review ecc.) rappresenta una knowledge base ricchissima ma scarsamente interrogabile semanticamente e facilmente accessibile dagli agenti.
+- Ipotesi: implementare un servizio RAG locale (Retrieval-Augmented Generation) basato su embeddings e ChromaDB esposto via MCP, che permetta agli orchestratori LLM e agli agenti di richiedere chunk rilevanti da template e artefatti storici, senza caricamenti massivi e con latenza minimale. Il servizio indexerebbe i markdown dei tool-prompts, una representative sample di artefatti precedenti, e inoltre la memoria di progetto completa contenuta in docs/ per consentire agli agenti di esplorare decisioni architetturali, specifiche API, risultati di audit e migliori pratiche consolidate.
+- Impatto atteso: migliore context awareness degli agenti (fondamentale per improvement prompt). minore utilizzo di context window LLM (minori costi), accelerazione nel retrieval di pattern e best practice precedenti, supporto a flussi di raffinamento iterativo dove l'agente accede a generazioni passate per imparare pattern di qualita, miglior onboarding degli agenti con accesso a memoria locale di decision e risultati senza overhead. Inoltre, accesso semantico efficace alla memoria di progetto permette agli agenti di fondare le decisioni su adrs e specifiche consolidate, ridurre drift rispetto a convenzioni documentate e rafforzare coerenza operativa.
+- Dipendenze o vincoli noti: architettura MCP server (Python, Node.js, Rust), modello embedding locale (sentence-transformers, ONNX per CPU-only inference). versionamento indice (invalidazione quando template o docs cambiano), sicurezza ownership su artefatti storici (non esporre dati di altri utenti), tuning chunking strategy e similitudine semantica threshold, impatto memoria/storage per vector store. Necessaria strategia di refresh indice quando docs viene aggiornato (es. sync incrementale o rebuilds periodici).
+- Segnali per promuovere a planning: proof-of-concept di indexing e query su subset template mini-funnels attuali e su sample ridotto di docs/. misurazione latenza e quality dei risultati semantici per decisioni di raffinamento. definizione schema MCP tool (es. query_artifacts, query_project_memory, update_index), integrazione con orchestratore legacy, piano rollout incrementale senza breaking change. Validazione che retrieval semantico da docs/ sia effettivamente piu utile di file search classica per i casi d'uso target.
+- Data nota: 2026-04-16.
+- Owner proposto: LLM/Tooling + Platform + Research team.
+- Riferimento: https://dev.to/lord_magus/supercharging-my-vs-code-ai-agent-with-local-rag-25n8
+
+## Temi promossi o chiusi
+
+### Rilancio generazione da dettaglio artefatto
+
+- Stato: promosso e completato nello sprint GUI/UX low-impact.
+- Riferimenti: [../implementation/gui-ux-low-impact-microtasks-sprint-plan-2026-04-14.md](../implementation/gui-ux-low-impact-microtasks-sprint-plan-2026-04-14.md), [../implement-index.md](../implement-index.md).
+
+### Vista ultimi artefatti generati in dashboard
+
+- Stato: promossa e completata nello sprint GUI/UX low-impact.
+- Riferimenti: [../implementation/gui-ux-low-impact-microtasks-sprint-plan-2026-04-14.md](../implementation/gui-ux-low-impact-microtasks-sprint-plan-2026-04-14.md), [../implement-index.md](../implement-index.md).
+
+### Trend personale dashboard 7/30 giorni
+
+- Stato: MVP personale completato; questa nota mantiene aperto solo l'eventuale follow-up sul confronto globale vs utente.
+- Riferimenti: [../implementation/gui-ux-low-impact-microtasks-sprint-plan-2026-04-14.md](../implementation/gui-ux-low-impact-microtasks-sprint-plan-2026-04-14.md), [../implement-index.md](../implement-index.md).

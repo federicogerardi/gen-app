@@ -73,31 +73,31 @@ describe('ArtifactsClientPage', () => {
     render(<ArtifactsClientPage projects={[]} />);
 
     const cards = screen.getAllByRole('listitem');
-    expect(within(cards[0]).getByRole('button', { name: 'Apri dettaglio artefatto art_new' })).toBeInTheDocument();
-    expect(within(cards[1]).getByRole('button', { name: 'Apri dettaglio artefatto art_old' })).toBeInTheDocument();
+    const firstCardDetailButton = within(cards[0]).getByRole('button', { name: /Apri dettaglio/i });
+    const secondCardDetailButton = within(cards[1]).getByRole('button', { name: /Apri dettaglio/i });
+
+    expect(firstCardDetailButton).toHaveAccessibleName(expect.stringContaining('art_new'));
+    expect(secondCardDetailButton).toHaveAccessibleName(expect.stringContaining('art_old'));
   });
 
-  it('shows Use as base action only for artifacts with supported relaunch mapping', () => {
+  it('shows relaunch action only for artifacts with supported relaunch mapping', () => {
     mockUseArtifacts.mockReturnValue({
       isLoading: false,
       error: null,
       data: {
         items: [
           {
-            id: 'art_meta',
+            id: 'art_funnel',
             projectId: 'p1',
             project: { id: 'p1', name: 'Progetto A' },
             type: 'content',
-            workflowType: 'meta_ads',
+            workflowType: 'funnel_pages',
             model: 'model-a',
             input: {
-              product: 'Prodotto',
-              audience: 'Audience',
-              offer: 'Offerta',
-              objective: 'lead generation',
+              workflowType: 'funnel_pages',
               tone: 'professional',
             },
-            content: 'meta',
+            content: 'funnel',
             status: 'completed',
             inputTokens: 10,
             outputTokens: 20,
@@ -125,6 +125,6 @@ describe('ArtifactsClientPage', () => {
 
     render(<ArtifactsClientPage projects={[]} />);
 
-    expect(screen.getAllByRole('button', { name: /Usa artefatto .* come base/ })).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: /Rigenera variante/ })).toHaveLength(1);
   });
 });

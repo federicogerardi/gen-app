@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { Fraunces, Geist, Geist_Mono, IBM_Plex_Sans } from 'next/font/google';
 import * as Sentry from '@sentry/nextjs';
 import { Providers } from '@/components/layout/Providers';
+import { RuntimeInfoProvider } from '@/components/layout/RuntimeInfoProvider';
+import { getRuntimeInfo } from '@/lib/runtime-info';
 import './globals.css';
 
 const geistSans = Geist({
@@ -41,6 +43,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const runtimeInfo = getRuntimeInfo();
+
   return (
     <html
       lang="it"
@@ -48,6 +52,7 @@ export default function RootLayout({
       style={{ fontFamily: 'var(--font-geist-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif' }}
     >
       <body
+        data-runtime-env={runtimeInfo.channel}
         className="min-h-full flex flex-col bg-background text-foreground"
         style={{ fontFamily: 'inherit' }}
       >
@@ -57,7 +62,9 @@ export default function RootLayout({
         >
           Salta al contenuto principale
         </a>
-        <Providers>{children}</Providers>
+        <RuntimeInfoProvider value={runtimeInfo}>
+          <Providers>{children}</Providers>
+        </RuntimeInfoProvider>
       </body>
     </html>
   );

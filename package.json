@@ -12,6 +12,7 @@
     "postinstall": "prisma generate",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
+    "check:app-version": "node scripts/check-app-version.mjs",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:e2e": "playwright test"

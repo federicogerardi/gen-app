@@ -5,6 +5,16 @@ type ArtifactRelaunchInput = {
   projectId?: string | null;
   workflowType?: string | null;
   input?: unknown;
+  hasReusableCheckpoint?: boolean;
+};
+
+export type ArtifactRelaunchIntent = 'resume' | 'regenerate';
+
+export type ArtifactRelaunchAction = {
+  href: string;
+  label: string;
+  intent: ArtifactRelaunchIntent;
+  variant: 'primary' | 'secondary';
 };
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -25,7 +35,7 @@ function appendIfPresent(params: URLSearchParams, key: string, value: string | n
   params.set(key, value);
 }
 
-export function buildArtifactRelaunchHref(payload: ArtifactRelaunchInput): string | null {
+function buildArtifactIntentHref(payload: ArtifactRelaunchInput, intent: ArtifactRelaunchIntent): string | null {
   const inputRecord = asRecord(payload.input);
   const workflow = getEffectiveArtifactWorkflowType(payload.workflowType, payload.input);
 
@@ -35,18 +45,8 @@ export function buildArtifactRelaunchHref(payload: ArtifactRelaunchInput): strin
   appendIfPresent(params, 'sourceArtifactId', payload.id);
   appendIfPresent(params, 'projectId', payload.projectId ?? null);
 
-  if (workflow === 'meta_ads') {
-    appendIfPresent(params, 'product', readString(inputRecord, 'product'));
-    appendIfPresent(params, 'audience', readString(inputRecord, 'audience'));
-    appendIfPresent(params, 'offer', readString(inputRecord, 'offer'));
-    appendIfPresent(params, 'objective', readString(inputRecord, 'objective'));
-    appendIfPresent(params, 'tone', readString(inputRecord, 'tone'));
-    appendIfPresent(params, 'angle', readString(inputRecord, 'angle'));
-
-    return `/tools/meta-ads?${params.toString()}`;
-  }
-
   if (workflow === 'funnel_pages') {
+    params.set('intent', intent);
     appendIfPresent(params, 'tone', readString(inputRecord, 'tone'));
     appendIfPresent(params, 'notes', readString(inputRecord, 'notes'));
 
@@ -54,4 +54,52 @@ export function buildArtifactRelaunchHref(payload: ArtifactRelaunchInput): strin
   }
 
   return null;
+}
+
+export function buildArtifactRelaunchActions(payload: ArtifactRelaunchInput): ArtifactRelaunchAction[] {
+  const workflow = getEffectiveArtifactWorkflowType(payload.workflowType, payload.input);
+
+  if (!workflow) return [];
+
+  if (workflow === 'funnel_pages') {
+    const regenerateHref = buildArtifactIntentHref(payload, 'regenerate');
+    if (!regenerateHref) return [];
+
+    const actions: ArtifactRelaunchAction[] = [];
+
+    if (payload.hasReusableCheckpoint) {
+      const resumeHref = buildArtifactIntentHref(payload, 'resume');
+      if (resumeHref) {
+        actions.push({
+          href: resumeHref,
+          label: 'Riprendi dal checkpoint',
+          intent: 'resume',
+          variant: 'primary',
+        });
+      }
+    }
+
+    actions.push({
+      href: regenerateHref,
+      label: 'Rigenera variante',
+      intent: 'regenerate',
+      variant: actions.length === 0 ? 'primary' : 'secondary',
+    });
+
+    return actions;
+  }
+
+  const href = buildArtifactIntentHref(payload, 'regenerate');
+  if (!href) return [];
+
+  return [{
+    href,
+    label: 'Rigenera variante',
+    intent: 'regenerate',
+    variant: 'primary',
+  }];
+}
+
+export function buildArtifactRelaunchHref(payload: ArtifactRelaunchInput): string | null {
+  return buildArtifactRelaunchActions(payload)[0]?.href ?? null;
 }

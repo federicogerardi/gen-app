@@ -22,12 +22,13 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 
 ### implementation/
 - [implementation-plan.md](implementation/implementation-plan.md): Implementation plan dettagliato.
-- [feature-audit-remediation-sequenced-1.md](implementation/feature-audit-remediation-sequenced-1.md): Piano esecutivo audit remediation sequenziale (TASK-001..020) — completato PR #19.
-- [feature-audit-remediation-sequenced-tracker-1.md](implementation/feature-audit-remediation-sequenced-tracker-1.md): Tracker del track audit remediation — tutti i task completati.
 - [feature-prisma-deploy-migrations-1.md](implementation/feature-prisma-deploy-migrations-1.md): Piano esecutivo per deploy deterministico Prisma su Vercel — completato.
 - [feature-prisma-deploy-migrations-tracker-1.md](implementation/feature-prisma-deploy-migrations-tracker-1.md): Tracker del deploy migrations track — tutti i task completati.
 - [funnel-extraction-model-policy-plan.md](implementation/funnel-extraction-model-policy-plan.md): Piano esecutivo policy runtime extraction con fallback deterministico (fasi 1-4 completate).
 - [feature-funnel-extraction-model-policy-tracker-1.md](implementation/feature-funnel-extraction-model-policy-tracker-1.md): Tracker operativo della delivery extraction policy.
+- [extraction-chain-artifact-first-prompt-plan.md](implementation/extraction-chain-artifact-first-prompt-plan.md): Piano sorgente del track extraction artifact-first (resilience contract, rollout e KPI gate).
+- [feature-extraction-chain-artifact-first-tracker-1.md](implementation/feature-extraction-chain-artifact-first-tracker-1.md): Tracker operativo del track extraction artifact-first (stato task e evidence register).
+- [extraction-chain-artifact-first-sprint-operations-plan-2026-04-14.md](implementation/extraction-chain-artifact-first-sprint-operations-plan-2026-04-14.md): Layer operativo sprint del track artifact-first.
 - [gui-ux-low-impact-microtasks-sprint-plan-2026-04-14.md](implementation/gui-ux-low-impact-microtasks-sprint-plan-2026-04-14.md): Backlog microtask GUI/UX low-impact per sprint breve (estrazione 2026-04-14).
 - [feature-operational-hardening-api-llm-tooling-plan-1.md](implementation/feature-operational-hardening-api-llm-tooling-plan-1.md): Piano esecutivo P1 per hardening operativo API/LLM tooling (pre-stream errors, artifact lifecycle safety, taxonomy, API docs alignment).
 - [feature-operational-hardening-api-llm-tooling-tracker-1.md](implementation/feature-operational-hardening-api-llm-tooling-tracker-1.md): Tracker operativo companion del piano P1 con baseline, stato task ed evidenze di chiusura.
@@ -44,13 +45,14 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 - [pr-28-dev-commit-changelog-2026-04-13.md](review/pr-28-dev-commit-changelog-2026-04-13.md): Changelog commit-level della PR #28 con shortstat e note di riuso per documentazione.
 - [operational-improvement-note-api-llm-tooling-2026-04-15.md](review/operational-improvement-note-api-llm-tooling-2026-04-15.md): Nota di improvement operativa che origina il piano P1 di hardening API/LLM tooling.
 
+### code-review/
+- [2026-04-15-test-suite-security-balance-review.md](code-review/2026-04-15-test-suite-security-balance-review.md): Valutazione del bilanciamento sicurezza pre-deploy vs delivery e stato remediation iniziale dei test fragili prompt/UI.
+
 ### archive/
 - Documenti storici e snapshot superseded (review, roadmap, follow-up PR).
 
 ### prompts/
 - [README.md](prompts/README.md): Indice e linee guida per i prompt.
-- [hl_funnel/](prompts/hl_funnel/): Prompt e strumenti per HL Funnel.
-- [meta_ads/](prompts/meta_ads/): Prompt e strumenti per Meta Ads.
 - [tools/hl_funnel/](prompts/tools/hl_funnel/): Prompt generator specifici HL Funnel.
 - [tools/meta_ads/](prompts/tools/meta_ads/): Prompt generator specifici Meta Ads.
 
@@ -67,6 +69,9 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 - [ux-strategy.md](ux/ux-strategy.md): Strategia UX e principi guida.
 
 ### Aggiornamenti recenti
+- 2026-04-15: archiviati i documenti completati del track audit remediation sequenziale (`feature-audit-remediation-sequenced-1.md`, `feature-audit-remediation-sequenced-tracker-1.md`) in `docs/archive/` e riallineati i riferimenti nei report review/index.
+- 2026-04-15: normalizzato naming del piano artifact-first (`plan-extractionChainArtifactFirst.prompt.md` -> `extraction-chain-artifact-first-prompt-plan.md`) con aggiornamento cross-link nel perimetro implementation.
+- 2026-04-15: completata remediation iniziale dei test fragili prompt/UI (riduzione assert copy-level, mantenimento test sicurezza/contratti), con report operativo in `docs/code-review/2026-04-15-test-suite-security-balance-review.md`.
 - 2026-04-14: aggiunto guardrail build-safe Next.js App Router in `docs/specifications/api-specifications.md` per evitare errori CI su `useSearchParams` senza boundary `Suspense`.
 - 2026-04-14: aggiornate le specifiche funnel/API per il passaggio di testimonianze strutturate (`quote`, `source`, `achieved_result`, `measurable_results`) dal payload extraction al contesto generazione.
 - 2026-04-14: introdotto piano operativo microtask GUI/UX low-impact in `docs/implementation/gui-ux-low-impact-microtasks-sprint-plan-2026-04-14.md` e allineato `docs/implement-index.md`.

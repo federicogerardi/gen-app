@@ -12,7 +12,7 @@ tags: [process, tracker, extraction, artifact-first, resilience]
 
 ![Status: In Progress](https://img.shields.io/badge/status-In%20Progress-yellow)
 
-Questo tracker e il companion operativo di `docs/implementation/plan-extractionChainArtifactFirst.prompt.md`.
+Questo tracker e il companion operativo di `docs/implementation/extraction-chain-artifact-first-prompt-plan.md`.
 Registra baseline, avanzamento, evidenze e criteri di chiusura per il track di refactor artifact-first della chain extraction.
 
 Come leggere questo tracker:
@@ -207,7 +207,7 @@ Nota baseline: il dato sopra riflette il momento iniziale del tracker; l'aggiorn
 
 ## 5. Evidence Register
 
-- **EVID-001**: piano artifact-first creato in `docs/implementation/plan-extractionChainArtifactFirst.prompt.md`.
+- **EVID-001**: piano artifact-first creato in `docs/implementation/extraction-chain-artifact-first-prompt-plan.md`.
 - **EVID-002**: baseline timeout/acceptance e chain semantics gia presenti in `src/app/api/tools/extraction/generate/route.ts`.
 - **EVID-003**: policy timeout e escalation esistente in `src/lib/llm/extraction-model-policy.ts`.
 - **EVID-004**: runbook rollback e KPI base presenti in `docs/review/extraction-model-policy-rollout-runbook-2026-04-12.md`.
@@ -322,7 +322,7 @@ Decisione corrente: NO-GO per produzione per KPI runtime non ancora consolidati;
 
 ## 9. Related Documents
 
-- docs/implementation/plan-extractionChainArtifactFirst.prompt.md
+- docs/implementation/extraction-chain-artifact-first-prompt-plan.md
 - docs/implementation/extraction-chain-artifact-first-sprint-operations-plan-2026-04-14.md
 - docs/implementation/feature-extraction-chain-hardening-plan-1.md
 - docs/implement-index.md

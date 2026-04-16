@@ -23,8 +23,14 @@ Lo squash-merge comprime N commit in uno su `main`. Senza sincronizzazione, `dev
 Trigger: ogni push su `main`.
 
 Comportamento:
-- Se `dev` non ha nuovi commit oltre `main` → `git reset --hard origin/main` + force push (reset sicuro post-squash).
-- Se `dev` ha nuovi commit con contenuto diverso → skip automatico con warning nel log CI (nessun dato perso).
+- Permessi espliciti workflow: `contents: write` e `pull-requests: read`, con checkout autenticato via `github.token`.
+- Se `dev` punta gia allo stesso SHA di `main` → no-op.
+- Se esistono PR aperte con base `dev` → skip automatico per evitare rewrite del branch base durante review attive.
+- Se `dev` ha contenuto diverso da `main` (tree hash differente) → skip automatico con diff `--stat` nel log CI (nessun dato perso).
+- Solo se il contenuto di `dev` e `main` e identico ma la storia diverge per effetto dello squash-merge → `git reset --hard origin/main` + `git push --force-with-lease origin dev`.
+
+Nota operativa:
+- Il workflow elimina il 403 dovuto ai permessi read-only del token di default, ma non bypassa eventuali regole di branch protection che vietano force-push su `dev`. In quel caso il job fallisce con errore esplicito e serve adeguare la policy del branch o rinunciare al reset automatico.
 
 ## Gate pre-merge (dev → main)
 

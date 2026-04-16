@@ -6,11 +6,10 @@ import { usePathname } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
 import { ChevronDown, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { RuntimeStatusBadge } from './RuntimeStatusBadge';
 import { NAVBAR_WIDTH_CLASS } from './shell-width';
 
 const toolLinks = [
-  { href: '/tools/meta-ads', label: 'Meta Ads' },
   { href: '/tools/funnel-pages', label: 'Funnel Pages' },
 ];
 
@@ -47,7 +46,7 @@ export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <nav className="sticky top-0 z-30 border-b border-black/10 bg-[#fbf8f2]/90 backdrop-blur px-4 py-3 app-copy" aria-label="Navigazione principale">
+    <nav className="runtime-chrome-navbar sticky top-0 z-30 border-b border-black/10 bg-[#fbf8f2]/90 backdrop-blur px-4 py-3 app-copy" aria-label="Navigazione principale">
       <div className={`${NAVBAR_WIDTH_CLASS} mx-auto`}>
         {/* Top bar */}
         <div className="flex items-center justify-between">
@@ -111,7 +110,7 @@ export function Navbar() {
 
           {/* Desktop user area */}
           <div className="hidden md:flex items-center gap-3">
-            {session?.user?.role === 'admin' && <Badge variant="secondary">Admin</Badge>}
+            <RuntimeStatusBadge />
             <span className="text-sm text-muted-foreground max-w-[20vw] truncate" title={session?.user?.email ?? undefined}>{session?.user?.email}</span>
             <Button
               variant="outline"
@@ -127,17 +126,6 @@ export function Navbar() {
 
           {/* Mobile: user actions + hamburger */}
           <div className="flex md:hidden items-center gap-2">
-            {session?.user?.role === 'admin' && <Badge variant="secondary">Admin</Badge>}
-            <Button
-              variant="outline"
-              size="sm"
-              type="button"
-              onClick={() => signOut({ callbackUrl: '/' })}
-              aria-label="Esci dalla sessione"
-              className="border-black/15 bg-white/80"
-            >
-              Esci
-            </Button>
             <Button
               variant="ghost"
               size="sm"
@@ -213,6 +201,19 @@ export function Navbar() {
               </Link>
             )}
             <span className="text-xs text-muted-foreground truncate pt-1 border-t mt-1">{session?.user?.email}</span>
+            <Button
+              variant="outline"
+              size="sm"
+              type="button"
+              onClick={() => signOut({ callbackUrl: '/' })}
+              aria-label="Esci dalla sessione"
+              className="border-black/15 bg-white/80 mt-2"
+            >
+              Esci
+            </Button>
+            <div className="pt-2 border-t border-black/10">
+              <RuntimeStatusBadge />
+            </div>
           </div>
         )}
       </div>

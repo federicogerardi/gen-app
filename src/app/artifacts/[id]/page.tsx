@@ -11,8 +11,38 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { formatArtifactContentForDisplay, getArtifactDisplayTypeLabel, getEffectiveArtifactWorkflowType } from '@/lib/artifact-preview';
 import { getArtifactStatusBadgeClass, getArtifactStatusLabel } from '@/lib/artifact-status-ui';
-import { buildArtifactRelaunchHref } from '@/lib/artifact-relaunch';
+import { buildArtifactRelaunchActions } from '@/lib/artifact-relaunch';
 import { isArtifactType, isArtifactStatus } from '@/lib/types/artifact';
+
+function parseTerminalOutcome(input: unknown): string | null {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) {
+    return null;
+  }
+
+  const terminalState = (input as Record<string, unknown>).terminalState;
+  if (!terminalState || typeof terminalState !== 'object' || Array.isArray(terminalState)) {
+    return null;
+  }
+
+  const outcome = (terminalState as Record<string, unknown>).completionOutcome;
+  return typeof outcome === 'string' ? outcome : null;
+}
+
+function hasReusableFunnelCheckpoint(artifacts: Array<{ type: string; status: string; workflowType: string | null; content: string; input: unknown }>): boolean {
+  return artifacts.some((item) => {
+    const workflow = item.workflowType ?? ((item.input && typeof item.input === 'object' && !Array.isArray(item.input))
+      ? ((item.input as Record<string, unknown>).workflowType as string | undefined) ?? null
+      : null);
+
+    if (item.type !== 'extraction' || workflow !== 'extraction' || item.content.trim().length === 0) {
+      return false;
+    }
+
+    return item.status === 'generating'
+      || item.status === 'completed'
+      || parseTerminalOutcome(item.input) === 'completed_partial';
+  });
+}
 
 export default async function ArtifactPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -34,6 +64,25 @@ export default async function ArtifactPage({ params }: { params: Promise<{ id: s
   if (!artifact || artifact.userId !== session.user.id) notFound();
 
   const workflowType = getEffectiveArtifactWorkflowType(artifact.workflowType, artifact.input);
+  const relatedProjectArtifacts = workflowType === 'funnel_pages' && artifact.projectId
+    ? await db.artifact.findMany({
+        where: {
+          projectId: artifact.projectId,
+          userId: session.user.id,
+        },
+        select: {
+          type: true,
+          status: true,
+          workflowType: true,
+          content: true,
+          input: true,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        take: 100,
+      })
+    : [];
 
   // Type-guard artifact fields from DB (String) to runtime types (literal unions)
   if (!isArtifactType(artifact.type) || !isArtifactStatus(artifact.status)) {
@@ -50,12 +99,15 @@ export default async function ArtifactPage({ params }: { params: Promise<{ id: s
     type: artifact.type,
     workflowType,
   });
-  const relaunchHref = buildArtifactRelaunchHref({
+  const relaunchActions = buildArtifactRelaunchActions({
     id: artifact.id,
     projectId: artifact.projectId,
     workflowType,
     input: artifact.input,
+    hasReusableCheckpoint: hasReusableFunnelCheckpoint(relatedProjectArtifacts),
   });
+  const primaryRelaunchAction = relaunchActions[0] ?? null;
+  const secondaryRelaunchActions = relaunchActions.slice(1);
 
   return (
     <PageShell width="workspace">
@@ -74,11 +126,16 @@ export default async function ArtifactPage({ params }: { params: Promise<{ id: s
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-            {relaunchHref && (
+            {primaryRelaunchAction && (
               <Button className="w-full sm:w-auto" asChild>
-                <Link href={relaunchHref}>Rigenera variante</Link>
+                <Link href={primaryRelaunchAction.href}>{primaryRelaunchAction.label}</Link>
               </Button>
             )}
+            {secondaryRelaunchActions.map((action) => (
+              <Button key={action.href} className="w-full sm:w-auto" variant="outline" asChild>
+                <Link href={action.href}>{action.label}</Link>
+              </Button>
+            ))}
             {artifact.project?.id && (
               <Button className="w-full sm:w-auto" variant="outline" asChild>
                 <Link href={`/dashboard/projects/${artifact.project.id}`}>Apri progetto</Link>

@@ -2,6 +2,47 @@
 
 _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 
+## Aggiornamento sessione (2026-04-16 — Funnel tool flow rationalization: PR-2 completata)
+
+- **Stato attuale**: `COMPLETATO`.
+- **Esito validazione**: `lint`, `typecheck` e `test` tutti verdi.
+- **Completato in codice (chiusura PR-2)**:
+  - relaunch intent-aware Funnel applicato nel builder shared con supporto `intent=resume|regenerate`;
+  - dettaglio artefatto aggiornato con primaria contestuale (`Riprendi dal checkpoint` o `Rigenera variante`) e secondaria coerente;
+  - storico artefatti allineato allo stesso contract di relaunch;
+  - aggiunta copertura unitaria sul builder di relaunch e allineamento test lista artefatti.
+- **Stabilizzazione test**:
+  - risolto il failure integration su `artifacts-client-page` riallineando l'asserzione a fixture non rilanciabile;
+  - silenziati warning attesi nella suite `runtime-info` per output CI piu pulito.
+- **File aggiornati in questa fase**:
+  - `src/lib/artifact-relaunch.ts`
+  - `src/app/artifacts/[id]/page.tsx`
+  - `src/app/artifacts/ArtifactsClientPage.tsx`
+  - `tests/unit/artifact-relaunch.test.ts`
+  - `tests/unit/ArtifactsClientPage.test.tsx`
+  - `tests/integration/artifacts-client-page.test.tsx`
+  - `tests/unit/runtime-info.test.ts`
+- **Follow-up opzionali**:
+  - nessun follow-up critico aperto; E2E artifact-first su `resume` vs `regenerate` gia coperto.
+
+## Aggiornamento sessione (2026-04-15 — Test Fragility Hardening: prompt/UI)
+
+- **Obiettivo completato**: ridotta la fragilita dei test su prompt markdown e copy UI non critico, mantenendo invariati i test ad alto valore sicurezza/contratto API.
+- **Interventi eseguiti**:
+  - `tool-prompts-parity`: sostituito il confronto byte-to-byte con parity strutturale (headings) + guardrail di parita grossolana lunghezza.
+  - `tool-prompts`: sostituite asserzioni su frasi letterali con invarianti a token in punti non critici.
+  - `Navbar`, `RuntimeInfoProvider`, `PersonalTrendCard`, `ArtifactsClientPage`: ridotta dipendenza da stringhe complete e rafforzate asserzioni su comportamento/semantica/accessibilita.
+- **File test aggiornati**:
+  - `tests/unit/tool-prompts-parity.test.ts`
+  - `tests/unit/tool-prompts.test.ts`
+  - `tests/unit/Navbar.test.tsx`
+  - `tests/unit/RuntimeInfoProvider.test.tsx`
+  - `tests/unit/PersonalTrendCard.test.tsx`
+  - `tests/unit/ArtifactsClientPage.test.tsx`
+- **Conferma sicurezza**:
+  - Nessuna modifica ai test integration di auth/ownership/rate-limit/error-code.
+  - Strategia confermata: rigidita alta sui contratti sicurezza, elasticita controllata su copy e wording.
+- **Riferimento review**: `docs/code-review/2026-04-15-test-suite-security-balance-review.md`.
 ## Aggiornamento sessione (2026-04-15 — Hotfix: stream deadline funnel-pages)
 
 - **Root cause identificata in produzione**: artefatto con id `cmnzviexu000004ib6p23z621` restava in stato `generating` a frontend completato. Causa confermata da runtime log Vercel: invocazione `POST /api/tools/funnel-pages/generate` con durata `300001ms`, corrispondente al kill hard del runtime Vercel a 300s; la persistenza terminale DB saltava per interruzione forzata del processo Node prima del `db.artifact.update(status: completed|failed)`.
@@ -60,7 +101,7 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
    - API spec enhanced: new "Text-Mode Extraction" section with response format, timeout behavior, log field differences
    - Hardening tracker updated: all 16 tasks marked complete
    - hl-funnel schema updated: new section documenting text-mode extraction stability and KPI measurement plan
-   - Completion report created: `docs/closure/text-mode-extraction-completion-2026-04-14.md`
+  - Completion evidence consolidated in `docs/implementation/feature-extraction-chain-hardening-tracker-1.md`
 
 **Validazione in produzione:**
 - Live extraction request (responseMode:text) succeeds on attempt 2 with gpt-4.1
@@ -75,7 +116,7 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 - ✅ Tests aligned (2 failures fixed)
 - ✅ DB persistence correct (200 responses persist as success)
 
-**Prossimer step:**
+**Prossimi step:**
 - Monitor first-attempt success rates in production (target: >80% attempt 1-2)
 - Measure extraction quality for downstream generators
 - Track timeout distribution (measure real-world token_idle occurrences)
@@ -87,7 +128,7 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 - **Extraction chain hardening (latenza/affidabilita/first-pass)**: snapshot storico 2026-04-14, allora in corso; implementazione tecnica completata (diagnostica consistency, timeout per-attempt, acceptance a soglie, prompt contract, abort propagation), con validazione KPI dev allora aperta.
 - **Extraction text-mode simplification (Funnel upload-first)**: attivata modalita `responseMode: "text"` con payload V3 `extractionContext`, riducendo dipendenza dal parsing strutturato; ultimo run dev positivo con successo al primo tentativo e latenza ~20s.
 - **Documenti attivati**: piano `docs/implementation/feature-extraction-chain-hardening-plan-1.md` e tracker `docs/implementation/feature-extraction-chain-hardening-tracker-1.md`.
-- **Extraction chain artifact-first (nuovo track)**: Sprint 0 completato (outcome matrix, reason taxonomy, mapping terminale HTTP/artifact status), Sprint 1 completato (artifact stub, idempotency, single artifact chain), Sprint 2 tecnico completato (timeout classifier completo, partial timeout acceptance, single-finalize), Sprint 3 completato (finalizzazione atomica completion/failure, persistenza terminal reason, coerenza complete-event post-commit), Sprint 4 completato (`TASK-0401`, `TASK-0402`, `TASK-0403`), Sprint 5 completato (`TASK-0501..0504` con retry/resume UX + E2E dedicata) e Sprint 6 codice completato (`TASK-0601..0603`: feature flag route-level, rollout percentuale 10/30/100, rollback switch + drill runbook); monitoraggio KPI runtime e promozione progressiva restano attivi per chiusura gate finale (`docs/implementation/plan-extractionChainArtifactFirst.prompt.md`, `docs/implementation/feature-extraction-chain-artifact-first-tracker-1.md`, `docs/implementation/extraction-chain-artifact-first-sprint-operations-plan-2026-04-14.md`, `docs/review/extraction-model-policy-rollout-runbook-2026-04-12.md`).
+- **Extraction chain artifact-first (nuovo track)**: Sprint 0 completato (outcome matrix, reason taxonomy, mapping terminale HTTP/artifact status), Sprint 1 completato (artifact stub, idempotency, single artifact chain), Sprint 2 tecnico completato (timeout classifier completo, partial timeout acceptance, single-finalize), Sprint 3 completato (finalizzazione atomica completion/failure, persistenza terminal reason, coerenza complete-event post-commit), Sprint 4 completato (`TASK-0401`, `TASK-0402`, `TASK-0403`), Sprint 5 completato (`TASK-0501..0504` con retry/resume UX + E2E dedicata) e Sprint 6 codice completato (`TASK-0601..0603`: feature flag route-level, rollout percentuale 10/30/100, rollback switch + drill runbook); monitoraggio KPI runtime e promozione progressiva restano attivi per chiusura gate finale (`docs/implementation/extraction-chain-artifact-first-prompt-plan.md`, `docs/implementation/feature-extraction-chain-artifact-first-tracker-1.md`, `docs/implementation/extraction-chain-artifact-first-sprint-operations-plan-2026-04-14.md`, `docs/review/extraction-model-policy-rollout-runbook-2026-04-12.md`).
 - **Funnel upload-first: testimonianze strutturate propagate al contesto generazione**: completato il passaggio dati da `extractedFields.testimonials_sources` verso `proof_context.testimonials_sources` con campi estesi (`quote`, `source`, `achieved_result`, `measurable_results`).
 - **Field map extraction funnel esteso**: aggiunta voce `testimonials_sources` in `FUNNEL_EXTRACTION_FIELD_MAP` per rendere esplicita l'estrazione della social proof dal documento sorgente.
 - **Validazione recente**: test mirati `PASS` su mapping e route funnel (`tests/unit/funnel-mapping.test.ts`, `tests/unit/funnel-extraction-field-map.test.ts`, `tests/integration/funnel-pages-route.test.ts`).
@@ -122,7 +163,7 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 - **Feature audit remediation sequenced (2026-04-12)**: `COMPLETATO E MERGIATO`
   - Piano sequenziale `TASK-001..TASK-020` completato con evidenze test/unit/integration/e2e.
   - PR #19 mergiata su `dev` e chiusa; stato operativo consolidato nel report di closure.
-  - File: docs/implementation/feature-audit-remediation-sequenced-1.md, docs/implementation/feature-audit-remediation-sequenced-tracker-1.md, docs/review/feature-audit-remediation-closure-2026-04-12.md
+  - File: docs/archive/feature-audit-remediation-sequenced-1.md, docs/archive/feature-audit-remediation-sequenced-tracker-1.md, docs/review/feature-audit-remediation-closure-2026-04-12.md
 
 - **Refactoring preview artefatti**: `IN CORSO`
   - Rafforzato fallback human-readable con nuovi test unit.
