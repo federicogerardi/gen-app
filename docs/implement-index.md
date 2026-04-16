@@ -2,6 +2,29 @@
 
 _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 
+## Aggiornamento sessione (2026-04-16 — Funnel tool flow rationalization: PR-2 completata)
+
+- **Stato attuale**: `COMPLETATO`.
+- **Esito validazione**: `lint`, `typecheck` e `test` tutti verdi.
+- **Completato in codice (chiusura PR-2)**:
+  - relaunch intent-aware Funnel applicato nel builder shared con supporto `intent=resume|regenerate`;
+  - dettaglio artefatto aggiornato con primaria contestuale (`Riprendi dal checkpoint` o `Rigenera variante`) e secondaria coerente;
+  - storico artefatti allineato allo stesso contract di relaunch;
+  - aggiunta copertura unitaria sul builder di relaunch e allineamento test lista artefatti.
+- **Stabilizzazione test**:
+  - risolto il failure integration su `artifacts-client-page` riallineando l'asserzione a fixture non rilanciabile;
+  - silenziati warning attesi nella suite `runtime-info` per output CI piu pulito.
+- **File aggiornati in questa fase**:
+  - `src/lib/artifact-relaunch.ts`
+  - `src/app/artifacts/[id]/page.tsx`
+  - `src/app/artifacts/ArtifactsClientPage.tsx`
+  - `tests/unit/artifact-relaunch.test.ts`
+  - `tests/unit/ArtifactsClientPage.test.tsx`
+  - `tests/integration/artifacts-client-page.test.tsx`
+  - `tests/unit/runtime-info.test.ts`
+- **Follow-up opzionali**:
+  - nessun follow-up critico aperto; E2E artifact-first su `resume` vs `regenerate` gia coperto.
+
 ## Aggiornamento sessione (2026-04-15 — Test Fragility Hardening: prompt/UI)
 
 - **Obiettivo completato**: ridotta la fragilita dei test su prompt markdown e copy UI non critico, mantenendo invariati i test ad alto valore sicurezza/contratto API.

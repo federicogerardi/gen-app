@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { getArtifactDisplayTypeLabel, getEffectiveArtifactWorkflowType } from '@/lib/artifact-preview';
 import { getArtifactStatusBadgeClass, getArtifactStatusLabel } from '@/lib/artifact-status-ui';
 import { buildArtifactCardIdentity } from '@/lib/artifact-card-identity';
-import { buildArtifactRelaunchHref } from '@/lib/artifact-relaunch';
+import { buildArtifactRelaunchActions } from '@/lib/artifact-relaunch';
 import { isArtifactStatus, isArtifactType } from '@/lib/types/artifact';
 
 type ProjectOption = {
@@ -184,12 +184,12 @@ export function ArtifactsClientPage({ projects }: Props) {
                 input: artifact.input,
                 projectName: artifact.project?.name ?? null,
               });
-              const relaunchHref = buildArtifactRelaunchHref({
+              const relaunchAction = buildArtifactRelaunchActions({
                 id: artifact.id,
                 projectId: artifact.projectId,
                 workflowType,
                 input: artifact.input,
-              });
+              })[0] ?? null;
 
               return (
               <Card key={artifact.id} className="app-surface rounded-2xl hover:shadow-[0_24px_60px_-42px_rgba(15,23,42,0.75)] transition-shadow" role="listitem">
@@ -214,15 +214,15 @@ export function ArtifactsClientPage({ projects }: Props) {
                     <Button className="w-full sm:w-auto" size="sm" variant="outline" onClick={() => router.push(`/artifacts/${artifact.id}`)} aria-label={`Apri dettaglio artefatto ${artifact.id}`}>
                       Apri dettaglio
                     </Button>
-                    {relaunchHref && (
+                    {relaunchAction && (
                       <Button
                         className="w-full sm:w-auto"
                         size="sm"
                         variant="secondary"
-                        onClick={() => router.push(relaunchHref)}
-                        aria-label={`Usa artefatto ${artifact.id} come base`}
+                        onClick={() => router.push(relaunchAction.href)}
+                        aria-label={`${relaunchAction.label} da artefatto ${artifact.id}`}
                       >
-                        Usa come base
+                        {relaunchAction.label}
                       </Button>
                     )}
                     <Button

@@ -80,7 +80,7 @@ describe('ArtifactsClientPage', () => {
     expect(secondCardDetailButton).toHaveAccessibleName(expect.stringContaining('art_old'));
   });
 
-  it('shows Use as base action only for artifacts with supported relaunch mapping', () => {
+  it('shows relaunch action only for artifacts with supported relaunch mapping', () => {
     mockUseArtifacts.mockReturnValue({
       isLoading: false,
       error: null,
@@ -128,6 +128,6 @@ describe('ArtifactsClientPage', () => {
 
     render(<ArtifactsClientPage projects={[]} />);
 
-    expect(screen.getAllByRole('button', { name: /Usa artefatto .* come base/ })).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: /Rigenera variante da artefatto/ })).toHaveLength(1);
   });
 });

@@ -77,6 +77,17 @@ Usare questo spazio quando un input e utile per orientare le prossime decisioni,
 - Data nota: 2026-04-14.
 - Owner proposto: Platform + LLM/Tooling + Frontend + Product team.
 
+### RAG locale con MCP per ricerca semantica su artefatti e template
+
+- Contesto: gli orchestratori e gli agenti LLM del progetto gestiscono molteplici tool-prompt template e artefatti generati storicamente, ma l'accesso al contesto passato e limitato dalla dimensione della finestra di contesto LLM e dalla necessità di letture file manuali o pesanti caricamenti di dati nel prompt. Gli agenti potrebbero beneficiare di accesso efficiente e semantico alla base di knowledge locale (template, artefatti storici, pattern di generazione precedenti). Allo stesso tempo, la memoria di progetto distribuita in docs/ (adrs, implementation, specifications, review ecc.) rappresenta una knowledge base ricchissima ma scarsamente interrogabile semanticamente e facilmente accessibile dagli agenti.
+- Ipotesi: implementare un servizio RAG locale (Retrieval-Augmented Generation) basato su embeddings e ChromaDB esposto via MCP, che permetta agli orchestratori LLM e agli agenti di richiedere chunk rilevanti da template e artefatti storici, senza caricamenti massivi e con latenza minimale. Il servizio indexerebbe i markdown dei tool-prompts, una representative sample di artefatti precedenti, e inoltre la memoria di progetto completa contenuta in docs/ per consentire agli agenti di esplorare decisioni architetturali, specifiche API, risultati di audit e migliori pratiche consolidate.
+- Impatto atteso: migliore context awareness degli agenti (fondamentale per improvement prompt). minore utilizzo di context window LLM (minori costi), accelerazione nel retrieval di pattern e best practice precedenti, supporto a flussi di raffinamento iterativo dove l'agente accede a generazioni passate per imparare pattern di qualita, miglior onboarding degli agenti con accesso a memoria locale di decision e risultati senza overhead. Inoltre, accesso semantico efficace alla memoria di progetto permette agli agenti di fondare le decisioni su adrs e specifiche consolidate, ridurre drift rispetto a convenzioni documentate e rafforzare coerenza operativa.
+- Dipendenze o vincoli noti: architettura MCP server (Python, Node.js, Rust), modello embedding locale (sentence-transformers, ONNX per CPU-only inference). versionamento indice (invalidazione quando template o docs cambiano), sicurezza ownership su artefatti storici (non esporre dati di altri utenti), tuning chunking strategy e similitudine semantica threshold, impatto memoria/storage per vector store. Necessaria strategia di refresh indice quando docs viene aggiornato (es. sync incrementale o rebuilds periodici).
+- Segnali per promuovere a planning: proof-of-concept di indexing e query su subset template mini-funnels attuali e su sample ridotto di docs/. misurazione latenza e quality dei risultati semantici per decisioni di raffinamento. definizione schema MCP tool (es. query_artifacts, query_project_memory, update_index), integrazione con orchestratore legacy, piano rollout incrementale senza breaking change. Validazione che retrieval semantico da docs/ sia effettivamente piu utile di file search classica per i casi d'uso target.
+- Data nota: 2026-04-16.
+- Owner proposto: LLM/Tooling + Platform + Research team.
+- Riferimento: https://dev.to/lord_magus/supercharging-my-vs-code-ai-agent-with-local-rag-25n8
+
 ## Temi promossi o chiusi
 
 ### Rilancio generazione da dettaglio artefatto

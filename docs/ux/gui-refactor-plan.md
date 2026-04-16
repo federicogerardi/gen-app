@@ -119,8 +119,9 @@ Interventi:
 
 - filtri fissi per tipo, stato, progetto, periodo
 - anteprima leggibile in lista
-- azioni rapide: duplica input, modifica, elimina
+- azioni rapide: riprendi checkpoint, rigenera variante, elimina
 - pagina dettaglio read-only con output elaborato human-readable e metadati in sidebar
+- dettaglio artefatto con CTA primaria intent-aware verso il tool corretto
 
 ### Refactoring visualizzazione output card (hotfix UX)
 
