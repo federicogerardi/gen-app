@@ -17,7 +17,7 @@ Stato avanzamento implementazione:
 
 Rendere la GUI più veloce, chiara e orientata ai task quotidiani del team marketing:
 
-- generare artefatti con tool separati per workflow operativo (Meta Ads, Funnel Pages)
+- generare artefatti con tool separati per workflow operativo (Meta Ads, HotLead Funnel)
 - ridurre il tempo di esecuzione del flusso principale
 - aumentare qualità percepita e controllo dell output generato
 
@@ -60,7 +60,7 @@ Quando un SEO Specialist o MediaBuyer deve produrre rapidamente varianti di cont
 
 - Dashboard
 - Tool Meta Ads
-- Tool Funnel Pages
+- Tool HotLead Funnel
 - Artefatti
 - Progetti
 - Admin (solo role admin)
@@ -69,7 +69,7 @@ Quando un SEO Specialist o MediaBuyer deve produrre rapidamente varianti di cont
 
 - Dashboard overview: /dashboard
 - Tool Meta Ads: /tools/meta-ads
-- Tool Funnel Pages: /tools/funnel-pages
+- Tool HotLead Funnel: /tools/funnel-pages
 - Lista artefatti: /artifacts
 - Dettaglio artefatto: /artifacts/[id]
 
@@ -85,7 +85,7 @@ Obiettivo: diventare un hub di scelta task e non una pagina generica.
 
 Interventi:
 
-- Hero con CTA separate: Apri Meta Ads, Apri Funnel Pages
+- Hero con CTA separate: Apri Meta Ads, Apri HotLead Funnel
 - Sezione Progetti recenti con accesso rapido
 - Sezione Artefatti recenti con stato e azioni rapide
 - Widget quota e spesa visibile in alto
@@ -104,7 +104,7 @@ Interventi comuni:
 Interventi per tool:
 
 - Meta Ads: focus su prodotto, audience, offerta, objective e creative angle
-- Funnel Pages: focus su briefing funnel e flusso sequenziale `optin -> quiz -> vsl`
+- HotLead Funnel: focus su briefing funnel e flusso sequenziale `optin -> quiz -> vsl`
 
 ### 3) Artefatti
 
@@ -242,7 +242,7 @@ DoD:
 - tutti i link principali funzionanti
 - layout mobile/tablet/desktop stabile
 
-### Sprint 2: Tool Meta Ads e Funnel Pages
+### Sprint 2: Tool Meta Ads e HotLead Funnel
 
 Deliverable:
 
@@ -335,7 +335,7 @@ Testing:
 - Task completion rate per generazione
 - Tempo medio da apertura tool a completamento artefatto
 - Numero medio di rigenerazioni per sessione
-- Adozione dei tool separati (Meta Ads vs Funnel Pages)
+- Adozione dei tool separati (Meta Ads vs HotLead Funnel)
 - Error rate su validazione input e quota
 
 ---

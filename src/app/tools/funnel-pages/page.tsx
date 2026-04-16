@@ -92,10 +92,10 @@ const ALLOWED_MIME_TYPES = [
 const ALLOWED_EXTENSIONS = ['.docx', '.txt', '.md'] as const;
 
 const TONE_HINTS: Record<(typeof TONES)[number], string> = {
-  professional: 'Chiaro e autorevole: ideale per comunicare affidabilita e struttura del servizio.',
-  casual: 'Diretto e vicino: utile per aumentare empatia, leggibilita e coinvolgimento rapido.',
-  formal: 'Istituzionale e rigoroso: adatto a contesti premium, corporate o regolamentati.',
-  technical: 'Preciso e dettagliato: focalizzato su metodo, caratteristiche e argomentazione razionale.',
+  professional: 'Chiaro e autorevole.',
+  casual: 'Diretto e vicino.',
+  formal: 'Istituzionale e rigoroso.',
+  technical: 'Preciso e tecnico.',
 };
 
 const STEP_STATUS_BADGE_CLASS: Record<FunnelStepState['status'], string> = {
@@ -121,7 +121,7 @@ const EXTRACTION_LIFECYCLE_BADGE_CLASS: Record<ExtractionLifecycleState, string>
 };
 
 const EXTRACTION_LIFECYCLE_LABEL: Record<ExtractionLifecycleState, string> = {
-  idle: 'Aggiungi il documento per iniziare',
+  idle: 'Carica un documento per iniziare',
   in_progress: 'Estrazione in corso',
   completed_partial: 'Estrazione parziale',
   completed_full: 'Estrazione completa',
@@ -944,14 +944,14 @@ function FunnelPagesToolContent() {
   }
 
   const actionSummary: Record<FunnelUiState, string> = {
-    'draft-empty': 'Completa il blocco progetto e briefing oppure recupera un checkpoint.',
-    'processing-briefing': 'Il briefing e in elaborazione.',
-    'draft-ready': 'Il contesto e pronto per lanciare la generazione.',
-    'prefilled-regenerate': 'Il tool e precompilato e puo rigenerare subito.',
-    'paused-with-checkpoint': 'Esiste un checkpoint riutilizzabile per questo funnel.',
-    'resume-needs-briefing': 'Gli output parziali ci sono, ma serve ricaricare il briefing.',
-    running: 'La generazione sta avanzando sugli step del funnel.',
-    completed: 'L output finale e pronto o puo essere rilanciato.',
+    'draft-empty': 'Completa progetto e briefing, o riprendi un checkpoint.',
+    'processing-briefing': 'Briefing in elaborazione.',
+    'draft-ready': 'Contesto pronto. Puoi generare.',
+    'prefilled-regenerate': 'Dati pronti. Puoi rigenerare.',
+    'paused-with-checkpoint': 'Checkpoint disponibile.',
+    'resume-needs-briefing': 'Output parziali presenti: ricarica il briefing.',
+    running: 'Generazione in corso sui 3 step.',
+    completed: 'Output pronti. Puoi aprire o rigenerare.',
   };
 
   return (
@@ -959,10 +959,10 @@ function FunnelPagesToolContent() {
 
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
-            <h1 className="app-title text-3xl font-semibold text-slate-900">Generatore Pagine del Funnel</h1>
-            <p className="text-sm text-muted-foreground">Seleziona progetto e briefing, regola le avanzate visibili e avvia il funnel.</p>
+            <h1 className="app-title text-3xl font-semibold text-slate-900">HotLead Funnel</h1>
+            <p className="text-sm text-muted-foreground">Scegli progetto, carica briefing, genera.</p>
             {sourceArtifactId && (
-              <p className="mt-2 text-xs text-muted-foreground">Prefill applicato da storico artefatti (ID: {sourceArtifactId}).</p>
+              <p className="mt-2 text-xs text-muted-foreground">Dati precompilati da artefatto (ID: {sourceArtifactId}).</p>
             )}
           </div>
           <Button variant="outline" asChild>
@@ -973,16 +973,16 @@ function FunnelPagesToolContent() {
         <div className="grid gap-6 lg:grid-cols-2">
           <Card className="app-surface app-rise rounded-3xl">
             <CardHeader>
-              <CardTitle className="text-base">Setup funnel</CardTitle>
-              <CardDescription>Compila prima il blocco operativo, poi rifinisci il resto.</CardDescription>
+              <CardTitle className="text-base">Setup</CardTitle>
+              <CardDescription>Completa i campi essenziali.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
               <div className="space-y-6">
                 <section className="space-y-4">
                   <div className="flex items-center justify-between gap-3 border-b border-black/10 pb-2">
                     <div className="space-y-1">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Blocco obbligatorio</p>
-                      <p className="text-base font-semibold text-slate-950">Progetto + briefing</p>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Campi obbligatori</p>
+                      <p className="text-base font-semibold text-slate-950">Progetto e briefing</p>
                     </div>
                     <Badge
                       variant="outline"
@@ -994,7 +994,7 @@ function FunnelPagesToolContent() {
                             : 'border-sky-300 bg-sky-100 text-sky-950'
                       }
                     >
-                      {!projectId ? 'Attende progetto' : uploadedFileName ? 'Pronto al lancio' : 'Attende briefing'}
+                      {!projectId ? 'Manca progetto' : uploadedFileName ? 'Pronto' : 'Manca briefing'}
                     </Badge>
                   </div>
 
@@ -1012,15 +1012,15 @@ function FunnelPagesToolContent() {
                               {selectedProject ? (
                                 <span className="block min-w-0 flex-1 truncate">{selectedProject.name}</span>
                               ) : (
-                                <span className="block min-w-0 flex-1 truncate text-muted-foreground">Seleziona progetto</span>
+                                <span className="block min-w-0 flex-1 truncate text-muted-foreground">Scegli un progetto</span>
                               )}
                             </Button>
                           </Dialog.Trigger>
                           <Dialog.Portal>
                             <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50" />
                             <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-96 max-h-96 -translate-x-1/2 -translate-y-1/2 rounded-lg border border-black/10 bg-white p-6 shadow-lg overflow-y-auto">
-                              <Dialog.Title className="text-lg font-semibold mb-4">Seleziona progetto</Dialog.Title>
-                              <Dialog.Description className="sr-only">Elenco di progetti disponibili per il new funnel</Dialog.Description>
+                              <Dialog.Title className="text-lg font-semibold mb-4">Scegli un progetto</Dialog.Title>
+                              <Dialog.Description className="sr-only">Elenco progetti disponibili per il funnel</Dialog.Description>
                               <div className="space-y-2">
                                 {projectsData?.projects?.map((project) => (
                                   <button
@@ -1050,7 +1050,7 @@ function FunnelPagesToolContent() {
 
                     <div className="space-y-3 rounded-2xl border border-black/10 bg-white/80 p-4 shadow-sm">
                       <div className="space-y-1.5">
-                        <FieldLabel htmlFor="funnel-file-input">Documento di briefing</FieldLabel>
+                        <FieldLabel htmlFor="funnel-file-input">Briefing</FieldLabel>
                         <p className="text-xs text-muted-foreground">.docx, .txt, .md</p>
                       </div>
 
@@ -1084,21 +1084,21 @@ function FunnelPagesToolContent() {
                     <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Stato rapido</p>
                     {!projectId && (
                       <>
-                        <p className="mt-2 text-sm font-semibold text-amber-950">Seleziona prima il progetto</p>
-                        <p className="mt-1 text-xs leading-relaxed text-amber-900">L upload si attiva appena scegli il progetto nel campo qui accanto.</p>
+                        <p className="mt-2 text-sm font-semibold text-amber-950">Scegli prima il progetto</p>
+                        <p className="mt-1 text-xs leading-relaxed text-amber-900">Dopo puoi caricare il briefing.</p>
                       </>
                     )}
                     {projectId && !uploadedFileName && (
                       <>
-                        <p className="mt-2 text-sm font-semibold text-sky-950">Progetto agganciato</p>
-                        <p className="mt-1 text-xs leading-relaxed text-sky-900">Ora carica il briefing per estrarre il contesto e sbloccare la CTA primaria.</p>
+                        <p className="mt-2 text-sm font-semibold text-sky-950">Progetto selezionato</p>
+                        <p className="mt-1 text-xs leading-relaxed text-sky-900">Carica il briefing per continuare.</p>
                         <p className="mt-3 rounded-lg bg-white/70 px-3 py-2 text-xs text-slate-700">{selectedProject?.name ?? projectId}</p>
                       </>
                     )}
                     {projectId && uploadedFileName && (
                       <>
-                        <p className="mt-2 text-sm font-semibold text-emerald-950">Blocco pronto</p>
-                        <p className="mt-1 text-xs leading-relaxed text-emerald-900">Progetto e file sono allineati. Attendi l estrazione o prosegui con il funnel.</p>
+                        <p className="mt-2 text-sm font-semibold text-emerald-950">Pronto</p>
+                        <p className="mt-1 text-xs leading-relaxed text-emerald-900">Progetto e file impostati.</p>
                         <div className="mt-3 space-y-2 text-xs text-slate-700">
                           <p className="rounded-lg bg-white/70 px-3 py-2">Progetto: {selectedProject?.name ?? projectId}</p>
                           <p className="rounded-lg bg-white/70 px-3 py-2">File: {uploadedFileName}</p>
@@ -1112,7 +1112,7 @@ function FunnelPagesToolContent() {
                   <div className="space-y-3">
                     {(phase === 'uploading' || phase === 'extracting') && (
                       <div className="rounded-xl border border-black/10 bg-white/60 p-4 text-center" role="status" aria-live="polite" aria-atomic="true">
-                        <p className="text-sm font-medium">{phase === 'uploading' ? 'Caricamento documento...' : 'Estrazione campi in corso...'}</p>
+                        <p className="text-sm font-medium">{phase === 'uploading' ? 'Caricamento...' : 'Estrazione in corso...'}</p>
                       </div>
                     )}
 
@@ -1192,7 +1192,7 @@ function FunnelPagesToolContent() {
                 <>
                   <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4 space-y-3">
                     <div className="flex items-center justify-between gap-3">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">Contesto estratto</p>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">Anteprima contesto</p>
                       <Badge variant="secondary">{Math.ceil((extractionContext?.length ?? 0) / 6)} token stimati</Badge>
                     </div>
                     <p className="max-h-52 overflow-y-auto whitespace-pre-wrap rounded-lg border border-emerald-200/70 bg-white/70 p-3 text-sm text-foreground">
@@ -1201,11 +1201,11 @@ function FunnelPagesToolContent() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <FieldLabel htmlFor="funnel-notes" required={false}>Note aggiuntive</FieldLabel>
+                    <FieldLabel htmlFor="funnel-notes" required={false}>Note</FieldLabel>
                     <Textarea
                       id="funnel-notes"
                       className="app-control"
-                      placeholder="Istruzioni extra per la generazione (opzionale)"
+                      placeholder="Istruzioni extra (opzionale)"
                       rows={3}
                       value={notes}
                       onChange={(event) => setNotes(event.target.value)}
@@ -1252,23 +1252,23 @@ function FunnelPagesToolContent() {
           <div className="space-y-4">
             <details className="group rounded-3xl border border-black/10 bg-white/60 px-4 py-3 shadow-sm">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-medium text-slate-900 [&::-webkit-details-marker]:hidden">
-                <span>Come compilare il modulo</span>
+                <span>Guida rapida</span>
                 <span className="text-xs text-muted-foreground group-open:hidden">Mostra</span>
                 <span className="hidden text-xs text-muted-foreground group-open:inline">Nascondi</span>
               </summary>
 
               <div className="mt-4 space-y-3 text-sm text-slate-700">
                 <div className="rounded-2xl border border-black/10 bg-slate-50/90 px-3 py-3">
-                  <p className="font-medium text-slate-900">1. Aggancia il contesto operativo</p>
-                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Seleziona il progetto e carica subito il briefing: sono due azioni pensate per essere fatte in sequenza rapida.</p>
+                  <p className="font-medium text-slate-900">1. Scegli il progetto</p>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Primo passaggio obbligatorio.</p>
                 </div>
                 <div className="rounded-2xl border border-black/10 bg-slate-50/90 px-3 py-3">
-                  <p className="font-medium text-slate-900">2. Controlla le avanzate</p>
-                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Modello e tono restano visibili per essere verificati subito, ma non bloccano il flusso di input.</p>
+                  <p className="font-medium text-slate-900">2. Carica il briefing</p>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Il tool estrae il contesto in automatico.</p>
                 </div>
                 <div className="rounded-2xl border border-black/10 bg-slate-50/90 px-3 py-3">
-                  <p className="font-medium text-slate-900">3. Lancia l azione consigliata</p>
-                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Usa la CTA primaria quando il contesto e pronto; le azioni secondarie servono solo come alternative.</p>
+                  <p className="font-medium text-slate-900">3. Avvia la generazione</p>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Usa il pulsante principale quando e pronto.</p>
                 </div>
               </div>
             </details>
@@ -1291,9 +1291,9 @@ function FunnelPagesToolContent() {
                       </Badge>
                     </div>
                     <CardDescription>
-                      {step.key === 'optin' && 'Landing page di acquisizione lead'}
-                      {step.key === 'quiz' && 'Questionario di qualificazione'}
-                      {step.key === 'vsl' && 'Script Video Sales Letter'}
+                      {step.key === 'optin' && 'Pagina optin'}
+                      {step.key === 'quiz' && 'Domande di qualifica'}
+                      {step.key === 'vsl' && 'Script video di vendita'}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-3">
@@ -1306,7 +1306,7 @@ function FunnelPagesToolContent() {
                       </div>
                     ) : (
                       <p className="text-sm text-muted-foreground">
-                        {step.status === 'running' ? stepDisplay.text : 'Output non ancora generato.'}
+                        {step.status === 'running' ? stepDisplay.text : 'Nessun output ancora.'}
                       </p>
                     )}
                     {step.error && <p className="text-sm text-destructive" role="alert" aria-live="assertive">{step.error}</p>}
@@ -1331,7 +1331,7 @@ export default function FunnelPagesToolPage() {
       fallback={(
         <PageShell width="workspace">
           <div className="py-10 text-sm text-muted-foreground" role="status" aria-live="polite" aria-atomic="true">
-            Caricamento tool Funnel Pages...
+            Caricamento HotLead Funnel...
           </div>
         </PageShell>
       )}

@@ -19,7 +19,7 @@ Uso consigliato:
 - eseguire `npm test -- --runTestsByPath tests/unit/tool-prompts-parity.test.ts` dopo ogni modifica ai prompt
 - mantenere questa cartella allineata come riferimento documentale
 
-Standard output workflow tool (Meta Ads + Funnel Pages):
+Standard output workflow tool (Meta Ads + HotLead Funnel):
 - output format unico: `markdown`
 - non usare output JSON raw nei prompt runtime
 - mantenere heading/sezioni coerenti con il contratto usato dalla UI

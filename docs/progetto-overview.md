@@ -59,10 +59,10 @@ Stiamo costruendo un **Hub di Generazione Artefatti con AI/LLM** che permette ai
 
 ### Tool Workflows Attivi (MVP)
 1. **Meta Ads**: varianti ad copy complete (hook, body, headline, CTA)
-2. **Funnel Pages**: processo multi-step (optin page, quiz questions, VSL script)
+2. **HotLead Funnel**: processo multi-step (optin page, quiz questions, VSL script)
 
 ### Evoluzione Tool
-- il perimetro MVP attivo include solo `Meta Ads` e `Funnel Pages`
+- il perimetro MVP attivo include solo `Meta Ads` e `HotLead Funnel`
 - eventuali route/tool legacy fuori perimetro sono da considerare refusi e non fanno parte dell'applicazione pubblica
 
 ### Modelli LLM

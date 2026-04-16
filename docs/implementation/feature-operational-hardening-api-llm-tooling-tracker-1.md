@@ -35,7 +35,7 @@ Status legend:
 | Task | Baseline Status | Evidence Snapshot |
 | --- | --- | --- |
 | TASK-001 | Gap | Prompt build in Meta Ads fuori dal perimetro di catch uniforme pre-stream. |
-| TASK-002 | Gap | Prompt build in Funnel Pages fuori dal perimetro di catch uniforme pre-stream. |
+| TASK-002 | Gap | Prompt build in HotLead Funnel fuori dal perimetro di catch uniforme pre-stream. |
 | TASK-003 | Partial | Contratto SSE successful stabile, ma non ancora coperto il ramo eccezione pre-stream con envelope standard. |
 
 ### Phase 2 - Extraction artifact lifecycle safety
@@ -59,7 +59,7 @@ Status legend:
 | Task | Baseline Status | Evidence Snapshot |
 | --- | --- | --- |
 | TASK-010 | Gap | Manca test integration Meta Ads su prompt-builder throw pre-stream. |
-| TASK-011 | Gap | Manca test integration Funnel Pages su prompt-builder throw pre-stream. |
+| TASK-011 | Gap | Manca test integration HotLead Funnel su prompt-builder throw pre-stream. |
 | TASK-012 | Gap | Manca test integration Extraction su failure pre-stream con verifica finalizzazione artifact. |
 | TASK-013 | Gap | Validazione finale suite/test/typecheck/build non ancora registrata per questo track. |
 

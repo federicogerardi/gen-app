@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-A modular web application that allows non-technical users (MediaBuyers, SEO Specialists) to generate professional artifacts through dedicated workflows (Meta Ads and Funnel Pages) using various LLM models via OpenRouter.
+A modular web application that allows non-technical users (MediaBuyers, SEO Specialists) to generate professional artifacts through dedicated workflows (Meta Ads and HotLead Funnel) using various LLM models via OpenRouter.
 
 **Key Characteristics**:
 - Full-stack TypeScript/Node.js
@@ -31,7 +31,7 @@ A modular web application that allows non-technical users (MediaBuyers, SEO Spec
 │  ┌──────────────────────────────────────────────────────┐   │
 │  │ shadcn/ui Components + Tailwind CSS                  │   │
 │  │ - Project Dashboard                                   │   │
-│  │ - Tool pages (Meta Ads, Funnel Pages)               │   │
+│  │ - Tool pages (Meta Ads, HotLead Funnel)             │   │
 │  │ - Artifact Detail read-only con output elaborato    │   │
 │  │ - Admin CRUD (users, projects, artifacts, models)    │   │
 │  └────────────────────┬─────────────────────────────────┘   │
@@ -237,7 +237,7 @@ model QuotaHistory {
 **Responsibility**: Coordination, not business logic
 
 #### Agents (Pluggable Tools)
-- Active workflow perimeter: Meta Ads + Funnel Pages
+- Active workflow perimeter: Meta Ads + HotLead Funnel
 - Generic agent layer remains available for extensibility and legacy artifact generation paths
 - New tool workflows should be integrated via dedicated prompt builders + orchestrator/provider chain
 
@@ -309,7 +309,7 @@ model QuotaHistory {
 
 #### Components (shadcn/ui)
 - Layout: Sidebar, Header, Main content
-- Forms: tool-specific forms (Meta Ads) + upload-review-generate flow (Funnel Pages)
+- Forms: tool-specific forms (Meta Ads) + upload-review-generate flow (HotLead Funnel)
 - UI: Buttons, Dialog, Tabs, Select, NumberInput
 - Display: StreamingDisplay (real-time artifact display)
 
@@ -317,7 +317,7 @@ model QuotaHistory {
 - `/` → Landing
 - `/dashboard` → Dashboard con CTA tool dedicate
 - `/tools/meta-ads` → Tool Meta Ads
-- `/tools/funnel-pages` → Tool Funnel Pages (upload documento -> extraction -> review -> generazione sequenziale)
+- `/tools/funnel-pages` → Tool HotLead Funnel (upload documento -> extraction -> review -> generazione sequenziale)
 - `/artifacts` → Project artifacts list
 - `/artifacts/[id]` → Edit artifact
 - `/admin` → Admin panel (user/quota management)

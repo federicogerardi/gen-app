@@ -19,7 +19,7 @@ Il set e progettato per:
 
 ## Allineamento refactoring tool (upload-first)
 
-Con il refactoring Funnel Pages del branch corrente, il flusso UI principale e:
+Con il refactoring frontend del tool HotLead Funnel (workflow `funnel_pages`), il flusso UI principale e:
 1. upload documento (`/api/tools/funnel-pages/upload`)
 2. extraction contesto testuale (`/api/tools/extraction/generate` con `responseMode: "text"`)
 3. generazione step funnel (`/api/tools/funnel-pages/generate`, payload V3 `extractionContext`)
