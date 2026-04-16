@@ -2,6 +2,22 @@
 
 _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 
+## Aggiornamento sessione (2026-04-16 — Native login credentials + Google OAuth)
+
+- **Stato attuale**: `PLANNED`.
+- **Obiettivo**: introdurre autenticazione credentials admin-managed in coesistenza con il flusso Google OAuth esistente.
+- **Documentazione operativa migrata in docs/**:
+  - `docs/implementation/feature-native-login-credentials-google-oauth-plan-1.md`
+  - `docs/implementation/feature-native-login-credentials-google-oauth-implementation-plan-1.md`
+  - `docs/implementation/feature-native-login-credentials-google-oauth-execution-plan-1.md`
+  - `docs/implementation/feature-native-login-credentials-google-oauth-tracker-1.md`
+  - `docs/review/native-login-credentials-google-oauth-research-review-2026-04-16.md`
+  - `docs/prompts/native-login-credentials-google-oauth-implementation-prompt.md`
+- **Scope tecnico previsto**:
+  - aggiunta `passwordHash` nullable su `User` (retrocompatibile con utenti OAuth);
+  - endpoint/admin workflow per create/reset password con guard `requireAdminUser()`;
+  - estensione UI login/admin e matrice test di non-regressione auth/admin.
+
 ## Aggiornamento sessione (2026-04-16 — Artifact detail export actions plan)
 
 - **Stato attuale**: `PLANNED`.

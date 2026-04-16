@@ -2,6 +2,9 @@
 
 Questa cartella contiene la copia documentale dei prompt `.md`.
 
+Prompt archiviati in questa cartella:
+- `native-login-credentials-google-oauth-implementation-prompt.md`
+
 Sorgenti editabili:
 - `src/lib/tool-prompts/prompts`
 
