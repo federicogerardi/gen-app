@@ -86,6 +86,10 @@ Recently completed (2026-04-11):
   - Execution plan: docs/archive/feature-quality-audit-resolution-1.md
   - Tracker: docs/archive/feature-quality-audit-resolution-tracker-1.md
 
+- Artifact detail export actions
+  - Execution plan: docs/implementation/feature-artifact-page-export-actions-plan-1.md
+  - Scope: copy text + download markdown + download docx su dettaglio artefatto
+
 ---
 
 ## Single Sprint Plan: Internal Pages Visual Unification (Login Concept Extension)

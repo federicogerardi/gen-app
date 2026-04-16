@@ -2,6 +2,17 @@
 
 _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 
+## Aggiornamento sessione (2026-04-16 — Artifact detail export actions plan)
+
+- **Stato attuale**: `PLANNED`.
+- **Obiettivo**: introdurre nella pagina dettaglio artefatto le azioni `Copia testo`, `Scarica MD`, `Scarica DOCX` con logica lato client e without nuove route API.
+- **Documento piano**: `docs/implementation/feature-artifact-page-export-actions-plan-1.md`.
+- **Scope pianificato**:
+  - utility export (`src/lib/artifact-export.ts`) per naming, markdown e blob docx;
+  - integrazione client component azioni in `src/app/artifacts/[id]/page.tsx`;
+  - copertura test unit/integration dedicata al comportamento copy/download.
+- **Assunzione aperta da confermare**: `download in docs` interpretato come `download .docx`.
+
 ## Aggiornamento sessione (2026-04-16 — Funnel tool flow rationalization: PR-2 completata)
 
 - **Stato attuale**: `COMPLETATO`.
