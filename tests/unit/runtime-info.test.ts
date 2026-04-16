@@ -2,6 +2,16 @@ import packageJson from '../../package.json';
 import { getRuntimeInfo } from '@/lib/runtime-info';
 
 describe('getRuntimeInfo', () => {
+  let warnSpy: jest.SpyInstance;
+
+  beforeEach(() => {
+    warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    warnSpy.mockRestore();
+  });
+
   it('maps production channel and uses NEXT_PUBLIC_APP_VERSION', () => {
     const info = getRuntimeInfo({
       NODE_ENV: 'production',
