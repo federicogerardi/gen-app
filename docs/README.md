@@ -32,6 +32,11 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 - [gui-ux-low-impact-microtasks-sprint-plan-2026-04-14.md](implementation/gui-ux-low-impact-microtasks-sprint-plan-2026-04-14.md): Backlog microtask GUI/UX low-impact per sprint breve (estrazione 2026-04-14).
 - [feature-operational-hardening-api-llm-tooling-plan-1.md](implementation/feature-operational-hardening-api-llm-tooling-plan-1.md): Piano esecutivo P1 per hardening operativo API/LLM tooling (pre-stream errors, artifact lifecycle safety, taxonomy, API docs alignment).
 - [feature-operational-hardening-api-llm-tooling-tracker-1.md](implementation/feature-operational-hardening-api-llm-tooling-tracker-1.md): Tracker operativo companion del piano P1 con baseline, stato task ed evidenze di chiusura.
+- [feature-artifact-page-export-actions-plan-1.md](implementation/feature-artifact-page-export-actions-plan-1.md): Piano esecutivo per azioni pagina artefatto (copy text, download Markdown e DOCX).
+- [feature-native-login-credentials-google-oauth-plan-1.md](implementation/feature-native-login-credentials-google-oauth-plan-1.md): Piano di alto livello per introdurre login credenziali mantenendo invariato il flusso Google OAuth.
+- [feature-native-login-credentials-google-oauth-implementation-plan-1.md](implementation/feature-native-login-credentials-google-oauth-implementation-plan-1.md): Checklist fasi/task e criteri di successo del track native login.
+- [feature-native-login-credentials-google-oauth-execution-plan-1.md](implementation/feature-native-login-credentials-google-oauth-execution-plan-1.md): Piano esecutivo dettagliato con sequenza PR e validazioni.
+- [feature-native-login-credentials-google-oauth-tracker-1.md](implementation/feature-native-login-credentials-google-oauth-tracker-1.md): Tracker operativo con stato fasi, gate Go/No-Go e rischi.
 
 ### notes/
 - [desiderata-e-appunti-futuri-sviluppi.md](notes/desiderata-e-appunti-futuri-sviluppi.md): Raccolta di idee e appunti preliminari non ancora in planning o refactoring.
@@ -44,6 +49,7 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 - [pr-28-dev-merge-review-2026-04-13.md](review/pr-28-dev-merge-review-2026-04-13.md): Review operativa dell'ultimo merge PR verso `dev` (PR #28), con metadati, scope e sintesi sprint.
 - [pr-28-dev-commit-changelog-2026-04-13.md](review/pr-28-dev-commit-changelog-2026-04-13.md): Changelog commit-level della PR #28 con shortstat e note di riuso per documentazione.
 - [operational-improvement-note-api-llm-tooling-2026-04-15.md](review/operational-improvement-note-api-llm-tooling-2026-04-15.md): Nota di improvement operativa che origina il piano P1 di hardening API/LLM tooling.
+- [native-login-credentials-google-oauth-research-review-2026-04-16.md](review/native-login-credentials-google-oauth-research-review-2026-04-16.md): Ricerca tecnica e decision gate per l'introduzione del login credenziali in coesistenza con Google OAuth.
 
 ### code-review/
 - [2026-04-15-test-suite-security-balance-review.md](code-review/2026-04-15-test-suite-security-balance-review.md): Valutazione del bilanciamento sicurezza pre-deploy vs delivery e stato remediation iniziale dei test fragili prompt/UI.
@@ -53,6 +59,7 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 
 ### prompts/
 - [README.md](prompts/README.md): Indice e linee guida per i prompt.
+- [native-login-credentials-google-oauth-implementation-prompt.md](prompts/native-login-credentials-google-oauth-implementation-prompt.md): Prompt operativo archiviato per il track native login.
 - [tools/hl_funnel/](prompts/tools/hl_funnel/): Prompt generator specifici HL Funnel.
 - [tools/meta_ads/](prompts/tools/meta_ads/): Prompt generator specifici Meta Ads.
 
@@ -69,6 +76,8 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 - [ux-strategy.md](ux/ux-strategy.md): Strategia UX e principi guida.
 
 ### Aggiornamenti recenti
+- 2026-04-16: migrati in `docs/` i documenti fuori scope presenti in `plan/` e `.copilot-tracking/` per il track native login (plan/checklist/execution/tracker/research/prompt) e aggiornato l'indice principale.
+- 2026-04-16: collegato al perimetro docs il piano export pagina artefatto in `docs/implementation/feature-artifact-page-export-actions-plan-1.md` e aggiornati gli indici operativi.
 - 2026-04-15: archiviati i documenti completati del track audit remediation sequenziale (`feature-audit-remediation-sequenced-1.md`, `feature-audit-remediation-sequenced-tracker-1.md`) in `docs/archive/` e riallineati i riferimenti nei report review/index.
 - 2026-04-15: normalizzato naming del piano artifact-first (`plan-extractionChainArtifactFirst.prompt.md` -> `extraction-chain-artifact-first-prompt-plan.md`) con aggiornamento cross-link nel perimetro implementation.
 - 2026-04-15: completata remediation iniziale dei test fragili prompt/UI (riduzione assert copy-level, mantenimento test sicurezza/contratti), con report operativo in `docs/code-review/2026-04-15-test-suite-security-balance-review.md`.

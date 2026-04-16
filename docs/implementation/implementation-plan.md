@@ -33,7 +33,7 @@ Implemented in the current codebase:
 - Dashboard/navbar client-server boundary fixed (`SessionProvider` + client-side `signOut`) and build verified
 - Admin dashboard with user quota editing, recent usage activity and metrics overview
 - Jest + Playwright scaffolding with passing local unit/integration/e2e smoke tests
-- Tool UI modulare con entrypoint dedicati per Meta Ads (`/tools/meta-ads`) e Funnel Pages (`/tools/funnel-pages`)
+- Tool UI modulare con entrypoint dedicati per Meta Ads (`/tools/meta-ads`) e HotLead Funnel (`/tools/funnel-pages`)
 - Endpoint tool-specific per generazione (`/api/tools/meta-ads/generate`, `/api/tools/funnel-pages/generate`)
 - Prompt architecture centralizzata sotto `src/lib/tool-prompts` con registry + loader e template runtime statici tipizzati (`templates.ts`), derivati da sorgenti markdown versionate
 
@@ -85,6 +85,10 @@ Recently completed (2026-04-11):
   - Source roadmap: docs/archive/implement-quality-audit-closure-2026-04-11.md
   - Execution plan: docs/archive/feature-quality-audit-resolution-1.md
   - Tracker: docs/archive/feature-quality-audit-resolution-tracker-1.md
+
+- Artifact detail export actions
+  - Execution plan: docs/implementation/feature-artifact-page-export-actions-plan-1.md
+  - Scope: copy text + download markdown + download docx su dettaglio artefatto
 
 ---
 
@@ -146,7 +150,7 @@ Acceptance Criteria:
 - Nessun overflow o layout break a 320px, 768px, 1024px, 1440px
 - KPI leggibili anche in condizioni dense
 
-#### WS3 - Tool Pages (Meta Ads + Funnel Pages)
+#### WS3 - Tool Pages (Meta Ads + HotLead Funnel)
 Deliverable:
 - Layout input/output armonizzato con shell condivisa
 - Card form e output con stile unificato, stati loading/error semanticamente chiari
@@ -1017,7 +1021,7 @@ To complete the plan from the current state, execute the remaining work in this 
 
 3. **Sprint 3 (completed)**
   - Remove obsolete legacy tool routes (`/tools/content`, `/tools/seo`, `/tools/code`) from the app surface.
-  - Outcome: buttons, routes and related obsolete code/tests removed to keep the MVP toolset aligned with Meta Ads and Funnel Pages only.
+  - Outcome: buttons, routes and related obsolete code/tests removed to keep the MVP toolset aligned with Meta Ads and HotLead Funnel only.
 
 4. **Sprint 4 (in progress - core polish completed)**
   - Navigation/layout polish (navbar, sidebar, dashboard density) and admin UX refinements.

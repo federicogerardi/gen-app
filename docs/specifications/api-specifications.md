@@ -312,12 +312,12 @@ Campi diagnostici terminali (log route extraction):
 **Response**:
 - Stream SSE con eventi standard (`start`, `token`, `complete`, `error`)
 - Workflow `extraction`
-- Output workflow consigliato per Funnel Pages: testo markdown contestuale (consumato direttamente come `extractionContext` nei prompt downstream)
+- Output workflow consigliato per HotLead Funnel (workflow `funnel_pages`): testo markdown contestuale (consumato direttamente come `extractionContext` nei prompt downstream)
 
 Nota operativa:
 - La route valida internamente i tentativi e poi invia al client gli eventi SSE del tentativo valido; durante retry non e garantito passthrough token live continuo.
 
-### Generate Funnel Pages Step (Streaming)
+### Generate HotLead Funnel Step (Streaming)
 
 **Endpoint**:
 ```
@@ -360,7 +360,7 @@ Nota mapping proof context (V3):
 - Crea un artifact di tipo `content`
 - Formato output workflow: `markdown` (per `optin`, `quiz`, `vsl`)
 
-Nota workflow UI Funnel Pages:
+Nota workflow UI HotLead Funnel:
 1. upload documento (`/api/tools/funnel-pages/upload`)
 2. estrazione contesto testuale (`/api/tools/extraction/generate` con `responseMode: "text"`)
 3. generazione sequenziale `optin -> quiz -> vsl` (`/api/tools/funnel-pages/generate`)

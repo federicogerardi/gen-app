@@ -92,10 +92,10 @@ const ALLOWED_MIME_TYPES = [
 const ALLOWED_EXTENSIONS = ['.docx', '.txt', '.md'] as const;
 
 const TONE_HINTS: Record<(typeof TONES)[number], string> = {
-  professional: 'Chiaro e autorevole: ideale per comunicare affidabilita e struttura del servizio.',
-  casual: 'Diretto e vicino: utile per aumentare empatia, leggibilita e coinvolgimento rapido.',
-  formal: 'Istituzionale e rigoroso: adatto a contesti premium, corporate o regolamentati.',
-  technical: 'Preciso e dettagliato: focalizzato su metodo, caratteristiche e argomentazione razionale.',
+  professional: 'Chiaro e autorevole.',
+  casual: 'Diretto e vicino.',
+  formal: 'Istituzionale e rigoroso.',
+  technical: 'Preciso e tecnico.',
 };
 
 const STEP_STATUS_BADGE_CLASS: Record<FunnelStepState['status'], string> = {
@@ -110,22 +110,6 @@ const STEP_STATUS_LABEL: Record<FunnelStepState['status'], string> = {
   running: 'In corso',
   done: 'Completato',
   error: 'Errore',
-};
-
-const EXTRACTION_LIFECYCLE_BADGE_CLASS: Record<ExtractionLifecycleState, string> = {
-  idle: 'border-slate-400 bg-slate-200 text-slate-950',
-  in_progress: 'border-amber-400 bg-amber-200 text-amber-950',
-  completed_partial: 'border-orange-400 bg-orange-200 text-orange-950',
-  completed_full: 'border-emerald-400 bg-emerald-200 text-emerald-950',
-  failed_hard: 'border-rose-400 bg-rose-200 text-rose-950',
-};
-
-const EXTRACTION_LIFECYCLE_LABEL: Record<ExtractionLifecycleState, string> = {
-  idle: 'Aggiungi il documento per iniziare',
-  in_progress: 'Estrazione in corso',
-  completed_partial: 'Estrazione parziale',
-  completed_full: 'Estrazione completa',
-  failed_hard: 'Estrazione fallita',
 };
 
 const RETRY_MAX_ATTEMPTS = 3;
@@ -151,6 +135,10 @@ function FieldLabel({ htmlFor, required = true, children }: FieldLabelProps) {
       )}
     </div>
   );
+}
+
+function formatToneLabel(tone: (typeof TONES)[number]) {
+  return tone.charAt(0).toUpperCase() + tone.slice(1);
 }
 
 async function streamToText(response: Response): Promise<string> {
@@ -367,8 +355,8 @@ function FunnelPagesToolContent() {
   const [resumeNotice, setResumeNotice] = useState<string | null>(null);
   const [intent, setIntent] = useState<FunnelIntent>(initialIntent);
   const [hasRecoveredCheckpoint, setHasRecoveredCheckpoint] = useState(false);
-  const [isAdvancedOpen, setIsAdvancedOpen] = useState(true);
   const [isProjectDialogOpen, setIsProjectDialogOpen] = useState(false);
+  const [isStatusOpen, setIsStatusOpen] = useState(true);
   const autoResumeAttemptKeyRef = useRef<string | null>(null);
 
   const { data: projectsData } = useQuery({
@@ -802,11 +790,12 @@ function FunnelPagesToolContent() {
     }
   }
 
-  const reviewContextPreview = extractionContext
-    ? extractionContext.slice(0, 1200)
-    : '';
   const isBriefingProcessing = phase === 'uploading' || phase === 'extracting';
   const hasExtractionReady = Boolean(extractionContext?.trim());
+  const hasCheckpointBriefing = hasExtractionReady && !uploadedFileName;
+  const hasProjectSelected = Boolean(projectId);
+  const hasBriefingSource = Boolean(uploadedFileName || hasCheckpointBriefing);
+  const hasExtractionError = Boolean(uploadError || extractionError);
   const hasCompletedSteps = steps.every((step) => step.status === 'done' && step.content.trim().length > 0);
   const hasRecoveredSteps = steps.some((step) => step.artifactId || step.content.trim().length > 0);
   const hasRecoveryData = hasRecoveredCheckpoint && (hasExtractionReady || hasRecoveredSteps);
@@ -943,26 +932,49 @@ function FunnelPagesToolContent() {
     });
   }
 
-  const actionSummary: Record<FunnelUiState, string> = {
-    'draft-empty': 'Completa il blocco progetto e briefing oppure recupera un checkpoint.',
-    'processing-briefing': 'Il briefing e in elaborazione.',
-    'draft-ready': 'Il contesto e pronto per lanciare la generazione.',
-    'prefilled-regenerate': 'Il tool e precompilato e puo rigenerare subito.',
-    'paused-with-checkpoint': 'Esiste un checkpoint riutilizzabile per questo funnel.',
-    'resume-needs-briefing': 'Gli output parziali ci sono, ma serve ricaricare il briefing.',
-    running: 'La generazione sta avanzando sugli step del funnel.',
-    completed: 'L output finale e pronto o puo essere rilanciato.',
+  const extractionChecklistStatus: 'todo' | 'active' | 'done' | 'error' = hasExtractionError
+    ? 'error'
+    : isBriefingProcessing
+      ? 'active'
+      : hasExtractionReady
+        ? 'done'
+        : 'todo';
+
+  const generationChecklistStatus: 'todo' | 'active' | 'done' = running
+    ? 'active'
+    : canRunGeneration
+      ? 'done'
+      : 'todo';
+
+  const checklistBadgeClass: Record<'todo' | 'active' | 'done' | 'error', string> = {
+    todo: 'border-slate-300 bg-slate-100 text-slate-700',
+    active: 'border-amber-300 bg-amber-100 text-amber-900',
+    done: 'border-emerald-300 bg-emerald-100 text-emerald-900',
+    error: 'border-rose-300 bg-rose-100 text-rose-900',
   };
+
+  const checklistBadgeLabel: Record<'todo' | 'active' | 'done' | 'error', string> = {
+    todo: 'Da fare',
+    active: 'In corso',
+    done: 'Ok',
+    error: 'Errore',
+  };
+
+  useEffect(() => {
+    if (running && isStatusOpen) {
+      setIsStatusOpen(false);
+    }
+  }, [running, isStatusOpen]);
 
   return (
     <PageShell width="workspace">
 
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
-            <h1 className="app-title text-3xl font-semibold text-slate-900">Generatore Pagine del Funnel</h1>
-            <p className="text-sm text-muted-foreground">Seleziona progetto e briefing, regola le avanzate visibili e avvia il funnel.</p>
+            <h1 className="app-title text-3xl font-semibold text-slate-900">HotLead Funnel</h1>
+            <p className="text-sm text-muted-foreground">Scegli progetto, carica briefing, genera.</p>
             {sourceArtifactId && (
-              <p className="mt-2 text-xs text-muted-foreground">Prefill applicato da storico artefatti (ID: {sourceArtifactId}).</p>
+              <p className="mt-2 text-xs text-muted-foreground">Dati precompilati da artefatto (ID: {sourceArtifactId}).</p>
             )}
           </div>
           <Button variant="outline" asChild>
@@ -970,193 +982,84 @@ function FunnelPagesToolContent() {
           </Button>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
           <Card className="app-surface app-rise rounded-3xl">
             <CardHeader>
-              <CardTitle className="text-base">Setup funnel</CardTitle>
-              <CardDescription>Compila prima il blocco operativo, poi rifinisci il resto.</CardDescription>
+              <CardTitle className="text-base">Setup</CardTitle>
+              <CardDescription>Completa i campi essenziali.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
               <div className="space-y-6">
                 <section className="space-y-4">
-                  <div className="flex items-center justify-between gap-3 border-b border-black/10 pb-2">
-                    <div className="space-y-1">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Blocco obbligatorio</p>
-                      <p className="text-base font-semibold text-slate-950">Progetto + briefing</p>
-                    </div>
-                    <Badge
-                      variant="outline"
-                      className={
-                        !projectId
-                          ? 'border-amber-300 bg-amber-100 text-amber-950'
-                          : uploadedFileName
-                            ? 'border-emerald-300 bg-emerald-100 text-emerald-950'
-                            : 'border-sky-300 bg-sky-100 text-sky-950'
-                      }
-                    >
-                      {!projectId ? 'Attende progetto' : uploadedFileName ? 'Pronto al lancio' : 'Attende briefing'}
-                    </Badge>
-                  </div>
-
-                  <div className="grid gap-4 xl:grid-cols-[1fr_2fr]">
-                    <div className="min-w-0 space-y-4 rounded-2xl border border-black/10 bg-white/80 p-4 shadow-sm">
-                      <div className="space-y-1.5">
-                        <FieldLabel>Progetto</FieldLabel>
-                        <Dialog.Root open={isProjectDialogOpen} onOpenChange={setIsProjectDialogOpen}>
-                          <Dialog.Trigger asChild>
-                            <Button
-                              className="w-full min-w-0 max-w-full cursor-pointer justify-start overflow-hidden text-left"
-                              variant="outline"
-                              title={selectedProject?.name ?? undefined}
-                            >
-                              {selectedProject ? (
-                                <span className="block min-w-0 flex-1 truncate">{selectedProject.name}</span>
-                              ) : (
-                                <span className="block min-w-0 flex-1 truncate text-muted-foreground">Seleziona progetto</span>
-                              )}
-                            </Button>
-                          </Dialog.Trigger>
-                          <Dialog.Portal>
-                            <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50" />
-                            <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-96 max-h-96 -translate-x-1/2 -translate-y-1/2 rounded-lg border border-black/10 bg-white p-6 shadow-lg overflow-y-auto">
-                              <Dialog.Title className="text-lg font-semibold mb-4">Seleziona progetto</Dialog.Title>
-                              <Dialog.Description className="sr-only">Elenco di progetti disponibili per il new funnel</Dialog.Description>
-                              <div className="space-y-2">
-                                {projectsData?.projects?.map((project) => (
-                                  <button
-                                    key={project.id}
-                                    onClick={() => {
-                                      setProjectId(project.id);
-                                      setIsProjectDialogOpen(false);
-                                    }}
-                                    className={`w-full cursor-pointer px-3 py-2 text-left rounded-lg border transition-colors ${
-                                      projectId === project.id
-                                        ? 'border-blue-500 bg-blue-50 text-blue-900'
-                                        : 'border-transparent hover:bg-slate-100'
-                                    }`}
-                                  >
-                                    <span className="font-medium">{project.name}</span>
-                                  </button>
-                                ))}
-                              </div>
-                              <Dialog.Close asChild>
-                                <button className="absolute right-4 top-4 cursor-pointer text-muted-foreground hover:text-foreground">✕</button>
-                              </Dialog.Close>
-                            </Dialog.Content>
-                          </Dialog.Portal>
-                        </Dialog.Root>
-                      </div>
+                  <div className="space-y-5">
+                    <div className="space-y-1.5">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">1. Progetto</p>
+                      <FieldLabel>Seleziona il progetto</FieldLabel>
+                      <Dialog.Root open={isProjectDialogOpen} onOpenChange={setIsProjectDialogOpen}>
+                        <Dialog.Trigger asChild>
+                          <Button
+                            className="h-11 w-full min-w-0 cursor-pointer justify-start overflow-hidden px-3 text-left lg:w-2/3"
+                            variant="outline"
+                            title={selectedProject?.name ?? undefined}
+                          >
+                            {selectedProject ? (
+                              <span className="block min-w-0 flex-1 truncate">{selectedProject.name}</span>
+                            ) : (
+                              <span className="block min-w-0 flex-1 truncate text-muted-foreground">Scegli un progetto</span>
+                            )}
+                          </Button>
+                        </Dialog.Trigger>
+                        <Dialog.Portal>
+                          <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50" />
+                          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-96 max-h-96 -translate-x-1/2 -translate-y-1/2 rounded-lg border border-black/10 bg-white p-6 shadow-lg overflow-y-auto">
+                            <Dialog.Title className="text-lg font-semibold mb-4">Scegli un progetto</Dialog.Title>
+                            <Dialog.Description className="sr-only">Elenco progetti disponibili per il funnel</Dialog.Description>
+                            <div className="space-y-2">
+                              {projectsData?.projects?.map((project) => (
+                                <button
+                                  key={project.id}
+                                  onClick={() => {
+                                    setProjectId(project.id);
+                                    setIsProjectDialogOpen(false);
+                                  }}
+                                  className={`w-full cursor-pointer px-3 py-2 text-left rounded-lg border transition-colors ${
+                                    projectId === project.id
+                                      ? 'border-blue-500 bg-blue-50 text-blue-900'
+                                      : 'border-transparent hover:bg-slate-100'
+                                  }`}
+                                >
+                                  <span className="font-medium">{project.name}</span>
+                                </button>
+                              ))}
+                            </div>
+                            <Dialog.Close asChild>
+                              <button className="absolute right-4 top-4 cursor-pointer text-muted-foreground hover:text-foreground">✕</button>
+                            </Dialog.Close>
+                          </Dialog.Content>
+                        </Dialog.Portal>
+                      </Dialog.Root>
                     </div>
 
-                    <div className="space-y-3 rounded-2xl border border-black/10 bg-white/80 p-4 shadow-sm">
-                      <div className="space-y-1.5">
-                        <FieldLabel htmlFor="funnel-file-input">Documento di briefing</FieldLabel>
-                        <p className="text-xs text-muted-foreground">.docx, .txt, .md</p>
-                      </div>
-
+                    <div className="space-y-1.5">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">2. Briefing</p>
+                      <FieldLabel htmlFor="funnel-file-input">Carica il file</FieldLabel>
+                      <p className="text-xs text-muted-foreground">Formati supportati: .docx, .txt, .md</p>
                       <input
                         id="funnel-file-input"
                         type="file"
                         accept=".docx,.txt,.md,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown"
-                        className="block w-full cursor-pointer rounded-xl border border-black/10 bg-white/60 px-3 py-2 text-sm text-foreground outline-none transition-colors file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1 file:text-xs file:font-medium focus-visible:border-blue-500/60 focus-visible:ring-3 focus-visible:ring-blue-500/25 disabled:cursor-not-allowed disabled:bg-slate-100/80"
+                        className="block min-h-11 w-full cursor-pointer rounded-lg border border-input bg-background px-3 py-1.5 text-sm text-foreground outline-none transition-colors file:mr-3 file:h-7 file:rounded-md file:border-0 file:bg-slate-100 file:px-3.5 file:text-xs file:font-medium focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:bg-input/50 lg:w-2/3"
                         onChange={handleFileChange}
                         disabled={phase === 'uploading' || phase === 'extracting' || running || !projectId}
                       />
-
-                      <Badge variant="outline" className={EXTRACTION_LIFECYCLE_BADGE_CLASS[extractionLifecycle]}>
-                        {EXTRACTION_LIFECYCLE_LABEL[extractionLifecycle]}
-                      </Badge>
                     </div>
                   </div>
 
-                  <aside
-                    className={[
-                      'rounded-2xl border p-4 shadow-sm transition-colors',
-                      !projectId
-                        ? 'border-amber-300 bg-amber-50/90'
-                        : uploadedFileName
-                          ? 'border-emerald-300 bg-emerald-50/90'
-                          : 'border-sky-300 bg-sky-50/90',
-                    ].join(' ')}
-                    role="status"
-                    aria-live="polite"
-                  >
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Stato rapido</p>
-                    {!projectId && (
-                      <>
-                        <p className="mt-2 text-sm font-semibold text-amber-950">Seleziona prima il progetto</p>
-                        <p className="mt-1 text-xs leading-relaxed text-amber-900">L upload si attiva appena scegli il progetto nel campo qui accanto.</p>
-                      </>
-                    )}
-                    {projectId && !uploadedFileName && (
-                      <>
-                        <p className="mt-2 text-sm font-semibold text-sky-950">Progetto agganciato</p>
-                        <p className="mt-1 text-xs leading-relaxed text-sky-900">Ora carica il briefing per estrarre il contesto e sbloccare la CTA primaria.</p>
-                        <p className="mt-3 rounded-lg bg-white/70 px-3 py-2 text-xs text-slate-700">{selectedProject?.name ?? projectId}</p>
-                      </>
-                    )}
-                    {projectId && uploadedFileName && (
-                      <>
-                        <p className="mt-2 text-sm font-semibold text-emerald-950">Blocco pronto</p>
-                        <p className="mt-1 text-xs leading-relaxed text-emerald-900">Progetto e file sono allineati. Attendi l estrazione o prosegui con il funnel.</p>
-                        <div className="mt-3 space-y-2 text-xs text-slate-700">
-                          <p className="rounded-lg bg-white/70 px-3 py-2">Progetto: {selectedProject?.name ?? projectId}</p>
-                          <p className="rounded-lg bg-white/70 px-3 py-2">File: {uploadedFileName}</p>
-                        </div>
-                      </>
-                    )}
-                  </aside>
-                </section>
-
-                <section className="space-y-4 border-t border-black/10 pt-5">
-                  <div className="space-y-3">
-                    {(phase === 'uploading' || phase === 'extracting') && (
-                      <div className="rounded-xl border border-black/10 bg-white/60 p-4 text-center" role="status" aria-live="polite" aria-atomic="true">
-                        <p className="text-sm font-medium">{phase === 'uploading' ? 'Caricamento documento...' : 'Estrazione campi in corso...'}</p>
-                      </div>
-                    )}
-
-                    {(uploadError || extractionError) && (
-                      <p className="rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive" role="alert" aria-live="assertive">
-                        {uploadError ?? extractionError}
-                      </p>
-                    )}
-
-                    {retryNotice && (
-                      <p className="rounded-xl bg-amber-100 px-4 py-3 text-sm text-amber-900" role="status" aria-live="polite">
-                        {retryNotice}
-                      </p>
-                    )}
-
-                    {resumeNotice && (
-                      <p className="rounded-xl bg-slate-100 px-4 py-3 text-sm text-slate-800" role="status" aria-live="polite">
-                        {resumeNotice}
-                      </p>
-                    )}
-                  </div>
-                </section>
-
-                <section className="space-y-4 border-t border-black/10 pt-5">
-                  <details
-                    open={isAdvancedOpen}
-                    onToggle={(event) => setIsAdvancedOpen(event.currentTarget.open)}
-                    className="group rounded-2xl border border-sky-200 bg-sky-50/50 px-4 py-3 shadow-sm"
-                  >
-                    <summary className="cursor-pointer list-none text-sm font-medium text-slate-900">
-                      <span className="flex items-center justify-between gap-3">
-                        <span className="flex items-center gap-3">
-                          <span>Impostazioni avanzate</span>
-                          <span className="rounded-full bg-slate-900 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
-                            {isAdvancedOpen ? 'Attive' : 'Chiuse'}
-                          </span>
-                        </span>
-                        <span className="text-xs text-muted-foreground">{isAdvancedOpen ? 'Nascondi' : 'Mostra'}</span>
-                      </span>
-                    </summary>
-
-                    <div className="mt-4 space-y-4">
+                  <div className="pt-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">3. Opzioni facoltative</p>
+                    <div className="mt-3 grid gap-4 md:grid-cols-2">
                       <div className="space-y-1.5">
-                        <FieldLabel htmlFor="funnel-model-select">Modello</FieldLabel>
+                        <Label htmlFor="funnel-model-select" className="text-xs font-medium text-slate-600">Modello</Label>
                         <Select value={model} onValueChange={setManualModel}>
                           <SelectTrigger id="funnel-model-select" className="app-control" aria-label="Modello LLM">
                             <SelectValue placeholder="Seleziona modello" />
@@ -1170,56 +1073,40 @@ function FunnelPagesToolContent() {
                       </div>
 
                       <div className="space-y-1.5">
-                        <FieldLabel htmlFor="funnel-tone-select">Tono di voce</FieldLabel>
+                        <Label htmlFor="funnel-tone-select" className="text-xs font-medium text-slate-600">Tono di voce</Label>
                         <Select value={tone} onValueChange={(value) => setTone(value as (typeof TONES)[number])}>
                           <SelectTrigger id="funnel-tone-select" className="app-control" aria-label="Tono di comunicazione">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
                             {TONES.map((item) => (
-                              <SelectItem key={item} value={item}>{item}</SelectItem>
+                              <SelectItem key={item} value={item}>{formatToneLabel(item)}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                         <p className="text-xs leading-relaxed text-muted-foreground">{TONE_HINTS[tone]}</p>
                       </div>
                     </div>
-                  </details>
+                  </div>
+
                 </section>
               </div>
 
               {hasExtractionReady && (
-                <>
-                  <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4 space-y-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">Contesto estratto</p>
-                      <Badge variant="secondary">{Math.ceil((extractionContext?.length ?? 0) / 6)} token stimati</Badge>
-                    </div>
-                    <p className="max-h-52 overflow-y-auto whitespace-pre-wrap rounded-lg border border-emerald-200/70 bg-white/70 p-3 text-sm text-foreground">
-                      {reviewContextPreview}
-                    </p>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <FieldLabel htmlFor="funnel-notes" required={false}>Note aggiuntive</FieldLabel>
-                    <Textarea
-                      id="funnel-notes"
-                      className="app-control"
-                      placeholder="Istruzioni extra per la generazione (opzionale)"
-                      rows={3}
-                      value={notes}
-                      onChange={(event) => setNotes(event.target.value)}
-                    />
-                  </div>
-                </>
+                <div className="space-y-1.5">
+                  <FieldLabel htmlFor="funnel-notes" required={false}>Note</FieldLabel>
+                  <Textarea
+                    id="funnel-notes"
+                    className="app-control"
+                    placeholder="Istruzioni extra (opzionale)"
+                    rows={3}
+                    value={notes}
+                    onChange={(event) => setNotes(event.target.value)}
+                  />
+                </div>
               )}
 
-              <section className="space-y-4 border-t border-black/10 pt-5">
-                <div className="space-y-1">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Azione consigliata</p>
-                  <p className="text-sm text-slate-700">{actionSummary[uiState]}</p>
-                </div>
-
+              <section className="space-y-4 pt-5">
                 <Button
                   className="w-full"
                   data-primary-action="true"
@@ -1250,25 +1137,143 @@ function FunnelPagesToolContent() {
           </Card>
 
           <div className="space-y-4">
+            <details
+              open={isStatusOpen}
+              onToggle={(event) => setIsStatusOpen(event.currentTarget.open)}
+              className={[
+                'group rounded-2xl border px-4 py-3 shadow-sm transition-colors',
+                hasExtractionError
+                  ? 'border-rose-300 bg-rose-50/90'
+                  : canRunGeneration
+                    ? 'border-emerald-300 bg-emerald-50/90'
+                    : 'border-sky-300 bg-sky-50/90',
+              ].join(' ')}
+            >
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-medium text-slate-900 [&::-webkit-details-marker]:hidden">
+                <span>Stato rapido</span>
+                <span className="text-xs text-muted-foreground">{isStatusOpen ? 'Nascondi' : 'Mostra'}</span>
+              </summary>
+
+              <div className="mt-3 space-y-2" role="status" aria-live="polite">
+                <div className="rounded-lg bg-white/70 px-3 py-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-semibold text-slate-900">1. Progetto selezionato</p>
+                      <p className="mt-0.5 text-xs text-slate-700">
+                        {hasProjectSelected
+                          ? (selectedProject?.name ?? projectId)
+                          : 'Seleziona un progetto per iniziare.'}
+                      </p>
+                    </div>
+                    <Badge variant="outline" className={checklistBadgeClass[hasProjectSelected ? 'done' : 'todo']}>
+                      {checklistBadgeLabel[hasProjectSelected ? 'done' : 'todo']}
+                    </Badge>
+                  </div>
+                </div>
+
+                <div className="rounded-lg bg-white/70 px-3 py-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-semibold text-slate-900">2. Briefing disponibile</p>
+                      <p className="mt-0.5 text-xs text-slate-700">
+                        {hasBriefingSource
+                          ? (hasCheckpointBriefing ? 'Fonte: checkpoint estratto' : `File: ${uploadedFileName}`)
+                          : 'Carica un briefing per continuare.'}
+                      </p>
+                    </div>
+                    <Badge variant="outline" className={checklistBadgeClass[hasBriefingSource ? 'done' : 'todo']}>
+                      {checklistBadgeLabel[hasBriefingSource ? 'done' : 'todo']}
+                    </Badge>
+                  </div>
+                </div>
+
+                <div className="rounded-lg bg-white/70 px-3 py-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-semibold text-slate-900">3. Estrazione</p>
+                      <p className="mt-0.5 text-xs text-slate-700">
+                        {hasExtractionError
+                          ? (uploadError ?? extractionError)
+                          : isBriefingProcessing
+                            ? (phase === 'uploading' ? 'Caricamento briefing in corso.' : 'Estrazione in corso.')
+                            : hasExtractionReady
+                              ? 'Estrazione pronta.'
+                              : 'In attesa del briefing.'}
+                      </p>
+                    </div>
+                    <Badge variant="outline" className={checklistBadgeClass[extractionChecklistStatus]}>
+                      {checklistBadgeLabel[extractionChecklistStatus]}
+                    </Badge>
+                  </div>
+                </div>
+
+                <div className="rounded-lg bg-white/70 px-3 py-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-semibold text-slate-900">4. Pronto a generare</p>
+                      <p className="mt-0.5 text-xs text-slate-700">
+                        {running
+                          ? 'Generazione in corso.'
+                          : canRunGeneration
+                            ? 'Puoi avviare la generazione degli artefatti.'
+                            : 'Completa gli step precedenti.'}
+                      </p>
+                    </div>
+                    <Badge variant="outline" className={checklistBadgeClass[generationChecklistStatus]}>
+                      {checklistBadgeLabel[generationChecklistStatus]}
+                    </Badge>
+                  </div>
+                </div>
+
+                {retryNotice && (
+                  <div className="rounded-lg bg-white/70 px-3 py-2">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-xs font-semibold text-slate-900">Aggiornamento</p>
+                        <p className="mt-0.5 text-xs text-slate-700">{retryNotice}</p>
+                      </div>
+                      <Badge variant="outline" className={checklistBadgeClass.active}>
+                        {checklistBadgeLabel.active}
+                      </Badge>
+                    </div>
+                  </div>
+                )}
+
+                {resumeNotice && (
+                  <div className="rounded-lg bg-white/70 px-3 py-2">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-xs font-semibold text-slate-900">Aggiornamento</p>
+                        <p className="mt-0.5 text-xs text-slate-700">{resumeNotice}</p>
+                      </div>
+                      <Badge variant="outline" className={checklistBadgeClass.active}>
+                        {checklistBadgeLabel.active}
+                      </Badge>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </details>
+
             <details className="group rounded-3xl border border-black/10 bg-white/60 px-4 py-3 shadow-sm">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-medium text-slate-900 [&::-webkit-details-marker]:hidden">
-                <span>Come compilare il modulo</span>
+                <span>Guida rapida</span>
                 <span className="text-xs text-muted-foreground group-open:hidden">Mostra</span>
                 <span className="hidden text-xs text-muted-foreground group-open:inline">Nascondi</span>
               </summary>
 
               <div className="mt-4 space-y-3 text-sm text-slate-700">
                 <div className="rounded-2xl border border-black/10 bg-slate-50/90 px-3 py-3">
-                  <p className="font-medium text-slate-900">1. Aggancia il contesto operativo</p>
-                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Seleziona il progetto e carica subito il briefing: sono due azioni pensate per essere fatte in sequenza rapida.</p>
+                  <p className="font-medium text-slate-900">1. Scegli il progetto</p>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Primo passaggio obbligatorio.</p>
                 </div>
                 <div className="rounded-2xl border border-black/10 bg-slate-50/90 px-3 py-3">
-                  <p className="font-medium text-slate-900">2. Controlla le avanzate</p>
-                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Modello e tono restano visibili per essere verificati subito, ma non bloccano il flusso di input.</p>
+                  <p className="font-medium text-slate-900">2. Carica il briefing</p>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Il tool estrae il contesto in automatico.</p>
                 </div>
                 <div className="rounded-2xl border border-black/10 bg-slate-50/90 px-3 py-3">
-                  <p className="font-medium text-slate-900">3. Lancia l azione consigliata</p>
-                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Usa la CTA primaria quando il contesto e pronto; le azioni secondarie servono solo come alternative.</p>
+                  <p className="font-medium text-slate-900">3. Avvia la generazione</p>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Usa il pulsante principale quando e pronto.</p>
                 </div>
               </div>
             </details>
@@ -1291,9 +1296,9 @@ function FunnelPagesToolContent() {
                       </Badge>
                     </div>
                     <CardDescription>
-                      {step.key === 'optin' && 'Landing page di acquisizione lead'}
-                      {step.key === 'quiz' && 'Questionario di qualificazione'}
-                      {step.key === 'vsl' && 'Script Video Sales Letter'}
+                      {step.key === 'optin' && 'Pagina optin'}
+                      {step.key === 'quiz' && 'Domande di qualifica'}
+                      {step.key === 'vsl' && 'Script video di vendita'}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-3">
@@ -1306,7 +1311,7 @@ function FunnelPagesToolContent() {
                       </div>
                     ) : (
                       <p className="text-sm text-muted-foreground">
-                        {step.status === 'running' ? stepDisplay.text : 'Output non ancora generato.'}
+                        {step.status === 'running' ? stepDisplay.text : 'Nessun output ancora.'}
                       </p>
                     )}
                     {step.error && <p className="text-sm text-destructive" role="alert" aria-live="assertive">{step.error}</p>}
@@ -1331,7 +1336,7 @@ export default function FunnelPagesToolPage() {
       fallback={(
         <PageShell width="workspace">
           <div className="py-10 text-sm text-muted-foreground" role="status" aria-live="polite" aria-atomic="true">
-            Caricamento tool Funnel Pages...
+            Caricamento HotLead Funnel...
           </div>
         </PageShell>
       )}

@@ -32,7 +32,7 @@ Piano esecutivo per risolvere i gap operativi emersi nell'audit API/LLM tooling,
 
 ### Implementation Phase 1
 
-- GOAL-001: Consolidare hardening pre-stream su route Meta Ads e Funnel Pages con fallback error mapping stabile.
+- GOAL-001: Consolidare hardening pre-stream su route Meta Ads e HotLead Funnel con fallback error mapping stabile.
 
 | Task     | Description | Completed | Date |
 | -------- | ----------- | --------- | ---- |

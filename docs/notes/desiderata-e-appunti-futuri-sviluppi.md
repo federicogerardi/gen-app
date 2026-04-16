@@ -88,6 +88,16 @@ Usare questo spazio quando un input e utile per orientare le prossime decisioni,
 - Owner proposto: LLM/Tooling + Platform + Research team.
 - Riferimento: https://dev.to/lord_magus/supercharging-my-vs-code-ai-agent-with-local-rag-25n8
 
+### Sistema news/changelog in-app per la dashboard
+
+- Contesto: gli utenti non hanno visibilita sulle novita rilasciate, sugli aggiornamenti in corso o su problemi noti; le comunicazioni avvengono fuori banda (chat, email) e non sono contestuali all'uso dell'app. Manca un canale dedicato e persistente per mantenere gli utenti informati senza interrompere il flusso di lavoro.
+- Ipotesi: introdurre un feed di news/changelog visibile nella dashboard, con flusso editoriale separato per ambiente prod e dev, che consenta al team di pubblicare aggiornamenti di release, novita di funzionalita, stati di avanzamento e manutenzioni pianificate direttamente in-app.
+- Impatto atteso: maggiore trasparenza verso gli utenti interni, riduzione delle richieste di supporto su funzionalita appena rilasciate, feedback loop piu rapido su nuove feature, possibilita di testare comunicazioni in dev prima di esporle in prod.
+- Dipendenze o vincoli noti: modello dati per news item (titolo, corpo, tipo, ambiente, data pubblicazione, autore), interfaccia admin per creazione/pubblicazione/archiviazione news, separazione esplicita prod/dev (es. tramite flag ambiente o endpoint dedicato), gestione stato lettura per utente (badge unread), policy di visibilita per ruolo, eventuale integrazione con CHANGELOG.md esistente come sorgente di verita per release note.
+- Segnali per promuovere a planning: definizione dell'UI di inserimento (admin) e di lettura (dashboard), decisione su storage (tabella DB vs file markdown versionato), allineamento su flusso editoriale e responsabilita di pubblicazione, bozza UX del widget in-dashboard approvata.
+- Data nota: 2026-04-16.
+- Owner proposto: Product + Frontend + Platform team.
+
 ## Temi promossi o chiusi
 
 ### Rilancio generazione da dettaglio artefatto

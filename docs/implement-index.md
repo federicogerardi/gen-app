@@ -2,6 +2,33 @@
 
 _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 
+## Aggiornamento sessione (2026-04-16 — Native login credentials + Google OAuth)
+
+- **Stato attuale**: `PLANNED`.
+- **Obiettivo**: introdurre autenticazione credentials admin-managed in coesistenza con il flusso Google OAuth esistente.
+- **Documentazione operativa migrata in docs/**:
+  - `docs/implementation/feature-native-login-credentials-google-oauth-plan-1.md`
+  - `docs/implementation/feature-native-login-credentials-google-oauth-implementation-plan-1.md`
+  - `docs/implementation/feature-native-login-credentials-google-oauth-execution-plan-1.md`
+  - `docs/implementation/feature-native-login-credentials-google-oauth-tracker-1.md`
+  - `docs/review/native-login-credentials-google-oauth-research-review-2026-04-16.md`
+  - `docs/prompts/native-login-credentials-google-oauth-implementation-prompt.md`
+- **Scope tecnico previsto**:
+  - aggiunta `passwordHash` nullable su `User` (retrocompatibile con utenti OAuth);
+  - endpoint/admin workflow per create/reset password con guard `requireAdminUser()`;
+  - estensione UI login/admin e matrice test di non-regressione auth/admin.
+
+## Aggiornamento sessione (2026-04-16 — Artifact detail export actions plan)
+
+- **Stato attuale**: `PLANNED`.
+- **Obiettivo**: introdurre nella pagina dettaglio artefatto le azioni `Copia testo`, `Scarica MD`, `Scarica DOCX` con logica lato client e without nuove route API.
+- **Documento piano**: `docs/implementation/feature-artifact-page-export-actions-plan-1.md`.
+- **Scope pianificato**:
+  - utility export (`src/lib/artifact-export.ts`) per naming, markdown e blob docx;
+  - integrazione client component azioni in `src/app/artifacts/[id]/page.tsx`;
+  - copertura test unit/integration dedicata al comportamento copy/download.
+- **Assunzione aperta da confermare**: `download in docs` interpretato come `download .docx`.
+
 ## Aggiornamento sessione (2026-04-16 — Funnel tool flow rationalization: PR-2 completata)
 
 - **Stato attuale**: `COMPLETATO`.
@@ -175,10 +202,10 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
   - Merge eseguito su `dev` tramite PR #21.
   - Documentazione contrattuale allineata su `docs/specifications/api-specifications.md`.
 
-- **Tooling generation optimization (Meta Ads + Funnel Pages)**: `COMPLETATO (PR-1..PR-6)`
+- **Tooling generation optimization (Meta Ads + HotLead Funnel)**: `COMPLETATO (PR-1..PR-6)`
   - Completati schema unificato input, prompt/runtime parity, normalizzazione output, SSE metadata additive, consolidamento route/error mapping e hardening finale.
-  - Standard output workflow tool allineato a `outputFormat: markdown` (Meta Ads + Funnel Pages).
-  - Esteso il flow Funnel Pages a pipeline upload-first: upload documento inline -> extraction fields -> generazione sequenziale `optin -> quiz -> vsl`.
+  - Standard output workflow tool allineato a `outputFormat: markdown` (Meta Ads + HotLead Funnel).
+  - Esteso il flow HotLead Funnel (workflow `funnel_pages`) a pipeline upload-first: upload documento inline -> extraction fields -> generazione sequenziale `optin -> quiz -> vsl`.
   - Follow-up 2026-04-14: arricchita la propagazione delle testimonianze estratte verso il briefing funnel con campi risultato e metriche misurabili.
   - Validazione finale locale aggiornata: `npm run lint`, `npm run typecheck`, `npm run test` (30/30 suite), `npm run build` tutti `PASS`.
   - File: docs/archive/tooling-generation-refactor-plan.md
@@ -343,7 +370,7 @@ Nota operativa: il track tooling generation e chiuso (`PR-1..PR-6` completate). 
   - Resta pending la validazione cross-device completa con checklist finale Sprint 2.
 
 #### Checklist finale Sprint 2 (pending)
-- Verifica viewport `320px`, `375px`, `768px`, `1024px`, `1280px` su pagine autenticate: dashboard progetto, lista artefatti, dettaglio artefatto, Meta Ads, Funnel Pages, Admin.
+- Verifica viewport `320px`, `375px`, `768px`, `1024px`, `1280px` su pagine autenticate: dashboard progetto, lista artefatti, dettaglio artefatto, Meta Ads, HotLead Funnel, Admin.
 - Verifica keyboard flow completo (Tab/Shift+Tab/Enter/Escape) su pagine autenticate: filtri, CTA principali e drawer admin.
 - Verifica focus visible su controlli interattivi principali e nessuna trap non voluta fuori dal drawer.
 - Verifica contrasto testi/badge/stati in condizioni default e hover/focus.
@@ -386,7 +413,7 @@ Nota operativa: il track tooling generation e chiuso (`PR-1..PR-6` completate). 
 ---
 
 **Prossimi step consigliati:**
-- Mantenere monitoraggio runtime su stream/error-rate dei tool Meta Ads e Funnel Pages dopo il refactor completato.
+- Mantenere monitoraggio runtime su stream/error-rate dei tool Meta Ads e HotLead Funnel dopo il refactor completato.
 - Estendere test E2E sui flussi reali auth/db per consolidare il gate di regressione end-to-end.
 - Mantenere coverage >80% sul perimetro attuale e introdurre guardrail anti-regressione nei PR check.
 - Estendere coverage su flussi E2E critici (login reale, generazione completa, gestione quota/admin).

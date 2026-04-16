@@ -2,14 +2,14 @@
 
 Versione: 1.4  
 Data: 2026-04-16  
-Ambito: UX + GUI + flow operativo del tool Funnel Pages  
+Ambito: UX + GUI + flow operativo del tool HotLead Funnel  
 Stato: Completato
 
 ---
 
 ## Obiettivo
 
-Razionalizzare la scansione del tool Funnel Pages per ridurre frizione, ambiguita delle CTA e click ridondanti nei percorsi:
+Razionalizzare la scansione del tool HotLead Funnel per ridurre frizione, ambiguita delle CTA e click ridondanti nei percorsi:
 
 - nuova generazione
 - ripresa da checkpoint
@@ -74,7 +74,7 @@ Quando devo creare o rilanciare rapidamente un funnel per un progetto, voglio tr
 
 ### Entry point supportati
 
-1. Tool Funnel Pages (creazione nuova)
+1. Tool HotLead Funnel (creazione nuova)
 2. Pagina dettaglio artefatto (rigenera)
 3. Pagina dettaglio artefatto o tool (riprendi da checkpoint)
 
@@ -171,7 +171,7 @@ Introdurre intent esplicito nel routing/payload view-model:
 
 ### Contratto UX del dettaglio artefatto (target PR-2)
 
-Il dettaglio artefatto Funnel deve risolvere l'azione di rilancio prima del redirect al tool, evitando che l'utente debba dedurre nel form se il percorso corretto sia `resume` o `regenerate`.
+Il dettaglio artefatto HotLead Funnel deve risolvere l'azione di rilancio prima del redirect al tool, evitando che l'utente debba dedurre nel form se il percorso corretto sia `resume` o `regenerate`.
 
 | Situazione nel dettaglio artefatto | CTA primaria | CTA secondaria | Routing richiesto |
 |---|---|---|---|
@@ -182,7 +182,7 @@ Il dettaglio artefatto Funnel deve risolvere l'azione di rilancio prima del redi
 Vincoli operativi:
 
 1. La CTA primaria nel dettaglio artefatto deve rappresentare il miglior next step effettivamente eseguibile.
-2. Il tool Funnel, all'apertura, non deve richiedere un click intermedio per determinare l'intent.
+2. Il tool HotLead Funnel, all'apertura, non deve richiedere un click intermedio per determinare l'intent.
 3. La semantica delle CTA deve restare coerente tra dettaglio artefatto e storico/lista artefatti.
 
 ---
@@ -215,7 +215,7 @@ Vincoli operativi:
 - Le attese che verificavano CTA recovery parallele sono state riallineate al nuovo principio di primaria unica.
 
 7. Relaunch intent-aware avviato su artifact detail e storico.
-- Il builder condiviso di relaunch ora supporta esplicitamente `resume` e `regenerate` per Funnel Pages.
+- Il builder condiviso di relaunch ora supporta esplicitamente `resume` e `regenerate` per HotLead Funnel.
 - Il dettaglio artefatto usa una primaria contestuale (`Riprendi dal checkpoint` oppure `Rigenera variante`) e una secondaria coerente quando disponibile.
 - Lo storico artefatti riusa lo stesso builder per mantenere etichette e routing allineati.
 
