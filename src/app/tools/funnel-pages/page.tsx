@@ -1,8 +1,9 @@
 'use client';
 
-import { Suspense, useRef, useState, type ReactNode } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import * as Dialog from '@radix-ui/react-dialog';
 import { useQuery } from '@tanstack/react-query';
 import { PageShell } from '@/components/layout/PageShell';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,6 +27,10 @@ type FunnelStepState = {
 };
 
 type Phase = 'idle' | 'uploading' | 'extracting' | 'review' | 'generating';
+
+type FunnelIntent = 'new' | 'resume' | 'regenerate';
+
+type FunnelUiState = 'draft-empty' | 'processing-briefing' | 'draft-ready' | 'prefilled-regenerate' | 'paused-with-checkpoint' | 'resume-needs-briefing' | 'running' | 'completed';
 
 type StreamResult = {
   content: string;
@@ -116,7 +121,7 @@ const EXTRACTION_LIFECYCLE_BADGE_CLASS: Record<ExtractionLifecycleState, string>
 };
 
 const EXTRACTION_LIFECYCLE_LABEL: Record<ExtractionLifecycleState, string> = {
-  idle: 'Nessuna estrazione',
+  idle: 'Aggiungi il documento per iniziare',
   in_progress: 'Estrazione in corso',
   completed_partial: 'Estrazione parziale',
   completed_full: 'Estrazione completa',
@@ -126,6 +131,14 @@ const EXTRACTION_LIFECYCLE_LABEL: Record<ExtractionLifecycleState, string> = {
 const RETRY_MAX_ATTEMPTS = 3;
 const RETRY_BASE_DELAY_MS = 900;
 const RETRY_JITTER_MS = 350;
+
+function parseIntent(value: string | null, fallback: FunnelIntent = 'new'): FunnelIntent {
+  if (value === 'new' || value === 'resume' || value === 'regenerate') {
+    return value;
+  }
+
+  return fallback;
+}
 
 function FieldLabel({ htmlFor, required = true, children }: FieldLabelProps) {
   return (
@@ -330,6 +343,8 @@ function parseStepFromArtifactInput(input: Record<string, unknown> | undefined):
 function FunnelPagesToolContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const sourceArtifactId = searchParams.get('sourceArtifactId');
+  const initialIntent = parseIntent(searchParams.get('intent'), sourceArtifactId ? 'regenerate' : 'new');
   const toneFromQuery = searchParams.get('tone');
   const initialTone = TONES.includes((toneFromQuery ?? '') as (typeof TONES)[number])
     ? (toneFromQuery as (typeof TONES)[number])
@@ -350,7 +365,11 @@ function FunnelPagesToolContent() {
   const [steps, setSteps] = useState<FunnelStepState[]>(initialSteps);
   const [retryNotice, setRetryNotice] = useState<string | null>(null);
   const [resumeNotice, setResumeNotice] = useState<string | null>(null);
-  const sourceArtifactId = searchParams.get('sourceArtifactId');
+  const [intent, setIntent] = useState<FunnelIntent>(initialIntent);
+  const [hasRecoveredCheckpoint, setHasRecoveredCheckpoint] = useState(false);
+  const [isAdvancedOpen, setIsAdvancedOpen] = useState(true);
+  const [isProjectDialogOpen, setIsProjectDialogOpen] = useState(false);
+  const autoResumeAttemptKeyRef = useRef<string | null>(null);
 
   const { data: projectsData } = useQuery({
     queryKey: ['projects'],
@@ -372,12 +391,15 @@ function FunnelPagesToolContent() {
     || modelsData?.models?.find((item: { default?: boolean }) => item.default)?.id
     || modelsData?.models?.[0]?.id
     || '';
+  const selectedProject = projectsData?.projects?.find((project) => project.id === projectId) ?? null;
 
   function updateStep(key: FunnelStepKey, patch: Partial<FunnelStepState>) {
     setSteps((prev) => prev.map((step) => (step.key === key ? { ...step, ...patch } : step)));
   }
 
   function resetAll() {
+    setIntent(sourceArtifactId && (intent === 'regenerate' || intent === 'resume') ? 'regenerate' : 'new');
+    setHasRecoveredCheckpoint(false);
     setPhase('idle');
     setUploadedFileName(null);
     setExtractionContext(null);
@@ -410,17 +432,15 @@ function FunnelPagesToolContent() {
       return;
     }
 
-    if (!model) {
-      setUploadError('Seleziona prima un modello.');
-      return;
-    }
-
+    setIntent(sourceArtifactId && (intent === 'regenerate' || intent === 'resume') ? 'regenerate' : 'new');
+    setHasRecoveredCheckpoint(false);
     setUploadError(null);
     setExtractionError(null);
     setRetryNotice(null);
     setResumeNotice(null);
     setExtractionContext(null);
     setLastUploadedText(null);
+    setSteps(initialSteps);
     setExtractionLifecycle('in_progress');
     setUploadedFileName(file.name);
     setPhase('uploading');
@@ -442,6 +462,14 @@ function FunnelPagesToolContent() {
 
       const uploadData = (await uploadRes.json()) as { data: { text: string } };
       setLastUploadedText(uploadData.data.text);
+
+      if (!model) {
+        setExtractionError('Upload completato, ma non e disponibile alcun modello per avviare l\'estrazione. Riprova tra pochi secondi.');
+        setExtractionLifecycle('failed_hard');
+        setPhase('idle');
+        return;
+      }
+
       setPhase('extracting');
 
       const rawOutput = await withRetry(async () => {
@@ -489,7 +517,7 @@ function FunnelPagesToolContent() {
     }
   }
 
-  async function handleResumeFromArtifacts() {
+  const handleResumeFromArtifacts = useCallback(async () => {
     if (!projectId) {
       setResumeNotice('Seleziona prima un progetto per riprendere una generazione.');
       return;
@@ -497,6 +525,7 @@ function FunnelPagesToolContent() {
 
     setResumeNotice(null);
     setRetryNotice(null);
+    setHasRecoveredCheckpoint(false);
 
     try {
       const response = await fetch(`/api/artifacts?projectId=${projectId}&limit=100`);
@@ -575,25 +604,56 @@ function FunnelPagesToolContent() {
       }
 
       if (!prioritizedExtraction && !hasRecoveredSteps) {
+        setHasRecoveredCheckpoint(false);
         setResumeNotice('Nessun checkpoint utile trovato per questo progetto.');
         return;
       }
 
+      if (!prioritizedExtraction && hasRecoveredSteps) {
+        setIntent('new');
+        setHasRecoveredCheckpoint(false);
+        setResumeNotice('Checkpoint parziale recuperato, ma manca il contesto estratto per riprendere. Carica di nuovo il briefing per rigenerare il funnel.');
+        return;
+      }
+
+      setIntent('resume');
+      setHasRecoveredCheckpoint(true);
       setResumeNotice('Checkpoint recuperato. Puoi riprendere dalla fase attuale.');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Errore durante il recupero del checkpoint.';
+      setHasRecoveredCheckpoint(false);
       setResumeNotice(message);
     }
-  }
+  }, [projectId, setResumeNotice, setRetryNotice, setHasRecoveredCheckpoint, setExtractionContext, setExtractionLifecycle, setPhase, setSteps, setIntent]);
 
   async function handleRegenerateFunnel() {
     if (!extractionContext || !projectId) {
       return;
     }
 
+    setIntent('regenerate');
+    setHasRecoveredCheckpoint(false);
     setSteps(initialSteps);
     await handleRunProcess();
   }
+
+  useEffect(() => {
+    if (intent !== 'resume' || !sourceArtifactId || !projectId) {
+      return;
+    }
+
+    if (phase === 'uploading' || phase === 'extracting' || running) {
+      return;
+    }
+
+    const attemptKey = `${projectId}:${sourceArtifactId}:${intent}`;
+    if (autoResumeAttemptKeyRef.current === attemptKey) {
+      return;
+    }
+
+    autoResumeAttemptKeyRef.current = attemptKey;
+    void handleResumeFromArtifacts();
+  }, [intent, sourceArtifactId, projectId, phase, running, handleResumeFromArtifacts]);
 
   async function handleRetryExtraction() {
     if (!projectId || !model || !lastUploadedText) {
@@ -745,6 +805,154 @@ function FunnelPagesToolContent() {
   const reviewContextPreview = extractionContext
     ? extractionContext.slice(0, 1200)
     : '';
+  const isBriefingProcessing = phase === 'uploading' || phase === 'extracting';
+  const hasExtractionReady = Boolean(extractionContext?.trim());
+  const hasCompletedSteps = steps.every((step) => step.status === 'done' && step.content.trim().length > 0);
+  const hasRecoveredSteps = steps.some((step) => step.artifactId || step.content.trim().length > 0);
+  const hasRecoveryData = hasRecoveredCheckpoint && (hasExtractionReady || hasRecoveredSteps);
+  const latestArtifactId = steps.find((step) => step.key === 'vsl' && step.artifactId)?.artifactId
+    ?? steps.find((step) => step.key === 'quiz' && step.artifactId)?.artifactId
+    ?? steps.find((step) => step.key === 'optin' && step.artifactId)?.artifactId
+    ?? null;
+
+  let uiState: FunnelUiState;
+  if (running) {
+    uiState = 'running';
+  } else if (isBriefingProcessing) {
+    uiState = 'processing-briefing';
+  } else if (hasCompletedSteps) {
+    uiState = 'completed';
+  } else if (!hasExtractionReady && hasRecoveredSteps && !hasRecoveredCheckpoint) {
+    uiState = 'resume-needs-briefing';
+  } else if (intent === 'resume' && hasRecoveryData) {
+    uiState = 'paused-with-checkpoint';
+  } else if (intent === 'regenerate' && Boolean(sourceArtifactId) && hasExtractionReady) {
+    uiState = 'prefilled-regenerate';
+  } else if (hasExtractionReady) {
+    uiState = 'draft-ready';
+  } else {
+    uiState = 'draft-empty';
+  }
+
+  const canRunGeneration = Boolean(projectId && model && hasExtractionReady);
+  const canResumeCheckpoint = Boolean(projectId && !running && !isBriefingProcessing);
+  const canRetryExtraction = Boolean(projectId && model && lastUploadedText && !running && !isBriefingProcessing);
+
+  const primaryAction = (() => {
+    if (uiState === 'processing-briefing') {
+      return {
+        label: phase === 'uploading' ? 'Caricamento in corso...' : 'Estrazione in corso...',
+        disabled: true,
+        onClick: undefined as (() => void) | undefined,
+      };
+    }
+
+    if (uiState === 'running') {
+      return {
+        label: 'Generazione in corso...',
+        disabled: true,
+        onClick: undefined as (() => void) | undefined,
+      };
+    }
+
+    if (uiState === 'paused-with-checkpoint') {
+      return {
+        label: 'Riprendi dal checkpoint',
+        disabled: !canRunGeneration,
+        onClick: handleRunProcess,
+      };
+    }
+
+    if (uiState === 'resume-needs-briefing') {
+      return {
+        label: 'Carica nuovo briefing',
+        disabled: !projectId,
+        onClick: () => fileInputRef.current?.click(),
+      };
+    }
+
+    if (uiState === 'prefilled-regenerate') {
+      return {
+        label: 'Rigenera ora',
+        disabled: !canRunGeneration,
+        onClick: handleRegenerateFunnel,
+      };
+    }
+
+    if (uiState === 'draft-ready') {
+      return {
+        label: 'Avvia generazione funnel',
+        disabled: !canRunGeneration,
+        onClick: handleRunProcess,
+      };
+    }
+
+    if (uiState === 'completed' && latestArtifactId) {
+      return {
+        label: 'Apri ultimo artefatto',
+        disabled: false,
+        onClick: () => router.push(`/artifacts/${latestArtifactId}`),
+      };
+    }
+
+    return {
+      label: 'Completa dati obbligatori',
+      disabled: true,
+      onClick: undefined as (() => void) | undefined,
+    };
+  })();
+
+  const secondaryActions: Array<{
+    label: string;
+    onClick: () => void;
+    disabled?: boolean;
+  }> = [];
+
+  if ((uiState === 'draft-empty' || uiState === 'resume-needs-briefing') && canResumeCheckpoint) {
+    secondaryActions.push({
+      label: 'Riprendi da checkpoint',
+      onClick: handleResumeFromArtifacts,
+    });
+  }
+
+  if ((uiState === 'draft-empty' || uiState === 'draft-ready') && canRetryExtraction && extractionLifecycle === 'failed_hard') {
+    secondaryActions.push({
+      label: 'Riprova estrazione',
+      onClick: handleRetryExtraction,
+    });
+  }
+
+  if (uiState === 'paused-with-checkpoint' && hasExtractionReady) {
+    secondaryActions.push({
+      label: 'Rigenera da zero',
+      onClick: handleRegenerateFunnel,
+    });
+  }
+
+  if (uiState === 'completed' && hasExtractionReady) {
+    secondaryActions.push({
+      label: 'Rigenera funnel',
+      onClick: handleRegenerateFunnel,
+    });
+  }
+
+  if (uiState !== 'processing-briefing' && uiState !== 'running' && (uiState !== 'draft-empty' || Boolean(projectId || uploadedFileName || extractionContext))) {
+    secondaryActions.push({
+      label: uiState === 'completed' ? 'Nuova generazione' : 'Ricomincia',
+      onClick: resetAll,
+    });
+  }
+
+  const actionSummary: Record<FunnelUiState, string> = {
+    'draft-empty': 'Completa il blocco progetto e briefing oppure recupera un checkpoint.',
+    'processing-briefing': 'Il briefing e in elaborazione.',
+    'draft-ready': 'Il contesto e pronto per lanciare la generazione.',
+    'prefilled-regenerate': 'Il tool e precompilato e puo rigenerare subito.',
+    'paused-with-checkpoint': 'Esiste un checkpoint riutilizzabile per questo funnel.',
+    'resume-needs-briefing': 'Gli output parziali ci sono, ma serve ricaricare il briefing.',
+    running: 'La generazione sta avanzando sugli step del funnel.',
+    completed: 'L output finale e pronto o puo essere rilanciato.',
+  };
 
   return (
     <PageShell width="workspace">
@@ -752,7 +960,7 @@ function FunnelPagesToolContent() {
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
             <h1 className="app-title text-3xl font-semibold text-slate-900">Generatore Pagine del Funnel</h1>
-            <p className="text-sm text-muted-foreground">Carica un documento di briefing e genera automaticamente optin, quiz e script VSL.</p>
+            <p className="text-sm text-muted-foreground">Seleziona progetto e briefing, regola le avanzate visibili e avvia il funnel.</p>
             {sourceArtifactId && (
               <p className="mt-2 text-xs text-muted-foreground">Prefill applicato da storico artefatti (ID: {sourceArtifactId}).</p>
             )}
@@ -765,92 +973,143 @@ function FunnelPagesToolContent() {
         <div className="grid gap-6 lg:grid-cols-2">
           <Card className="app-surface app-rise rounded-3xl">
             <CardHeader>
-              <CardTitle className="text-base">Input funnel</CardTitle>
-              <CardDescription>Form minimale: progetto, modello, tono di voce e documento di briefing.</CardDescription>
+              <CardTitle className="text-base">Setup funnel</CardTitle>
+              <CardDescription>Compila prima il blocco operativo, poi rifinisci il resto.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
               <div className="space-y-6">
                 <section className="space-y-4">
-                  <div className="space-y-1 pb-1 border-b border-black/10">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Setup</p>
-                    <p className="text-sm text-slate-700">Definisci il contesto operativo prima di avviare l&apos;estrazione del briefing.</p>
+                  <div className="flex items-center justify-between gap-3 border-b border-black/10 pb-2">
+                    <div className="space-y-1">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Blocco obbligatorio</p>
+                      <p className="text-base font-semibold text-slate-950">Progetto + briefing</p>
+                    </div>
+                    <Badge
+                      variant="outline"
+                      className={
+                        !projectId
+                          ? 'border-amber-300 bg-amber-100 text-amber-950'
+                          : uploadedFileName
+                            ? 'border-emerald-300 bg-emerald-100 text-emerald-950'
+                            : 'border-sky-300 bg-sky-100 text-sky-950'
+                      }
+                    >
+                      {!projectId ? 'Attende progetto' : uploadedFileName ? 'Pronto al lancio' : 'Attende briefing'}
+                    </Badge>
                   </div>
 
-                  <div className="space-y-4">
-                    <div className="space-y-1.5">
-                      <FieldLabel htmlFor="funnel-project-select">Progetto</FieldLabel>
-                      <Select value={projectId} onValueChange={setProjectId}>
-                        <SelectTrigger id="funnel-project-select" className="app-control" aria-label="Seleziona progetto">
-                          <SelectValue placeholder="Seleziona progetto" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {projectsData?.projects?.map((project) => (
-                            <SelectItem key={project.id} value={project.id}>{project.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                  <div className="grid gap-4 xl:grid-cols-[1fr_2fr]">
+                    <div className="min-w-0 space-y-4 rounded-2xl border border-black/10 bg-white/80 p-4 shadow-sm">
+                      <div className="space-y-1.5">
+                        <FieldLabel>Progetto</FieldLabel>
+                        <Dialog.Root open={isProjectDialogOpen} onOpenChange={setIsProjectDialogOpen}>
+                          <Dialog.Trigger asChild>
+                            <Button
+                              className="w-full min-w-0 max-w-full cursor-pointer justify-start overflow-hidden text-left"
+                              variant="outline"
+                              title={selectedProject?.name ?? undefined}
+                            >
+                              {selectedProject ? (
+                                <span className="block min-w-0 flex-1 truncate">{selectedProject.name}</span>
+                              ) : (
+                                <span className="block min-w-0 flex-1 truncate text-muted-foreground">Seleziona progetto</span>
+                              )}
+                            </Button>
+                          </Dialog.Trigger>
+                          <Dialog.Portal>
+                            <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50" />
+                            <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-96 max-h-96 -translate-x-1/2 -translate-y-1/2 rounded-lg border border-black/10 bg-white p-6 shadow-lg overflow-y-auto">
+                              <Dialog.Title className="text-lg font-semibold mb-4">Seleziona progetto</Dialog.Title>
+                              <Dialog.Description className="sr-only">Elenco di progetti disponibili per il new funnel</Dialog.Description>
+                              <div className="space-y-2">
+                                {projectsData?.projects?.map((project) => (
+                                  <button
+                                    key={project.id}
+                                    onClick={() => {
+                                      setProjectId(project.id);
+                                      setIsProjectDialogOpen(false);
+                                    }}
+                                    className={`w-full cursor-pointer px-3 py-2 text-left rounded-lg border transition-colors ${
+                                      projectId === project.id
+                                        ? 'border-blue-500 bg-blue-50 text-blue-900'
+                                        : 'border-transparent hover:bg-slate-100'
+                                    }`}
+                                  >
+                                    <span className="font-medium">{project.name}</span>
+                                  </button>
+                                ))}
+                              </div>
+                              <Dialog.Close asChild>
+                                <button className="absolute right-4 top-4 cursor-pointer text-muted-foreground hover:text-foreground">✕</button>
+                              </Dialog.Close>
+                            </Dialog.Content>
+                          </Dialog.Portal>
+                        </Dialog.Root>
+                      </div>
                     </div>
 
-                    <div className="space-y-1.5">
-                      <FieldLabel htmlFor="funnel-model-select">Modello</FieldLabel>
-                      <Select value={model} onValueChange={setManualModel}>
-                        <SelectTrigger id="funnel-model-select" className="app-control" aria-label="Modello LLM">
-                          <SelectValue placeholder="Seleziona modello" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {modelsData?.models?.map((item) => (
-                            <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    <div className="space-y-3 rounded-2xl border border-black/10 bg-white/80 p-4 shadow-sm">
+                      <div className="space-y-1.5">
+                        <FieldLabel htmlFor="funnel-file-input">Documento di briefing</FieldLabel>
+                        <p className="text-xs text-muted-foreground">.docx, .txt, .md</p>
+                      </div>
 
-                    <div className="space-y-1.5">
-                      <FieldLabel htmlFor="funnel-tone-select">Tono di voce</FieldLabel>
-                      <Select value={tone} onValueChange={(value) => setTone(value as (typeof TONES)[number])}>
-                        <SelectTrigger id="funnel-tone-select" className="app-control" aria-label="Tono di comunicazione">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {TONES.map((item) => (
-                            <SelectItem key={item} value={item}>{item}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <p className="text-xs leading-relaxed text-muted-foreground">{TONE_HINTS[tone]}</p>
-                    </div>
-                  </div>
-                </section>
+                      <input
+                        id="funnel-file-input"
+                        type="file"
+                        accept=".docx,.txt,.md,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown"
+                        className="block w-full cursor-pointer rounded-xl border border-black/10 bg-white/60 px-3 py-2 text-sm text-foreground outline-none transition-colors file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1 file:text-xs file:font-medium focus-visible:border-blue-500/60 focus-visible:ring-3 focus-visible:ring-blue-500/25 disabled:cursor-not-allowed disabled:bg-slate-100/80"
+                        onChange={handleFileChange}
+                        disabled={phase === 'uploading' || phase === 'extracting' || running || !projectId}
+                      />
 
-                <section className="space-y-4 border-t border-black/10 pt-5">
-                  <div className="space-y-1">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Briefing</p>
-                    <p className="text-sm text-slate-700">Carica il documento sorgente e verifica rapidamente che il file selezionato sia quello corretto.</p>
-                    <div className="pt-1">
                       <Badge variant="outline" className={EXTRACTION_LIFECYCLE_BADGE_CLASS[extractionLifecycle]}>
                         {EXTRACTION_LIFECYCLE_LABEL[extractionLifecycle]}
                       </Badge>
                     </div>
                   </div>
 
+                  <aside
+                    className={[
+                      'rounded-2xl border p-4 shadow-sm transition-colors',
+                      !projectId
+                        ? 'border-amber-300 bg-amber-50/90'
+                        : uploadedFileName
+                          ? 'border-emerald-300 bg-emerald-50/90'
+                          : 'border-sky-300 bg-sky-50/90',
+                    ].join(' ')}
+                    role="status"
+                    aria-live="polite"
+                  >
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Stato rapido</p>
+                    {!projectId && (
+                      <>
+                        <p className="mt-2 text-sm font-semibold text-amber-950">Seleziona prima il progetto</p>
+                        <p className="mt-1 text-xs leading-relaxed text-amber-900">L upload si attiva appena scegli il progetto nel campo qui accanto.</p>
+                      </>
+                    )}
+                    {projectId && !uploadedFileName && (
+                      <>
+                        <p className="mt-2 text-sm font-semibold text-sky-950">Progetto agganciato</p>
+                        <p className="mt-1 text-xs leading-relaxed text-sky-900">Ora carica il briefing per estrarre il contesto e sbloccare la CTA primaria.</p>
+                        <p className="mt-3 rounded-lg bg-white/70 px-3 py-2 text-xs text-slate-700">{selectedProject?.name ?? projectId}</p>
+                      </>
+                    )}
+                    {projectId && uploadedFileName && (
+                      <>
+                        <p className="mt-2 text-sm font-semibold text-emerald-950">Blocco pronto</p>
+                        <p className="mt-1 text-xs leading-relaxed text-emerald-900">Progetto e file sono allineati. Attendi l estrazione o prosegui con il funnel.</p>
+                        <div className="mt-3 space-y-2 text-xs text-slate-700">
+                          <p className="rounded-lg bg-white/70 px-3 py-2">Progetto: {selectedProject?.name ?? projectId}</p>
+                          <p className="rounded-lg bg-white/70 px-3 py-2">File: {uploadedFileName}</p>
+                        </div>
+                      </>
+                    )}
+                  </aside>
+                </section>
+
+                <section className="space-y-4 border-t border-black/10 pt-5">
                   <div className="space-y-3">
-                    <div className="space-y-2">
-                      <FieldLabel htmlFor="funnel-file-input">Documento di briefing</FieldLabel>
-                      <input
-                        id="funnel-file-input"
-                        type="file"
-                        accept=".docx,.txt,.md,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown"
-                        className="block w-full cursor-pointer rounded-xl border border-black/10 bg-white/60 px-3 py-2 text-sm text-foreground outline-none transition-colors file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1 file:text-xs file:font-medium focus-visible:border-blue-500/60 focus-visible:ring-3 focus-visible:ring-blue-500/25"
-                        onChange={handleFileChange}
-                        disabled={phase === 'uploading' || phase === 'extracting' || running || !projectId || !model}
-                      />
-                      <p className="text-xs text-muted-foreground">Formati supportati: .docx, .txt, .md</p>
-                    </div>
-
-                    {!projectId && <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-800">Seleziona prima un progetto per abilitare il caricamento.</p>}
-                    {projectId && !model && <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-800">Seleziona un modello per continuare.</p>}
-                    {uploadedFileName && <p className="rounded-xl bg-slate-100/80 px-3 py-2 text-xs text-slate-700">File selezionato: {uploadedFileName}</p>}
-
                     {(phase === 'uploading' || phase === 'extracting') && (
                       <div className="rounded-xl border border-black/10 bg-white/60 p-4 text-center" role="status" aria-live="polite" aria-atomic="true">
                         <p className="text-sm font-medium">{phase === 'uploading' ? 'Caricamento documento...' : 'Estrazione campi in corso...'}</p>
@@ -874,36 +1133,67 @@ function FunnelPagesToolContent() {
                         {resumeNotice}
                       </p>
                     )}
-
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleResumeFromArtifacts}
-                      disabled={!projectId || running || phase === 'uploading' || phase === 'extracting'}
-                      className="w-full"
-                    >
-                      Riprendi da checkpoint
-                    </Button>
-
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleRetryExtraction}
-                      disabled={!projectId || !model || !lastUploadedText || running || phase === 'uploading' || phase === 'extracting'}
-                      className="w-full"
-                    >
-                      Riprova estrazione
-                    </Button>
                   </div>
+                </section>
+
+                <section className="space-y-4 border-t border-black/10 pt-5">
+                  <details
+                    open={isAdvancedOpen}
+                    onToggle={(event) => setIsAdvancedOpen(event.currentTarget.open)}
+                    className="group rounded-2xl border border-sky-200 bg-sky-50/50 px-4 py-3 shadow-sm"
+                  >
+                    <summary className="cursor-pointer list-none text-sm font-medium text-slate-900">
+                      <span className="flex items-center justify-between gap-3">
+                        <span className="flex items-center gap-3">
+                          <span>Impostazioni avanzate</span>
+                          <span className="rounded-full bg-slate-900 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+                            {isAdvancedOpen ? 'Attive' : 'Chiuse'}
+                          </span>
+                        </span>
+                        <span className="text-xs text-muted-foreground">{isAdvancedOpen ? 'Nascondi' : 'Mostra'}</span>
+                      </span>
+                    </summary>
+
+                    <div className="mt-4 space-y-4">
+                      <div className="space-y-1.5">
+                        <FieldLabel htmlFor="funnel-model-select">Modello</FieldLabel>
+                        <Select value={model} onValueChange={setManualModel}>
+                          <SelectTrigger id="funnel-model-select" className="app-control" aria-label="Modello LLM">
+                            <SelectValue placeholder="Seleziona modello" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {modelsData?.models?.map((item) => (
+                              <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <FieldLabel htmlFor="funnel-tone-select">Tono di voce</FieldLabel>
+                        <Select value={tone} onValueChange={(value) => setTone(value as (typeof TONES)[number])}>
+                          <SelectTrigger id="funnel-tone-select" className="app-control" aria-label="Tono di comunicazione">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {TONES.map((item) => (
+                              <SelectItem key={item} value={item}>{item}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs leading-relaxed text-muted-foreground">{TONE_HINTS[tone]}</p>
+                      </div>
+                    </div>
+                  </details>
                 </section>
               </div>
 
-              {phase === 'review' && extractionContext && (
+              {hasExtractionReady && (
                 <>
                   <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4 space-y-3">
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">Contesto estratto</p>
-                      <Badge variant="secondary">{Math.ceil(extractionContext.length / 6)} token stimati</Badge>
+                      <Badge variant="secondary">{Math.ceil((extractionContext?.length ?? 0) / 6)} token stimati</Badge>
                     </div>
                     <p className="max-h-52 overflow-y-auto whitespace-pre-wrap rounded-lg border border-emerald-200/70 bg-white/70 p-3 text-sm text-foreground">
                       {reviewContextPreview}
@@ -921,32 +1211,68 @@ function FunnelPagesToolContent() {
                       onChange={(event) => setNotes(event.target.value)}
                     />
                   </div>
-
-                  <div className="flex items-center gap-3">
-                    <Button onClick={handleRunProcess} disabled={running || !projectId || !model} className="flex-1">
-                      {running ? 'Generazione in corso...' : 'Avvia generazione funnel'}
-                    </Button>
-                    <Button variant="outline" onClick={resetAll} disabled={running}>
-                      Ricomincia
-                    </Button>
-                  </div>
                 </>
               )}
 
-              {phase === 'generating' && !running && (
-                <div className="flex items-center gap-3">
-                  <Button variant="outline" className="flex-1" onClick={handleRegenerateFunnel} disabled={!extractionContext || !projectId}>
-                    Rigenera funnel
-                  </Button>
-                  <Button variant="outline" className="flex-1" onClick={resetAll}>
-                    Nuova generazione
-                  </Button>
+              <section className="space-y-4 border-t border-black/10 pt-5">
+                <div className="space-y-1">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Azione consigliata</p>
+                  <p className="text-sm text-slate-700">{actionSummary[uiState]}</p>
                 </div>
-              )}
+
+                <Button
+                  className="w-full"
+                  data-primary-action="true"
+                  onClick={primaryAction.onClick}
+                  disabled={primaryAction.disabled}
+                >
+                  {primaryAction.label}
+                </Button>
+
+                {secondaryActions.length > 0 && (
+                  <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                    {secondaryActions.map((action) => (
+                      <Button
+                        key={action.label}
+                        type="button"
+                        variant="outline"
+                        onClick={action.onClick}
+                        disabled={action.disabled}
+                        className="sm:flex-1"
+                      >
+                        {action.label}
+                      </Button>
+                    ))}
+                  </div>
+                )}
+              </section>
             </CardContent>
           </Card>
 
           <div className="space-y-4">
+            <details className="group rounded-3xl border border-black/10 bg-white/60 px-4 py-3 shadow-sm">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-medium text-slate-900 [&::-webkit-details-marker]:hidden">
+                <span>Come compilare il modulo</span>
+                <span className="text-xs text-muted-foreground group-open:hidden">Mostra</span>
+                <span className="hidden text-xs text-muted-foreground group-open:inline">Nascondi</span>
+              </summary>
+
+              <div className="mt-4 space-y-3 text-sm text-slate-700">
+                <div className="rounded-2xl border border-black/10 bg-slate-50/90 px-3 py-3">
+                  <p className="font-medium text-slate-900">1. Aggancia il contesto operativo</p>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Seleziona il progetto e carica subito il briefing: sono due azioni pensate per essere fatte in sequenza rapida.</p>
+                </div>
+                <div className="rounded-2xl border border-black/10 bg-slate-50/90 px-3 py-3">
+                  <p className="font-medium text-slate-900">2. Controlla le avanzate</p>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Modello e tono restano visibili per essere verificati subito, ma non bloccano il flusso di input.</p>
+                </div>
+                <div className="rounded-2xl border border-black/10 bg-slate-50/90 px-3 py-3">
+                  <p className="font-medium text-slate-900">3. Lancia l azione consigliata</p>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Usa la CTA primaria quando il contesto e pronto; le azioni secondarie servono solo come alternative.</p>
+                </div>
+              </div>
+            </details>
+
             {steps.map((step) => {
               const stepDisplay = formatArtifactContentForDisplay({
                 type: 'content',
