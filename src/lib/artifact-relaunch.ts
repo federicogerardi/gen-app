@@ -45,17 +45,6 @@ function buildArtifactIntentHref(payload: ArtifactRelaunchInput, intent: Artifac
   appendIfPresent(params, 'sourceArtifactId', payload.id);
   appendIfPresent(params, 'projectId', payload.projectId ?? null);
 
-  if (workflow === 'meta_ads') {
-    appendIfPresent(params, 'product', readString(inputRecord, 'product'));
-    appendIfPresent(params, 'audience', readString(inputRecord, 'audience'));
-    appendIfPresent(params, 'offer', readString(inputRecord, 'offer'));
-    appendIfPresent(params, 'objective', readString(inputRecord, 'objective'));
-    appendIfPresent(params, 'tone', readString(inputRecord, 'tone'));
-    appendIfPresent(params, 'angle', readString(inputRecord, 'angle'));
-
-    return `/tools/meta-ads?${params.toString()}`;
-  }
-
   if (workflow === 'funnel_pages') {
     params.set('intent', intent);
     appendIfPresent(params, 'tone', readString(inputRecord, 'tone'));

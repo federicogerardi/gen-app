@@ -13,13 +13,6 @@ import { PersonalTrendCard } from './PersonalTrendCard';
 
 const TOOL_ACTIONS = [
   {
-    title: 'Generatore Meta Ads',
-    description: 'Crea varianti ad copy Meta complete: hook, primary text, headline e CTA.',
-    href: '/tools/meta-ads',
-    cta: 'Apri tool',
-    tag: 'Campaign',
-  },
-  {
     title: 'Generatore Funnel Pages',
     description: 'Workflow multi-step: optin page, domande quiz e script VSL.',
     href: '/tools/funnel-pages',

@@ -43,7 +43,7 @@ describe('artifact relaunch', () => {
     })).toBe('/tools/funnel-pages?sourceArtifactId=art_funnel_2&projectId=proj_1&intent=regenerate&tone=professional');
   });
 
-  it('keeps meta ads relaunch mapped to a single regenerate action', () => {
+  it('returns no relaunch actions for meta ads artifacts', () => {
     const actions = buildArtifactRelaunchActions({
       id: 'art_meta_1',
       projectId: 'proj_1',
@@ -58,13 +58,14 @@ describe('artifact relaunch', () => {
       },
     });
 
-    expect(actions).toEqual([
-      {
-        href: '/tools/meta-ads?sourceArtifactId=art_meta_1&projectId=proj_1&product=Prodotto&audience=Audience&offer=Offerta&objective=lead+generation&tone=professional',
-        label: 'Rigenera variante',
-        intent: 'regenerate',
-        variant: 'primary',
+    expect(actions).toEqual([]);
+    expect(buildArtifactRelaunchHref({
+      id: 'art_meta_1',
+      projectId: 'proj_1',
+      workflowType: 'meta_ads',
+      input: {
+        workflowType: 'meta_ads',
       },
-    ]);
+    })).toBeNull();
   });
 });
