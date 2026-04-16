@@ -12,7 +12,7 @@ tags: [process, tracker, audit, remediation, security, quality, testing]
 
 ![Status: Completed](https://img.shields.io/badge/status-Completed-brightgreen)
 
-This tracker is the execution companion for docs/implementation/feature-audit-remediation-sequenced-1.md.
+This tracker is the execution companion for docs/archive/feature-audit-remediation-sequenced-1.md.
 It records baseline coverage, implementation progress, and evidence per task.
 
 ## 1. Tracking Rules
@@ -179,6 +179,6 @@ Evidence log:
 
 ## 6. Related Documents
 
-- docs/implementation/feature-audit-remediation-sequenced-1.md
+- docs/archive/feature-audit-remediation-sequenced-1.md
 - docs/review/feature-audit-remediation-gap-analysis-2026-04-12.md
 - docs/review/feature-audit-remediation-closure-2026-04-12.md

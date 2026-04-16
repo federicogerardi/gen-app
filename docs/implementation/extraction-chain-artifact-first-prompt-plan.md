@@ -142,16 +142,16 @@ Exit criteria:
 
 ### 10. File centrali da usare
 
-- [src/app/api/tools/extraction/generate/route.ts](src/app/api/tools/extraction/generate/route.ts)
-- [src/lib/llm/streaming.ts](src/lib/llm/streaming.ts)
-- [src/lib/llm/extraction-model-policy.ts](src/lib/llm/extraction-model-policy.ts)
-- [src/lib/llm/orchestrator.ts](src/lib/llm/orchestrator.ts)
-- [src/lib/llm/providers/openrouter.ts](src/lib/llm/providers/openrouter.ts)
-- [src/lib/tool-routes/guards.ts](src/lib/tool-routes/guards.ts)
-- [src/app/tools/funnel-pages/page.tsx](src/app/tools/funnel-pages/page.tsx)
-- [docs/review/extraction-model-policy-rollout-runbook-2026-04-12.md](docs/review/extraction-model-policy-rollout-runbook-2026-04-12.md)
-- [docs/implementation/feature-extraction-chain-hardening-plan-1.md](docs/implementation/feature-extraction-chain-hardening-plan-1.md)
-- [docs/implement-index.md](docs/implement-index.md)
+- [src/app/api/tools/extraction/generate/route.ts](../../src/app/api/tools/extraction/generate/route.ts)
+- [src/lib/llm/streaming.ts](../../src/lib/llm/streaming.ts)
+- [src/lib/llm/extraction-model-policy.ts](../../src/lib/llm/extraction-model-policy.ts)
+- [src/lib/llm/orchestrator.ts](../../src/lib/llm/orchestrator.ts)
+- [src/lib/llm/providers/openrouter.ts](../../src/lib/llm/providers/openrouter.ts)
+- [src/lib/tool-routes/guards.ts](../../src/lib/tool-routes/guards.ts)
+- [src/app/tools/funnel-pages/page.tsx](../../src/app/tools/funnel-pages/page.tsx)
+- [docs/review/extraction-model-policy-rollout-runbook-2026-04-12.md](../review/extraction-model-policy-rollout-runbook-2026-04-12.md)
+- [docs/implementation/feature-extraction-chain-hardening-plan-1.md](./feature-extraction-chain-hardening-plan-1.md)
+- [docs/implement-index.md](../implement-index.md)
 
 ### 11. Verification
 

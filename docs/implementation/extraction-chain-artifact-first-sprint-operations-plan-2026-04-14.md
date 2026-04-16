@@ -8,7 +8,7 @@ Rendere eseguibile il track artifact-first con operazioni sprint time-boxed, man
 - nessun breaking change al contratto errori API `{ error: { code, message } }`
 - priorita a output utile persistito rispetto a stop hard non necessari
 
-Questo documento e il layer operativo del piano sorgente `docs/implementation/plan-extractionChainArtifactFirst.prompt.md`.
+Questo documento e il layer operativo del piano sorgente `docs/implementation/extraction-chain-artifact-first-prompt-plan.md`.
 
 ## Operative Rules
 
@@ -164,7 +164,7 @@ Exit sprint:
 
 ## Related Documents
 
-- docs/implementation/plan-extractionChainArtifactFirst.prompt.md
+- docs/implementation/extraction-chain-artifact-first-prompt-plan.md
 - docs/implementation/feature-extraction-chain-artifact-first-tracker-1.md
 - docs/implementation/feature-extraction-chain-hardening-plan-1.md
 - docs/review/extraction-model-policy-rollout-runbook-2026-04-12.md

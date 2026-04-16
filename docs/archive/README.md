@@ -21,3 +21,5 @@ Contenuti archiviati:
 - `feature-quality-audit-resolution-1.md`: piano esecutivo del track quality-audit (4 fasi, 15 finding), completato 2026-04-11.
 - `feature-quality-audit-resolution-tracker-1.md`: tracker operativo del medesimo track — tutte le fasi Done.
 - `feature-quality-audit-resolution-sprint-ops-1.md`: runbook sessioni granulari del track quality-audit — track chiuso.
+- `feature-audit-remediation-sequenced-1.md`: piano esecutivo audit remediation sequenziale (TASK-001..TASK-020), completato e consolidato in closure report 2026-04-12.
+- `feature-audit-remediation-sequenced-tracker-1.md`: tracker storico del track audit remediation sequenziale, chiuso post-merge PR #19 su `dev`.

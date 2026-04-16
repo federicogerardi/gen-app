@@ -1,8 +1,8 @@
 # GUI Refactoring Plan: UX Moderna e Funzionale
 
-Versione: 1.0  
-Data: 2026-04-08  
-Input di partenza: [docs/ux-strategy.md](docs/ux-strategy.md)  
+Versione: 1.0
+Data: 2026-04-08
+Input di partenza: [ux-strategy.md](ux-strategy.md)
 Target utenti: SEO Specialist, MediaBuyer
 
 Stato avanzamento implementazione:

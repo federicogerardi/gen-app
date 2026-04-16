@@ -11,7 +11,7 @@ tags: [review, closure, audit, security, quality, testing]
 
 ## Summary
 
-- Scope completed: TASK-001..TASK-020 from docs/implementation/feature-audit-remediation-sequenced-1.md.
+- Scope completed: TASK-001..TASK-020 from docs/archive/feature-audit-remediation-sequenced-1.md.
 - Validation completed: lint, typecheck, unit+integration suite, e2e suite.
 - Branch context: feat/audit-remediation-session-1.
 - Base commit at closure start: 7059c18.

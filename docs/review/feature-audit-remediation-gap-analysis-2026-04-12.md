@@ -10,7 +10,7 @@ tags: [review, gap-analysis, security, quality, testing]
 
 # Scope
 
-Compared plan tasks TASK-001..TASK-020 from docs/implementation/feature-audit-remediation-sequenced-1.md with current implementation in:
+Compared plan tasks TASK-001..TASK-020 from docs/archive/feature-audit-remediation-sequenced-1.md with current implementation in:
 - src/lib/env.ts
 - src/app/api/artifacts/[id]/route.ts
 - src/app/api/cron/cleanup-stale-artifacts/route.ts
@@ -109,5 +109,5 @@ High-risk open gaps:
 
 # Artifacts Produced
 
-- docs/implementation/feature-audit-remediation-sequenced-tracker-1.md
+- docs/archive/feature-audit-remediation-sequenced-tracker-1.md
 - docs/review/feature-audit-remediation-gap-analysis-2026-04-12.md

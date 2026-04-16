@@ -80,7 +80,7 @@ Status legend:
   - ✅ Escalation logic fixed: soft_accept in text mode stops escalation (returns 200, not 503)
   - ✅ DB persistence fixed: HTTP status codes now synchronized with log state (soft_accept → 200 → DB success)
   - ✅ Documentation updated: API spec, hardening tracker, hl-funnel schema, implement-index
-  - ✅ Completion report created: `docs/closure/text-mode-extraction-completion-2026-04-14.md`
+  - ✅ Completion evidence consolidated in `docs/implement-index.md` and `docs/implementation/feature-extraction-chain-hardening-plan-1.md`
   - **Status**: Text-mode extraction stable and production-ready; all 16 TASK items now COMPLETE; ready for production KPI measurement
 
 ## 4. Current Phase Status
