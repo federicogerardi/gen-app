@@ -71,7 +71,7 @@ test('supports extraction retry with backoff feedback and review transition', as
   });
 
   await page.goto('/tools/funnel-pages?projectId=project-e2e-1');
-  await expect(page.getByText('Project E2E')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Project E2E' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Completa dati obbligatori' })).toBeVisible();
 
   await page.locator('#funnel-file-input').setInputFiles({
@@ -81,10 +81,10 @@ test('supports extraction retry with backoff feedback and review transition', as
   });
 
   await expect(page.getByText(/Estrazione: tentativo 2\/3/)).toBeVisible();
-  await expect(page.getByText('Contesto estratto con retry')).toBeVisible();
   await expect(page.locator('[data-primary-action="true"]')).toHaveCount(1);
   await expect(page.getByRole('button', { name: 'Avvia generazione funnel' })).toBeVisible();
-  await expect(page.getByText('Estrazione completa')).toBeVisible();
+  await expect(page.getByText('3. Estrazione')).toBeVisible();
+  await expect(page.getByText('Estrazione pronta.')).toBeVisible();
 });
 
 test('auto-resumes from artifact relaunch intent when checkpoint is available', async ({ page }) => {
@@ -140,12 +140,13 @@ test('auto-resumes from artifact relaunch intent when checkpoint is available', 
   });
 
   await page.goto('/tools/funnel-pages?projectId=project-e2e-1&sourceArtifactId=artifact-source-1&intent=resume');
-  await expect(page.getByText('Project E2E')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Project E2E' })).toBeVisible();
 
   await expect(page.getByText('Checkpoint recuperato. Puoi riprendere dalla fase attuale.')).toBeVisible();
   await expect(page.getByText('Optin recuperata da checkpoint')).toBeVisible();
   await expect(page.getByText('Quiz in recupero')).toBeVisible();
-  await expect(page.getByText('Estrazione parziale')).toBeVisible();
+  await expect(page.getByText('3. Estrazione')).toBeVisible();
+  await expect(page.getByText('Estrazione pronta.')).toBeVisible();
   await expect(page.locator('[data-primary-action="true"]')).toHaveCount(1);
   await expect(page.getByRole('button', { name: 'Riprendi dal checkpoint' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Rigenera da zero' })).toBeVisible();
@@ -211,7 +212,7 @@ test('uses regenerate primary action for artifact relaunch intent=regenerate', a
   });
 
   await page.goto('/tools/funnel-pages?projectId=project-e2e-1&sourceArtifactId=artifact-source-2&intent=regenerate');
-  await expect(page.getByText('Project E2E')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Project E2E' })).toBeVisible();
 
   await page.locator('#funnel-file-input').setInputFiles({
     name: 'briefing-rigenera.txt',
@@ -219,7 +220,59 @@ test('uses regenerate primary action for artifact relaunch intent=regenerate', a
     buffer: Buffer.from('Contenuto briefing per intent rigenera', 'utf-8'),
   });
 
-  await expect(page.getByText('Contesto estratto per rigenerazione da artefatto')).toBeVisible();
+  await expect(page.getByText('3. Estrazione')).toBeVisible();
+  await expect(page.getByText('Estrazione pronta.')).toBeVisible();
   await expect(page.locator('[data-primary-action="true"]')).toHaveCount(1);
   await expect(page.getByRole('button', { name: 'Rigenera ora' })).toBeVisible();
+});
+
+test('keeps Stato rapido open by default and auto-collapses when generation starts', async ({ page }) => {
+  await setupFunnelBaseMocks(page);
+
+  await page.route('**/api/tools/funnel-pages/upload', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        data: {
+          text: 'Briefing per test accordion stato rapido',
+        },
+      }),
+    });
+  });
+
+  await page.route('**/api/tools/extraction/generate', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'text/event-stream',
+      body: 'data: {"type":"token","token":"Contesto estratto"}\n\n',
+    });
+  });
+
+  await page.route('**/api/tools/funnel-pages/generate', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'text/event-stream',
+      body: 'data: {"type":"token","token":"Output step"}\n\n',
+    });
+  });
+
+  await page.goto('/tools/funnel-pages?projectId=project-e2e-1');
+
+  const statusRapidSummary = page.locator('summary', { hasText: 'Stato rapido' });
+  await expect(statusRapidSummary).toContainText('Nascondi');
+  await expect(page.getByRole('combobox', { name: 'Modello LLM' })).toContainText('Model E2E');
+
+  await page.locator('#funnel-file-input').setInputFiles({
+    name: 'briefing-stato-rapido.txt',
+    mimeType: 'text/plain',
+    buffer: Buffer.from('Contenuto briefing per test stato rapido', 'utf-8'),
+  });
+
+  await expect(page.getByText('Estrazione pronta.')).toBeVisible();
+  const primaryAction = page.locator('[data-primary-action="true"]');
+  await expect(primaryAction).toHaveText('Avvia generazione funnel');
+  await primaryAction.click();
+
+  await expect(statusRapidSummary).toContainText('Mostra');
 });

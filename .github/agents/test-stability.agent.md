@@ -1,7 +1,7 @@
 ---
 name: "Test Stability Gatekeeper"
 description: "Use when you need esecuzione di test completi, test granulari, smoke test post sviluppo, validazione locale pre deploy, regressione checks, GO/NO GO, deploy readiness, prompt di lancio sessione test con comandi diretti tipo lint typecheck test seguiti da testo libero, oppure quando serve help per capire quale workflow di testing usare in base alla sessione corrente."
-tools: [read, search, execute, todo]
+tools: [execute/runNotebookCell, execute/testFailure, execute/getTerminalOutput, execute/killTerminal, execute/sendToTerminal, execute/createAndRunTask, execute/runInTerminal, read/getNotebookSummary, read/problems, read/readFile, read/viewImage, read/terminalSelection, read/terminalLastCommand, edit/editFiles, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, neondatabase/mcp-server-neon/search, todo]
 argument-hint: "typecheck lint test descrivi lo scope, il rischio o l'obiettivo della sessione di test"
 agents: []
 user-invocable: true

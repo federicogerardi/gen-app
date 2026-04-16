@@ -13,7 +13,7 @@
 graph TB
     subgraph Browser["🌐 Browser (React 19 + shadcn/ui)"]
         Dashboard["Dashboard"]
-        FormUI["Tool Pages: Meta Ads / Funnel Pages"]
+        FormUI["Tool Pages: Meta Ads / HotLead Funnel"]
         StreamDisplay["Streaming Display"]
         AdminPanel["Admin Panel"]
     end
@@ -210,7 +210,7 @@ graph TD
 ```mermaid
 graph TD
     A["User Lands on Dashboard"] -->|Apri Meta Ads| C["Page Form: Meta Ads Parameters"]
-    A -->|Apri Funnel Pages| D["Page Form: Funnel Briefing"]
+    A -->|Apri HotLead Funnel| D["Page Form: Funnel Briefing"]
 
     C -->|Fill Product + Audience + Offer| F["Select Model"]
     D -->|Fill Product + Audience + Promise| F
