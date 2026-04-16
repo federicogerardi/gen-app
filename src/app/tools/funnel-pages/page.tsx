@@ -970,7 +970,7 @@ function FunnelPagesToolContent() {
           </Button>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
           <Card className="app-surface app-rise rounded-3xl">
             <CardHeader>
               <CardTitle className="text-base">Setup</CardTitle>
@@ -998,74 +998,76 @@ function FunnelPagesToolContent() {
                     </Badge>
                   </div>
 
-                  <div className="grid gap-4 xl:grid-cols-[1fr_2fr]">
-                    <div className="min-w-0 space-y-4 rounded-2xl border border-black/10 bg-white/80 p-4 shadow-sm">
-                      <div className="space-y-1.5">
-                        <FieldLabel>Progetto</FieldLabel>
-                        <Dialog.Root open={isProjectDialogOpen} onOpenChange={setIsProjectDialogOpen}>
-                          <Dialog.Trigger asChild>
-                            <Button
-                              className="w-full min-w-0 max-w-full cursor-pointer justify-start overflow-hidden text-left"
-                              variant="outline"
-                              title={selectedProject?.name ?? undefined}
-                            >
-                              {selectedProject ? (
-                                <span className="block min-w-0 flex-1 truncate">{selectedProject.name}</span>
-                              ) : (
-                                <span className="block min-w-0 flex-1 truncate text-muted-foreground">Scegli un progetto</span>
-                              )}
-                            </Button>
-                          </Dialog.Trigger>
-                          <Dialog.Portal>
-                            <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50" />
-                            <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-96 max-h-96 -translate-x-1/2 -translate-y-1/2 rounded-lg border border-black/10 bg-white p-6 shadow-lg overflow-y-auto">
-                              <Dialog.Title className="text-lg font-semibold mb-4">Scegli un progetto</Dialog.Title>
-                              <Dialog.Description className="sr-only">Elenco progetti disponibili per il funnel</Dialog.Description>
-                              <div className="space-y-2">
-                                {projectsData?.projects?.map((project) => (
-                                  <button
-                                    key={project.id}
-                                    onClick={() => {
-                                      setProjectId(project.id);
-                                      setIsProjectDialogOpen(false);
-                                    }}
-                                    className={`w-full cursor-pointer px-3 py-2 text-left rounded-lg border transition-colors ${
-                                      projectId === project.id
-                                        ? 'border-blue-500 bg-blue-50 text-blue-900'
-                                        : 'border-transparent hover:bg-slate-100'
-                                    }`}
-                                  >
-                                    <span className="font-medium">{project.name}</span>
-                                  </button>
-                                ))}
-                              </div>
-                              <Dialog.Close asChild>
-                                <button className="absolute right-4 top-4 cursor-pointer text-muted-foreground hover:text-foreground">✕</button>
-                              </Dialog.Close>
-                            </Dialog.Content>
-                          </Dialog.Portal>
-                        </Dialog.Root>
-                      </div>
-                    </div>
-
-                    <div className="space-y-3 rounded-2xl border border-black/10 bg-white/80 p-4 shadow-sm">
-                      <div className="space-y-1.5">
-                        <FieldLabel htmlFor="funnel-file-input">Briefing</FieldLabel>
-                        <p className="text-xs text-muted-foreground">.docx, .txt, .md</p>
+                  <div className="rounded-2xl border border-black/10 bg-white/80 p-4 shadow-sm">
+                    <div className="grid gap-4 xl:grid-cols-[1fr_2fr]">
+                      <div className="min-w-0 space-y-4">
+                        <div className="space-y-1.5">
+                          <FieldLabel>Progetto</FieldLabel>
+                          <Dialog.Root open={isProjectDialogOpen} onOpenChange={setIsProjectDialogOpen}>
+                            <Dialog.Trigger asChild>
+                              <Button
+                                className="w-full min-w-0 max-w-full cursor-pointer justify-start overflow-hidden text-left"
+                                variant="outline"
+                                title={selectedProject?.name ?? undefined}
+                              >
+                                {selectedProject ? (
+                                  <span className="block min-w-0 flex-1 truncate">{selectedProject.name}</span>
+                                ) : (
+                                  <span className="block min-w-0 flex-1 truncate text-muted-foreground">Scegli un progetto</span>
+                                )}
+                              </Button>
+                            </Dialog.Trigger>
+                            <Dialog.Portal>
+                              <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50" />
+                              <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-96 max-h-96 -translate-x-1/2 -translate-y-1/2 rounded-lg border border-black/10 bg-white p-6 shadow-lg overflow-y-auto">
+                                <Dialog.Title className="text-lg font-semibold mb-4">Scegli un progetto</Dialog.Title>
+                                <Dialog.Description className="sr-only">Elenco progetti disponibili per il funnel</Dialog.Description>
+                                <div className="space-y-2">
+                                  {projectsData?.projects?.map((project) => (
+                                    <button
+                                      key={project.id}
+                                      onClick={() => {
+                                        setProjectId(project.id);
+                                        setIsProjectDialogOpen(false);
+                                      }}
+                                      className={`w-full cursor-pointer px-3 py-2 text-left rounded-lg border transition-colors ${
+                                        projectId === project.id
+                                          ? 'border-blue-500 bg-blue-50 text-blue-900'
+                                          : 'border-transparent hover:bg-slate-100'
+                                      }`}
+                                    >
+                                      <span className="font-medium">{project.name}</span>
+                                    </button>
+                                  ))}
+                                </div>
+                                <Dialog.Close asChild>
+                                  <button className="absolute right-4 top-4 cursor-pointer text-muted-foreground hover:text-foreground">✕</button>
+                                </Dialog.Close>
+                              </Dialog.Content>
+                            </Dialog.Portal>
+                          </Dialog.Root>
+                        </div>
                       </div>
 
-                      <input
-                        id="funnel-file-input"
-                        type="file"
-                        accept=".docx,.txt,.md,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown"
-                        className="block w-full cursor-pointer rounded-xl border border-black/10 bg-white/60 px-3 py-2 text-sm text-foreground outline-none transition-colors file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1 file:text-xs file:font-medium focus-visible:border-blue-500/60 focus-visible:ring-3 focus-visible:ring-blue-500/25 disabled:cursor-not-allowed disabled:bg-slate-100/80"
-                        onChange={handleFileChange}
-                        disabled={phase === 'uploading' || phase === 'extracting' || running || !projectId}
-                      />
+                      <div className="space-y-3 xl:border-l xl:border-black/10 xl:pl-4">
+                        <div className="space-y-1.5">
+                          <FieldLabel htmlFor="funnel-file-input">Briefing</FieldLabel>
+                          <p className="text-xs text-muted-foreground">.docx, .txt, .md</p>
+                        </div>
 
-                      <Badge variant="outline" className={EXTRACTION_LIFECYCLE_BADGE_CLASS[extractionLifecycle]}>
-                        {EXTRACTION_LIFECYCLE_LABEL[extractionLifecycle]}
-                      </Badge>
+                        <input
+                          id="funnel-file-input"
+                          type="file"
+                          accept=".docx,.txt,.md,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown"
+                          className="block w-full cursor-pointer rounded-xl border border-black/10 bg-white/60 px-3 py-2 text-sm text-foreground outline-none transition-colors file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1 file:text-xs file:font-medium focus-visible:border-blue-500/60 focus-visible:ring-3 focus-visible:ring-blue-500/25 disabled:cursor-not-allowed disabled:bg-slate-100/80"
+                          onChange={handleFileChange}
+                          disabled={phase === 'uploading' || phase === 'extracting' || running || !projectId}
+                        />
+
+                        <Badge variant="outline" className={EXTRACTION_LIFECYCLE_BADGE_CLASS[extractionLifecycle]}>
+                          {EXTRACTION_LIFECYCLE_LABEL[extractionLifecycle]}
+                        </Badge>
+                      </div>
                     </div>
                   </div>
 
