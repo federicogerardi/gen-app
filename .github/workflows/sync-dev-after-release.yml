@@ -12,7 +12,6 @@ permissions:
 concurrency:
   group: sync-dev-after-release
   cancel-in-progress: false
-
 jobs:
   sync-dev:
     name: Reset dev to main
@@ -93,5 +92,4 @@ jobs:
             echo "::error::Failed to push synced dev branch. Check workflow token write permissions and whether dev allows force-push from GitHub Actions."
             exit 1
           fi
-
           echo "✅ dev reset to main successfully."

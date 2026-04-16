@@ -43,7 +43,6 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
   - Nessuna modifica ai test integration di auth/ownership/rate-limit/error-code.
   - Strategia confermata: rigidita alta sui contratti sicurezza, elasticita controllata su copy e wording.
 - **Riferimento review**: `docs/code-review/2026-04-15-test-suite-security-balance-review.md`.
-
 ## Aggiornamento sessione (2026-04-15 — Hotfix: stream deadline funnel-pages)
 
 - **Root cause identificata in produzione**: artefatto con id `cmnzviexu000004ib6p23z621` restava in stato `generating` a frontend completato. Causa confermata da runtime log Vercel: invocazione `POST /api/tools/funnel-pages/generate` con durata `300001ms`, corrispondente al kill hard del runtime Vercel a 300s; la persistenza terminale DB saltava per interruzione forzata del processo Node prima del `db.artifact.update(status: completed|failed)`.
