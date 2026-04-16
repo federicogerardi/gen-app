@@ -10,7 +10,6 @@ import { RuntimeStatusBadge } from './RuntimeStatusBadge';
 import { NAVBAR_WIDTH_CLASS } from './shell-width';
 
 const toolLinks = [
-  { href: '/tools/meta-ads', label: 'Meta Ads' },
   { href: '/tools/funnel-pages', label: 'Funnel Pages' },
 ];
 

@@ -48,6 +48,16 @@ describe('Navbar', () => {
     expect(screen.getByRole('link', { name: 'Storico' })).toHaveAttribute('href', '/artifacts');
   });
 
+  it('shows only Funnel Pages inside tools navigation', () => {
+    render(<Navbar />);
+
+    const desktopNavigation = screen.getAllByRole('list', { name: 'Sezioni applicazione' })[0];
+    fireEvent.click(within(desktopNavigation).getByText('Tools'));
+
+    expect(screen.getByRole('link', { name: 'Funnel Pages' })).toHaveAttribute('href', '/tools/funnel-pages');
+    expect(screen.queryByRole('link', { name: 'Meta Ads' })).not.toBeInTheDocument();
+  });
+
   it('marks Projects as active on project routes', () => {
     mockUsePathname.mockReturnValue('/dashboard/projects/proj_1');
     render(<Navbar />);
@@ -73,6 +83,10 @@ describe('Navbar', () => {
     expect(mobileBadge).toHaveTextContent('v0.1.0');
     expect(mobileNavigation.getByRole('link', { name: 'Progetti' })).toHaveAttribute('href', '/dashboard/projects');
     expect(mobileNavigation.getByRole('link', { name: 'Storico' })).toHaveAttribute('href', '/artifacts');
+
+    fireEvent.click(mobileNavigation.getByText('Tools'));
+    expect(mobileNavigation.getByRole('link', { name: 'Funnel Pages' })).toHaveAttribute('href', '/tools/funnel-pages');
+    expect(mobileNavigation.queryByRole('link', { name: 'Meta Ads' })).not.toBeInTheDocument();
   });
 
   it('shows textual runtime label in desktop user area for non-production', () => {
