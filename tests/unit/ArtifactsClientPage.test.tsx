@@ -87,20 +87,17 @@ describe('ArtifactsClientPage', () => {
       data: {
         items: [
           {
-            id: 'art_meta',
+            id: 'art_funnel',
             projectId: 'p1',
             project: { id: 'p1', name: 'Progetto A' },
             type: 'content',
-            workflowType: 'meta_ads',
+            workflowType: 'funnel_pages',
             model: 'model-a',
             input: {
-              product: 'Prodotto',
-              audience: 'Audience',
-              offer: 'Offerta',
-              objective: 'lead generation',
+              workflowType: 'funnel_pages',
               tone: 'professional',
             },
-            content: 'meta',
+            content: 'funnel',
             status: 'completed',
             inputTokens: 10,
             outputTokens: 20,
@@ -128,6 +125,6 @@ describe('ArtifactsClientPage', () => {
 
     render(<ArtifactsClientPage projects={[]} />);
 
-    expect(screen.getAllByRole('button', { name: /Rigenera variante da artefatto/ })).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: /Rigenera variante/ })).toHaveLength(1);
   });
 });
