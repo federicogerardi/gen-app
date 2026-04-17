@@ -1,6 +1,6 @@
 ---
 goal: Master Index - Navigation hub for entire tool cloning documentation library
-version: 1.6
+version: 1.7
 date_created: 2026-04-17
 date_updated: 2026-04-18
 status: Active
@@ -185,12 +185,21 @@ Prima di dichiarare la libreria docs "GO", chiudere questi gap minimi:
 
 ---
 
-### Prepared Tool Instances
+### Prepared Tool Instances (Templates vuoti)
 
 | Document | Purpose |
-|----------|---------|
-| [tool-cloning-nextland-blueprint.md](tool-cloning-nextland-blueprint.md) | Prefilled technical blueprint for cloning NextLand from HLF, now aligned to implemented as-is state |
-| [tool-cloning-nextland-operational-checklist.md](tool-cloning-nextland-operational-checklist.md) | Prefilled operational checklist for NextLand implementation and review, now aligned to implemented as-is state |
+|----------|--------|
+| [tool-cloning-blueprint-template.md](tool-cloning-blueprint-template.md) | Template vuoto per blueprint tecnico di un nuovo tool clone |
+| [tool-cloning-operational-checklist-template.md](tool-cloning-operational-checklist-template.md) | Template vuoto per checklist operativa di un nuovo tool clone |
+
+---
+
+### Implemented Tool Instances (Riferimento demo implementate)
+
+| Document | Tool | Status | Purpose |
+|----------|------|--------|---------|
+| [tool-cloning-nextland-blueprint.md](tool-cloning-nextland-blueprint.md) | NextLand | Implemented | Blueprint tecnico — riferimento per demo clonate da HLF |
+| [tool-cloning-nextland-operational-checklist.md](tool-cloning-nextland-operational-checklist.md) | NextLand | Implemented | Checklist operativa — riferimento per demo clonate da HLF |
 
 ---
 

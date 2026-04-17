@@ -13,7 +13,7 @@ Documento di preparazione e allineamento operativo per il clone NextLand.
 
 Scopo: usare HotLeadFunnel come reference implementation per costruire un tool con upload + extraction, due step generativi e capability di resume, retry e quota per step.
 
-Stato corrente: implementazione core completata (backend, prompt layer, UI, resume/retry, relaunch artifact-first, E2E dedicati).
+Stato corrente: implementazione core completata (backend, prompt layer, UI, resume/retry, relaunch artifact-first, E2E dedicati). Test funzionali su ambiente Dev superati: upload + extraction OK, step 1 OK, step 2 OK.
 
 ---
 
@@ -36,8 +36,45 @@ Evidenze di verifica eseguite:
 - `npm test -- --runInBand tests/integration/nextland-route.test.ts tests/integration/nextland-upload-route.test.ts tests/unit/tool-prompts.test.ts tests/unit/tool-prompts-parity.test.ts tests/unit/artifact-preview.test.ts tests/unit/artifact-card-identity.test.ts tests/unit/llm-orchestrator-normalization.test.ts` -> passed
 - `npm test -- --runInBand tests/unit/artifact-relaunch.test.ts tests/unit/artifact-preview.test.ts tests/unit/artifact-card-identity.test.ts tests/integration/nextland-route.test.ts tests/integration/nextland-upload-route.test.ts` -> passed
 - `npx playwright test tests/e2e/nextland-retry-resume.spec.ts tests/e2e/nextland-ux-parity.spec.ts` -> passed
+- Test funzionali su Dev (2026-04-18): upload file + extraction OK, generazione step 1 (`nextland_landing`) OK, generazione step 2 (`nextland_thank_you`) OK
 
 Nota: non ancora eseguiti in questo ciclo `npm run typecheck`, `npm run lint`, `npm run test` full suite, `npm run test:e2e` full suite.
+
+---
+
+## Ripartenza Rapida (handoff per domani)
+
+Stato pronto:
+
+- Implementazione NextLand completata nei layer API, prompt, UI e recovery (resume/retry).
+- Test mirati su route, prompt, relaunch e E2E NextLand gia passati.
+- Nessun blocker funzionale aperto nel blueprint.
+
+Punti rimasti prima del merge:
+
+1. Eseguire quality gates completi non ancora lanciati in questo ciclo.
+2. Chiudere il test mancante su rate limit nel piano integration.
+3. Fare passaggio finale su naming/messaging UI e coerenza copy step landing -> thank-you.
+
+Ordine consigliato di ripresa:
+
+1. `npm run typecheck`
+2. `npm run lint`
+3. `npm run test -- --runInBand tests/integration/nextland-route.test.ts`
+4. `npm run test`
+5. `npm run test:e2e`
+
+Checklist rapida di verifica:
+
+- [ ] Test integration: caso `RATE_LIMIT_EXCEEDED` coperto in `tests/integration/nextland-route.test.ts`
+- [ ] Nessuna regressione su `artifact-relaunch` e `artifact-preview` con workflow `nextland`
+- [ ] Conferma che step 2 non parte senza output valido di `nextland_landing`
+- [ ] Validazione manuale della pagina `src/app/tools/nextland/page.tsx` su desktop/mobile
+- [ ] Aggiornamento eventuale tracker/piano se emerge delta dai gate completi
+
+Se i gate completi passano senza delta:
+
+- Stato previsto: ready for PR verso `dev` con scope limitato a NextLand cloning.
 
 ---
 

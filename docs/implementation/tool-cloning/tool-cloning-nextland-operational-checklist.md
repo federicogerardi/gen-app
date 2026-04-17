@@ -13,7 +13,7 @@ Checklist operativa precompilata per NextLand.
 
 Scopo: mantenere il clone allineato al pattern HLF riducendo i delta alla sola differenza funzionale rilevante: due step generativi invece di tre, con upload + extraction, resume, retry e quota per step.
 
-Stato corrente: checklist aggiornata su implementazione completata nel perimetro core (backend, prompt layer, frontend, relaunch, testing mirato).
+Stato corrente: checklist aggiornata su implementazione completata nel perimetro core (backend, prompt layer, frontend, relaunch, testing mirato). Test funzionali su ambiente Dev superati: upload + extraction OK, step 1 OK, step 2 OK.
 
 ---
 
