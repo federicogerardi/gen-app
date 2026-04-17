@@ -117,7 +117,7 @@ function isExtractionContextInput(input: FunnelBriefingInput | FunnelUnifiedBrie
   return 'contextText' in input;
 }
 
-function buildBriefingText(input: FunnelBriefingInput | FunnelUnifiedBriefingInput | FunnelExtractionContextInput): string {
+export function buildToolBriefingText(input: FunnelBriefingInput | FunnelUnifiedBriefingInput | FunnelExtractionContextInput): string {
   if (isExtractionContextInput(input)) {
     return [
       '### Extraction Context',
@@ -140,7 +140,7 @@ function buildBriefingText(input: FunnelBriefingInput | FunnelUnifiedBriefingInp
 
 export async function buildFunnelOptinPrompt(input: FunnelBriefingInput | FunnelUnifiedBriefingInput | FunnelExtractionContextInput): Promise<string> {
   const template = await loadPromptSource(TOOL_PROMPT_REGISTRY.funnel.optin);
-  return `${template}\n\n## BRIEFING OPERATIVO\n${buildBriefingText(input)}\n\nNota aggiuntiva per questo step:\nnell'optin page puoi usare emoji in modo persuasivo e misurato per aumentare attenzione, leggibilita e click intent, evitando abuso, tono infantile o perdita di credibilita.\n\nRestituisci output rigorosamente conforme alle regole del prompt.`;
+  return `${template}\n\n## BRIEFING OPERATIVO\n${buildToolBriefingText(input)}\n\nNota aggiuntiva per questo step:\nnell'optin page puoi usare emoji in modo persuasivo e misurato per aumentare attenzione, leggibilita e click intent, evitando abuso, tono infantile o perdita di credibilita.\n\nRestituisci output rigorosamente conforme alle regole del prompt.`;
 }
 
 export async function buildFunnelQuizPrompt(
@@ -150,7 +150,7 @@ export async function buildFunnelQuizPrompt(
   return [
     template,
     '## BRIEFING OPERATIVO',
-    buildBriefingText(input),
+    buildToolBriefingText(input),
     '## CONTESTO OPTIN PAGE GIA GENERATA',
     input.optinOutput,
     'Restituisci output rigorosamente conforme alle regole del prompt.',
@@ -164,7 +164,7 @@ export async function buildFunnelVslPrompt(
   return [
     template,
     '## BRIEFING OPERATIVO',
-    buildBriefingText(input),
+    buildToolBriefingText(input),
     '## CONTESTO OPTIN PAGE GIA GENERATA',
     input.optinOutput,
     '## CONTESTO QUIZ GIA GENERATO',

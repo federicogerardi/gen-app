@@ -1,15 +1,15 @@
 import { expect, test } from '@playwright/test';
 import { setupToolBaseMocks } from './helpers/tool-base-mocks';
 
-test.describe('UX parity: funnel pages', () => {
+test.describe('UX parity: nextland', () => {
   test('keyboard-only navigation reaches primary controls', async ({ page }) => {
     await setupToolBaseMocks(page);
-    await page.goto('/tools/funnel-pages');
+    await page.goto('/tools/nextland');
 
-    await expect(page.getByRole('heading', { name: 'HotLeadFunnel' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'NextLand' })).toBeVisible();
 
     const focusTrail: string[] = [];
-    for (let i = 0; i < 8; i += 1) {
+    for (let index = 0; index < 8; index += 1) {
       await page.keyboard.press('Tab');
       const focusedTag = await page.evaluate(() => document.activeElement?.tagName?.toLowerCase() ?? 'none');
       focusTrail.push(focusedTag);
@@ -22,7 +22,7 @@ test.describe('UX parity: funnel pages', () => {
   test('mobile 375px has no horizontal scroll', async ({ page }) => {
     await setupToolBaseMocks(page);
     await page.setViewportSize({ width: 375, height: 812 });
-    await page.goto('/tools/funnel-pages');
+    await page.goto('/tools/nextland');
 
     const hasHorizontalOverflow = await page.evaluate(() => {
       const doc = document.documentElement;
@@ -34,9 +34,9 @@ test.describe('UX parity: funnel pages', () => {
 
   test('layout remains usable at 200% zoom', async ({ page }) => {
     await setupToolBaseMocks(page);
-    await page.goto('/tools/funnel-pages');
+    await page.goto('/tools/nextland');
     await page.waitForLoadState('networkidle');
-    await expect(page.getByRole('heading', { name: 'HotLeadFunnel' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'NextLand' })).toBeVisible();
 
     await page.evaluate(() => {
       document.body.style.zoom = '2';
@@ -48,7 +48,7 @@ test.describe('UX parity: funnel pages', () => {
 
   test('focus visibility is present on keyboard focus', async ({ page }) => {
     await setupToolBaseMocks(page);
-    await page.goto('/tools/funnel-pages');
+    await page.goto('/tools/nextland');
 
     await page.keyboard.press('Tab');
 

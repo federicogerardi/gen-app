@@ -153,7 +153,7 @@ export class LLMOrchestrator {
       };
     }
 
-    if (workflowType === 'funnel_pages') {
+    if (workflowType === 'funnel_pages' || workflowType === 'nextland') {
       const parsed = tryParseJson(raw);
       if (parsed) {
         const formatted = formatFunnelOptinOutput(parsed) ?? formatFunnelQuizOutput(parsed) ?? toReadableJsonFallback(parsed);

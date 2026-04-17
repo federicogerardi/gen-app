@@ -1,8 +1,8 @@
 ---
 goal: Testing Strategy - integration, unit, E2E, and recovery scenarios
-version: 1.1
+version: 1.2
 date_created: 2026-04-17
-date_updated: 2026-04-17
+date_updated: 2026-04-18
 status: Active
 tags: [runbook, tool-cloning, testing, integration, unit, e2e]
 ---
@@ -154,6 +154,40 @@ describe('{{TOOL_TITLE}} E2E Workflow', () => {
     }
   });
 });
+```
+
+---
+
+## E2E Stability Patterns (Validated)
+
+Per minimizzare flaky test durante i cicli di cloning completi:
+
+- Centralizzare mock base condivisi in helper riusabili, invece di duplicare setup in ogni spec.
+- Attendere esplicitamente lo stato di readiness UI prima delle azioni critiche (es. modello disponibile prima di upload/extraction).
+- Riusare fixture e assertion parity tra tool sorgente e tool clonato quando condividono la stessa architettura.
+
+Reference pattern:
+
+- `tests/e2e/helpers/tool-base-mocks.ts`
+
+Esempio sintetico:
+
+```typescript
+import { installToolBaseMocks } from './helpers/tool-base-mocks';
+
+test.beforeEach(async ({ page }) => {
+  await installToolBaseMocks(page);
+  await page.goto('/tools/{{TOOL_SLUG}}');
+
+  // Aspetta readiness del modello per evitare race in extraction/retry flow
+  await expect(page.getByRole('combobox', { name: /modello/i })).toContainText('openai/gpt-4o-mini');
+});
+```
+
+Quando disponibili, eseguire anche subset mirati prima del full run:
+
+```bash
+npx playwright test tests/e2e/{{TOOL_SLUG}}-retry-resume.spec.ts tests/e2e/{{TOOL_SLUG}}-ux-parity.spec.ts
 ```
 
 ---

@@ -1,8 +1,8 @@
 ---
 goal: Master Index - Navigation hub for entire tool cloning documentation library
-version: 1.4
+version: 1.6
 date_created: 2026-04-17
-date_updated: 2026-04-17
+date_updated: 2026-04-18
 status: Active
 tags: [runbook, tool-cloning, index, navigation]
 ---
@@ -37,6 +37,11 @@ Prima di dichiarare la libreria docs "GO", chiudere questi gap minimi:
 3. [tool-cloning-complexity-check.md](tool-cloning-complexity-check.md) — **Self-Assessment** (5 min)
 
 **Then jump to the relevant path below based on your complexity tier.**
+
+**For complex or very complex tools**: compile these preparation templates before coding:
+
+- [tool-cloning-blueprint-template.md](tool-cloning-blueprint-template.md) — Technical blueprint file-by-file
+- [tool-cloning-operational-checklist-template.md](tool-cloning-operational-checklist-template.md) — Minimal operating checklist during implementation
 
 ---
 
@@ -131,6 +136,15 @@ Prima di dichiarare la libreria docs "GO", chiudere questi gap minimi:
 
 ---
 
+### Preparation Templates
+
+| Document | Purpose | When |
+|----------|---------|------|
+| [tool-cloning-blueprint-template.md](tool-cloning-blueprint-template.md) | Planning file-by-file from a reference implementation | Before implementation of complex tools |
+| [tool-cloning-operational-checklist-template.md](tool-cloning-operational-checklist-template.md) | Minimal guardrail checklist to avoid HLF pattern drift | During implementation and review |
+
+---
+
 ### Implementation Phases
 
 | Document | Phase | Purpose | When |
@@ -168,6 +182,27 @@ Prima di dichiarare la libreria docs "GO", chiudere questi gap minimi:
 | Document | Purpose |
 |----------|---------|
 | [tool-cloning-spike-research-closure-2026-04-17.md](tool-cloning-spike-research-closure-2026-04-17.md) | Spike closure evidence, alignment verification, and final completion status |
+
+---
+
+### Prepared Tool Instances
+
+| Document | Purpose |
+|----------|---------|
+| [tool-cloning-nextland-blueprint.md](tool-cloning-nextland-blueprint.md) | Prefilled technical blueprint for cloning NextLand from HLF, now aligned to implemented as-is state |
+| [tool-cloning-nextland-operational-checklist.md](tool-cloning-nextland-operational-checklist.md) | Prefilled operational checklist for NextLand implementation and review, now aligned to implemented as-is state |
+
+---
+
+## 🔧 Framework Optimization Opportunities (Post NextLand Cycle)
+
+Validated after full NextLand cloning cycle completion:
+
+- [x] Consolidate shared E2E base mocks into helper modules to reduce duplication and setup drift across tool suites
+- [x] Enforce deterministic E2E readiness waits for prerequisite UI state (for example, model availability before upload/extraction)
+- [x] Keep prepared tool docs explicitly as-is (implemented vs planned) to avoid mixed-status ambiguity
+- [ ] Add a small regression matrix template for clone parity (backend, prompts, UX parity, resume/retry) reusable across future tools
+- [ ] Add a compact "targeted vs full gate" evidence table in each prepared tool checklist to standardize closure quality
 
 ---
 
@@ -218,6 +253,8 @@ Follow the full document sequence in order:
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.6 | 2026-04-18 | Added post-NextLand framework optimization opportunities and aligned prepared instance descriptions to implemented as-is status |
+| 1.5 | 2026-04-18 | Added reusable blueprint and operational checklist templates for future tool cloning preparation |
 | 1.1 | 2026-04-17 | Added Phase 3.5 UX Replicability, expanded testing, atomized into library |
 | 1.0 | 2026-04-10 | Initial monolithic runbook |
 
@@ -242,6 +279,6 @@ Follow the full document sequence in order:
 
 ---
 
-**Last Updated**: 2026-04-17  
+**Last Updated**: 2026-04-18  
 **Maintainer**: Federico  
 **Status**: Production-ready, atomized library
