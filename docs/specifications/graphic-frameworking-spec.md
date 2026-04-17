@@ -121,6 +121,30 @@ Controlli in queste aree sono sempre critici:
 
 ---
 
+## Tool Pages Exceptions
+
+Le pagine tool (`/tools/*`) possono discostarsi dalle regole di base per ragioni di usabilità operativa:
+
+### File Input
+- Il nativo `<input type="file">` NON richiede `.app-control`
+- Motivazione: input file ha UI browser specializzata; `.app-control` renderebbe la UX meno intuitiva
+- Verificare: focus ring nativo deve essere visibile WCAG AA
+- Esempio: HotLeadFunnel usa nativo file input senza `.app-control`
+
+### Checklist / Status Containers
+- Contenitori di stato e checklist possono usare `bg-white/70` invece di `.app-surface`
+- Motivazione: `bg-white/70` crea "depth layer" discernibile dal canvas atmosferico pur restando leggero
+- Vincolo: usare `bg-white/70` SOLO in sidebar/status panel, non nel main content
+- Esempio: HotLeadFunnel status checklist usa `bg-white/70` px-3 py-2
+
+### Modal / Dialog
+- Dialog può usare `bg-white` (opaco) se posizionato sopra overlay
+- Motivazione: disambiguare layer modale dal canvas
+- Vincolo: applicare `.app-surface` se il dialog non è posizionato fixed/absolute sopra overlay
+- Esempio: Project selector dialog usa `bg-white` su Dialog.Content
+
+---
+
 ## Accessibility Constraints
 
 Minimi obbligatori:
@@ -153,11 +177,19 @@ Per ogni intervento visuale nuovo o di refactor:
 
 ## QA Checklist (Quick)
 
-- Tutte le pagine autenticate usano shell coerente.
-- Nessun controllo critico resta senza `app-control` su sfondo grafico.
-- Nessuna card metrica resta senza sfondo esplicito.
-- Stato focus visibile ovunque.
-- Nessun testo secondario perde leggibilita su overlay.
+### Pagine dashboard / admin / artifacts
+- Tutte le pagine autenticate usano `.app-shell` su main.
+- Nessun controllo critico (input/select/textarea) resta senza `.app-control` in zone sensibili.
+- Nessuna card metrica resta senza `.app-surface` o `bg-white/*` esplicito.
+- Stato focus visibile su input/button ovunque.
+- Nessun testo secondario perde leggibilita su overlay atmosferico.
+
+### Tool pages (`/tools/*`) — Eccezioni consentite
+- File input può usare nativo `<input type="file">` senza `.app-control`
+- Checklist / status sidebar può usare `bg-white/70` invece che `.app-surface`
+- Dialog modale può usare `bg-white` opaco se posizionato fixed/absolute
+- Select/Textarea devono mantenere `.app-control` (come nel resto dell'app)
+- État focus ring nativo deve essere visibile WCAG AA
 
 ---
 

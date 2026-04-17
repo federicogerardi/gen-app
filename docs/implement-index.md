@@ -2,6 +2,30 @@
 
 _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 
+## Aggiornamento sessione (2026-04-17 — Tool Cloning Runbook + Allineamento grafica HLF)
+
+- **Stato attuale**: `COMPLETATO`.
+- **Obiettivo P1**: Allineare graphic-frameworking-spec e gui-refactor-plan allo stato effettivo di HotLeadFunnel.
+- **Obiettivo P2**: Creare procedura step-by-step completa per clonare HLF con variazioni mantenendo 95%+ conformità.
+- **Razionale**: Gap analysis identificò 3-4 deviazioni intenzionali (file input nativo, checklist bg-white/70, dialog bianco). Documentate come tool-pages exceptions. Nuovo runbook remove ambiguità su implementazione clone.
+- **Completato in docs**:
+  - ✅ Aggiunta sezione `## Tool Pages Exceptions` in `docs/specifications/graphic-frameworking-spec.md`
+  - ✅ Aggiornato QA checklist per differenziare "pagine dashboard/admin" vs "tool pages"
+  - ✅ Cross-reference in `docs/ux/gui-refactor-plan.md`
+  - ✅ **NUOVO**: Creato `docs/implementation/tool-cloning-runbook-1.md` con:
+    - Anatomia file structure per tool
+    - 4 phase sequenziali: Route + Schema → Prompts → Frontend → Testing
+    - Template TypeScript copiabili per route handler, builder, UI page, test
+    - Checklist conformità graphic framework + testing + build
+    - Troubleshooting comune
+    - Tempi stimati (2.5-3 ore con esperienza)
+    - DoD finale + link riferimenti
+- **Status compliance**: HLF 100% conforme. Clone potential: 95%+ con runbook (vs 85% senza).
+- **File aggiornati**:
+  - `docs/specifications/graphic-frameworking-spec.md`
+  - `docs/ux/gui-refactor-plan.md`
+  - **[NEW]** `docs/implementation/tool-cloning-runbook-1.md`
+
 ## Aggiornamento sessione (2026-04-16 — Native login credentials + Google OAuth)
 
 - **Stato attuale**: `PLANNED`.

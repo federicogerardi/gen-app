@@ -199,6 +199,14 @@ Aggiornamento esecuzione (2026-04-11):
 - ricerca, filtri stato/tipo e micro-card metriche su admin ora usano superfici esplicite su sfondo grafico
 - uniformati controlli sensibili con classe condivisa `app-control`
 
+## Note sulla Sezione Tool / HotLeadFunnel (allineamento 2026-04-17)
+
+La sezione tool del refactor ha deviazioni intenzionali dalla graphic-frameworking-spec per ottimizzare usabilità operativa.
+Vedi [docs/specifications/graphic-frameworking-spec.md](../specifications/graphic-frameworking-spec.md#tool-pages-exceptions) per eccezioni documentate su:
+- file input nativo (no `.app-control`)
+- status checklist con `bg-white/70`
+- dialog modale con `bg-white` opaco
+
 ---
 
 ## Design System e componenti da consolidare
