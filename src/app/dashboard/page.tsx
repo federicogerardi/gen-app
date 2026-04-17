@@ -13,7 +13,7 @@ import { PersonalTrendCard } from './PersonalTrendCard';
 
 const TOOL_ACTIONS = [
   {
-    title: 'HotLead Funnel',
+    title: 'HotLeadFunnel',
     description: 'Workflow multi-step: optin page, domande quiz e script VSL.',
     href: '/tools/funnel-pages',
     cta: 'Apri tool',

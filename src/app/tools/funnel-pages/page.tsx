@@ -358,6 +358,7 @@ function FunnelPagesToolContent() {
   const [isProjectDialogOpen, setIsProjectDialogOpen] = useState(false);
   const [isStatusOpen, setIsStatusOpen] = useState(true);
   const autoResumeAttemptKeyRef = useRef<string | null>(null);
+  const wasRunningRef = useRef(false);
 
   const { data: projectsData } = useQuery({
     queryKey: ['projects'],
@@ -927,7 +928,7 @@ function FunnelPagesToolContent() {
 
   if (uiState !== 'processing-briefing' && uiState !== 'running' && (uiState !== 'draft-empty' || Boolean(projectId || uploadedFileName || extractionContext))) {
     secondaryActions.push({
-      label: uiState === 'completed' ? 'Nuova generazione' : 'Ricomincia',
+      label: uiState === 'completed' ? 'Nuova generazione' : 'Resetta setup',
       onClick: resetAll,
     });
   }
@@ -954,31 +955,35 @@ function FunnelPagesToolContent() {
   };
 
   const checklistBadgeLabel: Record<'todo' | 'active' | 'done' | 'error', string> = {
-    todo: 'Da fare',
+    todo: 'Da completare',
     active: 'In corso',
-    done: 'Ok',
-    error: 'Errore',
+    done: 'Pronto',
+    error: 'Bloccato',
   };
 
   useEffect(() => {
-    if (running && isStatusOpen) {
+    const startedRunning = running && !wasRunningRef.current;
+
+    if (startedRunning) {
       setIsStatusOpen(false);
     }
-  }, [running, isStatusOpen]);
+
+    wasRunningRef.current = running;
+  }, [running]);
 
   return (
     <PageShell width="workspace">
 
-        <div className="mb-6 flex items-center justify-between gap-4">
+        <div className="mb-7 flex items-center justify-between gap-4">
           <div>
-            <h1 className="app-title text-3xl font-semibold text-slate-900">HotLead Funnel</h1>
-            <p className="text-sm text-muted-foreground">Scegli progetto, carica briefing, genera.</p>
+            <h1 className="app-title text-3xl font-semibold text-slate-900">HotLeadFunnel</h1>
+            <p className="text-sm text-muted-foreground">Seleziona progetto, carica briefing e genera i 3 step del funnel.</p>
             {sourceArtifactId && (
               <p className="mt-2 text-xs text-muted-foreground">Dati precompilati da artefatto (ID: {sourceArtifactId}).</p>
             )}
           </div>
           <Button variant="outline" asChild>
-            <Link href="/artifacts">Vai agli artefatti</Link>
+            <Link href="/artifacts">Apri storico</Link>
           </Button>
         </div>
 
@@ -1015,22 +1020,28 @@ function FunnelPagesToolContent() {
                             <Dialog.Title className="text-lg font-semibold mb-4">Scegli un progetto</Dialog.Title>
                             <Dialog.Description className="sr-only">Elenco progetti disponibili per il funnel</Dialog.Description>
                             <div className="space-y-2">
-                              {projectsData?.projects?.map((project) => (
-                                <button
-                                  key={project.id}
-                                  onClick={() => {
-                                    setProjectId(project.id);
-                                    setIsProjectDialogOpen(false);
-                                  }}
-                                  className={`w-full cursor-pointer px-3 py-2 text-left rounded-lg border transition-colors ${
-                                    projectId === project.id
-                                      ? 'border-blue-500 bg-blue-50 text-blue-900'
-                                      : 'border-transparent hover:bg-slate-100'
-                                  }`}
-                                >
-                                  <span className="font-medium">{project.name}</span>
-                                </button>
-                              ))}
+                              {projectsData?.projects?.length ? (
+                                projectsData.projects.map((project) => (
+                                  <button
+                                    key={project.id}
+                                    onClick={() => {
+                                      setProjectId(project.id);
+                                      setIsProjectDialogOpen(false);
+                                    }}
+                                    className={`w-full cursor-pointer px-3 py-2 text-left rounded-lg border transition-colors ${
+                                      projectId === project.id
+                                        ? 'border-blue-500 bg-blue-50 text-blue-900'
+                                        : 'border-transparent hover:bg-slate-100'
+                                    }`}
+                                  >
+                                    <span className="font-medium">{project.name}</span>
+                                  </button>
+                                ))
+                              ) : (
+                                <p className="rounded-lg border border-dashed border-slate-300 px-3 py-4 text-sm text-slate-600">
+                                  Nessun progetto disponibile. Crea un progetto prima di usare HotLeadFunnel.
+                                </p>
+                              )}
                             </div>
                             <Dialog.Close asChild>
                               <button className="absolute right-4 top-4 cursor-pointer text-muted-foreground hover:text-foreground">✕</button>
@@ -1044,6 +1055,9 @@ function FunnelPagesToolContent() {
                       <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">2. Briefing</p>
                       <FieldLabel htmlFor="funnel-file-input">Carica il file</FieldLabel>
                       <p className="text-xs text-muted-foreground">Formati supportati: .docx, .txt, .md</p>
+                      {!projectId && (
+                        <p className="text-xs text-amber-700">Seleziona prima un progetto per abilitare il caricamento.</p>
+                      )}
                       <input
                         id="funnel-file-input"
                         type="file"
@@ -1106,7 +1120,8 @@ function FunnelPagesToolContent() {
                 </div>
               )}
 
-              <section className="space-y-4 pt-5">
+              <section className="space-y-4 border-t border-black/10 pt-5">
+                <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">Azioni</p>
                 <Button
                   className="w-full"
                   data-primary-action="true"
@@ -1117,7 +1132,7 @@ function FunnelPagesToolContent() {
                 </Button>
 
                 {secondaryActions.length > 0 && (
-                  <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                  <div className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap">
                     {secondaryActions.map((action) => (
                       <Button
                         key={action.label}
@@ -1255,29 +1270,6 @@ function FunnelPagesToolContent() {
               </div>
             </details>
 
-            <details className="group rounded-3xl border border-black/10 bg-white/60 px-4 py-3 shadow-sm">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-medium text-slate-900 [&::-webkit-details-marker]:hidden">
-                <span>Guida rapida</span>
-                <span className="text-xs text-muted-foreground group-open:hidden">Mostra</span>
-                <span className="hidden text-xs text-muted-foreground group-open:inline">Nascondi</span>
-              </summary>
-
-              <div className="mt-4 space-y-3 text-sm text-slate-700">
-                <div className="rounded-2xl border border-black/10 bg-slate-50/90 px-3 py-3">
-                  <p className="font-medium text-slate-900">1. Scegli il progetto</p>
-                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Primo passaggio obbligatorio.</p>
-                </div>
-                <div className="rounded-2xl border border-black/10 bg-slate-50/90 px-3 py-3">
-                  <p className="font-medium text-slate-900">2. Carica il briefing</p>
-                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Il tool estrae il contesto in automatico.</p>
-                </div>
-                <div className="rounded-2xl border border-black/10 bg-slate-50/90 px-3 py-3">
-                  <p className="font-medium text-slate-900">3. Avvia la generazione</p>
-                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Usa il pulsante principale quando e pronto.</p>
-                </div>
-              </div>
-            </details>
-
             {steps.map((step) => {
               const stepDisplay = formatArtifactContentForDisplay({
                 type: 'content',
@@ -1336,7 +1328,7 @@ export default function FunnelPagesToolPage() {
       fallback={(
         <PageShell width="workspace">
           <div className="py-10 text-sm text-muted-foreground" role="status" aria-live="polite" aria-atomic="true">
-            Caricamento HotLead Funnel...
+            Caricamento HotLeadFunnel...
           </div>
         </PageShell>
       )}

@@ -48,13 +48,13 @@ describe('Navbar', () => {
     expect(screen.getByRole('link', { name: 'Storico' })).toHaveAttribute('href', '/artifacts');
   });
 
-  it('shows only HotLead Funnel inside tools navigation', () => {
+  it('shows only HotLeadFunnel inside tools navigation', () => {
     render(<Navbar />);
 
     const desktopNavigation = screen.getAllByRole('list', { name: 'Sezioni applicazione' })[0];
     fireEvent.click(within(desktopNavigation).getByText('Tools'));
 
-    expect(screen.getByRole('link', { name: 'HotLead Funnel' })).toHaveAttribute('href', '/tools/funnel-pages');
+    expect(screen.getByRole('link', { name: 'HotLeadFunnel' })).toHaveAttribute('href', '/tools/funnel-pages');
     expect(screen.queryByRole('link', { name: 'Meta Ads' })).not.toBeInTheDocument();
   });
 
@@ -85,7 +85,7 @@ describe('Navbar', () => {
     expect(mobileNavigation.getByRole('link', { name: 'Storico' })).toHaveAttribute('href', '/artifacts');
 
     fireEvent.click(mobileNavigation.getByText('Tools'));
-    expect(mobileNavigation.getByRole('link', { name: 'HotLead Funnel' })).toHaveAttribute('href', '/tools/funnel-pages');
+    expect(mobileNavigation.getByRole('link', { name: 'HotLeadFunnel' })).toHaveAttribute('href', '/tools/funnel-pages');
     expect(mobileNavigation.queryByRole('link', { name: 'Meta Ads' })).not.toBeInTheDocument();
   });
 

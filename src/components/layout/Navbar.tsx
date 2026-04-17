@@ -10,7 +10,7 @@ import { RuntimeStatusBadge } from './RuntimeStatusBadge';
 import { NAVBAR_WIDTH_CLASS } from './shell-width';
 
 const toolLinks = [
-  { href: '/tools/funnel-pages', label: 'HotLead Funnel' },
+  { href: '/tools/funnel-pages', label: 'HotLeadFunnel' },
 ];
 
 function linkClass(isActive: boolean) {
