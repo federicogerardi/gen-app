@@ -119,6 +119,7 @@ describe('formatArtifactPreview', () => {
   it('espone label workflow-specific per Meta Ads e Funnel Pages', () => {
     expect(getArtifactDisplayTypeLabel({ type: 'content', workflowType: 'meta_ads' })).toBe('Meta Ads');
     expect(getArtifactDisplayTypeLabel({ type: 'content', workflowType: 'funnel_pages' })).toBe('Funnel Pages');
+    expect(getArtifactDisplayTypeLabel({ type: 'content', workflowType: 'nextland' })).toBe('NextLand');
     expect(getArtifactDisplayTypeLabel({ type: 'seo' })).toBe('SEO');
   });
 

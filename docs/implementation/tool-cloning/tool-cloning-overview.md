@@ -1,8 +1,8 @@
 ---
 goal: Introduzione, stato versione, e referenze rapide al runbook di clonazione tool
-version: 1.1
+version: 1.2
 date_created: 2026-04-17
-date_updated: 2026-04-17
+date_updated: 2026-04-18
 status: Active
 tags: [runbook, tool-cloning, overview, introduction]
 ---
@@ -59,11 +59,13 @@ Il runbook è suddiviso in moduli atomici, sequenziali:
 **Se è la prima volta**: 
 1. Leggi **[tool-cloning-prerequisites.md](tool-cloning-prerequisites.md)** (10 min)
 2. Leggi **[tool-cloning-complexity-check.md](tool-cloning-complexity-check.md)** (5 min) — valuta il tuo tool
-3. Salta ai docs di phase appropriati (vedi "Percorso per Complexity Tier" sotto)
+3. Se il tool è complex o very complex, compila **[tool-cloning-blueprint-template.md](tool-cloning-blueprint-template.md)**
+4. Usa **[tool-cloning-operational-checklist-template.md](tool-cloning-operational-checklist-template.md)** come guardrail durante il lavoro
+5. Salta ai docs di phase appropriati (vedi "Percorso per Complexity Tier" sotto)
 
 **Se conosci il framework**:
 - Vai diretto a **[tool-cloning-complexity-check.md](tool-cloning-complexity-check.md)** per auto-classificare
-- Seleziona i phase doc appropriati
+- Se il tool è complesso, compila prima il blueprint template e poi seleziona i phase doc appropriati
 
 ---
 
@@ -140,6 +142,8 @@ GO/NO GO Assessment (per complex tools)
 | Tool Prompts | Template strategy | [.github/instructions/tool-prompts.instructions.md](../../.github/instructions/tool-prompts.instructions.md) |
 | API Specs | Error codes + SSE | [docs/specifications/api-specifications.md](../specifications/api-specifications.md#tool-specific-generation) |
 | HLF Reference | Codice completo funzionante | [src/app/tools/funnel-pages/page.tsx](../../src/app/tools/funnel-pages/page.tsx) |
+| Blueprint Template | Piano tecnico file-by-file | [tool-cloning-blueprint-template.md](tool-cloning-blueprint-template.md) |
+| Operational Checklist Template | Guardrail minimo implementativo | [tool-cloning-operational-checklist-template.md](tool-cloning-operational-checklist-template.md) |
 | UX Strategy | Higher-level design direction | [docs/ux/ux-strategy.md](../ux/ux-strategy.md) |
 | Accessibility | WCAG AA requirements | [docs/accessibility/accessibility.md](../accessibility/accessibility.md) |
 

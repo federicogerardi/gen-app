@@ -66,6 +66,16 @@ Usa sempre:
 
 **File**: `src/lib/tool-prompts/{{TOOL_SLUG}}.ts`
 
+Prima di scrivere il builder, dichiara esplicitamente il contratto di contesto multi-step.
+
+Per coerenza con HLF, il pattern raccomandato e:
+
+- step 1 riceve solo `extractionContext`
+- step 2 riceve `extractionContext + step1Output`
+- step 3 riceve `extractionContext + step1Output + step2Output`
+
+Evita di riscrivere o sostituire il contesto base a ogni step, salvo deviazione intenzionale documentata nel blueprint.
+
 ```typescript
 import 'server-only';
 
@@ -80,6 +90,9 @@ export type {{TOOL_TITLE}}Input = {
   topic: string;
   tone?: 'professional' | 'casual';
   notes?: string;
+  extractionContext?: string;
+  step1Output?: string;
+  step2Output?: string;
 };
 
 export type PromptTemplate = {
@@ -114,6 +127,8 @@ function countTokensApprox(text: string): number {
   return Math.ceil(text.length / 4);
 }
 ```
+
+Se il tool e multi-step, preferisci builder separati per step con input espliciti invece di un singolo builder ambiguo. Il requisito da preservare e che gli step successivi compongano il prompt come `contesto base invariato + output precedenti`, non come nuovo contesto sostitutivo.
 
 ### Vincoli
 

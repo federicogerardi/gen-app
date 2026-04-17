@@ -1,37 +1,8 @@
-import { expect, test, type Page } from '@playwright/test';
-
-async function setupFunnelBaseMocks(page: Page): Promise<void> {
-  await page.route('**/api/auth/session', async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ user: { id: 'user-e2e', role: 'user' } }),
-    });
-  });
-
-  await page.route('**/api/projects', async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        projects: [{ id: 'project-e2e-1', name: 'Project E2E' }],
-      }),
-    });
-  });
-
-  await page.route('**/api/models', async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        models: [{ id: 'model-e2e-1', name: 'Model E2E', default: true }],
-      }),
-    });
-  });
-}
+import { expect, test } from '@playwright/test';
+import { E2E_PROJECT_ID, E2E_PROJECT_NAME, setupToolBaseMocks } from './helpers/tool-base-mocks';
 
 test('supports extraction retry with backoff feedback and review transition', async ({ page }) => {
-  await setupFunnelBaseMocks(page);
+  await setupToolBaseMocks(page);
   await page.waitForLoadState('networkidle');
 
   await page.route('**/api/tools/funnel-pages/upload', async (route) => {
@@ -71,9 +42,9 @@ test('supports extraction retry with backoff feedback and review transition', as
     });
   });
 
-  await page.goto('/tools/funnel-pages?projectId=project-e2e-1');
+  await page.goto(`/tools/funnel-pages?projectId=${E2E_PROJECT_ID}`);
   await page.waitForSelector('h1:has-text("HotLeadFunnel")', { timeout: 10000 });
-  await expect(page.getByRole('button', { name: 'Project E2E' })).toBeVisible();
+  await expect(page.getByRole('button', { name: E2E_PROJECT_NAME })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Completa dati obbligatori' })).toBeVisible();
 
   await page.locator('#funnel-file-input').setInputFiles({
@@ -90,7 +61,7 @@ test('supports extraction retry with backoff feedback and review transition', as
 });
 
 test('auto-resumes from artifact relaunch intent when checkpoint is available', async ({ page }) => {
-  await setupFunnelBaseMocks(page);
+  await setupToolBaseMocks(page);
   await page.waitForLoadState('networkidle');
 
   await page.route('**/api/artifacts?**', async (route) => {
@@ -142,9 +113,9 @@ test('auto-resumes from artifact relaunch intent when checkpoint is available', 
     });
   });
 
-  await page.goto('/tools/funnel-pages?projectId=project-e2e-1&sourceArtifactId=artifact-source-1&intent=resume');
+  await page.goto(`/tools/funnel-pages?projectId=${E2E_PROJECT_ID}&sourceArtifactId=artifact-source-1&intent=resume`);
   await page.waitForSelector('h1:has-text("HotLeadFunnel")', { timeout: 10000 });
-  await expect(page.getByRole('button', { name: 'Project E2E' })).toBeVisible();
+  await expect(page.getByRole('button', { name: E2E_PROJECT_NAME })).toBeVisible();
 
   await expect(page.getByText('Checkpoint recuperato. Puoi riprendere dalla fase attuale.')).toBeVisible();
   await expect(page.getByText('Optin recuperata da checkpoint')).toBeVisible();
@@ -157,7 +128,7 @@ test('auto-resumes from artifact relaunch intent when checkpoint is available', 
 });
 
 test('falls back to briefing upload when resume has recovered steps but no extraction context', async ({ page }) => {
-  await setupFunnelBaseMocks(page);
+  await setupToolBaseMocks(page);
   await page.waitForLoadState('networkidle');
 
   await page.route('**/api/artifacts?**', async (route) => {
@@ -183,7 +154,7 @@ test('falls back to briefing upload when resume has recovered steps but no extra
     });
   });
 
-  await page.goto('/tools/funnel-pages?projectId=project-e2e-1');
+  await page.goto(`/tools/funnel-pages?projectId=${E2E_PROJECT_ID}`);
   await page.getByRole('button', { name: 'Riprendi da checkpoint' }).click();
 
   await expect(page.getByText('Checkpoint parziale recuperato, ma manca il contesto estratto per riprendere. Carica di nuovo il briefing per rigenerare il funnel.')).toBeVisible();
@@ -194,7 +165,7 @@ test('falls back to briefing upload when resume has recovered steps but no extra
 });
 
 test('uses regenerate primary action for artifact relaunch intent=regenerate', async ({ page }) => {
-  await setupFunnelBaseMocks(page);
+  await setupToolBaseMocks(page);
   await page.waitForLoadState('networkidle');
 
   await page.route('**/api/tools/funnel-pages/upload', async (route) => {
@@ -217,9 +188,9 @@ test('uses regenerate primary action for artifact relaunch intent=regenerate', a
     });
   });
 
-  await page.goto('/tools/funnel-pages?projectId=project-e2e-1&sourceArtifactId=artifact-source-2&intent=regenerate');
+  await page.goto(`/tools/funnel-pages?projectId=${E2E_PROJECT_ID}&sourceArtifactId=artifact-source-2&intent=regenerate`);
   await page.waitForSelector('h1:has-text("HotLeadFunnel")', { timeout: 10000 });
-  await expect(page.getByRole('button', { name: 'Project E2E' })).toBeVisible();
+  await expect(page.getByRole('button', { name: E2E_PROJECT_NAME })).toBeVisible();
 
   await page.locator('#funnel-file-input').setInputFiles({
     name: 'briefing-rigenera.txt',
@@ -234,7 +205,7 @@ test('uses regenerate primary action for artifact relaunch intent=regenerate', a
 });
 
 test('keeps Stato rapido open by default and auto-collapses when generation starts', async ({ page }) => {
-  await setupFunnelBaseMocks(page);
+  await setupToolBaseMocks(page);
   await page.waitForLoadState('networkidle');
 
   await page.route('**/api/tools/funnel-pages/upload', async (route) => {
@@ -269,7 +240,7 @@ test('keeps Stato rapido open by default and auto-collapses when generation star
     });
   });
 
-  await page.goto('/tools/funnel-pages?projectId=project-e2e-1');
+  await page.goto(`/tools/funnel-pages?projectId=${E2E_PROJECT_ID}`);
 
   const statusRapidSummary = page.locator('summary', { hasText: 'Stato rapido' });
   await expect(statusRapidSummary).toContainText('Nascondi');

@@ -19,6 +19,13 @@ const TOOL_ACTIONS = [
     cta: 'Apri tool',
     tag: 'Campaign',
   },
+  {
+    title: 'NextLand',
+    description: 'Workflow a 2 step: landing page e thank-you page con extraction e checkpoint.',
+    href: '/tools/nextland',
+    cta: 'Apri tool',
+    tag: 'Landing',
+  },
 ];
 
 export default async function DashboardPage() {

@@ -132,6 +132,16 @@ export async function POST(request: Request) {
 
 ## Step 2.5.3: Collega Extraction Context ai Prompt Multi-Step
 
+Regola di coerenza con HLF: l'`extractionContext` prodotto in questa fase resta il contesto base invariato per tutti gli step successivi.
+
+Questo significa:
+
+- step 1 usa `extractionContext`
+- step 2 usa `extractionContext + output step 1`
+- step 3 usa `extractionContext + output step 1 + output step 2`
+
+Non sostituire `extractionContext` con un nuovo contesto derivato a ogni step, salvo deviazione intenzionale documentata nel blueprint del tool.
+
 Modifica il builder della Phase 2 per accettare `extractionContext`:
 
 ```typescript
@@ -214,6 +224,12 @@ export async function build{{TOOL_TITLE}}Prompt(
   throw new Error(`Unknown step: ${input.step}`);
 }
 ```
+
+La regola da rendere esplicita anche nei test e nella documentazione del clone e:
+
+- `step1Output` si aggiunge al contesto base per lo step 2
+- `step2Output` si aggiunge al contesto base per lo step 3
+- il contesto base resta identico lungo tutta la pipeline
 
 ---
 

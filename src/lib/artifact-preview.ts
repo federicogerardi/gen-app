@@ -33,6 +33,7 @@ const DEFAULT_TYPE_LABELS: Record<string, string> = {
 const WORKFLOW_TYPE_LABELS: Record<string, string> = {
   meta_ads: 'Meta Ads',
   funnel_pages: 'Funnel Pages',
+  nextland: 'NextLand',
 };
 
 function normalizeWhitespace(value: string): string {

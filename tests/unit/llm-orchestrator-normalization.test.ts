@@ -103,6 +103,17 @@ describe('LLMOrchestrator.normalizeOutput', () => {
     expect(result.warning).toBeUndefined();
   });
 
+  it('keeps NextLand plain text output in markdown format', () => {
+    const result = orchestrator.normalizeOutput({
+      type: 'content',
+      workflowType: 'nextland',
+      rawContent: '```text\nLanding NextLand pronta per revisione.\n```',
+    });
+
+    expect(result.format).toBe('markdown');
+    expect(result.content).toBe('Landing NextLand pronta per revisione.');
+  });
+
   it('normalizes extraction JSON payload into markdown sections', () => {
     const result = orchestrator.normalizeOutput({
       type: 'extraction',

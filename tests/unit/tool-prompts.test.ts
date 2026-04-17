@@ -5,6 +5,10 @@ import {
   buildFunnelQuizPrompt,
   buildFunnelVslPrompt,
 } from '@/lib/tool-prompts/funnel-pages';
+import {
+  buildNextLandLandingPrompt,
+  buildNextLandThankYouPrompt,
+} from '@/lib/tool-prompts/nextland';
 import { EXTRACTION_GENERATION_TEMPLATE } from '@/lib/tool-prompts/extraction-templates';
 import { TOOL_PROMPT_REGISTRY } from '@/lib/tool-prompts/registry';
 import { loadPromptSource } from '@/lib/tool-prompts/loader';
@@ -221,6 +225,42 @@ describe('funnel prompt builders', () => {
     expect(prompt).toContain('### Business Context');
     expect(prompt).toContain('Tipo business: B2B');
     expect(prompt).toContain('Segmentazione primaria: Maturita funnel');
+  });
+});
+
+describe('nextland prompt builders', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockedLoadPromptSource.mockResolvedValue('PROMPT TEMPLATE');
+  });
+
+  const baseInput = {
+    product: 'Servizio acquisizione lead',
+    audience: 'Founder B2B',
+    offer: 'Audit funnel',
+    promise: 'Più call qualificate',
+    tone: 'professional' as const,
+    notes: 'Conserva tono premium',
+  };
+
+  it('buildNextLandLandingPrompt composes template and briefing', async () => {
+    const prompt = await buildNextLandLandingPrompt(baseInput);
+
+    expect(mockedLoadPromptSource).toHaveBeenCalledWith(TOOL_PROMPT_REGISTRY.nextland.landing);
+    expect(prompt).toContain('PROMPT TEMPLATE');
+    expect(prompt).toContain('## BRIEFING OPERATIVO');
+    expect(prompt).toContain('Prodotto/Servizio: Servizio acquisizione lead');
+  });
+
+  it('buildNextLandThankYouPrompt includes landing context', async () => {
+    const prompt = await buildNextLandThankYouPrompt({
+      ...baseInput,
+      landingOutput: 'LANDING OUTPUT',
+    });
+
+    expect(mockedLoadPromptSource).toHaveBeenCalledWith(TOOL_PROMPT_REGISTRY.nextland.thankYou);
+    expect(prompt).toContain('## CONTESTO LANDING PAGE GIA GENERATA');
+    expect(prompt).toContain('LANDING OUTPUT');
   });
 });
 

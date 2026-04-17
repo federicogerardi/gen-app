@@ -18,6 +18,8 @@ const FUNNEL_STEP_LABEL: Record<string, string> = {
   funnel_optin: 'Step Optin',
   funnel_quiz: 'Step Quiz',
   funnel_vsl: 'Step VSL',
+  nextland_landing: 'Landing Page',
+  nextland_thank_you: 'Thank-you Page',
 };
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -83,6 +85,14 @@ export function buildArtifactCardIdentity(input: ArtifactCardIdentityInput): Art
       title = `Funnel Pages • ${prettify(topic)}`;
     } else {
       title = 'Funnel Pages';
+    }
+  } else if (input.workflowType === 'nextland') {
+    if (stepLabel) {
+      title = `NextLand • ${stepLabel}`;
+    } else if (topic) {
+      title = `NextLand • ${prettify(topic)}`;
+    } else {
+      title = 'NextLand';
     }
   } else if (input.workflowType === 'extraction') {
     title = topic ? `Estrazione • ${prettify(topic)}` : 'Estrazione campi';

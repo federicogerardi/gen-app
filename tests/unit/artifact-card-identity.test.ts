@@ -33,6 +33,20 @@ describe('artifact card identity', () => {
     expect(result.subtitle).toContain('ID 654321');
   });
 
+  it('builds a NextLand title using workflow topic', () => {
+    const result = buildArtifactCardIdentity({
+      id: 'art_nextld123456',
+      type: 'content',
+      workflowType: 'nextland',
+      input: {
+        topic: 'nextland_thank_you',
+      },
+    });
+
+    expect(result.title).toBe('NextLand • Thank-you Page');
+    expect(result.subtitle).toContain('ID 123456');
+  });
+
   it('falls back to deterministic title when no input signal is available', () => {
     const result = buildArtifactCardIdentity({
       id: 'art_zzzzzz111111',

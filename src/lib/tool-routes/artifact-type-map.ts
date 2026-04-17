@@ -12,6 +12,7 @@ import { type ArtifactType, type ToolWorkflow, isArtifactType } from '@/lib/type
 export const TOOL_TO_ARTIFACT_TYPE: Record<ToolWorkflow, ArtifactType> = {
   meta_ads: 'content',
   funnel_pages: 'content',
+  nextland: 'content',
   extraction: 'extraction',
 };
 
