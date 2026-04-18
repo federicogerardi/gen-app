@@ -48,7 +48,7 @@ Scopo: evitare deviazioni involontarie dal pattern HLF su route, prompt, upload/
 
 ## 3. Prompt Layer Guardrails
 
-- [ ] Markdown sorgente salvato sotto `src/lib/tool-prompts/prompts/`
+- [ ] Markdown sorgente salvato sotto `src/lib/tool-prompts/prompts/tools/`
 - [ ] Builder runtime tipizzato creato in `src/lib/tool-prompts/`
 - [ ] Registry aggiornato con il nuovo tool
 - [ ] Placeholder espliciti e stabili
@@ -69,6 +69,9 @@ Scopo: evitare deviazioni involontarie dal pattern HLF su route, prompt, upload/
 
 ## 5. Frontend e UX Parity
 
+- [ ] `page.tsx` usato come thin wrapper con Suspense
+- [ ] `{{TOOL_TITLE}}ToolContent.tsx` contiene orchestration UI tool-specific
+- [ ] Hook e componenti tool-specific separati (`hooks/` + `components/`)
 - [ ] Page structure allineata al framework grafico del progetto
 - [ ] State machine UI definita e completa
 - [ ] Copy dei CTA coerente con lo step corrente

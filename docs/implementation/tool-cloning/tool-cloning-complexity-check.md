@@ -1,8 +1,8 @@
 ---
 goal: Auto-classificazione tool per complexity tier (planning + stima tempo)
-version: 1.1
+version: 1.2
 date_created: 2026-04-17
-date_updated: 2026-04-17
+date_updated: 2026-04-18
 status: Active
 tags: [runbook, tool-cloning, complexity-check, planning, assessment]
 ---
@@ -10,6 +10,8 @@ tags: [runbook, tool-cloning, complexity-check, planning, assessment]
 # Complexity Assessment Questionnaire
 
 **PRIMA DI INIZIARE A CLONARE**, completa questo questionnaire per auto-classificare il tool e stimare correttamente tempo + ambito.
+
+> ⚠️ Aggiornamento ADR 004 (2026-04-18): per i tool stateful usare il percorso composable completo (Phase 3 + 3.5 + 3.6 + 3.7 + testing esteso), non il vecchio pattern monolitico.
 
 ---
 
@@ -35,16 +37,16 @@ Rispondi alle seguenti domande con **SI'** o **NO**:
 **Conta i SI' nella tabella sopra:**
 
 ```
-0 SI':  🟢 SIMPLE TOOL          Runbook v1.1 → 3-3.5h
+0 SI':  🟢 SIMPLE TOOL          Runbook corrente → 3-3.5h
         Esempi: blog post generator, product description tool, meta description tool
         
-1-2 SI': 🟡 MODERATE TOOL       Runbook v1.1 + Case Study → 4-5h
+1-2 SI': 🟡 MODERATE TOOL       Runbook corrente + case study → 4-5h
         Esempi: long-form content with reviewer step, multi-tone variations
         
-3-5 SI': 🔴 COMPLEX TOOL        Advanced Runbook (TBD v2.0) → 6-8h
+3-5 SI': 🔴 COMPLEX TOOL        Percorso composable completo → 6-8h
         Esempi: HotLeadFunnel, multi-step sales flows, extraction-based tools
         
-6+ SI': 🔴 VERY COMPLEX TOOL    Specialized Framework Needed → 8-12h+
+6+ SI': 🔴 VERY COMPLEX TOOL    Composable + arch guidance richiesta → 8-12h+
         Esempi: custom agent workflows, dynamic step routing, complex state
 ```
 
@@ -63,7 +65,7 @@ Rispondi alle seguenti domande con **SI'** o **NO**:
 | 7 | Custom error recovery UI? | ✅ SI' | "Riprova generazione", prefill step precedenti |
 | 8 | Multi-model orchestration? | ❌ NO | Usa GPT-4-turbo per tutti i step |
 
-**Total SI'**: 6.5 / 8 → **🔴 VERY COMPLEX TOOL** → **Advanced Runbook + 6-8h minimum**
+**Total SI'**: 6.5 / 8 → **🔴 VERY COMPLEX TOOL** → **Composable path + architecture guidance (8-12h)**
 
 ---
 
@@ -81,7 +83,7 @@ Rispondi alle seguenti domande con **SI'** o **NO**:
 - Tool Complexity Tier: [🟢 Simple / 🟡 Moderate / 🔴 Complex]
 - Complexity Assessment: [Link a questo doc sezione risultati]
 - Estimated Time: [3-3.5h / 4-5h / 6-8h]
-- Runbook Version: [v1.1 / v1.1+Case / Advanced v2.0]
+- Runbook Path: [core / core+case / composable completo]
 ```
 
 ---

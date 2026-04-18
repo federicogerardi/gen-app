@@ -1,8 +1,8 @@
 ---
 goal: Chiusura spike di verifica allineamento della libreria tool-cloning al codice as-is
-version: 1.0
+version: 1.1
 date_created: 2026-04-17
-date_updated: 2026-04-17
+date_updated: 2026-04-18
 status: Completed
 tags: [runbook, tool-cloning, spike, research, closure]
 ---
@@ -25,6 +25,8 @@ Verificare che la libreria in `docs/implementation/tool-cloning/` sia coerente c
 
 ## Coverage Summary
 
+Nota storica: questa chiusura fotografa lo stato al 2026-04-17 (pre allineamento completo ADR 004 nel runbook tool-cloning). Per il riferimento as-is corrente usare i file in `src/app/tools/funnel-pages/` e `src/app/tools/nextland/` con pattern composable.
+
 File runbook verificati:
 - `tool-cloning-index.md`
 - `tool-cloning-overview.md`
@@ -43,6 +45,7 @@ File runbook verificati:
 
 Sorgenti di riferimento verificati:
 - `src/app/tools/funnel-pages/page.tsx`
+- `src/app/tools/funnel-pages/FunnelPagesToolContent.tsx`
 - `tests/e2e/funnel-pages-ux-parity.spec.ts`
 - `src/lib/tool-routes/guards.ts`
 - `src/lib/llm/streaming.ts`

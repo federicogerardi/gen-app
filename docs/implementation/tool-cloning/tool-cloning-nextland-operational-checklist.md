@@ -102,7 +102,9 @@ Note precompilate:
 - [x] Nessuna deviazione UX non documentata
 
 Note precompilate:
-- Baseline UI: `src/app/tools/funnel-pages/page.tsx`
+- Baseline UI wrapper: `src/app/tools/funnel-pages/page.tsx`
+- Baseline UI container: `src/app/tools/funnel-pages/FunnelPagesToolContent.tsx`
+- Baseline retry/resume hooks: `src/app/tools/funnel-pages/hooks/useFunnelGeneration.ts`, `src/app/tools/funnel-pages/hooks/useFunnelRecovery.ts`
 - Step target: landing page, thank-you page
 - Resume e regenerate devono restare coerenti con intent e artifact-first flow gia presenti in HLF
 

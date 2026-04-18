@@ -1,206 +1,279 @@
 ---
-goal: Phase 3 - Frontend UI Page con form, state management, streaming integration
-version: 1.1
+goal: Phase 3 - Frontend UI Page con architettura composable (page + ToolContent + hooks + components)
+version: 1.2
 date_created: 2026-04-17
-date_updated: 2026-04-17
+date_updated: 2026-04-18
 status: Active
 tags: [runbook, tool-cloning, phase-3, frontend, ui]
 ---
 
 # Phase 3: Frontend UI Page
 
-Questa phase copre la creazione della UI page Next.js con form, state management, e SSE streaming.
+Questa phase copre la creazione del layer frontend nel pattern composable introdotto con ADR 004.
+
+> ⚠️ **Aggiornato il 2026-04-18** — Il pattern monolitico (tutto-in-page.tsx) è obsoleto. Il pattern as-is divide il frontend in: thin Suspense wrapper (`page.tsx`) + container (`{{TOOL_TITLE}}ToolContent.tsx`) + custom hooks + componenti tool-specific. Reference: `src/app/tools/funnel-pages/` (HLF) e `src/app/tools/nextland/`.
 
 ---
 
-## Step 3.1: Crea UI Page Template
+## Overview della struttura frontend composable
+
+Un tool frontend si compone di questi livelli:
+
+```
+src/app/tools/{{TOOL_SLUG}}/
+├── page.tsx                             [SOLO Suspense wrapper + import — ~20 righe]
+├── {{TOOL_TITLE}}ToolContent.tsx        [Container: compone hooks + componenti — ~280 righe]
+├── config.ts                            [Costanti: TONES, initialSteps, badge class maps]
+├── types.ts                             [Re-export @/tools/shared + ToolStepState<StepKey>]
+├── hooks/
+│   ├── use{{TOOL_TITLE}}Generation.ts   [Stream generazione + retry via @/tools/shared]
+│   ├── use{{TOOL_TITLE}}Recovery.ts     [Resume artifact + checkpoint parse]
+│   ├── use{{TOOL_TITLE}}Extraction.ts   [Upload + extraction lifecycle — se applicable]
+│   └── use{{TOOL_TITLE}}UiState.ts      [uiState derivato da phase/steps/intent]
+└── components/
+    ├── {{TOOL_TITLE}}SetupCard.tsx       [Form setup (wrappa ToolSetup di shared)]
+    ├── {{TOOL_TITLE}}StatusQuick.tsx     [Widget stato step]
+    └── {{TOOL_TITLE}}StepCards.tsx       [Step cards + CTA per step]
+```
+
+---
+
+## Step 3.1: Crea `page.tsx` (Suspense wrapper)
 
 **File**: `src/app/tools/{{TOOL_SLUG}}/page.tsx`
+
+È un thin wrapper: Suspense + fallback + import del ToolContent. **Non contiene state, form, né logica.**
 
 ```tsx
 'use client';
 
-import { Suspense, useState } from 'react';
-import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 import { PageShell } from '@/components/layout/PageShell';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
+import { {{TOOL_TITLE}}ToolContent } from './{{TOOL_TITLE}}ToolContent';
 
-// ✅ Separazione: export default → Suspense → Content
-export default function {{TOOL_TITLE}}Page() {
+export default function {{TOOL_TITLE}}ToolPage() {
   return (
-    <Suspense fallback={<div>Caricamento...</div>}>
-      <{{TOOL_TITLE}}Content />
+    <Suspense
+      fallback={(
+        <PageShell width="workspace">
+          <div className="py-10 text-sm text-muted-foreground" role="status" aria-live="polite" aria-atomic="true">
+            Caricamento {{TOOL_TITLE}}...
+          </div>
+        </PageShell>
+      )}
+    >
+      <{{TOOL_TITLE}}ToolContent />
     </Suspense>
   );
 }
+```
 
-function {{TOOL_TITLE}}Content() {
+---
+
+## Step 3.2: Crea `config.ts`
+
+**File**: `src/app/tools/{{TOOL_SLUG}}/config.ts`
+
+```typescript
+import type { {{TOOL_TITLE}}StepState } from './types';
+
+export const TONES = ['professional', 'casual', 'formal', 'technical'] as const;
+
+export const TONE_HINTS: Record<(typeof TONES)[number], string> = {
+  professional: 'Chiaro e autorevole.',
+  casual: 'Diretto e vicino.',
+  formal: 'Istituzionale e rigoroso.',
+  technical: 'Preciso e tecnico.',
+};
+
+export const STEP_STATUS_BADGE_CLASS: Record<{{TOOL_TITLE}}StepState['status'], string> = {
+  idle:    'border-slate-400 bg-slate-200 text-slate-950',
+  running: 'border-amber-400 bg-amber-200 text-amber-950',
+  done:    'border-emerald-400 bg-emerald-200 text-emerald-950',
+  error:   'border-rose-400 bg-rose-200 text-rose-950',
+};
+
+export const STEP_STATUS_LABEL: Record<{{TOOL_TITLE}}StepState['status'], string> = {
+  idle:    'In attesa',
+  running: 'In corso',
+  done:    'Completato',
+  error:   'Errore',
+};
+
+export const initialSteps: {{TOOL_TITLE}}StepState[] = [
+  { key: '{{STEP_1_KEY}}', title: 'Step 1 — {{STEP_1_TITLE}}', status: 'idle', content: '', artifactId: null, error: null },
+  { key: '{{STEP_2_KEY}}', title: 'Step 2 — {{STEP_2_TITLE}}', status: 'idle', content: '', artifactId: null, error: null },
+  // aggiungere altri step se necessario
+];
+```
+
+---
+
+## Step 3.3: Crea `types.ts`
+
+**File**: `src/app/tools/{{TOOL_SLUG}}/types.ts`
+
+Riesporta i tipi condivisi da `@/tools/shared` e definisce il tipo step-state specifico.
+
+```typescript
+import type {
+  ToolStepState,
+  ToolIntent,
+  ToolUiState,
+  Phase,
+  StreamResult,
+  ResumeCandidateArtifact,
+  RetryMeta,
+  ExtractionLifecycleState,
+  ApiErrorPayload,
+} from '@/tools/shared';
+
+// Definisci le step key del tuo tool
+export type {{TOOL_TITLE}}StepKey = '{{STEP_1_KEY}}' | '{{STEP_2_KEY}}' /* | ... */;
+
+// Re-export tipi shared necessari ai componenti/hooks
+export type {
+  ToolIntent,
+  ToolUiState,
+  Phase,
+  StreamResult,
+  ResumeCandidateArtifact,
+  RetryMeta,
+  ExtractionLifecycleState,
+  ApiErrorPayload,
+};
+
+export type {{TOOL_TITLE}}StepState = ToolStepState<{{TOOL_TITLE}}StepKey>;
+export type {{TOOL_TITLE}}Intent = ToolIntent;
+export type {{TOOL_TITLE}}UiState = ToolUiState;
+```
+
+---
+
+## Step 3.4: Crea `hooks/use{{TOOL_TITLE}}Generation.ts`
+
+Gestisce la chiamata stream a `/api/tools/{{TOOL_SLUG}}/generate` con retry logic da `@/tools/shared`.
+
+```typescript
+import { useCallback, useState } from 'react';
+import {
+  RetryableRequestError,
+  getRetryMeta,
+  withRetry,
+} from '@/tools/shared';
+import { TONES, initialSteps } from '../config';
+import type { ApiErrorPayload, {{TOOL_TITLE}}StepKey, {{TOOL_TITLE}}StepState, StreamResult } from '../types';
+
+interface GenerateStreamRequest {
+  projectId: string;
+  model: string;
+  tone: (typeof TONES)[number];
+  step: {{TOOL_TITLE}}StepKey;
+  extractionContext: string;
+  // aggiungere campi chaining se multi-step
+}
+
+// fetch + stream parsing helper — ~20 righe
+async function generateStream(request: GenerateStreamRequest): Promise<StreamResult> {
+  const response = await fetch('/api/tools/{{TOOL_SLUG}}/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(request),
+  });
+  if (!response.ok) {
+    const data = (await response.json().catch(() => null)) as ApiErrorPayload | null;
+    const retryMeta = getRetryMeta(response.status, data);
+    const message = data?.error?.message ?? 'Generazione fallita';
+    throw new RetryableRequestError(message, retryMeta);
+  }
+  // parse SSE stream → return { content, artifactId }
+  // vedi useFunnelGeneration.ts per implementazione completa
+}
+
+// Hook export — espone generateStep + steps + isRunning + retryNotice
+export function use{{TOOL_TITLE}}Generation(/* options */) { /* ... */ }
+```
+
+> Per implementazione completa con backoff e step chaining, usa `src/app/tools/funnel-pages/hooks/useFunnelGeneration.ts` come riferimento diretto.
+
+---
+
+## Step 3.5: Crea `hooks/use{{TOOL_TITLE}}UiState.ts`
+
+Calcola il `uiState` derivato da `phase`, `steps`, `intent` e stato extraction.
+
+```typescript
+import type { Phase, ToolUiState, ExtractionLifecycleState, {{TOOL_TITLE}}StepState } from '../types';
+
+interface UseUiStateOptions {
+  phase: Phase;
+  intent: '{{TOOL_TITLE}}Intent';
+  steps: {{TOOL_TITLE}}StepState[];
+  extractionState?: ExtractionLifecycleState;
+}
+
+export function use{{TOOL_TITLE}}UiState(options: UseUiStateOptions): ToolUiState {
+  // logica derivata da phase, intent, steps
+  // vedi useNextLandUiState.ts per esempio
+}
+```
+
+---
+
+## Step 3.6: Crea `{{TOOL_TITLE}}ToolContent.tsx` (container)
+
+**File**: `src/app/tools/{{TOOL_SLUG}}/{{TOOL_TITLE}}ToolContent.tsx`
+
+Questo è il cuore della UI: compone i quattro custom hooks e i tre componenti tool-specific. Niente stato raw: tutto viene dai hook.
+
+```tsx
+'use client';
+
+import { useEffect, useRef, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
+import { PageShell } from '@/components/layout/PageShell';
+import { Button } from '@/components/ui/button';
+import { TONES, initialSteps } from './config';
+import { {{TOOL_TITLE}}SetupCard } from './components/{{TOOL_TITLE}}SetupCard';
+import { {{TOOL_TITLE}}StatusQuick } from './components/{{TOOL_TITLE}}StatusQuick';
+import { {{TOOL_TITLE}}StepCards } from './components/{{TOOL_TITLE}}StepCards';
+import { use{{TOOL_TITLE}}Generation } from './hooks/use{{TOOL_TITLE}}Generation';
+import { use{{TOOL_TITLE}}Recovery } from './hooks/use{{TOOL_TITLE}}Recovery';
+import { use{{TOOL_TITLE}}Extraction } from './hooks/use{{TOOL_TITLE}}Extraction';
+import { use{{TOOL_TITLE}}UiState } from './hooks/use{{TOOL_TITLE}}UiState';
+import type { {{TOOL_TITLE}}Intent, Phase } from './types';
+
+export function {{TOOL_TITLE}}ToolContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
-  // State: project, model, tone, input, running, output
-  const [projectId, setProjectId] = useState('');
-  const [model, setModel] = useState('');
-  const [tone, setTone] = useState('professional');
-  const [input, setInput] = useState('');
-  const [running, setRunning] = useState(false);
-  const [output, setOutput] = useState('');
 
-  const handleGenerate = async () => {
-    if (!projectId || !input.trim()) {
-      alert('Completa campi obbligatori');
-      return;
-    }
-
-    setRunning(true);
-    setOutput('');
-
-    try {
-      const response = await fetch('/api/tools/{{TOOL_SLUG}}/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectId,
-          model,
-          tone,
-          topic: input,
-        }),
-      });
-
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error?.message || 'Generazione fallita');
-      }
-
-      const reader = response.body?.getReader();
-      if (!reader) throw new Error('Stream non disponibile');
-
-      const decoder = new TextDecoder();
-      let buffer = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const parts = buffer.split('\n');
-        buffer = parts.pop() ?? '';
-
-        for (const line of parts) {
-          if (!line.startsWith('data: ')) continue;
-          const payload = JSON.parse(line.slice(6));
-          if (payload.type === 'token') setOutput(prev => prev + (payload.token ?? ''));
-          if (payload.type === 'error') throw new Error(payload.message);
-        }
-      }
-    } catch (error) {
-      alert(`Errore: ${error instanceof Error ? error.message : 'Sconosciuto'}`);
-    } finally {
-      setRunning(false);
-    }
-  };
+  // intent da searchParams
+  // project, model, tone state
+  // hook generation → steps, isRunning, retryNotice, generateStep
+  // hook recovery → resumeCandidate, handleResume
+  // hook extraction → extractionState, handleUpload
+  // hook uiState → uiState (derivato)
 
   return (
     <PageShell width="workspace">
+      {/* Header */}
       <div className="mb-7">
-        <h1 className="app-title text-3xl font-semibold">{{TOOL_TITLE}}</h1>
+        <h1 className="app-title text-3xl font-semibold">{{TOOL_TITLE_DISPLAY}}</h1>
         <p className="text-sm text-muted-foreground">{{TOOL_DESCRIPTION}}</p>
       </div>
-
+      {/* Grid */}
       <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
-        {/* Form Card */}
-        <Card className="app-surface app-rise rounded-3xl">
-          <CardHeader>
-            <CardTitle>Setup</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Progetto */}
-            <div>
-              <label className="text-sm font-medium">Progetto</label>
-              <input
-                type="text"
-                placeholder="Seleziona progetto"
-                value={projectId}
-                onChange={(e) => setProjectId(e.target.value)}
-                className="app-control w-full rounded px-3 py-2"
-              />
-            </div>
-
-            {/* Model */}
-            <div>
-              <label className="text-sm font-medium">Modello</label>
-              <Select value={model} onValueChange={setModel}>
-                <SelectTrigger className="app-control">
-                  <SelectValue placeholder="Scegli modello" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="gpt-4">GPT-4</SelectItem>
-                  <SelectItem value="gpt-3.5">GPT-3.5</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Tone */}
-            <div>
-              <label className="text-sm font-medium">Tono</label>
-              <Select value={tone} onValueChange={setTone}>
-                <SelectTrigger className="app-control">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="professional">Professionale</SelectItem>
-                  <SelectItem value="casual">Casual</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Input testuale */}
-            <div>
-              <label className="text-sm font-medium">Argomento</label>
-              <Textarea
-                placeholder="Descrivi il tema su cui generare contenuto"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                className="app-control"
-                rows={4}
-              />
-            </div>
-
-            {/* Generate button */}
-            <Button
-              onClick={handleGenerate}
-              disabled={running || !projectId || !input.trim()}
-              className="w-full"
-            >
-              {running ? 'In generazione...' : 'Genera contenuto'}
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Output Panel */}
-        <div>
-          <Card className="app-surface rounded-2xl">
-            <CardHeader>
-              <CardTitle className="text-sm">Output</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {output ? (
-                <div className="text-xs whitespace-pre-wrap">{output}</div>
-              ) : (
-                <p className="text-xs text-muted-foreground">Output apparirà qui...</p>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+        <{{TOOL_TITLE}}SetupCard /* props */ />
+        <{{TOOL_TITLE}}StatusQuick /* props */ />
       </div>
+      <{{TOOL_TITLE}}StepCards /* props */ />
     </PageShell>
   );
 }
 ```
+
+> Per implementazione completa (`~280 righe`) usa `src/app/tools/nextland/NextLandToolContent.tsx` come riferimento.
 
 ---
 
@@ -208,18 +281,19 @@ function {{TOOL_TITLE}}Content() {
 
 - [ ] `<PageShell width="workspace">` wrappa la pagina
 - [ ] Form card ha `.app-surface + .app-rise`
-- [ ] Select/Textarea hanno `.app-control`
+- [ ] Input/Select hanno `.app-control`
 - [ ] Titolo ha `.app-title`
-- [ ] Copy ha `.app-copy` (automatica da PageShell)
-- [ ] Output panel non ha sfondo piatto (usa bg-white/70 o container dedicato)
-- [ ] Pulsante ha variant="default" non custom
+- [ ] Output panel non ha sfondo piatto
+- [ ] Step CTA principale ha `data-primary-action="true"`
 
 ---
 
 ## Reference Documentazione
 
 - **Graphic Frameworking**: [docs/specifications/graphic-frameworking-spec.md](../../specifications/graphic-frameworking-spec.md)
-- **HLF Implementation**: [src/app/tools/funnel-pages/page.tsx](../../../src/app/tools/funnel-pages/page.tsx)
+- **HLF reference implementation**: `src/app/tools/funnel-pages/`
+- **NextLand reference implementation**: `src/app/tools/nextland/`
+- **Shared library**: `src/tools/shared/` (types, hooks, lib, components)
 
 ---
 

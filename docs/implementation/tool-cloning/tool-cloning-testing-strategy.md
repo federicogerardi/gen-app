@@ -1,6 +1,6 @@
 ---
 goal: Testing Strategy - integration, unit, E2E, and recovery scenarios
-version: 1.2
+version: 1.3
 date_created: 2026-04-17
 date_updated: 2026-04-18
 status: Active
@@ -11,6 +11,8 @@ tags: [runbook, tool-cloning, testing, integration, unit, e2e]
 
 Questa phase copre test integration, unit, e E2E per validare il tool clone.
 
+> ⚠️ **Aggiornato il 2026-04-18** — Con l'architettura composable (ADR 004), le unit test includono ora le suite dei custom hooks (`use{{TOOL_TITLE}}Generation`, `use{{TOOL_TITLE}}Recovery`, `use{{TOOL_TITLE}}Extraction`, `use{{TOOL_TITLE}}UiState`) e dei componenti tool-specific. Reference: `tests/unit/` per HLF e NextLand.
+
 ---
 
 ## Test Structure
@@ -18,13 +20,19 @@ Questa phase copre test integration, unit, e E2E per validare il tool clone.
 ```
 tests/
 ├── integration/
-│   ├── {{TOOL_SLUG}}-route.test.ts        [POST handler scenarios]
-│   └── [{{TOOL_SLUG}}-extraction.test.ts]  [Upload + extraction if applicable]
+│   ├── {{TOOL_SLUG}}-route.test.ts               [POST handler: auth, ownership, rate limit, SSE, validation]
+│   └── [{{TOOL_SLUG}}-extraction.test.ts]         [Upload + extraction se applicable]
 ├── unit/
-│   ├── {{TOOL_SLUG}}.test.ts               [Prompt builder edge cases]
-│   └── [{{TOOL_SLUG}}-orchestrator.test.ts] [State machine if complex]
+│   ├── {{TOOL_SLUG}}.test.ts                      [Prompt builder: placeholder, sanitization, step branching]
+│   ├── use{{TOOL_TITLE}}Generation.test.ts         [Hook generation: stream, retry, step sequencing, error]
+│   ├── use{{TOOL_TITLE}}Recovery.test.ts           [Hook recovery: resume candidate, checkpoint parse]
+│   ├── use{{TOOL_TITLE}}Extraction.test.ts         [Hook extraction: upload, lifecycle state — se applicable]
+│   ├── use{{TOOL_TITLE}}UiState.test.ts            [Hook uiState: derivazione da phase/steps/intent]
+│   └── tools/{{TOOL_SLUG}}/
+│       ├── {{TOOL_SLUG}}-setup-card.test.tsx       [Componente SetupCard: render, form bindings]
+│       └── {{TOOL_SLUG}}-step-cards.test.tsx       [Componente StepCards: stati, CTA, output]
 └── e2e/
-    └── {{TOOL_SLUG}}-ux-parity.spec.ts     [User workflow validation]
+    └── {{TOOL_SLUG}}-ux-parity.spec.ts             [User workflow + keyboard, mobile, focus parity]
 ```
 
 ---

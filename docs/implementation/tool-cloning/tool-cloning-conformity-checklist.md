@@ -1,8 +1,8 @@
 ---
 goal: Conformity Checklist - Pre-PR validation and Definition of Done
-version: 1.1
+version: 1.2
 date_created: 2026-04-17
-date_updated: 2026-04-17
+date_updated: 2026-04-18
 status: Active
 tags: [runbook, tool-cloning, conformity-checklist, dod, pre-pr]
 ---
@@ -29,7 +29,7 @@ Completa TUTTI i seguenti punti prima di mergiare.
 
 ## Prompt & Builder
 
-- [ ] Sorgente markdown in `src/lib/tool-prompts/prompts/{{TOOL_SLUG}}/generate.md`
+- [ ] Sorgente markdown in `src/lib/tool-prompts/prompts/tools/{{TOOL_SLUG}}/generate.md`
 - [ ] Builder TypeScript in `src/lib/tool-prompts/{{TOOL_SLUG}}.ts`
 - [ ] Template statico tipizzato (NO `fs.readFile` runtime)
 - [ ] Interpolazione safe (trim + empty string fallback)
@@ -41,7 +41,9 @@ Completa TUTTI i seguenti punti prima di mergiare.
 ## Frontend UI
 
 - [ ] Page exists: `src/app/tools/{{TOOL_SLUG}}/page.tsx`
-- [ ] `<Suspense>` wrappa `useSearchParams()` ✅ Build gate
+- [ ] `page.tsx` è thin wrapper con `<Suspense>`
+- [ ] `{{TOOL_TITLE}}ToolContent.tsx` contiene orchestration UI tool-specific
+- [ ] Hook/componenti tool-specific separati (`hooks/`, `components/`)
 - [ ] Layout usa `<PageShell width="workspace">`
 - [ ] Form card: `.app-surface + .app-rise`
 - [ ] Select/Textarea: `.app-control`
@@ -197,7 +199,7 @@ Status: Ready to Merge 🚀
 1. Merge PR to `dev` branch (via Squash-and-Merge)
 2. Verify PR title becomes commit message (Conventional Commits format)
 3. Close associated issue with reference to PR
-4. Update [docs/implement-index.md](../implement-index.md) with completion status
+4. Update [docs/implement-index.md](../../implement-index.md) with completion status
 
 ---
 

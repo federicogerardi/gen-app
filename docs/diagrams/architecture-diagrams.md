@@ -1,9 +1,24 @@
 # Architecture Diagrams: LLM Artifact Generation Hub
 
 **Version**: 1.0  
-**Status**: ALIGNED TO CURRENT IMPLEMENTATION  
+**Status**: HISTORICAL SNAPSHOT (PRE ADR 004 CLOSURE)  
 **Format**: Mermaid.js diagrams  
-**Last Updated**: 2026-04-08
+**Last Updated**: 2026-04-18
+
+> Nota: questi diagrammi sono utili come baseline concettuale ma non rappresentano al 100% lo stato as-is corrente dopo la chiusura ADR 004.
+> Fonti canoniche correnti:
+> - [docs/adrs/004-tool-pages-composable-architecture.md](../adrs/004-tool-pages-composable-architecture.md)
+> - [docs/implement-index.md](../implement-index.md)
+
+---
+
+## Drift Noti (Verifica 2026-04-18)
+
+1. Tool pages frontend: i diagrammi non riflettono esplicitamente il pattern composable (`page.tsx` wrapper + `*ToolContent.tsx` + hooks/components tool-specific).
+2. Route model: in piu sezioni appare un flusso centrato su `/api/artifacts/generate`; lo stato as-is usa anche endpoint tool-specific sotto `/api/tools/*`.
+3. Nomenclatura UX: riferimenti a "HotLead Funnel" non distinguono sempre tra naming storico e implementazione corrente modularizzata.
+
+Per evitare ambiguita operativa, trattare questo file come riferimento storico/illustrativo e non come spec di implementazione.
 
 ---
 

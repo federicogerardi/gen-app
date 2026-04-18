@@ -1,9 +1,9 @@
 ---
 goal: GO/NO-GO Assessment - Framework validity for tool complexity tiers
-version: 1.1
+version: 1.2
 date_created: 2026-04-17
-date_updated: 2026-04-17
-status: Active
+date_updated: 2026-04-18
+status: Historical Snapshot
 tags: [runbook, tool-cloning, go-no-go-assessment, framework-validity]
 ---
 
@@ -11,6 +11,18 @@ tags: [runbook, tool-cloning, go-no-go-assessment, framework-validity]
 
 **Data Assessment**: 2026-04-17  
 **Scope**: Capacità del runbook di guidare clonazione tool **con complessità comparabile o superiore** a HotLeadFunnel
+
+> ⚠️ Nota storica (2026-04-18): questo documento fotografa una valutazione pre-allineamento completo ADR 004.
+> Per decisioni correnti usare [tool-cloning-index.md](tool-cloning-index.md), [tool-cloning-complexity-check.md](tool-cloning-complexity-check.md) e [docs/adrs/004-tool-pages-composable-architecture.md](../../adrs/004-tool-pages-composable-architecture.md).
+
+## Stato Corrente (As-Is)
+
+| Categoria Tool | Applicabilità Runbook Corrente | Decisione Operativa |
+|---|---|---|
+| **Simple** | ✅ Alta | 🟢 GO |
+| **Moderate** | ✅ Alta | 🟢 GO |
+| **Complex** | ✅ Supportata con percorso completo | 🟢 GO con guardrail |
+| **Very Complex** | ⚠️ Supportata parzialmente | 🟡 GO condizionato a Architecture Team |
 
 ---
 
@@ -144,14 +156,14 @@ tags: [runbook, tool-cloning, go-no-go-assessment, framework-validity]
 
 ---
 
-## Final Verdict by Complexity Tier
+## Final Verdict by Complexity Tier (Storico, pre-ADR 004)
 
 ### 🟢 GO — Simple Tools (Form-based, single-endpoint, no recovery)
 
 - Applicabilità: 100%
 - Tempo realistico: 3-3.5h
 - Confidence: Alta
-- Action: Usa Runbook v1.1 as-is ✅
+- Action storica: usare il runbook disponibile a quella data
 
 ---
 
@@ -160,12 +172,12 @@ tags: [runbook, tool-cloning, go-no-go-assessment, framework-validity]
 - Applicabilità: 60%
 - Tempo realistico: 4-5h
 - Confidence: Media
-- Action: Use Runbook v1.1 + case study reference (HLF source code)
+- Action storica: runbook core + case study HLF
 - Risk: May need custom guidance on selected features
 
 ---
 
-### 🔴 NO GO — Complex Tools (Stateful, multi-step, recovery)
+### 🔴 NO GO (Storico) — Complex Tools (Stateful, multi-step, recovery)
 
 - Applicabilità: 20%
 - Tempo realistico: 6-8h
@@ -188,10 +200,10 @@ tags: [runbook, tool-cloning, go-no-go-assessment, framework-validity]
 ## Recommendations
 
 ### For Simple Tools
-Use Runbook v1.1 as-is ✅
+Indicazione storica: usare il runbook disponibile al momento dell'assessment.
 
 ### For Moderate Complexity Tools
-1. Follow Runbook v1.1 core path (Phase 1, 2, 3)
+1. Follow runbook core path (Phase 1, 2, 3)
 2. Implement select optional phases (2.5 OR 3.6, not both)
 3. Study HLF reference implementation for patterns
 4. Budget 4-5h total
@@ -207,7 +219,7 @@ Required supplementary guide covering:
 - Retry with backoff implementation
 - Advanced testing for state complexity
 
-**File**: `docs/implementation/tool-cloning-advanced-patterns.md` (to be created)
+Nota storica: all'epoca era stata proposta una guida supplementare dedicata ai pattern avanzati.
 
 ### For Very Complex Tools
 **Contact Architecture Team immediately.**

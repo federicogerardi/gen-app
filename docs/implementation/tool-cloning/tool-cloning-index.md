@@ -129,7 +129,7 @@ Prima di dichiarare la libreria docs "GO", chiudere questi gap minimi:
 
 | Document | Purpose | For |
 |----------|---------|-----|
-| [tool-cloning-overview.md](tool-cloning-overview.md) | Intro, v1.1 highlights, usage flow | Everyone, first |
+| [tool-cloning-overview.md](tool-cloning-overview.md) | Intro, v1.3 highlights, usage flow | Everyone, first |
 | [tool-cloning-prerequisites.md](tool-cloning-prerequisites.md) | Setup, access, env validation | Everyone, early |
 | [tool-cloning-anatomy.md](tool-cloning-anatomy.md) | File structure, naming conventions | Everyone, before code |
 | [tool-cloning-complexity-check.md](tool-cloning-complexity-check.md) | Self-assessment questionnaire, scoring, tier classification | Everyone, before starting |
@@ -223,7 +223,8 @@ Validated after full NextLand cloning cycle completion:
 | Tool Routes Guardrails | [.github/instructions/tool-routes.instructions.md](../../../.github/instructions/tool-routes.instructions.md) | Auth/rate limit pattern |
 | Tool Prompts Pattern | [.github/instructions/tool-prompts.instructions.md](../../../.github/instructions/tool-prompts.instructions.md) | Prompt builder strategy |
 | API Specifications | [docs/specifications/api-specifications.md](../../specifications/api-specifications.md#tool-specific-generation) | Error codes, SSE contract |
-| HLF Reference | [src/app/tools/funnel-pages/page.tsx](../../../src/app/tools/funnel-pages/page.tsx) | Working implementation |
+| HLF Reference (wrapper) | [src/app/tools/funnel-pages/page.tsx](../../../src/app/tools/funnel-pages/page.tsx) | Entry page |
+| HLF Reference (main UI) | [src/app/tools/funnel-pages/FunnelPagesToolContent.tsx](../../../src/app/tools/funnel-pages/FunnelPagesToolContent.tsx) | Working implementation |
 | Accessibility Guidelines | [docs/accessibility/accessibility.md](../../accessibility/accessibility.md) | WCAG AA requirements |
 | UX Strategy | [docs/ux/ux-strategy.md](../../ux/ux-strategy.md) | Higher-level design direction |
 

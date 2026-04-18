@@ -63,26 +63,28 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
   - ✅ Aggiunta sezione `## Tool Pages Exceptions` in `docs/specifications/graphic-frameworking-spec.md`
   - ✅ Aggiornato QA checklist per differenziare "pagine dashboard/admin" vs "tool pages"
   - ✅ Cross-reference in `docs/ux/gui-refactor-plan.md`
-  - ✅ **NUOVO**: Creato `docs/implementation/tool-cloning-runbook-1.md` con:
+  - ✅ **NUOVO (storico)**: Creato `docs/implementation/tool-cloning-runbook-1.md` (poi superseded)
+  - ✅ **AS-IS corrente**: Libreria atomizzata `docs/implementation/tool-cloning/` con entrypoint [docs/implementation/tool-cloning/tool-cloning-index.md](./implementation/tool-cloning/tool-cloning-index.md)
     - Anatomia file structure per tool
-    - 4 phase sequenziali: Route + Schema → Prompts → Frontend → Testing
+    - Phase sequence modulare (backend, prompts, extraction, frontend, UX, checkpoint, retry, testing)
     - Template TypeScript copiabili per route handler, builder, UI page, test
     - Checklist conformità graphic framework + testing + build
     - Troubleshooting comune
-    - Tempi stimati (2.5-3 ore con esperienza)
+    - Tempi stimati e criteri GO/NO-GO aggiornati
     - DoD finale + link riferimenti
 - **Status compliance**: HLF 100% conforme. Clone potential: 95%+ con runbook (vs 85% senza).
 - **File aggiornati**:
   - `docs/specifications/graphic-frameworking-spec.md`
   - `docs/ux/gui-refactor-plan.md`
-  - **[NEW]** `docs/implementation/tool-cloning-runbook-1.md`
+  - **[HISTORICAL]** `docs/implementation/tool-cloning-runbook-1.md`
+  - **[CURRENT]** `docs/implementation/tool-cloning/tool-cloning-index.md`
 
 ## Aggiornamento sessione (2026-04-18 — Capacity/overflow thresholds per tool generation)
 
 - **Stato attuale**: `COMPLETATO` (documentazione operativa).
 - **Obiettivo**: definire soglie operative verde/giallo/rosso per rischio overflow con baseline 20 utenti medi concorrenti.
 - **Riferimento unico (no duplicato tabella)**:
-  - [docs/review/2026-04-18-capacity-overflow-risk-review.md](docs/review/2026-04-18-capacity-overflow-risk-review.md)
+  - [docs/review/2026-04-18-capacity-overflow-risk-review.md](./review/2026-04-18-capacity-overflow-risk-review.md)
 - **Uso previsto**: base per alerting/runbook su p95, 429/5xx, stream concorrenti, saturazione DB e burn-rate costi.
 
 ## Aggiornamento sessione (2026-04-16 — Native login credentials + Google OAuth)

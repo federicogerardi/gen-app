@@ -1,6 +1,6 @@
 ---
 goal: Introduzione, stato versione, e referenze rapide al runbook di clonazione tool
-version: 1.2
+version: 1.3
 date_created: 2026-04-17
 date_updated: 2026-04-18
 status: Active
@@ -9,15 +9,15 @@ tags: [runbook, tool-cloning, overview, introduction]
 
 # Tool Cloning Runbook: Panoramica
 
-**Versione**: 1.1 (Aggiunta UX Replicability Guidance)  
+**Versione**: 1.3 (As-is modulare ADR 004 allineato)  
 **Data creazione**: 2026-04-17  
-**Ultimo aggiornamento**: 2026-04-17  
+**Ultimo aggiornamento**: 2026-04-18  
 **Scope**: Clonare HotLeadFunnel con variazioni mantenendo **95%+ conformità** a linee guida grafiche, API, prompt, **e replicabilità UX**  
 **Audience**: Developer che replicano HLF per nuovo tool con workflow diverso
 
 ---
 
-## Novità in v1.1
+## Novità Storiche in v1.1
 
 **Aggiunto contributo completo sulla UX Replicability** (Phase 3.5):
 - ✅ User Journey extraction e documentazione da HLF reference
@@ -125,7 +125,7 @@ GO/NO GO Assessment (per complex tools)
 
 ## Principi Fondamentali
 
-1. **Nessuna Variazione di Contenuto** — Questo runbook suddivide il file monolitico in moduli atomici. ZERO modifiche al contenuto originale.
+1. **As-is Prima del Legacy** — Il runbook segue l'architettura composable corrente (ADR 004): `page.tsx` wrapper + `ToolContent` + hooks/componenti dedicati.
 2. **Sequenziale Obbligatorio** — Completa le phase nell'ordine: 1 → 2 → 3 → Testing
 3. **Complexity-First** — Classifica il tool PRIMA di partire. La stima tempo dipende da questa auto-assessment.
 4. **UX è Conformità** — Non basta API corretto; UX deve replicare HLF identicamente (layout, interazioni, accessibility, tone).
@@ -137,15 +137,16 @@ GO/NO GO Assessment (per complex tools)
 
 | Documento | Scopo | Link |
 |-----------|-------|------|
-| Graphic Framework | CSS classes obbligatorie | [docs/specifications/graphic-frameworking-spec.md](../specifications/graphic-frameworking-spec.md) |
-| Tool Routes | Pattern auth/rate limit | [.github/instructions/tool-routes.instructions.md](../../.github/instructions/tool-routes.instructions.md) |
-| Tool Prompts | Template strategy | [.github/instructions/tool-prompts.instructions.md](../../.github/instructions/tool-prompts.instructions.md) |
-| API Specs | Error codes + SSE | [docs/specifications/api-specifications.md](../specifications/api-specifications.md#tool-specific-generation) |
-| HLF Reference | Codice completo funzionante | [src/app/tools/funnel-pages/page.tsx](../../src/app/tools/funnel-pages/page.tsx) |
+| Graphic Framework | CSS classes obbligatorie | [docs/specifications/graphic-frameworking-spec.md](../../specifications/graphic-frameworking-spec.md) |
+| Tool Routes | Pattern auth/rate limit | [.github/instructions/tool-routes.instructions.md](../../../.github/instructions/tool-routes.instructions.md) |
+| Tool Prompts | Template strategy | [.github/instructions/tool-prompts.instructions.md](../../../.github/instructions/tool-prompts.instructions.md) |
+| API Specs | Error codes + SSE | [docs/specifications/api-specifications.md](../../specifications/api-specifications.md#tool-specific-generation) |
+| HLF Reference (wrapper) | Entry page | [src/app/tools/funnel-pages/page.tsx](../../../src/app/tools/funnel-pages/page.tsx) |
+| HLF Reference (main UI) | Container e orchestration UI | [src/app/tools/funnel-pages/FunnelPagesToolContent.tsx](../../../src/app/tools/funnel-pages/FunnelPagesToolContent.tsx) |
 | Blueprint Template | Piano tecnico file-by-file | [tool-cloning-blueprint-template.md](tool-cloning-blueprint-template.md) |
 | Operational Checklist Template | Guardrail minimo implementativo | [tool-cloning-operational-checklist-template.md](tool-cloning-operational-checklist-template.md) |
-| UX Strategy | Higher-level design direction | [docs/ux/ux-strategy.md](../ux/ux-strategy.md) |
-| Accessibility | WCAG AA requirements | [docs/accessibility/accessibility.md](../accessibility/accessibility.md) |
+| UX Strategy | Higher-level design direction | [docs/ux/ux-strategy.md](../../ux/ux-strategy.md) |
+| Accessibility | WCAG AA requirements | [docs/accessibility/accessibility.md](../../accessibility/accessibility.md) |
 
 ---
 

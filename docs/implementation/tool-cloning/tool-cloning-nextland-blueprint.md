@@ -1,6 +1,6 @@
 ---
 goal: Blueprint tecnico precompilato per clonare NextLand a partire da HLF
-version: 1.4
+version: 1.5
 date_created: 2026-04-18
 date_updated: 2026-04-18
 status: Active
@@ -13,68 +13,60 @@ Documento di preparazione e allineamento operativo per il clone NextLand.
 
 Scopo: usare HotLeadFunnel come reference implementation per costruire un tool con upload + extraction, due step generativi e capability di resume, retry e quota per step.
 
-Stato corrente: implementazione core completata (backend, prompt layer, UI, resume/retry, relaunch artifact-first, E2E dedicati). Test funzionali su ambiente Dev superati: upload + extraction OK, step 1 OK, step 2 OK.
+Stato corrente: **implementazione completata e gate tecnici chiusi** (typecheck, lint, test full suite 69/69, build, E2E 25/25). Architettura composable ADR 004 applicata su entrambi i tool.
 
 ---
 
-## Snapshot Implementazione (as-is)
+## Snapshot Implementazione (as-is — post ADR 004 Phase 5)
 
-Implementato in repository:
+### Layer API e Prompt (invariati rispetto a versione pre-refactor)
 
-- route generate NextLand: `src/app/api/tools/nextland/generate/route.ts`
-- route upload NextLand: `src/app/api/tools/nextland/upload/route.ts`
-- pagina tool NextLand: `src/app/tools/nextland/page.tsx`
-- prompt layer NextLand runtime: `src/lib/tool-prompts/nextland.ts`, `src/lib/tool-prompts/nextland-templates.ts`
-- prompt source markdown NextLand: `src/lib/tool-prompts/prompts/tools/nextland/*`
-- registry templates/tool prompts aggiornato: `src/lib/tool-prompts/registry.ts`, `src/lib/tool-prompts/templates.ts`
-- supporto workflow NextLand in utility artifact/relaunch/preview: `src/lib/artifact-relaunch.ts`, `src/lib/artifact-preview.ts`, `src/lib/artifact-card-identity.ts`, `src/app/artifacts/[id]/page.tsx`
-- supporto workflow NextLand nei tipi e mapping artifact: `src/lib/types/artifact.ts`, `src/lib/tool-routes/artifact-type-map.ts`
-- copertura test integration/unit/e2e aggiornata per NextLand
+- `src/app/api/tools/nextland/generate/route.ts`
+- `src/app/api/tools/nextland/upload/route.ts`
+- `src/lib/tool-prompts/nextland.ts`, `src/lib/tool-prompts/nextland-templates.ts`
+- `src/lib/tool-prompts/prompts/tools/nextland/*`
+- `src/lib/tool-prompts/registry.ts`, `src/lib/tool-prompts/templates.ts`
 
-Evidenze di verifica eseguite:
+### Layer Frontend (architettura composable — aggiornato ADR 004 Phase 5)
 
-- `npm test -- --runInBand tests/integration/nextland-route.test.ts tests/integration/nextland-upload-route.test.ts tests/unit/tool-prompts.test.ts tests/unit/tool-prompts-parity.test.ts tests/unit/artifact-preview.test.ts tests/unit/artifact-card-identity.test.ts tests/unit/llm-orchestrator-normalization.test.ts` -> passed
-- `npm test -- --runInBand tests/unit/artifact-relaunch.test.ts tests/unit/artifact-preview.test.ts tests/unit/artifact-card-identity.test.ts tests/integration/nextland-route.test.ts tests/integration/nextland-upload-route.test.ts` -> passed
-- `npx playwright test tests/e2e/nextland-retry-resume.spec.ts tests/e2e/nextland-ux-parity.spec.ts` -> passed
-- Test funzionali su Dev (2026-04-18): upload file + extraction OK, generazione step 1 (`nextland_landing`) OK, generazione step 2 (`nextland_thank_you`) OK
+- `src/app/tools/nextland/page.tsx` — thin Suspense wrapper (~20 righe)
+- `src/app/tools/nextland/NextLandToolContent.tsx` — container (~282 righe)
+- `src/app/tools/nextland/config.ts` — TONES, initialSteps, badge class maps
+- `src/app/tools/nextland/types.ts` — re-export `@/tools/shared` + `NextLandStepState`
+- `src/app/tools/nextland/hooks/useNextLandGeneration.ts`
+- `src/app/tools/nextland/hooks/useNextLandRecovery.ts`
+- `src/app/tools/nextland/hooks/useNextLandExtraction.ts`
+- `src/app/tools/nextland/hooks/useNextLandUiState.ts`
+- `src/app/tools/nextland/components/NextLandSetupCard.tsx`
+- `src/app/tools/nextland/components/NextLandStatusQuick.tsx`
+- `src/app/tools/nextland/components/NextLandStepCards.tsx`
 
-Nota: non ancora eseguiti in questo ciclo `npm run typecheck`, `npm run lint`, `npm run test` full suite, `npm run test:e2e` full suite.
+### Shared library (condivisa con HLF — non modificare)
 
----
+- `src/tools/shared/` — types, hooks, lib, components, index.ts
 
-## Ripartenza Rapida (handoff per domani)
+### Integrations e artifact support
 
-Stato pronto:
+- `src/lib/artifact-relaunch.ts`, `src/lib/artifact-preview.ts`, `src/lib/artifact-card-identity.ts`
+- `src/app/artifacts/[id]/page.tsx`
+- `src/lib/types/artifact.ts`, `src/lib/tool-routes/artifact-type-map.ts`
 
-- Implementazione NextLand completata nei layer API, prompt, UI e recovery (resume/retry).
-- Test mirati su route, prompt, relaunch e E2E NextLand gia passati.
-- Nessun blocker funzionale aperto nel blueprint.
+### Copertura test completata
 
-Punti rimasti prima del merge:
+- `tests/integration/nextland-route.test.ts`, `tests/integration/nextland-upload-route.test.ts`
+- `tests/unit/useNextLandGeneration.test.ts`, `tests/unit/useNextLandRecovery.test.ts`
+- `tests/unit/useNextLandExtraction.test.ts`, `tests/unit/useNextLandUiState.test.ts`
+- `tests/unit/tools/nextland/nextland-setup-card.test.tsx`, `tests/unit/tools/nextland/nextland-step-cards.test.tsx`
+- `tests/integration/nextland-page-flow.test.tsx`
+- `tests/e2e/nextland-retry-resume.spec.ts`, `tests/e2e/nextland-ux-parity.spec.ts`
 
-1. Eseguire quality gates completi non ancora lanciati in questo ciclo.
-2. Chiudere il test mancante su rate limit nel piano integration.
-3. Fare passaggio finale su naming/messaging UI e coerenza copy step landing -> thank-you.
+### Gate tecnici chiusi (2026-04-18)
 
-Ordine consigliato di ripresa:
-
-1. `npm run typecheck`
-2. `npm run lint`
-3. `npm run test -- --runInBand tests/integration/nextland-route.test.ts`
-4. `npm run test`
-5. `npm run test:e2e`
-
-Checklist rapida di verifica:
-
-- [ ] Test integration: caso `RATE_LIMIT_EXCEEDED` coperto in `tests/integration/nextland-route.test.ts`
-- [ ] Nessuna regressione su `artifact-relaunch` e `artifact-preview` con workflow `nextland`
-- [ ] Conferma che step 2 non parte senza output valido di `nextland_landing`
-- [ ] Validazione manuale della pagina `src/app/tools/nextland/page.tsx` su desktop/mobile
-- [ ] Aggiornamento eventuale tracker/piano se emerge delta dai gate completi
-
-Se i gate completi passano senza delta:
-
-- Stato previsto: ready for PR verso `dev` con scope limitato a NextLand cloning.
+- ✅ `npm run typecheck`
+- ✅ `npm run lint`
+- ✅ `npm run test` (69 suite, 456 test)
+- ✅ `npm run build`
+- ✅ `npx playwright test` (25/25 E2E)
 
 ---
 
@@ -143,9 +135,9 @@ Per mantenere coerenza esplicita con HLF, NextLand usa il pattern `contesto inva
 | Prompt builder | `src/lib/tool-prompts/funnel-pages.ts` | `src/lib/tool-prompts/nextland.ts` | Sostituire optin/quiz/vsl con landing/thank-you |
 | Static templates | `src/lib/tool-prompts/funnel-templates.ts` | `src/lib/tool-prompts/nextland-templates.ts` | Template runtime per due step |
 | Prompt source | `src/lib/tool-prompts/prompts/tools/hl_funnel/*` | `src/lib/tool-prompts/prompts/tools/nextland/*` | Nuovi markdown sorgente orientati a landing e thank-you |
-| UI page | `src/app/tools/funnel-pages/page.tsx` | `src/app/tools/nextland/page.tsx` | State machine simile, step UI rinominati e semplificati |
-| Checkpoint logic | `src/app/tools/funnel-pages/page.tsx` | `src/app/tools/nextland/page.tsx` | Riuso del pattern artifact-first / resume |
-| Retry logic | `src/app/tools/funnel-pages/page.tsx` | `src/app/tools/nextland/page.tsx` | Riuso del wrapper `withRetry` con messaging adattato |
+| UI page | `src/app/tools/funnel-pages/FunnelPagesToolContent.tsx` | `src/app/tools/nextland/NextLandToolContent.tsx` | State machine simile, step UI rinominati e semplificati |
+| Checkpoint logic | `src/app/tools/funnel-pages/hooks/useFunnelRecovery.ts` | `src/app/tools/nextland/hooks/useNextLandRecovery.ts` | Riuso del pattern artifact-first / resume |
+| Retry logic | `src/app/tools/funnel-pages/hooks/useFunnelGeneration.ts` | `src/app/tools/nextland/hooks/useNextLandGeneration.ts` | Riuso del wrapper `withRetry` con messaging adattato |
 | Integration tests | `tests/integration/funnel-pages-route.test.ts` | `tests/integration/nextland-route.test.ts` | Coprire step landing e thank-you invece di optin/quiz/vsl |
 | Upload tests | `tests/integration/funnel-pages-upload-route.test.ts` | `tests/integration/nextland-upload-route.test.ts` | Riuso quasi completo |
 | E2E tests | `tests/e2e/funnel-pages-retry-resume.spec.ts` | `tests/e2e/nextland-retry-resume.spec.ts` | Retry extraction + resume adattati al journey NextLand |
@@ -164,7 +156,7 @@ Principio guida del clone:
 |------|-------------|-------------|--------|----------------|--------|
 | API | `src/app/api/tools/funnel-pages/generate/route.ts` | `src/app/api/tools/nextland/generate/route.ts` | adapt | Step union a 2 valori, workflowType dedicato, prompt builder dedicati | done |
 | API | `src/app/api/tools/funnel-pages/upload/route.ts` | `src/app/api/tools/nextland/upload/route.ts` | copy | Namespace tool aggiornato, riuso validazione upload | done |
-| UI | `src/app/tools/funnel-pages/page.tsx` | `src/app/tools/nextland/page.tsx` | adapt | Step titles, CTA, output model, content labels | done |
+| UI | `src/app/tools/funnel-pages/FunnelPagesToolContent.tsx` | `src/app/tools/nextland/NextLandToolContent.tsx` | adapt | Step titles, CTA, output model, content labels | done |
 | Prompt | `src/lib/tool-prompts/funnel-pages.ts` | `src/lib/tool-prompts/nextland.ts` | adapt | `buildLandingPrompt()` e `buildThankYouPrompt()` | done |
 | Prompt | `src/lib/tool-prompts/funnel-templates.ts` | `src/lib/tool-prompts/nextland-templates.ts` | adapt | Due template statici runtime | done |
 | Prompt source | `src/lib/tool-prompts/prompts/tools/hl_funnel/prompt_optin_generator.md` | `src/lib/tool-prompts/prompts/tools/nextland/prompt_landing_generator.md` | adapt | Copy system per landing page | done |

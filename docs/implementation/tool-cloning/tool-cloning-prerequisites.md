@@ -1,8 +1,8 @@
 ---
 goal: Pre-requisiti, setup iniziale, e accesso ai documenti di riferimento
-version: 1.1
+version: 1.2
 date_created: 2026-04-17
-date_updated: 2026-04-17
+date_updated: 2026-04-18
 status: Active
 tags: [runbook, tool-cloning, prerequisites, setup]
 ---
@@ -27,14 +27,17 @@ Prima di iniziare, verifica che tu abbia accesso a:
 4. **API Specifications**: [docs/specifications/api-specifications.md](../../specifications/api-specifications.md#tool-specific-generation)
    - Error codes + SSE contract standard
    
-5. **HLF Reference Implementation**: [src/app/tools/funnel-pages/page.tsx](../../../src/app/tools/funnel-pages/page.tsx) (main UI)
+5. **HLF Reference Implementation (modulare)**:
+   - [src/app/tools/funnel-pages/page.tsx](../../../src/app/tools/funnel-pages/page.tsx) (thin wrapper)
+   - [src/app/tools/funnel-pages/FunnelPagesToolContent.tsx](../../../src/app/tools/funnel-pages/FunnelPagesToolContent.tsx) (main UI container)
 
 ---
 
 ## File Sorgente di Riferimento da Copiare
 
 - Route handler template: `src/app/api/tools/funnel-pages/generate/route.ts`
-- UI page template: `src/app/tools/funnel-pages/page.tsx`
+- UI wrapper template: `src/app/tools/funnel-pages/page.tsx`
+- UI container template: `src/app/tools/funnel-pages/FunnelPagesToolContent.tsx`
 - Prompt builder template: `src/lib/tool-prompts/funnel-pages.ts`
 - Test template: `tests/integration/funnel-pages-route.test.ts`
 

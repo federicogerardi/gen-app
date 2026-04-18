@@ -1,15 +1,17 @@
 ---
 goal: File structure minima richiesta e naming conventions per tool clones
-version: 1.2
+version: 1.3
 date_created: 2026-04-17
-date_updated: 2026-04-17
+date_updated: 2026-04-18
 status: Active
 tags: [runbook, tool-cloning, anatomy, file-structure]
 ---
 
 # Anatomia di un Tool (File Structure)
 
-Ogni tool richiede questa struttura minima:
+Ogni tool richiede questa struttura minima.
+
+> ⚠️ **Aggiornato il 2026-04-18** — Il layout frontend riflette l'architettura composable introdotta con ADR 004 (Phase 4-5). La reference implementation è ora `src/app/tools/funnel-pages/` (HLF) o `src/app/tools/nextland/`. Il vecchio pattern monolitico in page.tsx è obsoleto.
 
 ---
 
@@ -17,43 +19,78 @@ Ogni tool richiede questa struttura minima:
 
 ```
 src/
+├── tools/
+│   └── shared/                          [Libreria condivisa tra tutti i tool]
+│       ├── types/
+│       │   └── tool.types.ts            [ToolStepState<T>, Phase, ToolIntent, ToolUiState, ecc.]
+│       ├── hooks/
+│       │   ├── useExtraction.ts         [Orchestrazione upload + extraction + retry]
+│       │   └── useStepGeneration.ts     [Generation stream + state management]
+│       ├── lib/
+│       │   ├── retryLogic.ts            [withRetry, RetryableRequestError, backoff]
+│       │   └── streamHelpers.ts         [streamToText, SSE helpers]
+│       ├── components/
+│       │   ├── ToolSetup.tsx            [Form setup generico]
+│       │   ├── StatusChecklist.tsx      [Widget stato step]
+│       │   ├── StepCard.tsx             [Template card singolo step]
+│       │   └── ProjectDialog.tsx        [Selector progetto]
+│       └── index.ts                     [Barrel export pubblico — usare questo come import]
+│
 ├── app/
 │   ├── api/tools/
 │   │   └── {{TOOL_SLUG}}/
-│   │       ├── upload/route.ts      [Opzionale: file upload + extraction]
-│   │       ├── generate/route.ts    [RICHIESTO: generazione LLM (single o multi-step)]
-│   │       └── [checkpoint]/route.ts [Opzionale: route dedicata checkpoint se non riusi artifacts]
+│   │       ├── upload/route.ts          [Opzionale: file upload + extraction]
+│   │       ├── generate/route.ts        [RICHIESTO: generazione LLM (single o multi-step)]
+│   │       └── [checkpoint]/route.ts   [Opzionale: route checkpoint dedicata]
 │   └── tools/
 │       └── {{TOOL_SLUG}}/
-│           └── page.tsx             [UI client page con state machine se complex]
+│           ├── page.tsx                 [SOLO Suspense wrapper + import ToolContent — ~20 righe]
+│           ├── {{TOOL_TITLE}}ToolContent.tsx  [Container: compone setup/status/steps via hooks — ~280 righe]
+│           ├── config.ts                [Costanti: TONES, initialSteps, STEP_STATUS_BADGE_CLASS, ecc.]
+│           ├── types.ts                 [Re-export @/tools/shared + ToolStepState<{{TOOL_TITLE}}StepKey>]
+│           ├── hooks/
+│           │   ├── use{{TOOL_TITLE}}Generation.ts  [Generation stream per step + retry — usa @/tools/shared]
+│           │   ├── use{{TOOL_TITLE}}Recovery.ts    [Resume artifact + checkpoint parsing]
+│           │   ├── use{{TOOL_TITLE}}Extraction.ts  [Upload file + extraction state — se applicable]
+│           │   └── use{{TOOL_TITLE}}UiState.ts     [Calcolo uiState derivato da phase/steps/intent]
+│           └── components/
+│               ├── {{TOOL_TITLE}}SetupCard.tsx     [Form setup tool-specific (compone ToolSetup)]
+│               ├── {{TOOL_TITLE}}StatusQuick.tsx   [Widget stato tool-specific (compone StatusChecklist)]
+│               └── {{TOOL_TITLE}}StepCards.tsx     [Step cards tool-specific (compone StepCard)]
 │
 └── lib/
     ├── tool-prompts/
-    │   ├── prompts/{{TOOL_SLUG}}/
-    │   │   ├── *.md                 [Sorgenti markdown (source of truth)]
-    │   │   └── [Subdirs per step]   [Se multi-step: step1/, step2/, step3/]
-    │   ├── {{TOOL_SLUG}}.ts         [Builder: (input) → PromptTemplate (può dispatcha per step)]
-    │   └── [optional] {{TOOL_SLUG}}-templates.ts  [Template statici se complessi]
+    │   ├── prompts/tools/{{TOOL_SLUG}}/
+    │   │   ├── *.md                     [Sorgenti markdown per step (source of truth)]
+    │   │   └── [Subdirs per step]
+    │   ├── {{TOOL_SLUG}}.ts             [Builder: (input) → PromptTemplate]
+    │   └── {{TOOL_SLUG}}-templates.ts   [Template statici runtime (obbligatorio se multi-step)]
     │
     ├── tool-routes/
-    │   ├── {{TOOL_SLUG}}-extraction.ts [Parser extraction context (se needed)]
-    │   ├── schemas.ts               [Zod schema per tool request + extraction]
-    │   └── responses.ts             [Helpers errori standard]
+    │   ├── {{TOOL_SLUG}}-extraction.ts  [Parser extraction context (se needed)]
+    │   ├── schemas.ts                   [Zod schema per tool request + extraction]
+    │   └── responses.ts                 [Helpers errori standard]
     │
-    └── orchestrator/ (Opzionale per complex workflows)
-        └── {{TOOL_SLUG}}-orchestrator.ts [State machine + step sequencing logic]
+    └── types/
+        └── artifact.ts                  [Aggiungere {{TOOL_SLUG}} workflow type + step keys]
 
 tests/
 ├── integration/
-│   ├── {{TOOL_SLUG}}-route.test.ts [POST /api/tools/{{TOOL_SLUG}}/generate scenarios]
-│   └── [{{TOOL_SLUG}}-extraction.test.ts] [Upload + extraction if applicable]
+│   ├── {{TOOL_SLUG}}-route.test.ts     [POST handler scenarios: auth, ownership, rate limit, stream]
+│   └── [{{TOOL_SLUG}}-extraction.test.ts] [Upload + extraction se applicable]
 │
 ├── unit/
-│   ├── {{TOOL_SLUG}}.test.ts        [Builder prompt per ogni step + resolver logica]
-│   └── [{{TOOL_SLUG}}-orchestrator.test.ts] [State machine logic if complex]
+│   ├── {{TOOL_SLUG}}.test.ts           [Builder prompt per ogni step]
+│   ├── use{{TOOL_TITLE}}Generation.test.ts   [Hook generation: retry, step sequencing, error]
+│   ├── use{{TOOL_TITLE}}Recovery.test.ts     [Hook recovery: resume, checkpoint parse]
+│   ├── use{{TOOL_TITLE}}Extraction.test.ts   [Hook extraction: upload, lifecycle state]
+│   ├── use{{TOOL_TITLE}}UiState.test.ts      [Hook uiState: derivazione da inputs]
+│   └── tools/{{TOOL_SLUG}}/
+│       ├── {{TOOL_SLUG}}-setup-card.test.tsx [Componente SetupCard]
+│       └── {{TOOL_SLUG}}-step-cards.test.tsx [Componente StepCards]
 │
 └── e2e/
-    └── {{TOOL_SLUG}}-workflow.spec.ts [Full user workflow: upload → extract → generate → output]
+    └── {{TOOL_SLUG}}-ux-parity.spec.ts [Full user workflow + ux parity]
 ```
 
 ---
@@ -112,7 +149,7 @@ Se il tool ha pipeline sequenziale (step1 → step2 → step3):
    └─ Prompt builder function, static template, no runtime fs
 
 ✅ src/app/tools/{{TOOL_SLUG}}/page.tsx
-   └─ Client page with form, styling from graphic-frameworking spec
+   └─ Thin Suspense wrapper che monta `{{TOOL_TITLE}}ToolContent`
 
 ✅ tests/integration/{{TOOL_SLUG}}-route.test.ts
    └─ Auth, ownership, validation, stream scenarios (≥4 test cases)
@@ -120,7 +157,7 @@ Se il tool ha pipeline sequenziale (step1 → step2 → step3):
 ✅ tests/unit/{{TOOL_SLUG}}.test.ts
    └─ Prompt builder edge cases (≥3 test cases)
 
-✅ src/lib/tool-prompts/prompts/{{TOOL_SLUG}}/generate.md
+✅ src/lib/tool-prompts/prompts/tools/{{TOOL_SLUG}}/generate.md
    └─ Markdown sorgente (source of truth per prompt)
 ```
 
@@ -173,7 +210,7 @@ Add:
 
 Add:
 ```
-src/lib/tool-prompts/prompts/{{TOOL_SLUG}}/
+src/lib/tool-prompts/prompts/tools/{{TOOL_SLUG}}/
 ├── step1/
 │   ├── optin-prompt.md        (if domain-specific names)
 │   └── instructions.md        (if shared instructions)

@@ -1,8 +1,8 @@
 ---
 goal: Troubleshooting - FAQ e common issues durante tool cloning
-version: 1.1
+version: 1.2
 date_created: 2026-04-17
-date_updated: 2026-04-17
+date_updated: 2026-04-18
 status: Active
 tags: [runbook, tool-cloning, troubleshooting, faq]
 ---
@@ -27,10 +27,10 @@ Problemi frequenti e soluzioni durante il cloning di tool.
 
 | Problema | Causa | Soluzione |
 |----------|-------|-----------|
-| `useSearchParams() should be wrapped in Suspense` | Page.tsx non ha Suspense | Avvolgi content in `<Suspense><{{TOOL_TITLE}}Content /></Suspense>` |
+| `useSearchParams() should be wrapped in Suspense` | `page.tsx` non è un wrapper Suspense | Mantieni `page.tsx` thin wrapper: `<Suspense><{{TOOL_TITLE}}ToolContent /></Suspense>` |
 | Input file non mostra focus ring | File input nativo senza styling | OK — tool-pages exception. Verifica browser focus con Tab |
 | `.app-control` su select rompe styling | SelectTrigger da Radix | Aggiungi `className="app-control"` su `SelectTrigger` non su `Select` |
-| Output not rendering (blank page) | No output state handling | Check SSE payload parsing, ensure `setOutput` called |
+| Output not rendering (blank page) | Step state non aggiornato dai custom hooks | Verifica parsing SSE e update stato in `use{{TOOL_TITLE}}Generation` / componenti step |
 
 ---
 

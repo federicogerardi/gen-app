@@ -1,8 +1,8 @@
 ---
 goal: Phase 2 - Prompt Specification and Builder nel formato TypeScript statico
-version: 1.1
+version: 1.2
 date_created: 2026-04-17
-date_updated: 2026-04-17
+date_updated: 2026-04-18
 status: Active
 tags: [runbook, tool-cloning, phase-2, prompts, builder]
 ---
@@ -15,7 +15,7 @@ Questa phase copre la creazione del prompt builder TypeScript e il markdown sorg
 
 ## Step 2.1: Scrivi Prompt Sorgente Markdown
 
-**File**: `src/lib/tool-prompts/prompts/{{TOOL_SLUG}}/generate.md` (o split per step se multi-step)
+**File**: `src/lib/tool-prompts/prompts/tools/{{TOOL_SLUG}}/generate.md` (o split per step se multi-step)
 
 ```markdown
 # {{TOOL_TITLE}} Generation Prompt

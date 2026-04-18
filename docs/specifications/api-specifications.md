@@ -71,6 +71,7 @@ Implemented routes in the current codebase:
 - `POST /tools/meta-ads/generate` (legacy hidden, deprecated)
 - `POST /tools/extraction/generate`
 - `POST /tools/funnel-pages/generate`
+- `POST /tools/nextland/generate`
 - `POST /tools/funnel-pages/upload`
 - `GET /artifacts/{id}`
 - `PUT /artifacts/{id}`

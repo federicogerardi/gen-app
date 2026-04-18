@@ -1,13 +1,16 @@
 ---
 goal: Procedura step-by-step per clonare HotLeadFunnel con variazioni mantenendo conformità a linee guida grafiche, API, prompt e UX replicability
-version: 1.1
+version: 1.2
 date_created: 2026-04-17
-date_updated: 2026-04-17
-status: Active
+date_updated: 2026-04-18
+status: Historical Snapshot
 tags: [runbook, tool-cloning, frontend, api, prompts, templates, ux-replicability, design-system, testing]
 ---
 
 # Tool Cloning Runbook: Da HotLeadFunnel a Nuovo Tool
+
+> Nota storica (2026-04-18): questo documento monolitico e stato superseded dalla libreria atomizzata in `docs/implementation/tool-cloning/`.
+> Entry point corrente: [tool-cloning-index.md](./tool-cloning/tool-cloning-index.md).
 
 **Versione**: 1.1 (Aggiunta UX Replicability Guidance)  
 **Data creazione**: 2026-04-17  

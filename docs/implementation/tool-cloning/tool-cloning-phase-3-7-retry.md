@@ -31,7 +31,8 @@ Se il tool deve gestire transient network errors (rate limits, timeouts), implem
 Per implementazione completa di retry, consulta:
 
 - [tool-cloning-phase-3-7-retry-implementation.md](tool-cloning-phase-3-7-retry-implementation.md) (detailed guide)
-- [src/app/tools/funnel-pages/page.tsx](../../../src/app/tools/funnel-pages/page.tsx) (`withRetry`, `RetryableRequestError`, retry feedback UI)
+- [src/tools/shared/lib/retryLogic.ts](../../../src/tools/shared/lib/retryLogic.ts) (`withRetry`, `RetryableRequestError`, `getRetryMeta`, backoff)
+- [src/app/tools/funnel-pages/hooks/useFunnelGeneration.ts](../../../src/app/tools/funnel-pages/hooks/useFunnelGeneration.ts) (uso concreto retry in hook generation)
 - [tests/e2e/funnel-pages-retry-resume.spec.ts](../../../tests/e2e/funnel-pages-retry-resume.spec.ts) (coverage retry/backoff UX)
 
 ---

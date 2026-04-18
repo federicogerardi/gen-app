@@ -1,8 +1,8 @@
 ---
 goal: Phase 3.7 Implementation - Retry con exponential backoff e feedback utente
-version: 1.0
+version: 1.1
 date_created: 2026-04-17
-date_updated: 2026-04-17
+date_updated: 2026-04-18
 status: Active
 tags: [runbook, tool-cloning, phase-3-7, retry, implementation]
 ---
@@ -27,7 +27,8 @@ Gestire errori transienti senza bloccare l'utente, con:
 ## Pattern di riferimento (HLF)
 
 - Retry wrapper e backoff in frontend tool page
-  - [src/app/tools/funnel-pages/page.tsx](../../../src/app/tools/funnel-pages/page.tsx)
+  - [src/app/tools/funnel-pages/hooks/useFunnelGeneration.ts](../../../src/app/tools/funnel-pages/hooks/useFunnelGeneration.ts)
+  - [src/tools/shared/lib/retryLogic.ts](../../../src/tools/shared/lib/retryLogic.ts)
 - Endpoint generation (senza loop retry server-side)
   - [src/app/api/tools/funnel-pages/generate/route.ts](../../../src/app/api/tools/funnel-pages/generate/route.ts)
 - E2E coverage retry/resume

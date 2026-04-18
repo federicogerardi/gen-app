@@ -108,15 +108,28 @@ Segna una riga per ogni file che prevedi di toccare o creare.
 
 | Layer | Source file | Target file | Action | Required delta | Status |
 |------|-------------|-------------|--------|----------------|--------|
-| API | [src/app/api/tools/.../route.ts] | [src/app/api/tools/.../route.ts] | [reuse/copy/adapt/create] | [auth, zod, rate limit, stream] | [todo/in-progress/done] |
+| API | [src/app/api/tools/.../generate/route.ts] | [src/app/api/tools/.../generate/route.ts] | [reuse/copy/adapt/create] | [auth, zod, rate limit, stream] | [todo/in-progress/done] |
 | API | [src/app/api/tools/.../upload/route.ts] | [src/app/api/tools/.../upload/route.ts] | [reuse/copy/adapt/create] | [estrazione, storage, validation] | [todo/in-progress/done] |
-| UI | [src/app/tools/.../page.tsx] | [src/app/tools/.../page.tsx] | [reuse/copy/adapt/create] | [step labels, content model, CTA] | [todo/in-progress/done] |
+| UI page | [src/app/tools/.../page.tsx] | [src/app/tools/.../page.tsx] | [copy/adapt] | [solo Suspense wrapper + import ToolContent] | [todo/in-progress/done] |
+| UI container | [src/app/tools/.../{{TOOL_TITLE}}ToolContent.tsx] | [...] | [copy/adapt] | [hook composition, step labels, CTA logic] | [todo/in-progress/done] |
+| UI config | [src/app/tools/.../config.ts] | [...] | [copy/adapt] | [TONES, initialSteps, badge maps] | [todo/in-progress/done] |
+| UI types | [src/app/tools/.../types.ts] | [...] | [copy/adapt] | [StepKey type, re-export @/tools/shared] | [todo/in-progress/done] |
+| Hook generation | [src/app/tools/.../hooks/use{{TOOL_TITLE}}Generation.ts] | [...] | [copy/adapt] | [step sequencing, chaining, retry] | [todo/in-progress/done] |
+| Hook recovery | [src/app/tools/.../hooks/use{{TOOL_TITLE}}Recovery.ts] | [...] | [copy/adapt] | [resume candidate, checkpoint parse] | [todo/in-progress/done] |
+| Hook extraction | [src/app/tools/.../hooks/use{{TOOL_TITLE}}Extraction.ts] | [...] | [copy/adapt/skip] | [se applicable: upload lifecycle] | [todo/in-progress/done] |
+| Hook uiState | [src/app/tools/.../hooks/use{{TOOL_TITLE}}UiState.ts] | [...] | [copy/adapt] | [derivazione uiState] | [todo/in-progress/done] |
+| Component SetupCard | [src/app/tools/.../components/{{TOOL_TITLE}}SetupCard.tsx] | [...] | [copy/adapt] | [form fields tool-specific] | [todo/in-progress/done] |
+| Component StatusQuick | [src/app/tools/.../components/{{TOOL_TITLE}}StatusQuick.tsx] | [...] | [copy/adapt] | [labels step] | [todo/in-progress/done] |
+| Component StepCards | [src/app/tools/.../components/{{TOOL_TITLE}}StepCards.tsx] | [...] | [copy/adapt] | [step count, CTA labels, output render] | [todo/in-progress/done] |
+| Shared lib | src/tools/shared/ | src/tools/shared/ | [reuse — no modifica] | nessuno | done |
 | Prompt | [src/lib/tool-prompts/...ts] | [src/lib/tool-prompts/...ts] | [reuse/copy/adapt/create] | [builder per step] | [todo/in-progress/done] |
-| Prompt | [src/lib/tool-prompts/...-templates.ts] | [src/lib/tool-prompts/...-templates.ts] | [reuse/copy/adapt/create] | [template statici runtime] | [todo/in-progress/done] |
+| Prompt templates | [src/lib/tool-prompts/...-templates.ts] | [src/lib/tool-prompts/...-templates.ts] | [reuse/copy/adapt/create] | [template statici runtime] | [todo/in-progress/done] |
 | Prompt source | [src/lib/tool-prompts/prompts/tools/.../*.md] | [src/lib/tool-prompts/prompts/tools/.../*.md] | [reuse/copy/adapt/create] | [copy instructions per step] | [todo/in-progress/done] |
 | Registry | [src/lib/tool-prompts/registry.ts] | [src/lib/tool-prompts/registry.ts] | [adapt] | [nuovo mapping tool] | [todo/in-progress/done] |
 | Integration test | [tests/integration/...test.ts] | [tests/integration/...test.ts] | [reuse/copy/adapt/create] | [auth, validation, rate limit, SSE] | [todo/in-progress/done] |
-| Unit test | [tests/unit/...test.ts] | [tests/unit/...test.ts] | [reuse/copy/adapt/create] | [placeholder, branching, edge cases] | [todo/in-progress/done] |
+| Unit test — prompt | [tests/unit/{{TOOL_SLUG}}.test.ts] | [...] | [reuse/copy/adapt/create] | [placeholder, branching, edge cases] | [todo/in-progress/done] |
+| Unit test — hooks | [tests/unit/use{{TOOL_TITLE}}*.test.ts] | [...] | [copy/adapt/create] | [generation, recovery, extraction, uiState] | [todo/in-progress/done] |
+| Unit test — components | [tests/unit/tools/{{TOOL_SLUG}}/*.test.tsx] | [...] | [copy/adapt/create] | [SetupCard, StepCards render + binding] | [todo/in-progress/done] |
 | E2E test | [tests/e2e/...spec.ts] | [tests/e2e/...spec.ts] | [reuse/copy/adapt/create] | [upload, generation, output parity] | [todo/in-progress/done] |
 
 Righe aggiuntive:

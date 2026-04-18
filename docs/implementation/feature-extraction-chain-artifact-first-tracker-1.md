@@ -232,11 +232,11 @@ Nota baseline: il dato sopra riflette il momento iniziale del tracker; l'aggiorn
 - **EVID-023**: copertura test Sprint 4 aggiunta con scenario logger throw non-bloccante in `tests/integration/extraction-route.test.ts`.
 - **EVID-024**: query operative baseline per `TASK-0402` definite nel runbook (`timeout_distribution`, `partial_rate`, `fallback_depth`) in `docs/review/extraction-model-policy-rollout-runbook-2026-04-12.md`.
 - **EVID-025**: chiusura operativa `TASK-0402` con sezione runbook dedicata (`Baseline Queries Completed`) e allineamento tracker/index.
-- **EVID-026**: retry client con backoff+jitter e gestione errori retryable introdotti in `src/app/tools/funnel-pages/page.tsx`.
-- **EVID-027**: resume da checkpoint artifact (extraction + step funnel) introdotto in `src/app/tools/funnel-pages/page.tsx` con CTA dedicata.
+- **EVID-026**: retry client con backoff+jitter e gestione errori retryable introdotti in `src/app/tools/funnel-pages/hooks/useFunnelGeneration.ts` (con utility condivise in `src/tools/shared/lib/retryLogic.ts`).
+- **EVID-027**: resume da checkpoint artifact (extraction + step funnel) introdotto in `src/app/tools/funnel-pages/hooks/useFunnelRecovery.ts` e wiring UI in `src/app/tools/funnel-pages/FunnelPagesToolContent.tsx`.
 - **EVID-028**: regressione funnel validata su test integration/unit (`tests/integration/funnel-pages-route.test.ts`, `tests/unit/funnel-mapping.test.ts`, `tests/unit/funnel-extraction-field-map.test.ts`).
-- **EVID-029**: stati UX lifecycle extraction (`in_progress`, `completed_partial`, `completed_full`, `failed_hard`) esposti nel funnel tool in `src/app/tools/funnel-pages/page.tsx`.
-- **EVID-030**: CTA recovery esplicite `Riprendi da checkpoint`, `Riprova estrazione`, `Rigenera funnel` integrate in `src/app/tools/funnel-pages/page.tsx`.
+- **EVID-029**: stati UX lifecycle extraction (`in_progress`, `completed_partial`, `completed_full`, `failed_hard`) esposti nel funnel tool in `src/app/tools/funnel-pages/FunnelPagesToolContent.tsx` e hook dedicati.
+- **EVID-030**: CTA recovery esplicite `Riprendi da checkpoint`, `Riprova estrazione`, `Rigenera funnel` integrate in `src/app/tools/funnel-pages/components/FunnelStepCards.tsx` con orchestration in `src/app/tools/funnel-pages/FunnelPagesToolContent.tsx`.
 - **EVID-031**: copertura E2E dedicata retry/resume con feedback backoff e resume da checkpoint validata in `tests/e2e/funnel-pages-retry-resume.spec.ts`.
 - **EVID-032**: decision engine rollout artifact-first (feature flag + cohort percentage + rollback switch) introdotto in `src/lib/tool-routes/extraction-rollout.ts`.
 - **EVID-033**: gate route-level rollout integrato in `src/app/api/tools/extraction/generate/route.ts` con mapping `SERVICE_UNAVAILABLE` e dettagli diagnostici rollout.
