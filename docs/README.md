@@ -52,6 +52,7 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 - [pr-28-dev-commit-changelog-2026-04-13.md](review/pr-28-dev-commit-changelog-2026-04-13.md): Changelog commit-level della PR #28 con shortstat e note di riuso per documentazione.
 - [operational-improvement-note-api-llm-tooling-2026-04-15.md](review/operational-improvement-note-api-llm-tooling-2026-04-15.md): Nota di improvement operativa che origina il piano P1 di hardening API/LLM tooling.
 - [native-login-credentials-google-oauth-research-review-2026-04-16.md](review/native-login-credentials-google-oauth-research-review-2026-04-16.md): Ricerca tecnica e decision gate per l'introduzione del login credenziali in coesistenza con Google OAuth.
+- [tool-prompt-cloning-scope-as-is-gap-analysis-2026-04-18.md](review/tool-prompt-cloning-scope-as-is-gap-analysis-2026-04-18.md): Gap analysis e closure del riallineamento as-is del perimetro prompt tools rispetto al runtime.
 
 ### code-review/
 - [2026-04-15-test-suite-security-balance-review.md](code-review/2026-04-15-test-suite-security-balance-review.md): Valutazione del bilanciamento sicurezza pre-deploy vs delivery e stato remediation iniziale dei test fragili prompt/UI.
@@ -80,6 +81,7 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 - [ux-strategy.md](ux/ux-strategy.md): Strategia UX e principi guida.
 
 ### Aggiornamenti recenti
+- 2026-04-18: completato riallineamento as-is di `docs/prompts/tools/**` al runtime post-ADR con chiusura gap analysis in `docs/review/tool-prompt-cloning-scope-as-is-gap-analysis-2026-04-18.md`.
 - 2026-04-18: consolidata documentazione Phase 6 post-validazione finale con evidenza E2E (`25/25` Playwright) e allineamento path test nel piano Phase 5.
 - 2026-04-18: avviata Phase 6 del refactor tool-pages composabile con piano operativo dedicato in `docs/implementation/tool-pages-phase-6-cleanup-tests-plan-1.md` e kickoff test su componenti/integration NextLand.
 - 2026-04-18: aggiunti piano operativo Phase 4 funnel refactor in `docs/implementation/funnel-pages-phase-4-refactor-plan.md` e audit predittivo sicurezza in `docs/code-review/2026-04-18-phase-4-funnel-refactor-security-review.md`.
