@@ -2,6 +2,33 @@
 
 _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 
+## **[P1-CRITICO]** Aggiornamento sessione (2026-04-18 — Tool Pages Composable Architecture Refactoring)
+
+- **Stato attuale**: `SPIKE COMPLETE` → **READY FOR IMPLEMENTATION**.
+- **Risultati POC (2026-04-18 completato)**:
+  - ✅ **545 righe** di shared code estratte e validate
+  - ✅ **Zero TypeScript errors** — type safety CONFIRMED (no `any` types)
+  - ✅ **Generic architecture** — `ToolStepState<T>` works across tools
+  - ✅ **Hook isolation** — `useExtraction` + `useStepGeneration` standalone-testable
+  - ✅ **70%+ code reuse** — tra funnel-pages e nextland
+  - ✅ **No blockers** — tutti Must-Have criteria MET & EXCEEDED
+- **Decisione spike**: **✅ GO** → Proceed con full implementation (Phases 3-6)
+- **Prossimi step**: Implementazione sequenziale fasi 3-6 (vedi spike + ADR per dettagli)
+- **Gate operativi Phase 4 (nuovi)**: test matrix obbligatoria + rollback plan esplicito definiti nel piano operativo funnel.
+- **Documentazione**:
+  - [ADR 004: Refactoring Tool Pages a Architettura Composabile](./adrs/004-tool-pages-composable-architecture.md) — Design completo + POC results
+  - [Spike SPIKE-TOOL-PAGES-REFACTOR-1](./implementation/spike-tool-pages-composable-architecture-poc-1.md) — Risultati POC dettagliati
+  - [Funnel Pages Phase 4 Refactor Plan](./implementation/funnel-pages-phase-4-refactor-plan.md) — Piano operativo di implementazione Phase 4
+  - [Predictive Security Review: Phase 4 Funnel Refactor](./code-review/2026-04-18-phase-4-funnel-refactor-security-review.md) — Audit predittivo con remediation P1/P2
+- **Tempo stimato totale** (full implementation): 12-15 ore (Phases 3-6, 1.5-2 giorni concentrati)
+- **Impact**: Una volta completato:
+  - funnel-pages: 1162 → **300 righe** (-74%)
+  - nextland: 1032 → **280 righe** (-73%)
+  - Nuovo tool: reusable in **30min da template** (vs 2h manual)
+  - Manutenabilità: **5x improvement** in time-to-modify
+
+---
+
 ## Aggiornamento sessione (2026-04-17 — Tool Cloning Runbook + Allineamento grafica HLF)
 
 - **Stato attuale**: `COMPLETATO`.
