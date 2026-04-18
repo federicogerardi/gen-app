@@ -53,6 +53,7 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 
 ### code-review/
 - [2026-04-15-test-suite-security-balance-review.md](code-review/2026-04-15-test-suite-security-balance-review.md): Valutazione del bilanciamento sicurezza pre-deploy vs delivery e stato remediation iniziale dei test fragili prompt/UI.
+- [2026-04-18-capacity-overflow-risk-review.md](code-review/2026-04-18-capacity-overflow-risk-review.md): Valutazione rischio overflow/capacity con 20 utenti medi concorrenti su pipeline tool generation.
 
 ### archive/
 - Documenti storici e snapshot superseded (review, roadmap, follow-up PR).
@@ -76,6 +77,7 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 - [ux-strategy.md](ux/ux-strategy.md): Strategia UX e principi guida.
 
 ### Aggiornamenti recenti
+- 2026-04-18: aggiunta review capacity/overflow per scenario 20 utenti medi concorrenti in `docs/code-review/2026-04-18-capacity-overflow-risk-review.md`.
 - 2026-04-16: migrati in `docs/` i documenti fuori scope presenti in `plan/` e `.copilot-tracking/` per il track native login (plan/checklist/execution/tracker/research/prompt) e aggiornato l'indice principale.
 - 2026-04-16: collegato al perimetro docs il piano export pagina artefatto in `docs/implementation/feature-artifact-page-export-actions-plan-1.md` e aggiornati gli indici operativi.
 - 2026-04-15: archiviati i documenti completati del track audit remediation sequenziale (`feature-audit-remediation-sequenced-1.md`, `feature-audit-remediation-sequenced-tracker-1.md`) in `docs/archive/` e riallineati i riferimenti nei report review/index.

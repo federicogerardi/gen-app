@@ -26,6 +26,14 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
   - `docs/ux/gui-refactor-plan.md`
   - **[NEW]** `docs/implementation/tool-cloning-runbook-1.md`
 
+## Aggiornamento sessione (2026-04-18 — Capacity/overflow thresholds per tool generation)
+
+- **Stato attuale**: `COMPLETATO` (documentazione operativa).
+- **Obiettivo**: definire soglie operative verde/giallo/rosso per rischio overflow con baseline 20 utenti medi concorrenti.
+- **Riferimento unico (no duplicato tabella)**:
+  - [docs/code-review/2026-04-18-capacity-overflow-risk-review.md](docs/code-review/2026-04-18-capacity-overflow-risk-review.md)
+- **Uso previsto**: base per alerting/runbook su p95, 429/5xx, stream concorrenti, saturazione DB e burn-rate costi.
+
 ## Aggiornamento sessione (2026-04-16 — Native login credentials + Google OAuth)
 
 - **Stato attuale**: `PLANNED`.
