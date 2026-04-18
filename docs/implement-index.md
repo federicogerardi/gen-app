@@ -17,13 +17,13 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
   - `src/app/tools/funnel-pages/FunnelPagesToolContent.tsx`: 285 righe
   - decomposizione completata su `components/` e `hooks/` funnel-specific
   - validazione tecnica verde: `typecheck`, `lint`, test matrix Phase 4 (56/56)
-- **Prossimi step**: avviare Phase 6 (cleanup/documentazione finale/estensione test shared).
+- **Prossimi step**: **Phase 6 chiusa formalmente** e ADR 004 completato su perimetro operativo.
 - **Gate operativi Phase 4 (nuovi)**: test matrix obbligatoria + rollback plan esplicito definiti nel piano operativo funnel.
 - **Documentazione**:
   - [ADR 004: Refactoring Tool Pages a Architettura Composabile](./adrs/004-tool-pages-composable-architecture.md) — Design completo + POC results
   - [Spike SPIKE-TOOL-PAGES-REFACTOR-1](./implementation/spike-tool-pages-composable-architecture-poc-1.md) — Risultati POC dettagliati
   - [Funnel Pages Phase 4 Refactor Plan](./implementation/funnel-pages-phase-4-refactor-plan.md) — Piano operativo di implementazione Phase 4
-  - [NextLand Phase 5 Refactor Plan](../plan/feature-nextland-phase-5-1.md) — Piano operativo esecutivo Phase 5 (in corso)
+  - [NextLand Phase 5 Refactor Plan](../plan/feature-nextland-phase-5-1.md) — Piano operativo esecutivo Phase 5 (chiuso con follow-up Phase 6)
   - [Predictive Security Review: Phase 4 Funnel Refactor](./code-review/2026-04-18-phase-4-funnel-refactor-security-review.md) — Audit predittivo allineato: remediation P1/P2 integrate, stato GO operativo
 - **Tempo stimato totale** (full implementation): 12-15 ore (Phases 3-6, 1.5-2 giorni concentrati)
 - **Impact**: Stato misurato post-Phase 5:
@@ -32,6 +32,24 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
   - Nuovo tool: reusable in **30min da template** (vs 2h manual)
   - Manutenabilità: **5x improvement** in time-to-modify
   - test hook NextLand mirati aggiunti su generation/recovery/extraction/ui-state
+- **Remaining work esplicito (aperto)**:
+  - nessun item bloccante residuo nel perimetro ADR 004.
+- **Kickoff Phase 6 (2026-04-18, notte) completato**:
+  - aggiunti test componenti NextLand: `tests/unit/tools/nextland/nextland-setup-card.test.tsx`, `tests/unit/tools/nextland/nextland-step-cards.test.tsx`
+  - aggiunto integration test flow container NextLand: `tests/integration/nextland-page-flow.test.tsx`
+  - esito validazione mirata: 3 suite verdi, 7 test verdi
+- **Estensione shared coverage (2026-04-18, notte) completata**:
+  - nuove suite shared: `tests/unit/shared/useStepGeneration.test.ts`, `tests/unit/shared/useExtraction.test.ts`, `tests/unit/shared/step-card.test.tsx`, `tests/unit/shared/status-checklist.test.tsx`
+  - esito validazione shared: 4 suite verdi, 9 test verdi
+- **Gate tecnico finale chiuso (stato locale corrente)**:
+  - `npm run typecheck` ✅
+  - `npm run lint` ✅
+  - `npm run test` ✅ (69 suite, 456 test)
+  - `npm run build` ✅
+  - `npx playwright test --config .tmp-playwright.reuse.config.ts` ✅ (25/25 E2E)
+- **Chiusura formale ADR 004**:
+  - piano Phase 6 completato e allineato
+  - ADR 004 aggiornato a closure su scope Phase 4-5-6
 
 ---
 

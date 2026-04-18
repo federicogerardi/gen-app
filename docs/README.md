@@ -38,6 +38,7 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 - [feature-native-login-credentials-google-oauth-execution-plan-1.md](implementation/feature-native-login-credentials-google-oauth-execution-plan-1.md): Piano esecutivo dettagliato con sequenza PR e validazioni.
 - [feature-native-login-credentials-google-oauth-tracker-1.md](implementation/feature-native-login-credentials-google-oauth-tracker-1.md): Tracker operativo con stato fasi, gate Go/No-Go e rischi.
 - [funnel-pages-phase-4-refactor-plan.md](implementation/funnel-pages-phase-4-refactor-plan.md): Piano operativo Phase 4 per refactor funnel-pages su architettura composabile.
+- [tool-pages-phase-6-cleanup-tests-plan-1.md](implementation/tool-pages-phase-6-cleanup-tests-plan-1.md): Piano operativo Phase 6 per cleanup finale, estensione test e consolidamento documentale del refactor composabile.
 
 ### notes/
 - [desiderata-e-appunti-futuri-sviluppi.md](notes/desiderata-e-appunti-futuri-sviluppi.md): Raccolta di idee e appunti preliminari non ancora in planning o refactoring.
@@ -79,6 +80,8 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 - [ux-strategy.md](ux/ux-strategy.md): Strategia UX e principi guida.
 
 ### Aggiornamenti recenti
+- 2026-04-18: consolidata documentazione Phase 6 post-validazione finale con evidenza E2E (`25/25` Playwright) e allineamento path test nel piano Phase 5.
+- 2026-04-18: avviata Phase 6 del refactor tool-pages composabile con piano operativo dedicato in `docs/implementation/tool-pages-phase-6-cleanup-tests-plan-1.md` e kickoff test su componenti/integration NextLand.
 - 2026-04-18: aggiunti piano operativo Phase 4 funnel refactor in `docs/implementation/funnel-pages-phase-4-refactor-plan.md` e audit predittivo sicurezza in `docs/code-review/2026-04-18-phase-4-funnel-refactor-security-review.md`.
 - 2026-04-18: aggiunta review capacity/overflow per scenario 20 utenti medi concorrenti in `docs/code-review/2026-04-18-capacity-overflow-risk-review.md`.
 - 2026-04-16: migrati in `docs/` i documenti fuori scope presenti in `plan/` e `.copilot-tracking/` per il track native login (plan/checklist/execution/tracker/research/prompt) e aggiornato l'indice principale.

@@ -4,15 +4,20 @@ version: 1.0
 date_created: 2026-04-18
 last_updated: 2026-04-18
 owner: Federico / AI Coding Agent
-status: 'In progress'
+status: 'Completed (with Phase 6 follow-up)'
 tags: [feature, refactor, nextland, architecture, phase-5]
 ---
 
 # Introduction
 
-![Status: In progress](https://img.shields.io/badge/status-In%20progress-yellow)
+![Status: Completed](https://img.shields.io/badge/status-Completed-brightgreen)
 
-Piano operativo eseguibile per avviare e completare la Phase 5: decomposizione di src/app/tools/nextland/page.tsx in moduli composabili con parity funzionale rispetto al comportamento attuale e allineamento al pattern gia applicato in Funnel.
+Piano operativo eseguito per completare la Phase 5: decomposizione di src/app/tools/nextland/page.tsx in moduli composabili con parity funzionale rispetto al comportamento attuale e allineamento al pattern gia applicato in Funnel.
+
+## Execution Update (2026-04-18)
+
+- Phase 5 chiusa su perimetro core (refactor NextLand + allineamento documentale + test hook mirati).
+- Follow-up non bloccanti migrati a Phase 6 (cleanup finale, estensione copertura shared, documentazione pattern README).
 
 ## 1. Requirements & Constraints
 
@@ -39,10 +44,10 @@ Piano operativo eseguibile per avviare e completare la Phase 5: decomposizione d
 
 | Task | Description | Completed | Date |
 | -------- | --------------------- | --------- | ---------- |
-| TASK-001 | Eseguire baseline snapshot con comandi: wc -l src/app/tools/nextland/page.tsx e rg -n "^(function|async function|const )" src/app/tools/nextland/page.tsx; salvare output nel PR body per confronto finale. |  |  |
-| TASK-002 | Creare file scaffold vuoti con export minimi: src/app/tools/nextland/NextLandToolContent.tsx, src/app/tools/nextland/config.ts, src/app/tools/nextland/types.ts. |  |  |
-| TASK-003 | Creare directory e file hooks: src/app/tools/nextland/hooks/useNextLandExtraction.ts, src/app/tools/nextland/hooks/useNextLandGeneration.ts, src/app/tools/nextland/hooks/useNextLandRecovery.ts, src/app/tools/nextland/hooks/useNextLandUiState.ts. |  |  |
-| TASK-004 | Creare directory e file componenti: src/app/tools/nextland/components/NextLandSetupCard.tsx, src/app/tools/nextland/components/NextLandStatusQuick.tsx, src/app/tools/nextland/components/NextLandStepCards.tsx. |  |  |
+| TASK-001 | Eseguire baseline snapshot con comandi: wc -l src/app/tools/nextland/page.tsx e rg -n "^(function|async function|const )" src/app/tools/nextland/page.tsx; salvare output nel PR body per confronto finale. | ✅ | 2026-04-18 |
+| TASK-002 | Creare file scaffold vuoti con export minimi: src/app/tools/nextland/NextLandToolContent.tsx, src/app/tools/nextland/config.ts, src/app/tools/nextland/types.ts. | ✅ | 2026-04-18 |
+| TASK-003 | Creare directory e file hooks: src/app/tools/nextland/hooks/useNextLandExtraction.ts, src/app/tools/nextland/hooks/useNextLandGeneration.ts, src/app/tools/nextland/hooks/useNextLandRecovery.ts, src/app/tools/nextland/hooks/useNextLandUiState.ts. | ✅ | 2026-04-18 |
+| TASK-004 | Creare directory e file componenti: src/app/tools/nextland/components/NextLandSetupCard.tsx, src/app/tools/nextland/components/NextLandStatusQuick.tsx, src/app/tools/nextland/components/NextLandStepCards.tsx. | ✅ | 2026-04-18 |
 
 Completion Criteria Phase 1:
 - CCR-001: Tutti i file target esistono e compilano con export placeholder senza errori TypeScript locali.
@@ -54,10 +59,10 @@ Completion Criteria Phase 1:
 
 | Task | Description | Completed | Date |
 | -------- | --------------------- | --------- | ---------- |
-| TASK-005 | Spostare in src/app/tools/nextland/types.ts i tipi locali attuali: NextLandStepKey, NextLandStepState, Phase, NextLandIntent, NextLandUiState, StreamResult, ResumeCandidateArtifact, RetryMeta, ExtractionLifecycleState, ApiErrorPayload. |  |  |
-| TASK-006 | Spostare in src/app/tools/nextland/config.ts le costanti attuali: TONES, TONE_HINTS, ALLOWED_MIME_TYPES, ALLOWED_EXTENSIONS, STEP_STATUS_BADGE_CLASS, STEP_STATUS_LABEL, initialSteps. |  |  |
-| TASK-007 | Spostare o riscrivere come utility pure in hook dedicati: parseIntent (oggi linea ~118), parseTerminalOutcome (~291), mapOutcomeToLifecycle (~301), parseStepFromArtifactInput (~317). |  |  |
-| TASK-008 | Ridurre duplicazione con Funnel confrontando firme e tipi di src/app/tools/funnel-pages/types.ts e src/app/tools/funnel-pages/config.ts per mantenere naming parallelo e onboarding uniforme. |  |  |
+| TASK-005 | Spostare in src/app/tools/nextland/types.ts i tipi locali attuali: NextLandStepKey, NextLandStepState, Phase, NextLandIntent, NextLandUiState, StreamResult, ResumeCandidateArtifact, RetryMeta, ExtractionLifecycleState, ApiErrorPayload. | ✅ | 2026-04-18 |
+| TASK-006 | Spostare in src/app/tools/nextland/config.ts le costanti attuali: TONES, TONE_HINTS, ALLOWED_MIME_TYPES, ALLOWED_EXTENSIONS, STEP_STATUS_BADGE_CLASS, STEP_STATUS_LABEL, initialSteps. | ✅ | 2026-04-18 |
+| TASK-007 | Spostare o riscrivere come utility pure in hook dedicati: parseIntent (oggi linea ~118), parseTerminalOutcome (~291), mapOutcomeToLifecycle (~301), parseStepFromArtifactInput (~317). | ✅ | 2026-04-18 |
+| TASK-008 | Ridurre duplicazione con Funnel confrontando firme e tipi di src/app/tools/funnel-pages/types.ts e src/app/tools/funnel-pages/config.ts per mantenere naming parallelo e onboarding uniforme. | ✅ | 2026-04-18 |
 
 Completion Criteria Phase 2:
 - CCR-003: page.tsx non contiene piu definizioni type alias/interfaces/costanti dominio NextLand.
@@ -69,11 +74,11 @@ Completion Criteria Phase 2:
 
 | Task | Description | Completed | Date |
 | -------- | --------------------- | --------- | ---------- |
-| TASK-009 | Implementare useNextLandExtraction.ts con stato extraction, upload file, gestione endpoint extract, retry messaging e mapping lifecycle; includere ALLOWED_MIME_TYPES/ALLOWED_EXTENSIONS via config import. |  |  |
-| TASK-010 | Implementare useNextLandGeneration.ts includendo generateStream, stream parsing token, retry/backoff e orchestrazione step landing -> thank_you mantenendo contratti request correnti. |  |  |
-| TASK-011 | Implementare useNextLandRecovery.ts con auto-resume da artifact list, parser checkpoint e ricostruzione stato step/artifactId coerente con intent resume/regenerate. |  |  |
-| TASK-012 | Implementare useNextLandUiState.ts per determinare primary/secondary action in base a phase, intent, draft state, checkpoint e stato step. |  |  |
-| TASK-013 | Spostare helper locali stream/retry (streamToText, getRetryMeta, withRetry, sleep, getBackoffDelayMs, getExtractionErrorMessage) dentro i hook appropriati o utility locali del dominio NextLand, evitando ritorno di monolite. |  |  |
+| TASK-009 | Implementare useNextLandExtraction.ts con stato extraction, upload file, gestione endpoint extract, retry messaging e mapping lifecycle; includere ALLOWED_MIME_TYPES/ALLOWED_EXTENSIONS via config import. | ✅ | 2026-04-18 |
+| TASK-010 | Implementare useNextLandGeneration.ts includendo generateStream, stream parsing token, retry/backoff e orchestrazione step landing -> thank_you mantenendo contratti request correnti. | ✅ | 2026-04-18 |
+| TASK-011 | Implementare useNextLandRecovery.ts con auto-resume da artifact list, parser checkpoint e ricostruzione stato step/artifactId coerente con intent resume/regenerate. | ✅ | 2026-04-18 |
+| TASK-012 | Implementare useNextLandUiState.ts per determinare primary/secondary action in base a phase, intent, draft state, checkpoint e stato step. | ✅ | 2026-04-18 |
+| TASK-013 | Spostare helper locali stream/retry (streamToText, getRetryMeta, withRetry, sleep, getBackoffDelayMs, getExtractionErrorMessage) dentro i hook appropriati o utility locali del dominio NextLand, evitando ritorno di monolite. | ✅ | 2026-04-18 |
 
 Completion Criteria Phase 3:
 - CCR-005: Ogni hook esporta API tipizzata e puo essere importato indipendentemente senza leggere dal DOM.
@@ -85,11 +90,11 @@ Completion Criteria Phase 3:
 
 | Task | Description | Completed | Date |
 | -------- | --------------------- | --------- | ---------- |
-| TASK-014 | Implementare NextLandSetupCard.tsx riusando struttura di FunnelSetupCard con campi specifici NextLand (project, model, tone, notes, file upload, extraction context). |  |  |
-| TASK-015 | Implementare NextLandStatusQuick.tsx per widget rapido di stato phase/extraction lifecycle/checkpoint pronto. |  |  |
-| TASK-016 | Implementare NextLandStepCards.tsx per rendering card step con badge stato, preview contenuto e CTA apertura artifact. |  |  |
-| TASK-017 | Implementare NextLandToolContent.tsx come orchestratore: wiring hooks, query project/model, routing query params intent/artifact, callback UI e side effects controllati. |  |  |
-| TASK-018 | Ridurre src/app/tools/nextland/page.tsx a wrapper Suspense minimale che renderizza NextLandToolContent e mantiene metadata/page shell invariati. |  |  |
+| TASK-014 | Implementare NextLandSetupCard.tsx riusando struttura di FunnelSetupCard con campi specifici NextLand (project, model, tone, notes, file upload, extraction context). | ✅ | 2026-04-18 |
+| TASK-015 | Implementare NextLandStatusQuick.tsx per widget rapido di stato phase/extraction lifecycle/checkpoint pronto. | ✅ | 2026-04-18 |
+| TASK-016 | Implementare NextLandStepCards.tsx per rendering card step con badge stato, preview contenuto e CTA apertura artifact. | ✅ | 2026-04-18 |
+| TASK-017 | Implementare NextLandToolContent.tsx come orchestratore: wiring hooks, query project/model, routing query params intent/artifact, callback UI e side effects controllati. | ✅ | 2026-04-18 |
+| TASK-018 | Ridurre src/app/tools/nextland/page.tsx a wrapper Suspense minimale che renderizza NextLandToolContent e mantiene metadata/page shell invariati. | ✅ | 2026-04-18 |
 
 Completion Criteria Phase 4:
 - CCR-007: src/app/tools/nextland/page.tsx <= 40 linee.
@@ -102,18 +107,21 @@ Completion Criteria Phase 4:
 
 | Task | Description | Completed | Date |
 | -------- | --------------------- | --------- | ---------- |
-| TASK-019 | Aggiungere test unit hook in tests/unit/tools/nextland/use-nextland-extraction.test.ts, tests/unit/tools/nextland/use-nextland-generation.test.ts, tests/unit/tools/nextland/use-nextland-recovery.test.ts, tests/unit/tools/nextland/use-nextland-ui-state.test.ts. |  |  |
-| TASK-020 | Aggiungere test componenti in tests/unit/tools/nextland/nextland-setup-card.test.tsx e tests/unit/tools/nextland/nextland-step-cards.test.tsx per stati principali e callback. |  |  |
-| TASK-021 | Aggiungere o aggiornare integration test route/page in tests/integration/nextland-page-flow.test.ts per path critici: upload->extract->generate, resume da checkpoint, regenerate da artifact esistente. |  |  |
-| TASK-022 | Eseguire gate: npm run typecheck, npm run lint, npm run test; allegare esito sintetico in documento di tracking o PR. |  |  |
-| TASK-023 | Aggiornare docs/adrs/004-tool-pages-composable-architecture.md marcando avanzamento da "Phase 5 Pending" a stato corrente, includendo il link al piano plan/feature-nextland-phase-5-1.md e correggendo metriche/claim non ancora completati. |  |  |
-| TASK-024 | Aggiornare docs/implement-index.md nella sezione P1-CRITICO aggiungendo il riferimento a plan/feature-nextland-phase-5-1.md e distinguendo chiaramente metriche raggiunte vs metriche target post-Phase 5. |  |  |
+| TASK-019 | Aggiungere test unit hook in tests/unit/useNextLandExtraction.test.ts, tests/unit/useNextLandGeneration.test.ts, tests/unit/useNextLandRecovery.test.ts, tests/unit/useNextLandUiState.test.ts. | ✅ | 2026-04-18 |
+| TASK-020 | Aggiungere test componenti in tests/unit/tools/nextland/nextland-setup-card.test.tsx e tests/unit/tools/nextland/nextland-step-cards.test.tsx per stati principali e callback. | ➜ Phase 6 |  |
+| TASK-021 | Aggiungere o aggiornare integration test route/page in tests/integration/nextland-page-flow.test.tsx per path critici: upload->extract->generate, resume da checkpoint, regenerate da artifact esistente. | ➜ Phase 6 |  |
+| TASK-022 | Eseguire gate: npm run typecheck, npm run lint, npm run test; allegare esito sintetico in documento di tracking o PR. | ✅ | 2026-04-18 |
+| TASK-023 | Aggiornare docs/adrs/004-tool-pages-composable-architecture.md marcando avanzamento da "Phase 5 Pending" a stato corrente, includendo il link al piano plan/feature-nextland-phase-5-1.md e correggendo metriche/claim non ancora completati. | ✅ | 2026-04-18 |
+| TASK-024 | Aggiornare docs/implement-index.md nella sezione P1-CRITICO aggiungendo il riferimento a plan/feature-nextland-phase-5-1.md e distinguendo chiaramente metriche raggiunte vs metriche target post-Phase 5. | ✅ | 2026-04-18 |
 
 Completion Criteria Phase 5:
 - CCR-010: Tutti i gate CI locali sono verdi.
 - CCR-011: Test aggiunti coprono i casi di errore retryable/non-retryable, resume e sequenza step.
 - CCR-012: ADR 004 allineato allo stato reale repository.
 - CCR-013: Implement-index e ADR 004 contengono entrambi il riferimento esplicito al piano Phase 5 e lo stesso stato operativo.
+
+Note chiusura:
+- Le attivita residue TASK-020 e TASK-021 vengono tracciate come follow-up in Phase 6 per mantenere il perimetro della chiusura Phase 5 allineato al delivery effettivo.
 
 ## 3. Alternatives
 
@@ -141,13 +149,13 @@ Completion Criteria Phase 5:
 - FILE-009: src/app/tools/nextland/components/NextLandSetupCard.tsx - setup form component.
 - FILE-010: src/app/tools/nextland/components/NextLandStatusQuick.tsx - quick status component.
 - FILE-011: src/app/tools/nextland/components/NextLandStepCards.tsx - step cards component.
-- FILE-012: tests/unit/tools/nextland/use-nextland-extraction.test.ts - unit tests extraction hook.
-- FILE-013: tests/unit/tools/nextland/use-nextland-generation.test.ts - unit tests generation hook.
-- FILE-014: tests/unit/tools/nextland/use-nextland-recovery.test.ts - unit tests recovery hook.
-- FILE-015: tests/unit/tools/nextland/use-nextland-ui-state.test.ts - unit tests ui state hook.
+- FILE-012: tests/unit/useNextLandExtraction.test.ts - unit tests extraction hook.
+- FILE-013: tests/unit/useNextLandGeneration.test.ts - unit tests generation hook.
+- FILE-014: tests/unit/useNextLandRecovery.test.ts - unit tests recovery hook.
+- FILE-015: tests/unit/useNextLandUiState.test.ts - unit tests ui state hook.
 - FILE-016: tests/unit/tools/nextland/nextland-setup-card.test.tsx - component tests setup card.
 - FILE-017: tests/unit/tools/nextland/nextland-step-cards.test.tsx - component tests step cards.
-- FILE-018: tests/integration/nextland-page-flow.test.ts - integration tests principali.
+- FILE-018: tests/integration/nextland-page-flow.test.tsx - integration tests principali.
 - FILE-019: docs/adrs/004-tool-pages-composable-architecture.md - aggiornamento stato di avanzamento phase 5.
 - FILE-020: docs/implement-index.md - integrazione riferimento piano e stato avanzamento Phase 5.
 

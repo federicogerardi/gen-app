@@ -1,7 +1,7 @@
 # ADR 004: Refactoring Tool Pages a Architettura Composabile
 
 **Data**: 18 Aprile 2026  
-**Status**: Accepted (Phase 4 Completed, Phase 5 Completed)  
+**Status**: Accepted (Phase 4 Completed, Phase 5 Completed, Phase 6 Formally Closed)  
 **Deciders**: Federico (Lead)  
 **Affected Components**: `src/app/tools/funnel-pages/`, `src/app/tools/nextland/`
 
@@ -305,6 +305,53 @@ Refactor NextLand completato con decomposizione del monolite e allineamento al p
 ### Next Gate
 Proceed to Phase 6 (cleanup finale, estensione copertura shared, documentazione pattern README).
 
+### Implementation Update (2026-04-18, notte) — Phase 6 Started
+
+Phase 6 avviata con primo incremento su copertura test NextLand.
+
+**Nuovi test introdotti in avvio Phase 6**:
+- `tests/unit/tools/nextland/nextland-setup-card.test.tsx`
+- `tests/unit/tools/nextland/nextland-step-cards.test.tsx`
+- `tests/integration/nextland-page-flow.test.tsx`
+
+**Validazione kickoff Phase 6**:
+- ✅ 3/3 suite verdi
+- ✅ 7/7 test verdi
+
+**Workstream Phase 6 (snapshot iniziale)**:
+- cleanup file legacy/residui del refactor tool-pages
+- estensione copertura shared hooks/components fino al target documentato
+- consolidamento documentazione pattern nel README principale
+
+### Implementation Update (2026-04-18, notte) — Shared Coverage Extended + Final Gate Closed
+
+Copertura shared hooks/components estesa con nuove suite dedicate:
+- `tests/unit/shared/useStepGeneration.test.ts`
+- `tests/unit/shared/useExtraction.test.ts`
+- `tests/unit/shared/step-card.test.tsx`
+- `tests/unit/shared/status-checklist.test.tsx`
+
+Esito validazione nuova copertura shared:
+- ✅ 4/4 suite verdi
+- ✅ 9/9 test verdi
+
+Gate tecnico finale eseguito e chiuso su stato corrente:
+- ✅ `npm run typecheck`
+- ✅ `npm run lint`
+- ✅ `npm run test` (69 suite, 456 test)
+- ✅ `npm run build`
+- ✅ `npx playwright test --config .tmp-playwright.reuse.config.ts` (25/25 test E2E)
+
+### Implementation Update (2026-04-18, notte) — Phase 6 Formally Closed
+
+Chiusura formale del perimetro ADR completata dopo validazione finale e riallineamento documentale.
+
+Conferme finali di chiusura:
+- ✅ cleanup residui legacy/dead-path verificato sul perimetro tool-pages
+- ✅ estensione copertura shared hooks/components completata
+- ✅ pattern composabile consolidato nel README principale
+- ✅ ADR, implement-index e piano operativo allineati allo stato finale
+
 ### Spike Execution Results (2026-04-18)
 
 **POC Code Created**: `src/tools/shared/` (545 lines)
@@ -324,5 +371,5 @@ All spike success criteria **MET & EXCEEDED**:
 - ✅ Reusability: **70%+ code shared** between tools
 - ✅ No blockers: Architecture validated, ready for implementation
 
-### Next Gate
-Proceed directly to implementation Phases 3-6 (component extraction + tool refactoring)
+### Closure
+ADR 004 chiuso formalmente su scope Phase 4-5-6 con gate tecnici e E2E finali verdi.
