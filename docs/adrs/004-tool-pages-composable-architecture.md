@@ -1,7 +1,7 @@
 # ADR 004: Refactoring Tool Pages a Architettura Composabile
 
 **Data**: 18 Aprile 2026  
-**Status**: Accepted (Phase 4 Completed, Phase 5 Pending)  
+**Status**: Accepted (Phase 4 Completed, Phase 5 Completed)  
 **Deciders**: Federico (Lead)  
 **Affected Components**: `src/app/tools/funnel-pages/`, `src/app/tools/nextland/`
 
@@ -221,14 +221,14 @@ export function FunnelPagesToolContent() {
 1. ✅ `funnel-pages/page.tsx` < 350 righe
 2. ✅ `nextland/page.tsx` < 350 righe
 3. ✅ 0 duplicazione tra tool pages
-4. ✅ All shared hooks + components testati (>70% coverage)
-5. ✅ PR verde (build + typecheck + lint + test)
-6. ✅ Documentazione pattern in README
+4. ⏳ All shared hooks + components testati (>70% coverage)
+5. ⏳ PR verde (build + typecheck + lint + test)
+6. ⏳ Documentazione pattern in README
 
 ### Metriche di Validazione
 ```bash
-wc -l src/tools/funnel-pages/page.tsx      # < 350
-wc -l src/tools/nextland/page.tsx          # < 350
+wc -l src/app/tools/funnel-pages/page.tsx      # < 350
+wc -l src/app/tools/nextland/page.tsx          # < 350
 npm run test -- shared/                    # > 70% coverage
 ```
 
@@ -244,12 +244,13 @@ npm run test -- shared/                    # > 70% coverage
 
 - **[Spike: Tool Pages Composable Architecture POC](../implementation/spike-tool-pages-composable-architecture-poc-1.md)** — Validazione fattibilità attraverso proof-of-concept (6-8 ore, risoluvi incertezze chiave su types, size reduction, hook composition)
 - **[Phase 4 Plan: Funnel Pages Refactor](../implementation/funnel-pages-phase-4-refactor-plan.md)** — Piano esecutivo dettagliato per implementazione Step 4
+- **[Phase 5 Plan: NextLand Refactor](../../plan/feature-nextland-phase-5-1.md)** — Piano operativo esecutivo per avvio e completamento della Phase 5
 
 ---
 
 ## Status
 
-✅ **PHASE 4 COMPLETE (FUNNEL PAGES)** → **READY FOR PHASE 5 (NEXTLAND)**
+✅ **PHASE 4 COMPLETE (FUNNEL PAGES)** → ✅ **PHASE 5 COMPLETE (NEXTLAND)**
 
 ### Implementation Update (2026-04-18)
 
@@ -275,6 +276,34 @@ Refactor Phase 4 eseguito e validato su funnel-pages con decomposizione completa
 - ✅ `lint` verde
 - ✅ test matrix Phase 4 verde (56/56)
 - ✅ parity funzionale confermata su flow upload/extraction/retry/resume/generation
+
+### Implementation Update (2026-04-18, sera) — Phase 5 Closed
+
+Refactor NextLand completato con decomposizione del monolite e allineamento al pattern composabile usato in Funnel.
+
+**Risultato dimensionale verificato**:
+- `src/app/tools/nextland/page.tsx`: **20 righe**
+- `src/app/tools/nextland/NextLandToolContent.tsx`: **282 righe**
+
+**Nuovi moduli nextland-specific creati**:
+- `src/app/tools/nextland/config.ts`
+- `src/app/tools/nextland/types.ts`
+- `src/app/tools/nextland/components/NextLandSetupCard.tsx`
+- `src/app/tools/nextland/components/NextLandStatusQuick.tsx`
+- `src/app/tools/nextland/components/NextLandStepCards.tsx`
+- `src/app/tools/nextland/hooks/useNextLandGeneration.ts`
+- `src/app/tools/nextland/hooks/useNextLandRecovery.ts`
+- `src/app/tools/nextland/hooks/useNextLandExtraction.ts`
+- `src/app/tools/nextland/hooks/useNextLandUiState.ts`
+
+**Test hook NextLand aggiunti (targeted)**:
+- `tests/unit/useNextLandGeneration.test.ts`
+- `tests/unit/useNextLandRecovery.test.ts`
+- `tests/unit/useNextLandExtraction.test.ts`
+- `tests/unit/useNextLandUiState.test.ts`
+
+### Next Gate
+Proceed to Phase 6 (cleanup finale, estensione copertura shared, documentazione pattern README).
 
 ### Spike Execution Results (2026-04-18)
 

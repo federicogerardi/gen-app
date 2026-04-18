@@ -4,7 +4,7 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 
 ## **[P1-CRITICO]** Aggiornamento sessione (2026-04-18 — Tool Pages Composable Architecture Refactoring)
 
-- **Stato attuale**: `PHASE 4 COMPLETE (FUNNEL)` → **READY FOR PHASE 5 (NEXTLAND)**.
+- **Stato attuale**: `PHASE 4 COMPLETE (FUNNEL)` → **PHASE 5 COMPLETE (NEXTLAND)**.
 - **Risultati POC (2026-04-18 completato)**:
   - ✅ **545 righe** di shared code estratte e validate
   - ✅ **Zero TypeScript errors** — type safety CONFIRMED (no `any` types)
@@ -17,19 +17,21 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
   - `src/app/tools/funnel-pages/FunnelPagesToolContent.tsx`: 285 righe
   - decomposizione completata su `components/` e `hooks/` funnel-specific
   - validazione tecnica verde: `typecheck`, `lint`, test matrix Phase 4 (56/56)
-- **Prossimi step**: avviare Phase 5 su `nextland` riusando lo stesso blueprint composabile.
+- **Prossimi step**: avviare Phase 6 (cleanup/documentazione finale/estensione test shared).
 - **Gate operativi Phase 4 (nuovi)**: test matrix obbligatoria + rollback plan esplicito definiti nel piano operativo funnel.
 - **Documentazione**:
   - [ADR 004: Refactoring Tool Pages a Architettura Composabile](./adrs/004-tool-pages-composable-architecture.md) — Design completo + POC results
   - [Spike SPIKE-TOOL-PAGES-REFACTOR-1](./implementation/spike-tool-pages-composable-architecture-poc-1.md) — Risultati POC dettagliati
   - [Funnel Pages Phase 4 Refactor Plan](./implementation/funnel-pages-phase-4-refactor-plan.md) — Piano operativo di implementazione Phase 4
+  - [NextLand Phase 5 Refactor Plan](../plan/feature-nextland-phase-5-1.md) — Piano operativo esecutivo Phase 5 (in corso)
   - [Predictive Security Review: Phase 4 Funnel Refactor](./code-review/2026-04-18-phase-4-funnel-refactor-security-review.md) — Audit predittivo allineato: remediation P1/P2 integrate, stato GO operativo
 - **Tempo stimato totale** (full implementation): 12-15 ore (Phases 3-6, 1.5-2 giorni concentrati)
-- **Impact**: Una volta completato:
+- **Impact**: Stato misurato post-Phase 5:
   - funnel-pages: 1162 → **300 righe** (-74%)
-  - nextland: 1032 → **280 righe** (-73%)
+  - nextland: 1308 → **302 righe aggregate** (`page.tsx` 20 + `NextLandToolContent.tsx` 282)
   - Nuovo tool: reusable in **30min da template** (vs 2h manual)
   - Manutenabilità: **5x improvement** in time-to-modify
+  - test hook NextLand mirati aggiunti su generation/recovery/extraction/ui-state
 
 ---
 
