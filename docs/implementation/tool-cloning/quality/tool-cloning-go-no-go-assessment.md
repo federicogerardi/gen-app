@@ -13,7 +13,7 @@ tags: [runbook, tool-cloning, go-no-go-assessment, framework-validity]
 **Scope**: Capacità del runbook di guidare clonazione tool **con complessità comparabile o superiore** a HotLeadFunnel
 
 > ⚠️ Nota storica (2026-04-18): questo documento fotografa una valutazione pre-allineamento completo ADR 004.
-> Per decisioni correnti usare [tool-cloning-index.md](tool-cloning-index.md), [tool-cloning-complexity-check.md](tool-cloning-complexity-check.md) e [docs/adrs/004-tool-pages-composable-architecture.md](../../adrs/004-tool-pages-composable-architecture.md).
+> Per decisioni correnti usare [tool-cloning-index.md](/docs/implementation/tool-cloning/tool-cloning-index.md), [tool-cloning-complexity-check.md](/docs/implementation/tool-cloning/core/tool-cloning-complexity-check.md) e [docs/adrs/004-tool-pages-composable-architecture.md](/docs/adrs/004-tool-pages-composable-architecture.md).
 
 ## Stato Corrente (As-Is)
 
@@ -246,7 +246,7 @@ Non è un fallimento — è design corretto per mid-complexity scope. Per tools 
 
 ## Next Steps
 
-1. Complete **[tool-cloning-complexity-check.md](tool-cloning-complexity-check.md)** to classify your tool
+1. Complete **[tool-cloning-complexity-check.md](/docs/implementation/tool-cloning/core/tool-cloning-complexity-check.md)** to classify your tool
 2. Select appropriate path based on tier
 3. If COMPLEX/VERY COMPLEX: Contact Architecture Team
 4. Proceed with relevant phase sequence

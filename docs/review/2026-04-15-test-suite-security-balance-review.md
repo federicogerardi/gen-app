@@ -8,22 +8,22 @@
 ## Priority 2 (High) ⚠️
 - Eccessiva fragilita su test prompt e copy testuale, con alto rischio di blocchi non legati a sicurezza.
   - Evidenze:
-    - `tool-prompts-parity` usa confronto byte-to-byte tra markdown sorgente e template runtime: [tests/unit/tool-prompts-parity.test.ts](tests/unit/tool-prompts-parity.test.ts#L25).
-    - `tool-prompts` contiene molte asserzioni su stringhe letterali prompt: [tests/unit/tool-prompts.test.ts](tests/unit/tool-prompts.test.ts#L98), [tests/unit/tool-prompts.test.ts](tests/unit/tool-prompts.test.ts#L109), [tests/unit/tool-prompts.test.ts](tests/unit/tool-prompts.test.ts#L135), [tests/unit/tool-prompts.test.ts](tests/unit/tool-prompts.test.ts#L222).
-    - Test UI legati a copy/version label rigida: [tests/unit/Navbar.test.tsx](tests/unit/Navbar.test.tsx#L80), [tests/unit/RuntimeInfoProvider.test.tsx](tests/unit/RuntimeInfoProvider.test.tsx#L26), [tests/unit/PersonalTrendCard.test.tsx](tests/unit/PersonalTrendCard.test.tsx#L21).
+    - `tool-prompts-parity` usa confronto byte-to-byte tra markdown sorgente e template runtime: [tests/unit/tool-prompts-parity.test.ts](../../tests/unit/tool-prompts-parity.test.ts#L25).
+    - `tool-prompts` contiene molte asserzioni su stringhe letterali prompt: [tests/unit/tool-prompts.test.ts](../../tests/unit/tool-prompts.test.ts#L98), [tests/unit/tool-prompts.test.ts](../../tests/unit/tool-prompts.test.ts#L109), [tests/unit/tool-prompts.test.ts](../../tests/unit/tool-prompts.test.ts#L135), [tests/unit/tool-prompts.test.ts](../../tests/unit/tool-prompts.test.ts#L222).
+    - Test UI legati a copy/version label rigida: [tests/unit/Navbar.test.tsx](../../tests/unit/Navbar.test.tsx#L80), [tests/unit/RuntimeInfoProvider.test.tsx](../../tests/unit/RuntimeInfoProvider.test.tsx#L26), [tests/unit/PersonalTrendCard.test.tsx](../../tests/unit/PersonalTrendCard.test.tsx#L21).
   - Impatto sicurezza:
     - Basso impatto diretto su OWASP A01/A03 e policy auth/rate limit.
     - Alto impatto su velocita di delivery (falsi negativi CI).
 
 ## Priority 3 (Medium) 📌
-- Pipeline CI unica con gate duri su ogni PR (`lint`, `typecheck`, `test`, `build`): [ci.yml](.github/workflows/ci.yml#L46), [ci.yml](.github/workflows/ci.yml#L47), [ci.yml](.github/workflows/ci.yml#L48), [ci.yml](.github/workflows/ci.yml#L49).
+- Pipeline CI unica con gate duri su ogni PR (`lint`, `typecheck`, `test`, `build`): [ci.yml](../../.github/workflows/ci.yml#L46), [ci.yml](../../.github/workflows/ci.yml#L47), [ci.yml](../../.github/workflows/ci.yml#L48), [ci.yml](../../.github/workflows/ci.yml#L49).
 - In progetto interno (decine di utenti, non pubblico), il costo di rigidita testuale e superiore al beneficio marginale di sicurezza ottenuto da assert copy-level.
 
 ## Sicurezza da mantenere invariata
 - Test di autenticazione/ruoli/ownership/error-code API sono corretti e ad alto valore:
-  - [tests/integration/admin-routes.test.ts](tests/integration/admin-routes.test.ts#L60)
-  - [tests/integration/artifacts-id-route.test.ts](tests/integration/artifacts-id-route.test.ts#L64)
-  - [tests/integration/artifacts-generate-route.test.ts](tests/integration/artifacts-generate-route.test.ts#L134)
+  - [tests/integration/admin-routes.test.ts](../../tests/integration/admin-routes.test.ts#L60)
+  - [tests/integration/artifacts-id-route.test.ts](../../tests/integration/artifacts-id-route.test.ts#L64)
+  - [tests/integration/artifacts-generate-route.test.ts](../../tests/integration/artifacts-generate-route.test.ts#L134)
 
 ## Recommended Changes
 1. Ridurre la rigidita dei test prompt da copy exact a invarianti strutturali.

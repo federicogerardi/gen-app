@@ -238,14 +238,14 @@ Ready for Code Review: YES ✅
 
 ## Reference Documentazione
 
-- **Graphic Framework**: [docs/specifications/graphic-frameworking-spec.md](../../specifications/graphic-frameworking-spec.md)
-- **Accessibility Guidelines**: [docs/accessibility/accessibility.md](../../accessibility/accessibility.md)
-- **UX Strategy**: [docs/ux/ux-strategy.md](../../ux/ux-strategy.md)
+- **Graphic Framework**: [docs/specifications/graphic-frameworking-spec.md](/docs/specifications/graphic-frameworking-spec.md)
+- **Accessibility Guidelines**: [docs/accessibility/accessibility.md](/docs/accessibility/accessibility.md)
+- **UX Strategy**: [docs/ux/ux-strategy.md](/docs/ux/ux-strategy.md)
 
 ---
 
 ## Next Steps
 
-- If tool has checkpoint recovery: go to **[tool-cloning-phase-3-6-checkpoint.md](tool-cloning-phase-3-6-checkpoint.md)**
-- If tool needs retry logic: go to **[tool-cloning-phase-3-7-retry.md](tool-cloning-phase-3-7-retry.md)**
-- Otherwise: go to **[tool-cloning-testing-strategy.md](tool-cloning-testing-strategy.md)**
+- If tool has checkpoint recovery: go to **[tool-cloning-phase-3-6-checkpoint.md](/docs/implementation/tool-cloning/phases/tool-cloning-phase-3-6-checkpoint.md)**
+- If tool needs retry logic: go to **[tool-cloning-phase-3-7-retry.md](/docs/implementation/tool-cloning/phases/tool-cloning-phase-3-7-retry.md)**
+- Otherwise: go to **[tool-cloning-testing-strategy.md](/docs/implementation/tool-cloning/quality/tool-cloning-testing-strategy.md)**

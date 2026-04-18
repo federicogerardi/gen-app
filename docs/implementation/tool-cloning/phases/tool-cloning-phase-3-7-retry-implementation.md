@@ -27,12 +27,12 @@ Gestire errori transienti senza bloccare l'utente, con:
 ## Pattern di riferimento (HLF)
 
 - Retry wrapper e backoff in frontend tool page
-  - [src/app/tools/funnel-pages/hooks/useFunnelGeneration.ts](../../../src/app/tools/funnel-pages/hooks/useFunnelGeneration.ts)
-  - [src/tools/shared/lib/retryLogic.ts](../../../src/tools/shared/lib/retryLogic.ts)
+  - [src/app/tools/funnel-pages/hooks/useFunnelGeneration.ts](/src/app/tools/funnel-pages/hooks/useFunnelGeneration.ts)
+  - [src/tools/shared/lib/retryLogic.ts](/src/tools/shared/lib/retryLogic.ts)
 - Endpoint generation (senza loop retry server-side)
-  - [src/app/api/tools/funnel-pages/generate/route.ts](../../../src/app/api/tools/funnel-pages/generate/route.ts)
+  - [src/app/api/tools/funnel-pages/generate/route.ts](/src/app/api/tools/funnel-pages/generate/route.ts)
 - E2E coverage retry/resume
-  - [tests/e2e/funnel-pages-retry-resume.spec.ts](../../../tests/e2e/funnel-pages-retry-resume.spec.ts)
+  - [tests/e2e/funnel-pages-retry-resume.spec.ts](/tests/e2e/funnel-pages-retry-resume.spec.ts)
 
 ---
 

@@ -15,21 +15,21 @@ Prima di iniziare, verifica che tu abbia accesso a:
 
 ## Documenti di Riferimento (Leggi in Ordine)
 
-1. **Graphic Frameworking**: [docs/specifications/graphic-frameworking-spec.md](../../specifications/graphic-frameworking-spec.md)
+1. **Graphic Frameworking**: [docs/specifications/graphic-frameworking-spec.md](/docs/specifications/graphic-frameworking-spec.md)
    - Section "Tool Pages Exceptions" per deviazioni intenzionali
    
-2. **Tool Routes Guardrails**: [.github/instructions/tool-routes.instructions.md](../../../.github/instructions/tool-routes.instructions.md)
+2. **Tool Routes Guardrails**: [.github/instructions/tool-routes.instructions.md](/.github/instructions/tool-routes.instructions.md)
    - Auth → ownership → rate limit ordine obbligatorio
    
-3. **Tool Prompts Pattern**: [.github/instructions/tool-prompts.instructions.md](../../../.github/instructions/tool-prompts.instructions.md)
+3. **Tool Prompts Pattern**: [.github/instructions/tool-prompts.instructions.md](/.github/instructions/tool-prompts.instructions.md)
    - Markdown sorgente + template runtime tipizzato
    
-4. **API Specifications**: [docs/specifications/api-specifications.md](../../specifications/api-specifications.md#tool-specific-generation)
+4. **API Specifications**: [docs/specifications/api-specifications.md](/docs/specifications/api-specifications.md#tool-specific-generation)
    - Error codes + SSE contract standard
    
 5. **HLF Reference Implementation (modulare)**:
-   - [src/app/tools/funnel-pages/page.tsx](../../../src/app/tools/funnel-pages/page.tsx) (thin wrapper)
-   - [src/app/tools/funnel-pages/FunnelPagesToolContent.tsx](../../../src/app/tools/funnel-pages/FunnelPagesToolContent.tsx) (main UI container)
+   - [src/app/tools/funnel-pages/page.tsx](/src/app/tools/funnel-pages/page.tsx) (thin wrapper)
+   - [src/app/tools/funnel-pages/FunnelPagesToolContent.tsx](/src/app/tools/funnel-pages/FunnelPagesToolContent.tsx) (main UI container)
 
 ---
 
@@ -118,11 +118,17 @@ docs/
 │   └── ...
 ├── implementation/
 │   └── tool-cloning/                      ← Tu sei qui
-│       ├── tool-cloning-overview.md
-│       ├── tool-cloning-prerequisites.md  ← Questo file
-│       ├── tool-cloning-anatomy.md
-│       ├── tool-cloning-complexity-check.md
-│       └── [Altri phase files...]
+│       ├── tool-cloning-index.md          (Master index)
+│       ├── core/
+│       │   ├── tool-cloning-overview.md
+│       │   ├── tool-cloning-prerequisites.md  ← Questo file
+│       │   ├── tool-cloning-anatomy.md
+│       │   └── tool-cloning-complexity-check.md
+│       ├── phases/                        (Phase 1, 2, 2.5, 3, 3.5, 3.6, 3.7)
+│       ├── templates/                     (Blueprint + operational template)
+│       ├── quality/                       (Testing, conformity, troubleshooting, go/no-go)
+│       ├── instances/                     (Reference tool instances)
+│       └── history/                       (Dated closure snapshots)
 └── ...
 
 src/
@@ -144,4 +150,4 @@ src/
 
 ## Ready to Go?
 
-✅ Se hai completato la checklist, procedi a **[tool-cloning-anatomy.md](tool-cloning-anatomy.md)** per capire la struttura file minima richiesta.
+✅ Se hai completato la checklist, procedi a **[tool-cloning-anatomy.md](/docs/implementation/tool-cloning/core/tool-cloning-anatomy.md)** per capire la struttura file minima richiesta.

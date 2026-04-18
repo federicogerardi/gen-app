@@ -103,14 +103,14 @@ Usare questo spazio quando un input e utile per orientare le prossime decisioni,
 ### Rilancio generazione da dettaglio artefatto
 
 - Stato: promosso e completato nello sprint GUI/UX low-impact.
-- Riferimenti: [../implementation/gui-ux-low-impact-microtasks-sprint-plan-2026-04-14.md](../implementation/gui-ux-low-impact-microtasks-sprint-plan-2026-04-14.md), [../implement-index.md](../implement-index.md).
+- Riferimenti: [../implementation/gui-ux-low-impact-microtasks-sprint-plan-2026-04-14.md](../archive/gui-ux-low-impact-microtasks-sprint-plan-2026-04-14.md), [../implement-index.md](../implement-index.md).
 
 ### Vista ultimi artefatti generati in dashboard
 
 - Stato: promossa e completata nello sprint GUI/UX low-impact.
-- Riferimenti: [../implementation/gui-ux-low-impact-microtasks-sprint-plan-2026-04-14.md](../implementation/gui-ux-low-impact-microtasks-sprint-plan-2026-04-14.md), [../implement-index.md](../implement-index.md).
+- Riferimenti: [../implementation/gui-ux-low-impact-microtasks-sprint-plan-2026-04-14.md](../archive/gui-ux-low-impact-microtasks-sprint-plan-2026-04-14.md), [../implement-index.md](../implement-index.md).
 
 ### Trend personale dashboard 7/30 giorni
 
 - Stato: MVP personale completato; questa nota mantiene aperto solo l'eventuale follow-up sul confronto globale vs utente.
-- Riferimenti: [../implementation/gui-ux-low-impact-microtasks-sprint-plan-2026-04-14.md](../implementation/gui-ux-low-impact-microtasks-sprint-plan-2026-04-14.md), [../implement-index.md](../implement-index.md).
+- Riferimenti: [../implementation/gui-ux-low-impact-microtasks-sprint-plan-2026-04-14.md](../archive/gui-ux-low-impact-microtasks-sprint-plan-2026-04-14.md), [../implement-index.md](../implement-index.md).

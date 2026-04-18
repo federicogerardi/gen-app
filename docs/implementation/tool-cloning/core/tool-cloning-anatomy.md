@@ -199,11 +199,14 @@ OR
 
 Add:
 ```
-✅ src/lib/orchestrator/{{TOOL_SLUG}}-orchestrator.ts
-   └─ State machine, step sequencing, dependency resolution
+✅ src/app/tools/{{TOOL_SLUG}}/hooks/use{{TOOL_TITLE}}Generation.ts
+   └─ Sequencing degli step, chaining del contesto, retry lato UI
 
-✅ tests/integration/{{TOOL_SLUG}}-orchestrator.test.ts
-   └─ Happy path (all steps), failure recovery, partial completion
+✅ src/app/tools/{{TOOL_SLUG}}/types.ts
+   └─ Step key union tipizzata + ToolStepState<StepKey>
+
+✅ tests/unit/use{{TOOL_TITLE}}Generation.test.ts
+   └─ Happy path multi-step, failure recovery, partial completion
 ```
 
 ### If Tool Uses Dynamic Prompts Per Step
@@ -233,16 +236,25 @@ src/
 ├── app/api/tools/blog-gen/
 │   └── generate/route.ts
 ├── app/tools/blog-gen/
-│   └── page.tsx
+│   ├── page.tsx
+│   ├── BlogGenToolContent.tsx
+│   ├── config.ts
+│   ├── types.ts
+│   ├── hooks/
+│   │   └── useBlogGenGeneration.ts
+│   └── components/
+│       └── BlogGenSetupCard.tsx
 └── lib/tool-prompts/
     ├── blog-gen.ts             (Builder)
-    ├── prompts/blog-gen/
+   ├── prompts/tools/blog-gen/
     │   └── generate.md         (Source)
     └── [shared: schemas.ts, responses.ts]
 
 tests/
 ├── integration/blog-gen-route.test.ts
-└── unit/blog-gen.test.ts
+└── unit/
+   ├── blog-gen.test.ts
+   └── useBlogGenGeneration.test.ts
 ```
 
 ---
@@ -259,12 +271,24 @@ src/
 ├── app/api/artifacts/
 │   └── route.ts
 ├── app/tools/funnel-pages/
-│   └── page.tsx
+│   ├── page.tsx
+│   ├── FunnelPagesToolContent.tsx
+│   ├── config.ts
+│   ├── types.ts
+│   ├── hooks/
+│   │   ├── useFunnelGeneration.ts
+│   │   ├── useFunnelRecovery.ts
+│   │   ├── useFunnelExtraction.ts
+│   │   └── useFunnelUiState.ts
+│   └── components/
+│       ├── FunnelSetupCard.tsx
+│       ├── FunnelStatusQuick.tsx
+│       └── FunnelStepCards.tsx
 └── lib/
     ├── tool-prompts/
     │   ├── funnel-pages.ts             (Orchestrator builder)
     │   ├── funnel-pages-templates.ts   (Static templates)
-    │   └── prompts/funnel-pages/
+   │   └── prompts/tools/hl_funnel/
     │       ├── step1/
     │       │   └── optin-prompt.md
     │       ├── step2/
@@ -274,20 +298,25 @@ src/
     ├── tool-routes/
     │   ├── funnel-pages-extraction.ts
     │   ├── funnel-pages-checkpoint.ts
-    │   └── [shared: schemas.ts, responses.ts]
-    └── orchestrator/
-        └── funnel-pages-orchestrator.ts
+   │   └── [shared: schemas.ts, responses.ts]
+   └── [shared: llm orchestrator/provider modules]
 
 tests/
 ├── integration/
 │   ├── funnel-pages-route.test.ts
-│   ├── funnel-pages-extraction.test.ts
-│   └── funnel-pages-orchestrator.test.ts
+│   └── funnel-pages-extraction.test.ts
 ├── unit/
 │   ├── funnel-pages.test.ts
-│   └── funnel-pages-orchestrator.test.ts
+│   ├── useFunnelGeneration.test.ts
+│   ├── useFunnelRecovery.test.ts
+│   ├── useFunnelExtraction.test.ts
+│   ├── useFunnelUiState.test.ts
+│   └── tools/funnel-pages/
+│       ├── funnel-pages-setup-card.test.tsx
+│       └── funnel-pages-step-cards.test.tsx
 └── e2e/
-    └── funnel-pages-workflow.spec.ts
+   ├── funnel-pages-ux-parity.spec.ts
+   └── funnel-pages-retry-resume.spec.ts
 ```
 
 ---
@@ -297,7 +326,7 @@ tests/
 ```
 ❌ src/app/api/tools/blog_gen/           (use kebab-case, not snake_case)
 ❌ src/lib/tool-prompts/BlogGen.ts       (use kebab-case, not PascalCase)
-❌ src/lib/tool-prompts/prompts/blog-gen/prompt.md    (too generic, add type)
+❌ src/lib/tool-prompts/prompts/tools/blog-gen/prompt.md    (too generic, add type)
 ❌ tests/blog-gen.test.ts                (MUST co-locate: tests/*.test.ts)
 ❌ src/lib/tool-prompts/blog-gen-prompt-template.ts   (redundant suffix)
 ❌ templates/blog-gen-template.md        (no custom templates folders outside lib/)
@@ -307,4 +336,4 @@ tests/
 
 ## Next Step
 
-Procedi a **[tool-cloning-complexity-check.md](tool-cloning-complexity-check.md)** per auto-classificare il tool e stimare il tempo di work.
+Procedi a **[tool-cloning-complexity-check.md](/docs/implementation/tool-cloning/core/tool-cloning-complexity-check.md)** per auto-classificare il tool e stimare il tempo di work.

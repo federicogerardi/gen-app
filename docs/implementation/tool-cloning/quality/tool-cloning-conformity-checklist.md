@@ -16,7 +16,7 @@ Completa TUTTI i seguenti punti prima di mergiare.
 ## Backend (API Route)
 
 - [ ] Route POST `/api/tools/{{TOOL_SLUG}}/generate` exists
-- [ ] Sequenza obbligatoria: auth → rate limit → validate → build → stream (ORDINE FISSO)
+- [ ] Sequenza obbligatoria: auth → validate → ownership → rate limit (prima di LLM) → build → stream
 - [ ] `enforceUsageGuards()` chiamato PRIMA di LLM
 - [ ] Zod schema nel file `schemas.ts`
 - [ ] Error codes usano enum standard (`UNAUTHORIZED`, `FORBIDDEN`, `VALIDATION_ERROR`, `RATE_LIMIT_EXCEEDED`, `INTERNAL_ERROR`)
@@ -199,7 +199,7 @@ Status: Ready to Merge 🚀
 1. Merge PR to `dev` branch (via Squash-and-Merge)
 2. Verify PR title becomes commit message (Conventional Commits format)
 3. Close associated issue with reference to PR
-4. Update [docs/implement-index.md](../../implement-index.md) with completion status
+4. Update [docs/implement-index.md](/docs/implement-index.md) with completion status
 
 ---
 

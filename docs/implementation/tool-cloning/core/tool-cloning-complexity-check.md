@@ -220,10 +220,10 @@ Example: Multi-step (+50%) + extraction (+30%) + state machine (+40%) + checkpoi
 ## Next Steps
 
 - **If 🟢 SIMPLE** (0 SI'): 
-  → Jump to **[tool-cloning-phase-1-backend.md](tool-cloning-phase-1-backend.md)**
+  → Jump to **[tool-cloning-phase-1-backend.md](/docs/implementation/tool-cloning/phases/tool-cloning-phase-1-backend.md)**
   
 - **If 🟡 MODERATE** (1-2 SI'): 
-  → Review **[tool-cloning-phase-1-backend.md](tool-cloning-phase-1-backend.md)** and applicable optional phases
+  → Review **[tool-cloning-phase-1-backend.md](/docs/implementation/tool-cloning/phases/tool-cloning-phase-1-backend.md)** and applicable optional phases
   
 - **If 🔴 COMPLEX** (3-5 SI'): 
   → Follow full path: Phase 1 → Phase 2 → Phase 2.5 → Phase 3 → Phase 3.5 → Phase 3.6 → Phase 3.7 → Testing

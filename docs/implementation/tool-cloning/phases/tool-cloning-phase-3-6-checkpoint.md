@@ -30,15 +30,15 @@ Se il tool ha multi-step orchestration e vuoi supportare "ripartire da dove mi e
 
 Per implementazione completa di checkpoint, consulta:
 
-- [src/app/api/artifacts/route.ts](../../../src/app/api/artifacts/route.ts) (HLF usa artifacts come fonte checkpoint)
-- [src/app/tools/funnel-pages/FunnelPagesToolContent.tsx](../../../src/app/tools/funnel-pages/FunnelPagesToolContent.tsx) (wiring resume intent, prefill e artifact-driven flow)
-- [src/app/tools/funnel-pages/hooks/useFunnelRecovery.ts](../../../src/app/tools/funnel-pages/hooks/useFunnelRecovery.ts) (recovery logic dedicata)
-- [tests/e2e/funnel-pages-retry-resume.spec.ts](../../../tests/e2e/funnel-pages-retry-resume.spec.ts) (coverage resume/checkpoint UI)
-- [tool-cloning-go-no-go-assessment.md](tool-cloning-go-no-go-assessment.md) (Gap analysis section su checkpoint)
+- [src/app/api/artifacts/route.ts](/src/app/api/artifacts/route.ts) (HLF usa artifacts come fonte checkpoint)
+- [src/app/tools/funnel-pages/FunnelPagesToolContent.tsx](/src/app/tools/funnel-pages/FunnelPagesToolContent.tsx) (wiring resume intent, prefill e artifact-driven flow)
+- [src/app/tools/funnel-pages/hooks/useFunnelRecovery.ts](/src/app/tools/funnel-pages/hooks/useFunnelRecovery.ts) (recovery logic dedicata)
+- [tests/e2e/funnel-pages-retry-resume.spec.ts](/tests/e2e/funnel-pages-retry-resume.spec.ts) (coverage resume/checkpoint UI)
+- [tool-cloning-go-no-go-assessment.md](/docs/implementation/tool-cloning/quality/tool-cloning-go-no-go-assessment.md) (Gap analysis section su checkpoint)
 
 ---
 
-## Wenn Tool è Complex (6+ questionnaire SI')
+## If Tool è Very Complex (6+ questionnaire SI')
 
 Contatta Architecture Team per guidance specializzato su checkpoint strategy.
 
@@ -46,6 +46,6 @@ Contatta Architecture Team per guidance specializzato su checkpoint strategy.
 
 ## Next Step
 
-Se il tool ha transient error scenarios, vai a **[tool-cloning-phase-3-7-retry.md](tool-cloning-phase-3-7-retry.md)**.
+Se il tool ha transient error scenarios, vai a **[tool-cloning-phase-3-7-retry.md](/docs/implementation/tool-cloning/phases/tool-cloning-phase-3-7-retry.md)**.
 
-Altrimenti, vai a **[tool-cloning-testing-strategy.md](tool-cloning-testing-strategy.md)**.
+Altrimenti, vai a **[tool-cloning-testing-strategy.md](/docs/implementation/tool-cloning/quality/tool-cloning-testing-strategy.md)**.

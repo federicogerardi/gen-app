@@ -290,7 +290,7 @@ export function {{TOOL_TITLE}}ToolContent() {
 
 ## Reference Documentazione
 
-- **Graphic Frameworking**: [docs/specifications/graphic-frameworking-spec.md](../../specifications/graphic-frameworking-spec.md)
+- **Graphic Frameworking**: [docs/specifications/graphic-frameworking-spec.md](/docs/specifications/graphic-frameworking-spec.md)
 - **HLF reference implementation**: `src/app/tools/funnel-pages/`
 - **NextLand reference implementation**: `src/app/tools/nextland/`
 - **Shared library**: `src/tools/shared/` (types, hooks, lib, components)
@@ -299,4 +299,4 @@ export function {{TOOL_TITLE}}ToolContent() {
 
 ## Next Step
 
-Procedi a **[tool-cloning-phase-3-5-ux-guide.md](tool-cloning-phase-3-5-ux-guide.md)** per garantire la replicabilità UX completa.
+Procedi a **[tool-cloning-phase-3-5-ux-guide.md](/docs/implementation/tool-cloning/phases/tool-cloning-phase-3-5-ux-guide.md)** per garantire la replicabilità UX completa.

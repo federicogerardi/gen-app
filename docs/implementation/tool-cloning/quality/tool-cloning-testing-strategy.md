@@ -217,4 +217,4 @@ npm run test && npm run test:e2e
 
 ## Next Step
 
-Procedi a **[tool-cloning-conformity-checklist.md](tool-cloning-conformity-checklist.md)** per la checklist pre-PR finale.
+Procedi a **[tool-cloning-conformity-checklist.md](/docs/implementation/tool-cloning/quality/tool-cloning-conformity-checklist.md)** per la checklist pre-PR finale.

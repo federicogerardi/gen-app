@@ -157,13 +157,13 @@ export const toolRegistry = {
 
 ## Reference Documentazione
 
-- **Tool Prompts Pattern**: [.github/instructions/tool-prompts.instructions.md](../../../.github/instructions/tool-prompts.instructions.md)
-- **HLF Reference**: [src/lib/tool-prompts/funnel-pages.ts](../../../src/lib/tool-prompts/funnel-pages.ts)
+- **Tool Prompts Pattern**: [.github/instructions/tool-prompts.instructions.md](/.github/instructions/tool-prompts.instructions.md)
+- **HLF Reference**: [src/lib/tool-prompts/funnel-pages.ts](/src/lib/tool-prompts/funnel-pages.ts)
 
 ---
 
 ## Next Step
 
-Se il tool ha file upload o preprocessing, vai a **[tool-cloning-phase-2-5-extraction.md](tool-cloning-phase-2-5-extraction.md)**.
+Se il tool ha file upload o preprocessing, vai a **[tool-cloning-phase-2-5-extraction.md](/docs/implementation/tool-cloning/phases/tool-cloning-phase-2-5-extraction.md)**.
 
-Altrimenti, salta direttamente a **[tool-cloning-phase-3-frontend.md](tool-cloning-phase-3-frontend.md)**.
+Altrimenti, salta direttamente a **[tool-cloning-phase-3-frontend.md](/docs/implementation/tool-cloning/phases/tool-cloning-phase-3-frontend.md)**.

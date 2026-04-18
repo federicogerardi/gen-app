@@ -249,4 +249,4 @@ La regola da rendere esplicita anche nei test e nella documentazione del clone e
 
 ## Next Step
 
-Procedi a **[tool-cloning-phase-3-frontend.md](tool-cloning-phase-3-frontend.md)** per creare la UI page.
+Procedi a **[tool-cloning-phase-3-frontend.md](/docs/implementation/tool-cloning/phases/tool-cloning-phase-3-frontend.md)** per creare la UI page.

@@ -30,14 +30,14 @@ Se il tool deve gestire transient network errors (rate limits, timeouts), implem
 
 Per implementazione completa di retry, consulta:
 
-- [tool-cloning-phase-3-7-retry-implementation.md](tool-cloning-phase-3-7-retry-implementation.md) (detailed guide)
-- [src/tools/shared/lib/retryLogic.ts](../../../src/tools/shared/lib/retryLogic.ts) (`withRetry`, `RetryableRequestError`, `getRetryMeta`, backoff)
-- [src/app/tools/funnel-pages/hooks/useFunnelGeneration.ts](../../../src/app/tools/funnel-pages/hooks/useFunnelGeneration.ts) (uso concreto retry in hook generation)
-- [tests/e2e/funnel-pages-retry-resume.spec.ts](../../../tests/e2e/funnel-pages-retry-resume.spec.ts) (coverage retry/backoff UX)
+- [tool-cloning-phase-3-7-retry-implementation.md](/docs/implementation/tool-cloning/phases/tool-cloning-phase-3-7-retry-implementation.md) (detailed guide)
+- [src/tools/shared/lib/retryLogic.ts](/src/tools/shared/lib/retryLogic.ts) (`withRetry`, `RetryableRequestError`, `getRetryMeta`, backoff)
+- [src/app/tools/funnel-pages/hooks/useFunnelGeneration.ts](/src/app/tools/funnel-pages/hooks/useFunnelGeneration.ts) (uso concreto retry in hook generation)
+- [tests/e2e/funnel-pages-retry-resume.spec.ts](/tests/e2e/funnel-pages-retry-resume.spec.ts) (coverage retry/backoff UX)
 
 ---
 
-## Wenn Tool è Complex (6+ questionnaire SI')
+## If Tool è Very Complex (6+ questionnaire SI')
 
 Contatta Architecture Team per guidance su retry strategy avanzate.
 
@@ -45,4 +45,4 @@ Contatta Architecture Team per guidance su retry strategy avanzate.
 
 ## Next Step
 
-Procedi a **[tool-cloning-testing-strategy.md](tool-cloning-testing-strategy.md)** per creare i test.
+Procedi a **[tool-cloning-testing-strategy.md](/docs/implementation/tool-cloning/quality/tool-cloning-testing-strategy.md)** per creare i test.

@@ -176,12 +176,12 @@ Se il tool non ha upload, salta questo step e vai a Phase 2.
 
 ## Reference Documentazione
 
-- **Tool Routes Guardrails**: [.github/instructions/tool-routes.instructions.md](../../../.github/instructions/tool-routes.instructions.md)
-- **API Specifications**: [docs/specifications/api-specifications.md](../../specifications/api-specifications.md#tool-specific-generation)
-- **HLF Reference**: [src/app/api/tools/funnel-pages/generate/route.ts](../../../src/app/api/tools/funnel-pages/generate/route.ts)
+- **Tool Routes Guardrails**: [.github/instructions/tool-routes.instructions.md](/.github/instructions/tool-routes.instructions.md)
+- **API Specifications**: [docs/specifications/api-specifications.md](/docs/specifications/api-specifications.md#tool-specific-generation)
+- **HLF Reference**: [src/app/api/tools/funnel-pages/generate/route.ts](/src/app/api/tools/funnel-pages/generate/route.ts)
 
 ---
 
 ## Next Step
 
-Procedi a **[tool-cloning-phase-2-prompts.md](tool-cloning-phase-2-prompts.md)** per creare il prompt builder.
+Procedi a **[tool-cloning-phase-2-prompts.md](/docs/implementation/tool-cloning/phases/tool-cloning-phase-2-prompts.md)** per creare il prompt builder.

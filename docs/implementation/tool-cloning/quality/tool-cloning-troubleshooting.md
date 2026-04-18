@@ -79,7 +79,7 @@ Problemi frequenti e soluzioni durante il cloning di tool.
 If you're stuck:
 
 1. Consult relevant reference docs (graphic-frameworking, tool-routes guardrails, tool-prompts pattern)
-2. Check [tool-cloning-go-no-go-assessment.md](tool-cloning-go-no-go-assessment.md) for framework gaps
+2. Check [tool-cloning-go-no-go-assessment.md](/docs/implementation/tool-cloning/quality/tool-cloning-go-no-go-assessment.md) for framework gaps
 3. Review HLF source code for patterns
 4. Contact Architecture Team if classified as COMPLEX or VERY COMPLEX tool
 
@@ -87,4 +87,4 @@ If you're stuck:
 
 ## Next Step
 
-Ready to start? Go to **[tool-cloning-overview.md](tool-cloning-overview.md)** for the full roadmap.
+Ready to start? Go to **[tool-cloning-overview.md](/docs/implementation/tool-cloning/core/tool-cloning-overview.md)** for the full roadmap.

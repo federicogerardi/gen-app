@@ -43,7 +43,7 @@ La decomposizione mantiene il perimetro invariato: **4 fasi**, **15 finding**, *
 
 **Problema**: `inputTokenCount = Math.ceil(accumulated.length / 4)` stima su **output** accumulato, non su **input prompt**.  
 **Effetto**: Cost accounting sottostima il costo input → budget tracking impreciso.  
-**File interessato**: [src/lib/llm/streaming.ts](../src/lib/llm/streaming.ts#L93)
+**File interessato**: [src/lib/llm/streaming.ts](../../src/lib/llm/streaming.ts#L93)
 
 **Soluzione**:
 - Catturare `inputTokens` dal provider al momento della generazione
@@ -71,7 +71,7 @@ La decomposizione mantiene il perimetro invariato: **4 fasi**, **15 finding**, *
 
 **Problema**: Check quota e increment non atomici — due richieste parallele passano entrambe il check.  
 **Effetto**: Sforamento quota in concorrenza.  
-**File interessato**: [src/lib/tool-routes/guards.ts](../src/lib/tool-routes/guards.ts#L47-L91), [src/lib/llm/streaming.ts](../src/lib/llm/streaming.ts#L113-L128)
+**File interessato**: [src/lib/tool-routes/guards.ts](../../src/lib/tool-routes/guards.ts#L47-L91), [src/lib/llm/streaming.ts](../../src/lib/llm/streaming.ts#L113-L128)
 
 ```typescript
 // Sequenza non atomica (race condition):
@@ -114,7 +114,7 @@ const result = await db.$transaction(async (tx) => {
 
 **Problema**: Client abbandona stream → server continua in background → artifact rimane `generating` indefinitamente.  
 **Effetto**: DB sporco; admin non sa se job è completato o stuck.  
-**File interessato**: [src/lib/llm/streaming.ts](../src/lib/llm/streaming.ts#L56-L90)
+**File interessato**: [src/lib/llm/streaming.ts](../../src/lib/llm/streaming.ts#L56-L90)
 
 **Soluzione**:
 - Cleanup on close: listener su stream close/error → mark artifact as `failed`
@@ -141,7 +141,7 @@ const result = await db.$transaction(async (tx) => {
 
 **Problema**: PUT su qualsiasi artifact setta `status: 'completed'` → failed/generating artifacts vengono "risanati".  
 **Effetto**: State di artifact non affidabile.  
-**File interessato**: [src/app/api/artifacts/[id]/route.ts](../src/app/api/artifacts/%5Bid%5D/route.ts)
+**File interessato**: [src/app/api/artifacts/[id]/route.ts](../../src/app/api/artifacts/[id]/route.ts)
 
 **Soluzione**: Reject PUT se artifact non in stato terminale.
 
@@ -191,7 +191,7 @@ await db.artifact.update({ where: { id }, data: { content: parsed.data.content }
 
 **Problema**: `artifacts/generate` duplica quota/ownership check inline → divergenza futura.  
 **Effetto**: Logica diverge tra endpoint, difficile da manutenere.  
-**File interessato**: [src/app/api/artifacts/generate/route.ts](../src/app/api/artifacts/generate/route.ts#L42-L70)
+**File interessato**: [src/app/api/artifacts/generate/route.ts](../../src/app/api/artifacts/generate/route.ts#L42-L70)
 
 **Soluzione**: Usare `enforceUsageGuards` centralizzato.
 
@@ -226,7 +226,7 @@ if (!guardResult.ok) return guardResult.response;
 
 **Problema**: ALLOWED_MODELS definito in 2 file con liste divergenti.  
 **Effetto**: Possibili modelli accettati diversi tra endpoint.  
-**File interessato**: [src/app/api/artifacts/generate/route.ts](../src/app/api/artifacts/generate/route.ts), [src/lib/tool-routes/schemas.ts](../src/lib/tool-routes/schemas.ts)
+**File interessato**: [src/app/api/artifacts/generate/route.ts](../../src/app/api/artifacts/generate/route.ts), [src/lib/tool-routes/schemas.ts](../../src/lib/tool-routes/schemas.ts)
 
 ```typescript
 // artifacts/generate/route.ts
@@ -277,7 +277,7 @@ export const MODEL_COSTS: Record<typeof ALLOWED_MODELS[number], { input: number;
 
 **Problema**: `enforceUsageGuards` hardcoda `artifactType: 'content'` anche per extraction.  
 **Effetto**: quotaHistory dati incorretti per audit.  
-**File interessato**: [src/lib/tool-routes/guards.ts](../src/lib/tool-routes/guards.ts#L67,79,91)
+**File interessato**: [src/lib/tool-routes/guards.ts](../../src/lib/tool-routes/guards.ts#L67,79,91)
 
 **Soluzione**: Guard accetta `artifactType` come parametro.
 
@@ -329,7 +329,7 @@ export async function enforceUsageGuards(
 
 **Problema**: Nessun limite — `db.user.findMany()` O(N), rischio timeout/OOM.  
 **Effetto**: Query lenta con 1000+ utenti.  
-**File interessato**: [src/app/api/admin/users/route.ts](../src/app/api/admin/users/route.ts)
+**File interessato**: [src/app/api/admin/users/route.ts](../../src/app/api/admin/users/route.ts)
 
 **Soluzione**: Pagination con query params + metadata.
 
@@ -373,7 +373,7 @@ return NextResponse.json({
 
 **Problema**: `db.artifact.update` ogni 20 token senza backpressure → alta pressure.  
 **Effetto**: 5 token/sec × 100 utenti = ~800 writes/sec su DB.  
-**File interessato**: [src/lib/llm/streaming.ts](../src/lib/llm/streaming.ts#L73-77)
+**File interessato**: [src/lib/llm/streaming.ts](../../src/lib/llm/streaming.ts#L73-77)
 
 **Soluzione**: Batch writes con queue + throttle.
 
@@ -428,7 +428,7 @@ await pendingUpdate;
 
 **Problema**: File MIME dichiarato dal client, non verificato.  
 **Effetto**: Attaccante può caricare .exe come .png.  
-**File interessato**: [src/app/api/tools/funnel-pages/upload/route.ts](../src/app/api/tools/funnel-pages/upload/route.ts)
+**File interessato**: [src/app/api/tools/funnel-pages/upload/route.ts](../../src/app/api/tools/funnel-pages/upload/route.ts)
 
 **Soluzione**: Magic byte verification con libreria `file-type`.
 
@@ -463,7 +463,7 @@ if (!detected || !ALLOWED_TYPES.includes(detected.mime)) {
 
 **Problema**: Non-null assertion su env var mancanti → crash senza messaggio chiaro.  
 **Effetto**: Runtime error oscuro in produzione.  
-**File interessato**: [src/lib/auth.ts](../src/lib/auth.ts)
+**File interessato**: [src/lib/auth.ts](../../src/lib/auth.ts)
 
 **Soluzione**: Validazione Zod all'app boot.
 
@@ -502,7 +502,7 @@ export const env = envSchema.parse(process.env);
 
 **Problema**: Role as String senza constraint.  
 **Effetto**: Valori invalidi possono essere scritti direttamente.  
-**File interessato**: [prisma/schema.prisma](../prisma/schema.prisma)
+**File interessato**: [prisma/schema.prisma](../../prisma/schema.prisma)
 
 **Soluzione**: Prisma enum + migration.
 
@@ -611,7 +611,7 @@ catch (error) {
 
 **Problema**: MODEL_COSTS hardcodati, non riflettono variazioni OpenRouter.  
 **Effetto**: Budget tracking sempre più impreciso nel tempo.  
-**File interessato**: [src/lib/llm/costs.ts](../src/lib/llm/costs.ts)
+**File interessato**: [src/lib/llm/costs.ts](../../src/lib/llm/costs.ts)
 
 **Soluzione** (progressiva):
 1. **Phase 4**: Aggiungere `_lastUpdated` timestamp + warning se >30gg
