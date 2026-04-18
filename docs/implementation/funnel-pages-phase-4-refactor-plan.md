@@ -198,3 +198,29 @@ Rollback completed criteria:
 - Pattern riusabile documentato implicitamente nella struttura file.
 - Nessun blocker tecnico aperto.
 - Nessun blocker sicurezza aperto (P1/P2 del review security chiusi).
+
+## Execution Status (2026-04-18)
+
+**Stato**: ✅ Completed
+
+Implementazione Phase 4 completata su `funnel-pages` con parity funzionale mantenuta.
+
+Output reali:
+- `src/app/tools/funnel-pages/page.tsx` ridotto a wrapper suspense: **21 righe**.
+- `src/app/tools/funnel-pages/FunnelPagesToolContent.tsx` ridotto a container composabile: **285 righe**.
+- Estrazione moduli funnel-specific:
+  - `config.ts`, `types.ts`
+  - `components/FunnelSetupCard.tsx`
+  - `components/FunnelStatusQuick.tsx`
+  - `components/FunnelStepCards.tsx`
+  - `hooks/useFunnelGeneration.ts`
+  - `hooks/useFunnelRecovery.ts`
+  - `hooks/useFunnelExtraction.ts`
+  - `hooks/useFunnelUiState.ts`
+
+Gate di validazione eseguiti con esito verde:
+- `npm run typecheck`
+- `npm run lint`
+- `npm run test -- tests/integration/funnel-pages-route.test.ts tests/integration/funnel-pages-upload-route.test.ts tests/integration/extraction-route.test.ts tests/unit/funnel-mapping.test.ts tests/unit/funnel-extraction-field-map.test.ts`
+
+Risultato test matrix: **56/56 PASS**.

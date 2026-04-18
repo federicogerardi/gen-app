@@ -1,7 +1,7 @@
 # ADR 004: Refactoring Tool Pages a Architettura Composabile
 
 **Data**: 18 Aprile 2026  
-**Status**: Proposed  
+**Status**: Accepted (Phase 4 Completed, Phase 5 Pending)  
 **Deciders**: Federico (Lead)  
 **Affected Components**: `src/app/tools/funnel-pages/`, `src/app/tools/nextland/`
 
@@ -249,7 +249,32 @@ npm run test -- shared/                    # > 70% coverage
 
 ## Status
 
-✅ **SPIKE COMPLETE** → **READY FOR IMPLEMENTATION**  
+✅ **PHASE 4 COMPLETE (FUNNEL PAGES)** → **READY FOR PHASE 5 (NEXTLAND)**
+
+### Implementation Update (2026-04-18)
+
+Refactor Phase 4 eseguito e validato su funnel-pages con decomposizione completa del monolite.
+
+**Risultato dimensionale verificato**:
+- `src/app/tools/funnel-pages/page.tsx`: **21 righe**
+- `src/app/tools/funnel-pages/FunnelPagesToolContent.tsx`: **285 righe**
+
+**Nuovi moduli funnel-specific creati**:
+- `src/app/tools/funnel-pages/config.ts`
+- `src/app/tools/funnel-pages/types.ts`
+- `src/app/tools/funnel-pages/components/FunnelSetupCard.tsx`
+- `src/app/tools/funnel-pages/components/FunnelStatusQuick.tsx`
+- `src/app/tools/funnel-pages/components/FunnelStepCards.tsx`
+- `src/app/tools/funnel-pages/hooks/useFunnelGeneration.ts`
+- `src/app/tools/funnel-pages/hooks/useFunnelRecovery.ts`
+- `src/app/tools/funnel-pages/hooks/useFunnelExtraction.ts`
+- `src/app/tools/funnel-pages/hooks/useFunnelUiState.ts`
+
+**Gate tecnici Phase 4**:
+- ✅ `typecheck` verde
+- ✅ `lint` verde
+- ✅ test matrix Phase 4 verde (56/56)
+- ✅ parity funzionale confermata su flow upload/extraction/retry/resume/generation
 
 ### Spike Execution Results (2026-04-18)
 

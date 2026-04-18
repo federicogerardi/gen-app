@@ -4,7 +4,7 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 
 ## **[P1-CRITICO]** Aggiornamento sessione (2026-04-18 — Tool Pages Composable Architecture Refactoring)
 
-- **Stato attuale**: `SPIKE COMPLETE` → **READY FOR IMPLEMENTATION**.
+- **Stato attuale**: `PHASE 4 COMPLETE (FUNNEL)` → **READY FOR PHASE 5 (NEXTLAND)**.
 - **Risultati POC (2026-04-18 completato)**:
   - ✅ **545 righe** di shared code estratte e validate
   - ✅ **Zero TypeScript errors** — type safety CONFIRMED (no `any` types)
@@ -12,14 +12,18 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
   - ✅ **Hook isolation** — `useExtraction` + `useStepGeneration` standalone-testable
   - ✅ **70%+ code reuse** — tra funnel-pages e nextland
   - ✅ **No blockers** — tutti Must-Have criteria MET & EXCEEDED
-- **Decisione spike**: **✅ GO** → Proceed con full implementation (Phases 3-6)
-- **Prossimi step**: Implementazione sequenziale fasi 3-6 (vedi spike + ADR per dettagli)
+- **Execution Phase 4 (funnel-pages)**: **✅ COMPLETATA**.
+  - `src/app/tools/funnel-pages/page.tsx`: 21 righe
+  - `src/app/tools/funnel-pages/FunnelPagesToolContent.tsx`: 285 righe
+  - decomposizione completata su `components/` e `hooks/` funnel-specific
+  - validazione tecnica verde: `typecheck`, `lint`, test matrix Phase 4 (56/56)
+- **Prossimi step**: avviare Phase 5 su `nextland` riusando lo stesso blueprint composabile.
 - **Gate operativi Phase 4 (nuovi)**: test matrix obbligatoria + rollback plan esplicito definiti nel piano operativo funnel.
 - **Documentazione**:
   - [ADR 004: Refactoring Tool Pages a Architettura Composabile](./adrs/004-tool-pages-composable-architecture.md) — Design completo + POC results
   - [Spike SPIKE-TOOL-PAGES-REFACTOR-1](./implementation/spike-tool-pages-composable-architecture-poc-1.md) — Risultati POC dettagliati
   - [Funnel Pages Phase 4 Refactor Plan](./implementation/funnel-pages-phase-4-refactor-plan.md) — Piano operativo di implementazione Phase 4
-  - [Predictive Security Review: Phase 4 Funnel Refactor](./code-review/2026-04-18-phase-4-funnel-refactor-security-review.md) — Audit predittivo con remediation P1/P2
+  - [Predictive Security Review: Phase 4 Funnel Refactor](./code-review/2026-04-18-phase-4-funnel-refactor-security-review.md) — Audit predittivo allineato: remediation P1/P2 integrate, stato GO operativo
 - **Tempo stimato totale** (full implementation): 12-15 ore (Phases 3-6, 1.5-2 giorni concentrati)
 - **Impact**: Una volta completato:
   - funnel-pages: 1162 → **300 righe** (-74%)
