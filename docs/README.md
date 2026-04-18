@@ -32,6 +32,7 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 - [gui-ux-low-impact-microtasks-sprint-plan-2026-04-14.md](implementation/gui-ux-low-impact-microtasks-sprint-plan-2026-04-14.md): Backlog microtask GUI/UX low-impact per sprint breve (estrazione 2026-04-14).
 - [feature-operational-hardening-api-llm-tooling-plan-1.md](implementation/feature-operational-hardening-api-llm-tooling-plan-1.md): Piano esecutivo P1 per hardening operativo API/LLM tooling (pre-stream errors, artifact lifecycle safety, taxonomy, API docs alignment).
 - [feature-operational-hardening-api-llm-tooling-tracker-1.md](implementation/feature-operational-hardening-api-llm-tooling-tracker-1.md): Tracker operativo companion del piano P1 con baseline, stato task ed evidenze di chiusura.
+- [feature-meta-ads-runtime-decommission-checklist-1.md](implementation/feature-meta-ads-runtime-decommission-checklist-1.md): Checklist tecnica file-per-file per decommission runtime legacy Meta Ads.
 - [feature-artifact-page-export-actions-plan-1.md](implementation/feature-artifact-page-export-actions-plan-1.md): Piano esecutivo per azioni pagina artefatto (copy text, download Markdown e DOCX).
 - [feature-native-login-credentials-google-oauth-plan-1.md](implementation/feature-native-login-credentials-google-oauth-plan-1.md): Piano di alto livello per introdurre login credenziali mantenendo invariato il flusso Google OAuth.
 - [feature-native-login-credentials-google-oauth-implementation-plan-1.md](implementation/feature-native-login-credentials-google-oauth-implementation-plan-1.md): Checklist fasi/task e criteri di successo del track native login.
@@ -66,7 +67,7 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 - [README.md](prompts/README.md): Indice e linee guida per i prompt.
 - [native-login-credentials-google-oauth-implementation-prompt.md](prompts/native-login-credentials-google-oauth-implementation-prompt.md): Prompt operativo archiviato per il track native login.
 - [tools/hl_funnel/](prompts/tools/hl_funnel/): Prompt generator specifici HL Funnel.
-- [tools/meta_ads/](prompts/tools/meta_ads/): Prompt generator specifici Meta Ads.
+- [tools/meta_ads/](prompts/tools/meta_ads/): Prompt generator specifici Meta Ads (legacy runtime, fuori standard framework tool, pending decommission).
 
 ### specifications/
 - [api-specifications.md](specifications/api-specifications.md): Specifiche API e contratti.
@@ -81,6 +82,8 @@ Questa cartella contiene la documentazione tecnica e funzionale del progetto, or
 - [ux-strategy.md](ux/ux-strategy.md): Strategia UX e principi guida.
 
 ### Aggiornamenti recenti
+- 2026-04-18: allineato as-is il perimetro docs su stato tool framework; Meta Ads riclassificato come runtime legacy hidden/deprecated con decommission pianificata.
+- 2026-04-18: pubblicata checklist esecutiva file-per-file per rimozione runtime Meta Ads in `docs/implementation/feature-meta-ads-runtime-decommission-checklist-1.md`.
 - 2026-04-18: completato riallineamento as-is di `docs/prompts/tools/**` al runtime post-ADR con chiusura gap analysis in `docs/review/tool-prompt-cloning-scope-as-is-gap-analysis-2026-04-18.md`.
 - 2026-04-18: consolidata documentazione Phase 6 post-validazione finale con evidenza E2E (`25/25` Playwright) e allineamento path test nel piano Phase 5.
 - 2026-04-18: avviata Phase 6 del refactor tool-pages composabile con piano operativo dedicato in `docs/implementation/tool-pages-phase-6-cleanup-tests-plan-1.md` e kickoff test su componenti/integration NextLand.

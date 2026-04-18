@@ -160,7 +160,7 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 - **Comportamento post-fix**: timeout applicativo → `cancellationReason = 'timeout'` → se contenuto accumulato >= 120 chars persiste come `completed` (partial); altrimenti `failed(timeout)`. Nessuna build/API change breaking.
 - **Validazione**: `typecheck` PASS, `tests/unit/streaming.test.ts` (nuovo test `persists failed(timeout) when stream deadline aborts`) PASS, `tests/integration/funnel-pages-route.test.ts` (asserzione `streamDeadlineMs: 270000`) PASS, `lint` PASS. Suite: 23/23.
 - **File toccati**: `src/lib/llm/streaming.ts`, `src/app/api/tools/funnel-pages/generate/route.ts`, `tests/unit/streaming.test.ts`, `tests/integration/funnel-pages-route.test.ts`.
-- **Scope da fare**: valutare applicazione analoga a `meta-ads/generate` se esposta allo stesso limite runtime.
+- **Scope da fare**: endpoint `meta-ads/generate` classificato legacy hidden/deprecated; non estendere nuovi hardening feature-specific oltre la baseline di sicurezza in attesa della rimozione runtime.
 
 ## Aggiornamento sessione (2026-04-15 — Operational Hardening Plan API/LLM Tooling)
 
@@ -285,9 +285,9 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
   - Merge eseguito su `dev` tramite PR #21.
   - Documentazione contrattuale allineata su `docs/specifications/api-specifications.md`.
 
-- **Tooling generation optimization (Meta Ads + HotLead Funnel)**: `COMPLETATO (PR-1..PR-6)`
+- **Tooling generation optimization (Meta Ads legacy + HotLead Funnel)**: `COMPLETATO (PR-1..PR-6)`
   - Completati schema unificato input, prompt/runtime parity, normalizzazione output, SSE metadata additive, consolidamento route/error mapping e hardening finale.
-  - Standard output workflow tool allineato a `outputFormat: markdown` (Meta Ads + HotLead Funnel).
+  - Standard output workflow tool allineato a `outputFormat: markdown` (Meta Ads legacy + HotLead Funnel).
   - Esteso il flow HotLead Funnel (workflow `funnel_pages`) a pipeline upload-first: upload documento inline -> extraction fields -> generazione sequenziale `optin -> quiz -> vsl`.
   - Follow-up 2026-04-14: arricchita la propagazione delle testimonianze estratte verso il briefing funnel con campi risultato e metriche misurabili.
   - Validazione finale locale aggiornata: `npm run lint`, `npm run typecheck`, `npm run test` (30/30 suite), `npm run build` tutti `PASS`.
@@ -453,7 +453,7 @@ Nota operativa: il track tooling generation e chiuso (`PR-1..PR-6` completate). 
   - Resta pending la validazione cross-device completa con checklist finale Sprint 2.
 
 #### Checklist finale Sprint 2 (pending)
-- Verifica viewport `320px`, `375px`, `768px`, `1024px`, `1280px` su pagine autenticate: dashboard progetto, lista artefatti, dettaglio artefatto, Meta Ads, HotLead Funnel, Admin.
+- Verifica viewport `320px`, `375px`, `768px`, `1024px`, `1280px` su pagine autenticate: dashboard progetto, lista artefatti, dettaglio artefatto, HotLead Funnel, NextLand, Admin.
 - Verifica keyboard flow completo (Tab/Shift+Tab/Enter/Escape) su pagine autenticate: filtri, CTA principali e drawer admin.
 - Verifica focus visible su controlli interattivi principali e nessuna trap non voluta fuori dal drawer.
 - Verifica contrasto testi/badge/stati in condizioni default e hover/focus.
@@ -496,7 +496,7 @@ Nota operativa: il track tooling generation e chiuso (`PR-1..PR-6` completate). 
 ---
 
 **Prossimi step consigliati:**
-- Mantenere monitoraggio runtime su stream/error-rate dei tool Meta Ads e HotLead Funnel dopo il refactor completato.
+- Mantenere monitoraggio runtime su stream/error-rate dei tool standard (HotLead Funnel, NextLand) e monitoraggio minimo di sicurezza sul solo endpoint Meta Ads legacy fino a decommission.
 - Estendere test E2E sui flussi reali auth/db per consolidare il gate di regressione end-to-end.
 - Mantenere coverage >80% sul perimetro attuale e introdurre guardrail anti-regressione nei PR check.
 - Estendere coverage su flussi E2E critici (login reale, generazione completa, gestione quota/admin).

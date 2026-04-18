@@ -1,15 +1,15 @@
 # Blueprint: LLM Artifact Generation Hub
 
-**Version**: 1.1  
-**Status**: CORE MVP IMPLEMENTED + TOOL WORKFLOWS OPERATIONAL + PR-28 REMEDIATION ALIGNED
+**Version**: 1.2  
+**Status**: CORE MVP IMPLEMENTED + TOOL FRAMEWORK STANDARD OPERATIONAL + LEGACY META ADS PENDING REMOVAL
 **Target Audience**: AI Development Agents  
-**Last Updated**: 2026-04-13
+**Last Updated**: 2026-04-18
 
 ---
 
 ## Executive Summary
 
-A modular web application that allows non-technical users (MediaBuyers, SEO Specialists) to generate professional artifacts through dedicated workflows (Meta Ads and HotLead Funnel) using various LLM models via OpenRouter.
+A modular web application that allows non-technical users (MediaBuyers, SEO Specialists) to generate professional artifacts through dedicated workflows (HotLead Funnel and NextLand) using various LLM models via OpenRouter.
 
 **Key Characteristics**:
 - Full-stack TypeScript/Node.js
@@ -31,7 +31,7 @@ A modular web application that allows non-technical users (MediaBuyers, SEO Spec
 │  ┌──────────────────────────────────────────────────────┐   │
 │  │ shadcn/ui Components + Tailwind CSS                  │   │
 │  │ - Project Dashboard                                   │   │
-│  │ - Tool pages (Meta Ads, HotLead Funnel)             │   │
+│  │ - Tool pages (HotLead Funnel, NextLand)             │   │
 │  │ - Artifact Detail read-only con output elaborato    │   │
 │  │ - Admin CRUD (users, projects, artifacts, models)    │   │
 │  └────────────────────┬─────────────────────────────────┘   │
@@ -40,7 +40,7 @@ A modular web application that allows non-technical users (MediaBuyers, SEO Spec
         ┌───────────────▼────────────────┐
         │  Next.js 16 Route Handlers     │
         │  /api/artifacts/generate       │
-        │  /api/tools/meta-ads/generate  │
+        │  /api/tools/meta-ads/generate* │
         │  /api/tools/extraction/generate│
         │  /api/tools/funnel-pages/upload│
         │  /api/tools/funnel-pages/generate │
@@ -60,7 +60,7 @@ A modular web application that allows non-technical users (MediaBuyers, SEO Spec
         │ └──────┬─────────────────────────────────┬─┘   │
         │        │                                 │      │
         │ ┌──────▼───────────┬───────────────┬────▼────┐  │
-        │ │ Meta Ads Workflow│ Funnel Workflow│ Generic │  │
+        │ │ Legacy Workflow  │ Funnel Workflow│ Generic │  │
         │ │ Agent/Prompt     │ Agent/Prompt   │ Agents  │  │
         │ └──────┬───────────┴───────────────┴────┬────┘  │
         │        │                                 │      │
@@ -84,6 +84,8 @@ A modular web application that allows non-technical users (MediaBuyers, SEO Spec
     │ Quotas       │  │              │  │           │
     └──────────────┘  └──────────────┘  └───────────┘
 ```
+
+Note as-is: `*` indica endpoint runtime legacy nascosto, fuori dallo standard del framework tool e in decommission pianificata.
 
 ### Technology Stack
 
@@ -237,7 +239,8 @@ model QuotaHistory {
 **Responsibility**: Coordination, not business logic
 
 #### Agents (Pluggable Tools)
-- Active workflow perimeter: Meta Ads + HotLead Funnel
+- Active tool framework perimeter: HotLead Funnel + NextLand (+ extraction service route)
+- Legacy runtime route still present: Meta Ads (`/api/tools/meta-ads/generate`), not exposed as standard tool page
 - Generic agent layer remains available for extensibility and legacy artifact generation paths
 - New tool workflows should be integrated via dedicated prompt builders + orchestrator/provider chain
 
@@ -245,7 +248,7 @@ model QuotaHistory {
 - `src/lib/tool-prompts/registry.ts`: registry centralizzato dei template
 - `src/lib/tool-prompts/loader.ts`: caricamento/caching da template runtime statici tipizzati
 - `src/lib/tool-prompts/templates.ts`: mappa tipizzata dei template runtime
-- `src/lib/tool-prompts/meta-ads.ts`: builder prompt Meta Ads
+- `src/lib/tool-prompts/meta-ads.ts`: builder prompt Meta Ads (legacy runtime, pending decommission)
 - `src/lib/tool-prompts/funnel-pages.ts`: builder prompt Funnel (`optin -> quiz -> vsl`)
 
 **Responsibility**: Tool-specific prompt engineering
@@ -275,7 +278,7 @@ model QuotaHistory {
 │   ├── generate          [POST]    → Stream LLM response
 │   └── [id]              [GET|PUT|DELETE] → Artifact detail/update/delete
 ├── tools/
-│   ├── meta-ads/generate    [POST] → Stream Meta Ads dedicated workflow
+│   ├── meta-ads/generate    [POST] → Stream Meta Ads dedicated workflow (legacy hidden)
 │   ├── extraction/generate   [POST] → Stream extraction JSON from raw content + field map
 │   └── funnel-pages/
 │       ├── upload            [POST] → Parse document inline (docx/txt/md)
@@ -309,15 +312,16 @@ model QuotaHistory {
 
 #### Components (shadcn/ui)
 - Layout: Sidebar, Header, Main content
-- Forms: tool-specific forms (Meta Ads) + upload-review-generate flow (HotLead Funnel)
+- Forms: upload-review-generate flow (HotLead Funnel) + multi-step workflow (NextLand)
 - UI: Buttons, Dialog, Tabs, Select, NumberInput
 - Display: StreamingDisplay (real-time artifact display)
 
 #### Pages
 - `/` → Landing
 - `/dashboard` → Dashboard con CTA tool dedicate
-- `/tools/meta-ads` → Tool Meta Ads
+- `/tools/meta-ads` → Legacy hidden route (redirect verso `/dashboard`)
 - `/tools/funnel-pages` → Tool HotLead Funnel (upload documento -> extraction -> review -> generazione sequenziale)
+- `/tools/nextland` → Tool NextLand (workflow a step con output landing/thank-you)
 - `/artifacts` → Project artifacts list
 - `/artifacts/[id]` → Edit artifact
 - `/admin` → Admin panel (user/quota management)

@@ -1,11 +1,11 @@
 # API Specifications: LLM Artifact Generation Hub
 
-**Version**: 1.4  
+**Version**: 1.5  
 **Status**: IMPLEMENTED SUBSET + OPEN ITEMS  
 **Base URL**: `https://<your-vercel-domain>/api` (production from `main`; development/preview from PR flow on `dev`)  
 **Authentication**: NextAuth session cookie (browser). Bearer tokens solo per integrazioni server-to-server esplicite.  
 **Content-Type**: `application/json` (default), `multipart/form-data` per upload documenti funnel  
-**Last Updated**: 2026-04-14
+**Last Updated**: 2026-04-18
 
 ---
 
@@ -68,7 +68,7 @@ All errors follow this format:
 Implemented routes in the current codebase:
 - `POST /artifacts/generate`
 - `GET /artifacts`
-- `POST /tools/meta-ads/generate`
+- `POST /tools/meta-ads/generate` (legacy hidden, deprecated)
 - `POST /tools/extraction/generate`
 - `POST /tools/funnel-pages/generate`
 - `POST /tools/funnel-pages/upload`
@@ -155,7 +155,12 @@ POST /api/auth/signout
 
 ## Tool-Specific Generation
 
-### Generate Meta Ads (Streaming)
+### Generate Meta Ads (Streaming, Legacy)
+
+Stato as-is:
+- endpoint runtime ancora implementato per compatibilita storica
+- non fa parte del perimetro tool standard in UI
+- decommission runtime pianificata nel prossimo step tecnico
 
 **Endpoint**:
 ```
@@ -897,7 +902,7 @@ async function streamArtifact(request: ArtifactRequest) {
 }
 
 // Variante tool-specific:
-// /api/tools/meta-ads/generate
+// /api/tools/meta-ads/generate (legacy hidden, deprecated)
 // /api/tools/funnel-pages/generate
 ```
 
