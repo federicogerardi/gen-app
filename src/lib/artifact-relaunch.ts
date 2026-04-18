@@ -45,12 +45,13 @@ function buildArtifactIntentHref(payload: ArtifactRelaunchInput, intent: Artifac
   appendIfPresent(params, 'sourceArtifactId', payload.id);
   appendIfPresent(params, 'projectId', payload.projectId ?? null);
 
-  if (workflow === 'funnel_pages') {
+  if (workflow === 'funnel_pages' || workflow === 'nextland') {
     params.set('intent', intent);
     appendIfPresent(params, 'tone', readString(inputRecord, 'tone'));
     appendIfPresent(params, 'notes', readString(inputRecord, 'notes'));
 
-    return `/tools/funnel-pages?${params.toString()}`;
+    const toolPath = workflow === 'nextland' ? '/tools/nextland' : '/tools/funnel-pages';
+    return `${toolPath}?${params.toString()}`;
   }
 
   return null;
@@ -61,7 +62,7 @@ export function buildArtifactRelaunchActions(payload: ArtifactRelaunchInput): Ar
 
   if (!workflow) return [];
 
-  if (workflow === 'funnel_pages') {
+  if (workflow === 'funnel_pages' || workflow === 'nextland') {
     const regenerateHref = buildArtifactIntentHref(payload, 'regenerate');
     if (!regenerateHref) return [];
 

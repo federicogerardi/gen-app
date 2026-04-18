@@ -1,147 +1,76 @@
-# gen-app — LLM Artifact Generation Hub
+# gen-app
 
-Hub interno per la generazione di contenuti marketing con AI. Permette a MediaBuyer e SEO Specialist di creare copy, varianti e funnel in pochi minuti, partendo da un brief o da un documento esistente.
+gen-app e un hub interno pensato per trasformare brief, materiali grezzi e conoscenza sparsa in artefatti marketing pronti da rifinire, salvare e riutilizzare.
 
----
+L'idea di fondo e semplice: togliere al team il peso della scrittura ripetitiva e riportare il tempo sulle decisioni che contano davvero, come angoli di comunicazione, posizionamento, test e strategia.
 
-## A cosa serve
+## Cosa rende utile il progetto
 
-gen-app mette a disposizione workflow guidati per generare artefatti di alta qualità direttamente dall'interfaccia web, senza dover scrivere prompt manualmente o gestire account LLM separati.
+gen-app nasce per chi lavora ogni giorno tra campagne, pagine, varianti e iterazioni continue. Invece di partire ogni volta da zero, l'utente entra in un workflow guidato, fornisce un brief o un documento di riferimento e ottiene in pochi minuti una base concreta su cui lavorare.
 
-Ogni artefatto generato viene salvato automaticamente e organizzato in progetti, così è sempre rintracciabile e riutilizzabile.
+Il valore non sta solo nella generazione veloce. Sta nel fatto che ogni output resta dentro un contesto di progetto, puo essere recuperato in seguito e puo diventare il punto di partenza per la prossima iterazione.
 
----
+## A chi e rivolto
 
-## Accesso
+Il prodotto e pensato soprattutto per team interni marketing e growth, in particolare:
 
-L'app è riservata agli utenti interni. Si accede tramite il proprio account Google aziendale — non è necessaria nessuna registrazione separata.
+- Media buyer che devono produrre e confrontare rapidamente piu varianti di messaggio
+- SEO e content specialist che vogliono accelerare la produzione senza perdere controllo editoriale
+- Figure operative e manageriali che hanno bisogno di materiali utili, consultabili e riusabili senza scrivere prompt manuali
 
----
+## Come si usa
 
-## Tool disponibili
+L'esperienza e costruita per essere diretta:
 
-### Meta Ads
+1. accedi con il tuo account aziendale
+2. apri o crei un progetto
+3. scegli il workflow di cui hai bisogno
+4. inserisci un brief oppure carichi un materiale di partenza
+5. generi, rivedi e salvi il risultato
 
-Genera varianti complete di annunci pubblicitari a partire da un brief testuale.
+Il progetto e il centro del lavoro. Gli artefatti non vivono come output isolati, ma come materiali collegati a una campagna, un'iniziativa o un'ipotesi da testare.
 
-**Output prodotto:**
-- Hook (apertura dell'annuncio)
-- Body copy
-- Headline
-- Call to action
+## Workflow attivi
 
-Utile per creare rapidamente più varianti da testare in A/B, o per iterare su un copy esistente cambiando angoli e messaggi.
+### NextLand
 
----
+NextLand e pensato per chi deve costruire rapidamente una presenza di campagna coerente a partire da un materiale sorgente. Il workflow guida l'utente nella trasformazione di un briefing o di un documento in una sequenza essenziale di pagine pronte da rifinire.
 
-### Funnel Pages
+L'obiettivo e ridurre il tempo necessario per passare dal contesto iniziale a una prima struttura solida, mantenendo continuita tra messaggio, tono e passaggi del percorso utente.
 
-Genera i testi di un funnel completo in tre step sequenziali, a partire da un documento di riferimento caricato dall'utente (es. brief di prodotto, deck commerciale, trascrizione intervista).
+### HotLead Funnel
 
-**Pipeline:**
-1. **Caricamento documento** — si carica il materiale di riferimento
-2. **Estrazione automatica** — l'AI estrae le informazioni chiave (prodotto, target, benefici, angoli di comunicazione)
-3. **Generazione sequenziale:**
-   - Optin page
-   - Quiz (domande di qualificazione)
-   - VSL script (Video Sales Letter)
+HotLead Funnel accompagna la creazione di un funnel in modo piu guidato e sequenziale. Si parte da un documento sorgente, per esempio un brief di prodotto, una trascrizione, un deck commerciale o altri materiali utili. Da li il sistema estrae le informazioni chiave e costruisce i passaggi successivi del funnel.
 
-Ogni step è revisionabile prima di procedere al successivo.
+Il flusso attivo oggi copre:
 
----
+- optin page
+- quiz di qualificazione
+- VSL script
 
-## Progetti e artefatti
+Ogni fase puo essere rivista prima di passare alla successiva, cosi il controllo resta in mano all'utente e la velocita non sacrifica la qualita.
 
-Gli artefatti generati si organizzano in **progetti**. Un progetto raggruppa tutti i materiali relativi a una campagna o iniziativa.
+## Progetti, storico e riuso
 
-Dal dashboard è possibile:
-- Creare e rinominare progetti
-- Consultare lo storico degli artefatti generati
-- Riaprire e leggere qualsiasi artefatto precedente
+gen-app adotta una logica projects-first. Significa che il punto naturale in cui lavorare e consultare i contenuti e il progetto, non un semplice elenco di output.
 
----
+Questo permette di:
 
-## Quota e utilizzo
+- raccogliere in un unico spazio tutti i materiali di una campagna
+- mantenere memoria delle versioni generate
+- recuperare rapidamente funnel, landing e contenuti gia prodotti
+- riaprire uno storico personale quando serve cercare un artefatto trasversale
 
-Ogni utente dispone di una **quota mensile di generazioni** (default: 1000/mese). La quota si azzera automaticamente a inizio mese.
+## Controllo e affidabilita
 
-Quando la quota è esaurita, non è possibile avviare nuove generazioni fino al reset mensile o fino a quando l'amministratore non aggiorna il limite.
+L'app e riservata agli utenti interni e usa l'accesso aziendale per mantenere il perimetro controllato. Ogni utente opera entro una quota mensile di utilizzo, mentre gli amministratori dispongono di strumenti dedicati per supervisionare accessi, quote, modelli disponibili e utilizzo complessivo.
 
----
+Questo rende il progetto utile non solo sul piano creativo, ma anche su quello operativo: adozione semplice, costi monitorabili e governance chiara.
 
-## Area Admin
+## Stato del progetto
 
-Gli amministratori hanno accesso a un pannello dedicato per:
-- Visualizzare e modificare le quote degli utenti
-- Consultare le metriche di utilizzo aggregate
-- Gestire il catalogo dei modelli LLM disponibili (aggiungere, disabilitare, impostare il modello di default)
-- Accedere all'audit trail per utente
+gen-app e gia operativo e viene usato come hub interno di generazione. Il perimetro pubblico attuale e focalizzato sui workflow NextLand e HotLead Funnel, con evoluzione continua della qualita dei flussi, dell'organizzazione per progetti e dell'esperienza di revisione.
 
----
+## Documentazione tecnica
 
-## Per i developer
-
-### Stack
-
-| Layer | Tecnologia |
-|---|---|
-| **Frontend** | React 19 · TypeScript · shadcn/ui v4 · Tailwind CSS v4 |
-| **Forms & Validazione** | React Hook Form · Zod v4 |
-| **Server state** | TanStack Query v5 |
-| **Backend** | Next.js 16 (App Router, Route Handlers) |
-| **Database** | PostgreSQL 16 · Prisma 7 |
-| **Auth** | NextAuth.js v5 · Google OAuth · `@auth/prisma-adapter` |
-| **LLM** | OpenRouter (OpenAI-compatible SDK) |
-| **Rate limiting** | `@upstash/ratelimit` · `@upstash/redis` |
-| **Monitoring** | Sentry · Pino (structured logging) |
-| **Test** | Jest · Testing Library · Playwright |
-| **Deploy** | Vercel (`main` → produzione, `dev` → PR flow) |
-
-### Setup locale
-
-**Prerequisiti:** Node.js 22 LTS, PostgreSQL 16, chiave API OpenRouter, app Google OAuth, database Upstash Redis.
-
-```bash
-git clone https://github.com/federicogerardi/gen-app.git
-cd gen-app
-npm install
-```
-
-Crea un file `.env.local` alla root con le seguenti variabili:
-
-```bash
-DATABASE_URL=postgresql://user:password@localhost:5432/genapp
-NEXTAUTH_SECRET=             # openssl rand -base64 32
-GOOGLE_CLIENT_ID=
-GOOGLE_CLIENT_SECRET=
-OPENROUTER_API_KEY=
-UPSTASH_REDIS_REST_URL=
-UPSTASH_REDIS_REST_TOKEN=
-VERCEL_CRON_SECRET=          # richiesto in produzione
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-```
-
-```bash
-npx prisma generate          # genera il client Prisma (⚠️ richiede DATABASE_URL)
-npx prisma migrate dev       # applica le migrazioni
-npm run dev                  # avvia il server di sviluppo
-```
-
-### Script disponibili
-
-| Comando | Descrizione |
-|---|---|
-| `npm run dev` | Server di sviluppo |
-| `npm run build` | Build di produzione |
-| `npm run typecheck` | Type-check TypeScript senza emit |
-| `npm run lint` | ESLint |
-| `npm run test` | Test Jest (unit + integration) |
-| `npm run test:e2e` | Test Playwright end-to-end |
-| `npm run db:migrate:deploy` | Applica migrazioni pending (idempotente) |
-| `npm run deploy:vercel` | Migrazioni + build (comando deploy completo) |
-
-### Deploy
-
-Il deploy avviene su Vercel tramite `npm run deploy:vercel`, che esegue `prisma migrate deploy` prima del build. Il branch `main` è il ramo di produzione; le PR vanno aperte su `dev`.
-
-Riferimenti architetturali: [`docs/adrs/`](docs/adrs/), [`docs/specifications/api-specifications.md`](docs/specifications/api-specifications.md).
+La documentazione tecnica, architetturale e operativa resta nella cartella [docs/README.md](docs/README.md). Questo README serve come presentazione del progetto e della sua idea, non come riferimento di implementazione.

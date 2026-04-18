@@ -28,7 +28,7 @@ function parseTerminalOutcome(input: unknown): string | null {
   return typeof outcome === 'string' ? outcome : null;
 }
 
-function hasReusableFunnelCheckpoint(artifacts: Array<{ type: string; status: string; workflowType: string | null; content: string; input: unknown }>): boolean {
+function hasReusableCheckpoint(artifacts: Array<{ type: string; status: string; workflowType: string | null; content: string; input: unknown }>): boolean {
   return artifacts.some((item) => {
     const workflow = item.workflowType ?? ((item.input && typeof item.input === 'object' && !Array.isArray(item.input))
       ? ((item.input as Record<string, unknown>).workflowType as string | undefined) ?? null
@@ -64,7 +64,7 @@ export default async function ArtifactPage({ params }: { params: Promise<{ id: s
   if (!artifact || artifact.userId !== session.user.id) notFound();
 
   const workflowType = getEffectiveArtifactWorkflowType(artifact.workflowType, artifact.input);
-  const relatedProjectArtifacts = workflowType === 'funnel_pages' && artifact.projectId
+  const relatedProjectArtifacts = (workflowType === 'funnel_pages' || workflowType === 'nextland') && artifact.projectId
     ? await db.artifact.findMany({
         where: {
           projectId: artifact.projectId,
@@ -104,7 +104,7 @@ export default async function ArtifactPage({ params }: { params: Promise<{ id: s
     projectId: artifact.projectId,
     workflowType,
     input: artifact.input,
-    hasReusableCheckpoint: hasReusableFunnelCheckpoint(relatedProjectArtifacts),
+    hasReusableCheckpoint: hasReusableCheckpoint(relatedProjectArtifacts),
   });
   const primaryRelaunchAction = relaunchActions[0] ?? null;
   const secondaryRelaunchActions = relaunchActions.slice(1);

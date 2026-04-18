@@ -43,6 +43,48 @@ describe('artifact relaunch', () => {
     })).toBe('/tools/funnel-pages?sourceArtifactId=art_funnel_2&projectId=proj_1&intent=regenerate&tone=professional');
   });
 
+  it('builds nextland relaunch actions with resume as primary when a reusable checkpoint exists', () => {
+    const actions = buildArtifactRelaunchActions({
+      id: 'art_nextland_1',
+      projectId: 'proj_2',
+      workflowType: 'nextland',
+      input: {
+        workflowType: 'nextland',
+        tone: 'formal',
+        notes: 'step 2 in sospeso',
+      },
+      hasReusableCheckpoint: true,
+    });
+
+    expect(actions).toEqual([
+      {
+        href: '/tools/nextland?sourceArtifactId=art_nextland_1&projectId=proj_2&intent=resume&tone=formal&notes=step+2+in+sospeso',
+        label: 'Riprendi dal checkpoint',
+        intent: 'resume',
+        variant: 'primary',
+      },
+      {
+        href: '/tools/nextland?sourceArtifactId=art_nextland_1&projectId=proj_2&intent=regenerate&tone=formal&notes=step+2+in+sospeso',
+        label: 'Rigenera variante',
+        intent: 'regenerate',
+        variant: 'secondary',
+      },
+    ]);
+  });
+
+  it('falls back to regenerate href for nextland when no checkpoint is reusable', () => {
+    expect(buildArtifactRelaunchHref({
+      id: 'art_nextland_2',
+      projectId: 'proj_2',
+      workflowType: 'nextland',
+      input: {
+        workflowType: 'nextland',
+        tone: 'casual',
+      },
+      hasReusableCheckpoint: false,
+    })).toBe('/tools/nextland?sourceArtifactId=art_nextland_2&projectId=proj_2&intent=regenerate&tone=casual');
+  });
+
   it('returns no relaunch actions for meta ads artifacts', () => {
     const actions = buildArtifactRelaunchActions({
       id: 'art_meta_1',

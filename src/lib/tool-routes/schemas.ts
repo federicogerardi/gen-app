@@ -77,7 +77,9 @@ export const extractionRequestSchema = toolSharedSchema.extend({
 });
 
 const funnelStepSchema = z.enum(['optin', 'quiz', 'vsl']);
+const nextLandStepSchema = z.enum(['landing', 'thank_you']);
 export const funnelSchemaVersionSchema = z.enum(['v1', 'v2', 'v3']);
+export const nextLandSchemaVersionSchema = z.enum(['v2', 'v3']);
 
 function normalizeFunnelSchemaVersion(value: unknown): unknown {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -360,6 +362,96 @@ export const funnelPagesRequestSchema = z.preprocess(
   ]),
 );
 
+function normalizeNextLandSchemaVersion(value: unknown): unknown {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return value;
+  }
+
+  const asRecord = value as Record<string, unknown>;
+  if (asRecord.schemaVersion === 'v2' || asRecord.schemaVersion === 'v3') {
+    return value;
+  }
+
+  if ('schemaVersion' in asRecord) {
+    return value;
+  }
+
+  if ('briefing' in asRecord) {
+    return { ...asRecord, schemaVersion: 'v2' };
+  }
+
+  return { ...asRecord, schemaVersion: 'v3' };
+}
+
+const nextLandRequestSchemaV2Object = toolSharedSchema
+  .extend({
+    schemaVersion: z.literal('v2'),
+    step: nextLandStepSchema,
+    briefing: funnelUnifiedBriefingSchema,
+    notes: z.string().optional(),
+    landingOutput: z.string().optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.step === 'thank_you' && !value.landingOutput) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['landingOutput'],
+        message: 'landingOutput is required for thank_you step',
+      });
+    }
+  });
+
+const nextLandRequestSchemaV3Object = toolSharedSchema
+  .extend({
+    schemaVersion: z.literal('v3'),
+    step: nextLandStepSchema,
+    extractedFields: z
+      .record(z.string(), z.unknown())
+      .refine((value) => Object.keys(value).length > 0, { message: 'extractedFields must contain at least one field' })
+      .optional(),
+    extractionContext: z.string().min(20).optional(),
+    notes: z.string().optional(),
+    landingOutput: z.string().optional(),
+  })
+  .superRefine((value, ctx) => {
+    const hasExtractedFields = Boolean(value.extractedFields && Object.keys(value.extractedFields).length > 0);
+    const hasExtractionContext = Boolean(value.extractionContext && value.extractionContext.trim().length >= 20);
+
+    if (!hasExtractedFields && !hasExtractionContext) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['extractedFields'],
+        message: 'Provide extractedFields or extractionContext',
+      });
+    }
+
+    if (value.step === 'thank_you' && !value.landingOutput) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['landingOutput'],
+        message: 'landingOutput is required for thank_you step',
+      });
+    }
+  });
+
+export const nextLandRequestSchemaV2 = z.preprocess(
+  normalizeNextLandSchemaVersion,
+  nextLandRequestSchemaV2Object,
+);
+
+export const nextLandRequestSchemaV3 = z.preprocess(
+  normalizeNextLandSchemaVersion,
+  nextLandRequestSchemaV3Object,
+);
+
+export const nextLandRequestSchema = z.preprocess(
+  normalizeNextLandSchemaVersion,
+  z.discriminatedUnion('schemaVersion', [
+    nextLandRequestSchemaV2Object,
+    nextLandRequestSchemaV3Object,
+  ]),
+);
+
 export type MetaAdsRequest = z.infer<typeof metaAdsRequestSchema>;
 export type ExtractionRequest = z.infer<typeof extractionRequestSchema>;
 export type ExtractionFieldDefinition = z.infer<typeof extractionFieldDefinitionSchema>;
@@ -367,10 +459,18 @@ export type FunnelPagesRequest = z.infer<typeof funnelPagesRequestSchema>;
 export type FunnelPagesRequestV1 = z.infer<typeof funnelPagesRequestSchemaV1>;
 export type FunnelPagesRequestV2 = z.infer<typeof funnelPagesRequestSchemaV2>;
 export type FunnelPagesRequestV3 = z.infer<typeof funnelPagesRequestSchemaV3>;
+export type NextLandRequest = z.infer<typeof nextLandRequestSchema>;
+export type NextLandRequestV2 = z.infer<typeof nextLandRequestSchemaV2>;
+export type NextLandRequestV3 = z.infer<typeof nextLandRequestSchemaV3>;
 export type FunnelUnifiedBriefing = z.infer<typeof funnelUnifiedBriefingSchema>;
 
 export function getLengthByFunnelStep(step: FunnelPagesRequest['step']): number {
   if (step === 'optin') return 1200;
   if (step === 'quiz') return 1400;
   return 3200;
+}
+
+export function getLengthByNextLandStep(step: NextLandRequest['step']): number {
+  if (step === 'landing') return 1800;
+  return 1200;
 }

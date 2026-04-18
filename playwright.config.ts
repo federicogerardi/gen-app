@@ -10,7 +10,7 @@ export default defineConfig({
   webServer: {
     command: 'PLAYWRIGHT_AUTH_BYPASS=1 npm run dev',
     url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
   },
   projects: [
     {

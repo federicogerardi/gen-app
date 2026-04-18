@@ -13,11 +13,18 @@ import { PersonalTrendCard } from './PersonalTrendCard';
 
 const TOOL_ACTIONS = [
   {
-    title: 'HotLead Funnel',
+    title: 'HotLeadFunnel',
     description: 'Workflow multi-step: optin page, domande quiz e script VSL.',
     href: '/tools/funnel-pages',
     cta: 'Apri tool',
     tag: 'Campaign',
+  },
+  {
+    title: 'NextLand',
+    description: 'Workflow a 2 step: landing page e thank-you page con extraction e checkpoint.',
+    href: '/tools/nextland',
+    cta: 'Apri tool',
+    tag: 'Landing',
   },
 ];
 
