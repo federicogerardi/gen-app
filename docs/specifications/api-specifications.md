@@ -68,7 +68,6 @@ All errors follow this format:
 Implemented routes in the current codebase:
 - `POST /artifacts/generate`
 - `GET /artifacts`
-- `POST /tools/meta-ads/generate` (legacy hidden, deprecated)
 - `POST /tools/extraction/generate`
 - `POST /tools/funnel-pages/generate`
 - `POST /tools/nextland/generate`
@@ -156,41 +155,11 @@ POST /api/auth/signout
 
 ## Tool-Specific Generation
 
-### Generate Meta Ads (Streaming, Legacy)
+### Meta Ads Runtime Decommission (as-is)
 
-Stato as-is:
-- endpoint runtime ancora implementato per compatibilita storica
-- non fa parte del perimetro tool standard in UI
-- decommission runtime pianificata nel prossimo step tecnico
-
-**Endpoint**:
-```
-POST /tools/meta-ads/generate
-```
-
-**Request** (application/json):
-```json
-{
-  "projectId": "proj_123",
-  "model": "openai/gpt-4-turbo",
-  "tone": "professional",
-  "customerContext": {
-    "product": "Programma nutrizione 90 giorni",
-    "audience": "Donne 28-45 interessate a fitness",
-    "offer": "Call gratuita + piano personalizzato"
-  },
-  "objective": "lead generation",
-  "angle": "problem-solution con social proof"
-}
-```
-
-Nota compatibilita:
-- I campi legacy top-level (`product`, `audience`, `offer`) sono ancora accettati e normalizzati server-side in `customerContext`.
-
-**Response**:
-- Stream SSE con eventi standard (`start`, `token`, `complete`, `error`) e metadata additive (`workflowType`, `format`, `sequence`, `progress`, `code`)
-- Crea un artifact di tipo `content`
-- Formato output workflow: `markdown`
+- L'endpoint `POST /tools/meta-ads/generate` e stato rimosso dal runtime.
+- Il perimetro tool standard attivo espone solo `funnel-pages`, `nextland`, `extraction`.
+- Gli artifact storici con `workflowType: meta_ads` restano visualizzabili nelle viste artifact/dashboard.
 
 ### Upload Funnel Source Document
 
@@ -903,7 +872,6 @@ async function streamArtifact(request: ArtifactRequest) {
 }
 
 // Variante tool-specific:
-// /api/tools/meta-ads/generate (legacy hidden, deprecated)
 // /api/tools/funnel-pages/generate
 ```
 

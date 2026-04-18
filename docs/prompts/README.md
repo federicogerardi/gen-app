@@ -43,7 +43,7 @@ Gate minimo consigliato per chiudere la checklist:
 - parity test verde
 - nessuna divergenza non tracciata tra `docs/prompts/tools/**` e `src/lib/tool-prompts/prompts/tools/**`
 
-Standard output workflow tool (Meta Ads + HotLead Funnel):
+Standard output workflow tool (HotLead Funnel + NextLand):
 - output format unico: `markdown`
 - non usare output JSON raw nei prompt runtime
 - mantenere heading/sezioni coerenti con il contratto usato dalla UI

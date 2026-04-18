@@ -10,11 +10,11 @@ describe('loadPromptSource', () => {
   });
 
   it('returns the static template content for a registered prompt path', async () => {
-    const path = TOOL_PROMPT_REGISTRY.metaAds.generation;
+    const path = TOOL_PROMPT_REGISTRY.extraction.generation;
     const content = await loadPromptSource(path);
 
     expect(content).toBe(PROMPT_TEMPLATES[path]);
-    expect(content).toContain('TASK: GENERA META ADS');
+    expect(content).toContain('PROMPT EXTRACTION GENERATOR');
   });
 });
 

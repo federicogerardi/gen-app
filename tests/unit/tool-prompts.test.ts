@@ -1,4 +1,3 @@
-import { buildMetaAdsPrompt } from '@/lib/tool-prompts/meta-ads';
 import { buildExtractionPrompt } from '@/lib/tool-prompts/extraction';
 import {
   buildFunnelOptinPrompt,
@@ -26,40 +25,6 @@ function expectTextIncludesAll(text: string, tokens: string[]) {
     expect(normalized).toContain(token.toLowerCase());
   }
 }
-
-describe('buildMetaAdsPrompt', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    mockedLoadPromptSource.mockResolvedValue('Template: {{context}}');
-  });
-
-  it('loads meta ads template and injects context', async () => {
-    const prompt = await buildMetaAdsPrompt({
-      product: 'CRM SaaS',
-      audience: 'SMB owners',
-      offer: '14-day trial',
-      objective: 'Lead generation',
-      tone: 'professional',
-      angle: 'ROI focus',
-    });
-
-    expect(mockedLoadPromptSource).toHaveBeenCalledWith(TOOL_PROMPT_REGISTRY.metaAds.generation);
-    expect(prompt).toContain('Prodotto/Servizio: CRM SaaS');
-    expect(prompt).toContain('Creative angle: ROI focus');
-  });
-
-  it('uses fallback angle when missing', async () => {
-    const prompt = await buildMetaAdsPrompt({
-      product: 'CRM SaaS',
-      audience: 'SMB owners',
-      offer: '14-day trial',
-      objective: 'Lead generation',
-      tone: 'professional',
-    });
-
-    expectTextIncludesAll(prompt, ['creative angle', 'non specificato']);
-  });
-});
 
 describe('buildExtractionPrompt', () => {
   beforeEach(() => {

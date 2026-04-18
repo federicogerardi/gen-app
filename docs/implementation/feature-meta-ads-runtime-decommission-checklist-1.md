@@ -1,6 +1,6 @@
 # Feature Checklist: Meta Ads Runtime Decommission
 
-**Status**: READY FOR EXECUTION  
+**Status**: COMPLETED (runtime removed, historical compatibility preserved)  
 **Date**: 2026-04-18  
 **Owner**: Backend + Frontend + QA
 
@@ -124,14 +124,14 @@ Rimuovere il runtime legacy del workflow `meta_ads` mantenendo stabilita su:
 
 ### 9) Documentazione (post-rimozione runtime)
 
-- [ ] `docs/specifications/api-specifications.md`
-  - Rimuovere sezione endpoint Meta Ads legacy dopo decommission completa.
+- [x] `docs/specifications/api-specifications.md`
+  - Rimossa sezione endpoint Meta Ads legacy e aggiunta nota as-is su runtime decommissioned.
 
-- [ ] `docs/blueprint.md`
-- [ ] `docs/progetto-overview.md`
-- [ ] `docs/implement-index.md`
-- [ ] `docs/README.md`
-  - Rimuovere note legacy e riallineare stato finale tool framework.
+- [x] `docs/blueprint.md`
+- [x] `docs/progetto-overview.md`
+- [x] `docs/implement-index.md`
+- [x] `docs/README.md`
+  - Rimosse note pending e riallineato stato finale tool framework.
 
 ---
 
@@ -151,3 +151,90 @@ Obiettivo: zero regressioni su funnel, nextland, extraction e su pagine artifact
 1. Policy storico: mantenere o no label/titoli Meta Ads negli artifact esistenti.
 2. Codice risposta endpoint deprecato in Fase A: `410` vs `404`.
 3. Destinazione prompt markdown Meta Ads: cancellazione completa vs archivio documentale.
+
+---
+
+## Checklist Esecutiva PR-by-PR
+
+### PR-1 - Deprecazione endpoint runtime (Fase A)
+
+- [ ] Branch: `fix/meta-ads-runtime-phase-a-deprecate-endpoint`
+- [ ] Aggiornare `src/app/api/tools/meta-ads/generate/route.ts` con risposta esplicita deprecata (`410` oppure `404`) mantenendo envelope `{ error: { code, message } }`.
+- [ ] Aggiornare `tests/integration/meta-ads-route.test.ts` per il nuovo comportamento endpoint deprecato.
+- [ ] Verificare che non ci siano regressioni su `funnel_pages`, `nextland`, `extraction`.
+- [ ] Eseguire validazione minima:
+  - [ ] `npm run lint`
+  - [ ] `npm run typecheck`
+  - [ ] `npm run test`
+
+### PR-2 - Rimozione runtime legacy e prompt layer (Fase B - Core)
+
+- [ ] Branch: `fix/meta-ads-runtime-phase-b-remove-core`
+- [ ] Eliminare route legacy `src/app/api/tools/meta-ads/generate/route.ts`.
+- [ ] Rimuovere componenti Meta Ads dal prompt layer:
+  - [ ] `src/lib/tool-prompts/meta-ads.ts`
+  - [ ] `src/lib/tool-prompts/meta-ads-templates.ts`
+  - [ ] aggiornamenti a `src/lib/tool-prompts/registry.ts`
+  - [ ] aggiornamenti a `src/lib/tool-prompts/templates.ts`
+- [ ] Chiudere decisione su `src/lib/tool-prompts/prompts/tools/meta_ads/prompt_generation.md` (delete o archivio docs).
+- [ ] Aggiornare schemi/mapping coinvolti:
+  - [ ] `src/lib/tool-routes/schemas.ts`
+  - [ ] `src/lib/tool-routes/artifact-type-map.ts`
+  - [ ] `src/lib/types/artifact.ts` (solo se compatibile con policy storico scelta)
+- [ ] Aggiornare test unit/integration direttamente impattati.
+- [ ] Eseguire validazione minima completa:
+  - [ ] `npm run lint`
+  - [ ] `npm run typecheck`
+  - [ ] `npm run test`
+  - [ ] `npm run build`
+
+### PR-3 - Normalizzazione output e storico artifact
+
+- [ ] Branch: `fix/meta-ads-runtime-phase-b-historical-compat`
+- [ ] Rimuovere branch Meta Ads in normalizzazione output:
+  - [ ] `src/lib/llm/orchestrator.ts`
+  - [ ] `src/lib/llm/normalizers.ts`
+- [ ] Applicare decisione su storico UI:
+  - [ ] `src/lib/artifact-preview.ts`
+  - [ ] `src/lib/artifact-card-identity.ts`
+- [ ] Aggiornare test di presentazione/storico:
+  - [ ] `tests/unit/artifact-preview.test.ts`
+  - [ ] `tests/unit/artifact-card-identity.test.ts`
+  - [ ] test integration artifact/dashboard correlati
+- [ ] Eseguire validazione minima:
+  - [ ] `npm run lint`
+  - [ ] `npm run typecheck`
+  - [ ] `npm run test`
+
+### PR-4 - Pulizia finale test e documentazione
+
+- [ ] Branch: `docs/meta-ads-runtime-decommission-closure`
+- [x] Rimuovere suite e riferimenti Meta Ads non piu pertinenti.
+- [x] Allineare documentazione finale:
+  - [x] `docs/specifications/api-specifications.md`
+  - [x] `docs/blueprint.md`
+  - [x] `docs/progetto-overview.md`
+  - [x] `docs/implement-index.md`
+  - [x] `docs/README.md`
+- [x] Verificare assenza riferimenti runtime Meta Ads in docs attive, mantenendo eventuale storico solo in `docs/archive/`.
+- [x] Eseguire validazione finale:
+  - [ ] `npm run lint`
+  - [x] `npm run typecheck`
+  - [x] `npm run test`
+  - [ ] `npm run build`
+
+### Gate di chiusura decommission
+
+- [x] Endpoint `/api/tools/meta-ads/generate` non raggiungibile in runtime.
+- [x] Nessun import residuo di builder/template Meta Ads nel path runtime.
+- [x] Tutte le pipeline tool standard (`funnel_pages`, `nextland`, `extraction`) verdi.
+- [x] Storico artifact verificato secondo policy scelta (compatibilita).
+- [x] Documentazione as-is aggiornata e coerente.
+
+---
+
+## Esito Decommission (as-is)
+
+- Runtime Meta Ads rimosso: route API, route page, prompt builder e template runtime eliminati.
+- Tool framework runtime attivo: `funnel_pages`, `nextland`, `extraction`.
+- Compatibilita storica mantenuta per artifact con `workflowType: meta_ads` nelle viste artifact/dashboard.

@@ -62,9 +62,9 @@ Stiamo costruendo un **Hub di Generazione Artefatti con AI/LLM** che permette ai
 2. **NextLand**: workflow a 2 step (landing page + thank-you page)
 
 ### Evoluzione Tool
-- il perimetro tool standard attivo include `HotLead Funnel` e `NextLand`
-- `Meta Ads` e presente come runtime legacy nascosto (endpoint ancora esposto, pagina tool non pubblica) e risulta fuori standard framework tool
-- la rimozione runtime completa di `Meta Ads` e pianificata nel prossimo step tecnico
+- il perimetro tool standard attivo include `HotLead Funnel`, `NextLand` e `Extraction`
+- il runtime legacy `Meta Ads` e stato rimosso
+- gli artifact storici con `workflowType: meta_ads` restano disponibili nelle viste artifact/dashboard
 
 ### Modelli LLM
 - Registry modelli dinamico persistito in DB (`LlmModel`)

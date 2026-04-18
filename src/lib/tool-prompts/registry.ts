@@ -3,9 +3,6 @@ import 'server-only';
 export const PROMPT_SOURCE_ROOT = ['src', 'lib', 'tool-prompts', 'prompts'] as const;
 
 export const TOOL_PROMPT_REGISTRY = {
-  metaAds: {
-    generation: 'tools/meta_ads/prompt_generation.md',
-  },
   extraction: {
     generation: 'tools/extraction/prompt_generation.md',
   },
@@ -21,7 +18,6 @@ export const TOOL_PROMPT_REGISTRY = {
 } as const;
 
 export type ToolPromptPath =
-  | (typeof TOOL_PROMPT_REGISTRY.metaAds)[keyof typeof TOOL_PROMPT_REGISTRY.metaAds]
   | (typeof TOOL_PROMPT_REGISTRY.extraction)[keyof typeof TOOL_PROMPT_REGISTRY.extraction]
   | (typeof TOOL_PROMPT_REGISTRY.funnel)[keyof typeof TOOL_PROMPT_REGISTRY.funnel]
   | (typeof TOOL_PROMPT_REGISTRY.nextland)[keyof typeof TOOL_PROMPT_REGISTRY.nextland];

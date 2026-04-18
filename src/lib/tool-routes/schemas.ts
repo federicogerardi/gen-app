@@ -51,14 +51,6 @@ function normalizeLegacyContext(value: unknown): unknown {
   };
 }
 
-export const metaAdsRequestSchema = z.preprocess(
-  normalizeLegacyContext,
-  toolBaseSchema.extend({
-    objective: z.string().min(3),
-    angle: z.string().optional(),
-  }),
-);
-
 const extractionFieldTypeSchema = z.enum(['text', 'textarea', 'number', 'boolean', 'select', 'email', 'url', 'object', 'array']);
 
 export const extractionFieldDefinitionSchema = z.object({
@@ -452,7 +444,6 @@ export const nextLandRequestSchema = z.preprocess(
   ]),
 );
 
-export type MetaAdsRequest = z.infer<typeof metaAdsRequestSchema>;
 export type ExtractionRequest = z.infer<typeof extractionRequestSchema>;
 export type ExtractionFieldDefinition = z.infer<typeof extractionFieldDefinitionSchema>;
 export type FunnelPagesRequest = z.infer<typeof funnelPagesRequestSchema>;

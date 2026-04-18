@@ -15,7 +15,7 @@ Riferimenti canonici:
 - [docs/specifications/api-specifications.md](../specifications/api-specifications.md)
 
 Nota perimetro:
-- `meta-ads` rimane route legacy (`/api/tools/meta-ads/generate`) fuori dallo scope tool standard di questi diagrammi.
+- Il runtime `meta-ads` e stato decommissionato; resta solo compatibilita storico artifact (`workflowType: meta_ads`).
 - La route `POST /api/artifacts/generate` coesiste come entrypoint generico, ma i flussi tool UI qui descritti usano endpoint `/api/tools/*`.
 
 ---

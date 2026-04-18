@@ -162,7 +162,7 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 - **Comportamento post-fix**: timeout applicativo → `cancellationReason = 'timeout'` → se contenuto accumulato >= 120 chars persiste come `completed` (partial); altrimenti `failed(timeout)`. Nessuna build/API change breaking.
 - **Validazione**: `typecheck` PASS, `tests/unit/streaming.test.ts` (nuovo test `persists failed(timeout) when stream deadline aborts`) PASS, `tests/integration/funnel-pages-route.test.ts` (asserzione `streamDeadlineMs: 270000`) PASS, `lint` PASS. Suite: 23/23.
 - **File toccati**: `src/lib/llm/streaming.ts`, `src/app/api/tools/funnel-pages/generate/route.ts`, `tests/unit/streaming.test.ts`, `tests/integration/funnel-pages-route.test.ts`.
-- **Scope da fare**: endpoint `meta-ads/generate` classificato legacy hidden/deprecated; non estendere nuovi hardening feature-specific oltre la baseline di sicurezza in attesa della rimozione runtime.
+- **Scope completato**: endpoint `meta-ads/generate` rimosso dal runtime; mantenuta compatibilita su storico artifact.
 
 ## Aggiornamento sessione (2026-04-15 — Operational Hardening Plan API/LLM Tooling)
 
@@ -287,9 +287,9 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
   - Merge eseguito su `dev` tramite PR #21.
   - Documentazione contrattuale allineata su `docs/specifications/api-specifications.md`.
 
-- **Tooling generation optimization (Meta Ads legacy + HotLead Funnel)**: `COMPLETATO (PR-1..PR-6)`
+- **Tooling generation optimization (HotLead Funnel + framework shared)**: `COMPLETATO (PR-1..PR-6 + decommission Meta Ads runtime)`
   - Completati schema unificato input, prompt/runtime parity, normalizzazione output, SSE metadata additive, consolidamento route/error mapping e hardening finale.
-  - Standard output workflow tool allineato a `outputFormat: markdown` (Meta Ads legacy + HotLead Funnel).
+  - Standard output workflow tool allineato a `outputFormat: markdown` (funnel pages + nextland).
   - Esteso il flow HotLead Funnel (workflow `funnel_pages`) a pipeline upload-first: upload documento inline -> extraction fields -> generazione sequenziale `optin -> quiz -> vsl`.
   - Follow-up 2026-04-14: arricchita la propagazione delle testimonianze estratte verso il briefing funnel con campi risultato e metriche misurabili.
   - Validazione finale locale aggiornata: `npm run lint`, `npm run typecheck`, `npm run test` (30/30 suite), `npm run build` tutti `PASS`.
@@ -498,7 +498,7 @@ Nota operativa: il track tooling generation e chiuso (`PR-1..PR-6` completate). 
 ---
 
 **Prossimi step consigliati:**
-- Mantenere monitoraggio runtime su stream/error-rate dei tool standard (HotLead Funnel, NextLand) e monitoraggio minimo di sicurezza sul solo endpoint Meta Ads legacy fino a decommission.
+- Mantenere monitoraggio runtime su stream/error-rate dei tool standard (HotLead Funnel, NextLand, Extraction).
 - Estendere test E2E sui flussi reali auth/db per consolidare il gate di regressione end-to-end.
 - Mantenere coverage >80% sul perimetro attuale e introdurre guardrail anti-regressione nei PR check.
 - Estendere coverage su flussi E2E critici (login reale, generazione completa, gestione quota/admin).
