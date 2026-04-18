@@ -324,6 +324,6 @@ Decisione corrente: NO-GO per produzione per KPI runtime non ancora consolidati;
 
 - docs/implementation/extraction-chain-artifact-first-prompt-plan.md
 - docs/implementation/extraction-chain-artifact-first-sprint-operations-plan-2026-04-14.md
-- docs/implementation/feature-extraction-chain-hardening-plan-1.md
+- docs/archive/feature-extraction-chain-hardening-plan-1.md
 - docs/implement-index.md
 - docs/review/extraction-model-policy-rollout-runbook-2026-04-12.md

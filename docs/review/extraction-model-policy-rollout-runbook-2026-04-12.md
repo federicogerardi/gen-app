@@ -287,7 +287,7 @@ Rollback drill (TASK-0603):
 
 ## Related docs
 
-- `docs/implementation/funnel-extraction-model-policy-plan.md`
-- `docs/implementation/feature-funnel-extraction-model-policy-tracker-1.md`
+- `docs/archive/funnel-extraction-model-policy-plan.md`
+- `docs/archive/feature-funnel-extraction-model-policy-tracker-1.md`
 - `docs/specifications/api-specifications.md`
 - `docs/adrs/003-rate-limiting-quota-strategy.md`

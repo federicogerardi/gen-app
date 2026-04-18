@@ -4,7 +4,7 @@
 **Owner**: Federico  
 **Riferimenti**: [ADR 004](../adrs/004-tool-pages-composable-architecture.md), [Spike POC](./spike-tool-pages-composable-architecture-poc-1.md)
 
-**Security Review**: [Phase 4 Funnel Refactor Security Review](../code-review/2026-04-18-phase-4-funnel-refactor-security-review.md)
+**Security Review**: [Phase 4 Funnel Refactor Security Review](../review/2026-04-18-phase-4-funnel-refactor-security-review.md)
 
 ## Obiettivo
 

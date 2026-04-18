@@ -23,8 +23,8 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
   - [ADR 004: Refactoring Tool Pages a Architettura Composabile](./adrs/004-tool-pages-composable-architecture.md) — Design completo + POC results
   - [Spike SPIKE-TOOL-PAGES-REFACTOR-1](./implementation/spike-tool-pages-composable-architecture-poc-1.md) — Risultati POC dettagliati
   - [Funnel Pages Phase 4 Refactor Plan](./implementation/funnel-pages-phase-4-refactor-plan.md) — Piano operativo di implementazione Phase 4
-  - [NextLand Phase 5 Refactor Plan](../plan/feature-nextland-phase-5-1.md) — Piano operativo esecutivo Phase 5 (chiuso con follow-up Phase 6)
-  - [Predictive Security Review: Phase 4 Funnel Refactor](./code-review/2026-04-18-phase-4-funnel-refactor-security-review.md) — Audit predittivo allineato: remediation P1/P2 integrate, stato GO operativo
+  - [NextLand Phase 5 Refactor Plan](./implementation/feature-nextland-phase-5-1.md) — Piano operativo esecutivo Phase 5 (chiuso con follow-up Phase 6)
+  - [Predictive Security Review: Phase 4 Funnel Refactor](./review/2026-04-18-phase-4-funnel-refactor-security-review.md) — Audit predittivo allineato: remediation P1/P2 integrate, stato GO operativo
 - **Tempo stimato totale** (full implementation): 12-15 ore (Phases 3-6, 1.5-2 giorni concentrati)
 - **Impact**: Stato misurato post-Phase 5:
   - funnel-pages: 1162 → **300 righe** (-74%)
@@ -82,7 +82,7 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 - **Stato attuale**: `COMPLETATO` (documentazione operativa).
 - **Obiettivo**: definire soglie operative verde/giallo/rosso per rischio overflow con baseline 20 utenti medi concorrenti.
 - **Riferimento unico (no duplicato tabella)**:
-  - [docs/code-review/2026-04-18-capacity-overflow-risk-review.md](docs/code-review/2026-04-18-capacity-overflow-risk-review.md)
+  - [docs/review/2026-04-18-capacity-overflow-risk-review.md](docs/review/2026-04-18-capacity-overflow-risk-review.md)
 - **Uso previsto**: base per alerting/runbook su p95, 429/5xx, stream concorrenti, saturazione DB e burn-rate costi.
 
 ## Aggiornamento sessione (2026-04-16 — Native login credentials + Google OAuth)
@@ -152,7 +152,7 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 - **Conferma sicurezza**:
   - Nessuna modifica ai test integration di auth/ownership/rate-limit/error-code.
   - Strategia confermata: rigidita alta sui contratti sicurezza, elasticita controllata su copy e wording.
-- **Riferimento review**: `docs/code-review/2026-04-15-test-suite-security-balance-review.md`.
+- **Riferimento review**: `docs/review/2026-04-15-test-suite-security-balance-review.md`.
 ## Aggiornamento sessione (2026-04-15 — Hotfix: stream deadline funnel-pages)
 
 - **Root cause identificata in produzione**: artefatto con id `cmnzviexu000004ib6p23z621` restava in stato `generating` a frontend completato. Causa confermata da runtime log Vercel: invocazione `POST /api/tools/funnel-pages/generate` con durata `300001ms`, corrispondente al kill hard del runtime Vercel a 300s; la persistenza terminale DB saltava per interruzione forzata del processo Node prima del `db.artifact.update(status: completed|failed)`.
@@ -211,7 +211,7 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
    - API spec enhanced: new "Text-Mode Extraction" section with response format, timeout behavior, log field differences
    - Hardening tracker updated: all 16 tasks marked complete
    - hl-funnel schema updated: new section documenting text-mode extraction stability and KPI measurement plan
-  - Completion evidence consolidated in `docs/implementation/feature-extraction-chain-hardening-tracker-1.md`
+  - Completion evidence consolidated in `docs/archive/feature-extraction-chain-hardening-tracker-1.md`
 
 **Validazione in produzione:**
 - Live extraction request (responseMode:text) succeeds on attempt 2 with gpt-4.1
@@ -237,7 +237,7 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 
 - **Extraction chain hardening (latenza/affidabilita/first-pass)**: snapshot storico 2026-04-14, allora in corso; implementazione tecnica completata (diagnostica consistency, timeout per-attempt, acceptance a soglie, prompt contract, abort propagation), con validazione KPI dev allora aperta.
 - **Extraction text-mode simplification (Funnel upload-first)**: attivata modalita `responseMode: "text"` con payload V3 `extractionContext`, riducendo dipendenza dal parsing strutturato; ultimo run dev positivo con successo al primo tentativo e latenza ~20s.
-- **Documenti attivati**: piano `docs/implementation/feature-extraction-chain-hardening-plan-1.md` e tracker `docs/implementation/feature-extraction-chain-hardening-tracker-1.md`.
+- **Documenti attivati**: piano `docs/archive/feature-extraction-chain-hardening-plan-1.md` e tracker `docs/archive/feature-extraction-chain-hardening-tracker-1.md`.
 - **Extraction chain artifact-first (nuovo track)**: Sprint 0 completato (outcome matrix, reason taxonomy, mapping terminale HTTP/artifact status), Sprint 1 completato (artifact stub, idempotency, single artifact chain), Sprint 2 tecnico completato (timeout classifier completo, partial timeout acceptance, single-finalize), Sprint 3 completato (finalizzazione atomica completion/failure, persistenza terminal reason, coerenza complete-event post-commit), Sprint 4 completato (`TASK-0401`, `TASK-0402`, `TASK-0403`), Sprint 5 completato (`TASK-0501..0504` con retry/resume UX + E2E dedicata) e Sprint 6 codice completato (`TASK-0601..0603`: feature flag route-level, rollout percentuale 10/30/100, rollback switch + drill runbook); monitoraggio KPI runtime e promozione progressiva restano attivi per chiusura gate finale (`docs/implementation/extraction-chain-artifact-first-prompt-plan.md`, `docs/implementation/feature-extraction-chain-artifact-first-tracker-1.md`, `docs/implementation/extraction-chain-artifact-first-sprint-operations-plan-2026-04-14.md`, `docs/review/extraction-model-policy-rollout-runbook-2026-04-12.md`).
 - **Funnel upload-first: testimonianze strutturate propagate al contesto generazione**: completato il passaggio dati da `extractedFields.testimonials_sources` verso `proof_context.testimonials_sources` con campi estesi (`quote`, `source`, `achieved_result`, `measurable_results`).
 - **Field map extraction funnel esteso**: aggiunta voce `testimonials_sources` in `FUNNEL_EXTRACTION_FIELD_MAP` per rendere esplicita l'estrazione della social proof dal documento sorgente.
@@ -297,12 +297,12 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
   - Completate tutte le 5 fasi: policy runtime statica su OpenRouter, fallback deterministico (`anthropic/claude-3.7-sonnet` -> `openai/gpt-4.1` -> `openai/o3`), validazione server-side parse/schema/coerenza, budget cap configurabile, telemetria tentativi, normalizzazione quota retry e bootstrap deploy idempotente del model registry.
   - Root cause runtime chiusa durante il track: mismatch sul campo `notes` tra prompt e schema route, corretto con riallineamento prompt e compatibilita `string | string[]` lato validazione.
   - Merge su `dev` completato; documentazione operativa e tracker chiusi come snapshot finale as-is.
-  - File: docs/implementation/funnel-extraction-model-policy-plan.md, docs/implementation/feature-funnel-extraction-model-policy-tracker-1.md, docs/review/extraction-model-policy-rollout-runbook-2026-04-12.md
+  - File: docs/archive/funnel-extraction-model-policy-plan.md, docs/archive/feature-funnel-extraction-model-policy-tracker-1.md, docs/review/extraction-model-policy-rollout-runbook-2026-04-12.md
 
 - **Extraction chain hardening (Funnel upload -> extraction)**: `COMPLETATO (2026-04-15)`
   - Implementazione hardening completata su route/policy/provider path: telemetria consistency, timeout differenziati per tentativo, acceptance engine `hard_accept/soft_accept/reject`, first-token + token-idle timeout, abort propagation end-to-end e rafforzamento prompt contract.
   - Stato operativo: monitoraggio KPI runtime prosegue nel track artifact-first/completeness-first per gate rollout finale.
-  - File: docs/implementation/feature-extraction-chain-hardening-plan-1.md, docs/implementation/feature-extraction-chain-hardening-tracker-1.md
+  - File: docs/archive/feature-extraction-chain-hardening-plan-1.md, docs/archive/feature-extraction-chain-hardening-tracker-1.md
 
 - **Deploy Vercel**: `COMPLETATO (baseline)`
   - Branch `main` in produzione.
@@ -382,7 +382,7 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 - **Microtask GUI/UX low-impact (estrazione sprint 2026-04-14)**: `COMPLETATO`
   - Backlog MT-UX-01..08 chiuso con implementazioni incrementali su dashboard, storico artefatti, rilancio con prefill e hardening accessibilita.
   - Evidenza di validazione: suite test verde e verifica GUI locale registrate nel tracker sprint.
-  - File: docs/implementation/gui-ux-low-impact-microtasks-sprint-plan-2026-04-14.md
+  - File: docs/archive/gui-ux-low-impact-microtasks-sprint-plan-2026-04-14.md
 
 - **Projects-first navigation & IA**: `COMPLETATO (2026-04-13)`
   - Riallineata la gerarchia dell'app ai progetti come entita primaria con route indice dedicata `/dashboard/projects`, dashboard project-first e riposizionamento di Artefatti come storico trasversale personale.

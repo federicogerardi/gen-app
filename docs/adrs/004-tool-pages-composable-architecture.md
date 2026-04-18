@@ -244,7 +244,7 @@ npm run test -- shared/                    # > 70% coverage
 
 - **[Spike: Tool Pages Composable Architecture POC](../implementation/spike-tool-pages-composable-architecture-poc-1.md)** — Validazione fattibilità attraverso proof-of-concept (6-8 ore, risoluvi incertezze chiave su types, size reduction, hook composition)
 - **[Phase 4 Plan: Funnel Pages Refactor](../implementation/funnel-pages-phase-4-refactor-plan.md)** — Piano esecutivo dettagliato per implementazione Step 4
-- **[Phase 5 Plan: NextLand Refactor](../../plan/feature-nextland-phase-5-1.md)** — Piano operativo esecutivo per avvio e completamento della Phase 5
+- **[Phase 5 Plan: NextLand Refactor](../implementation/feature-nextland-phase-5-1.md)** — Piano operativo esecutivo per avvio e completamento della Phase 5
 
 ---
 

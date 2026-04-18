@@ -289,7 +289,7 @@ La decisione strategica di semplificare da JSON schema parsing a plain text extr
 - Escalation logic ensures: attempt 1 (Claude) succeeds ~50% of time; attempt 2 (GPT-4.1) succeeds ~90%; fallback managed gracefully
 
 **Reference:**
-- Hardening tracker: [`docs/implementation/feature-extraction-chain-hardening-tracker-1.md`](../implementation/feature-extraction-chain-hardening-tracker-1.md)
+- Hardening tracker: [`docs/archive/feature-extraction-chain-hardening-tracker-1.md`](../archive/feature-extraction-chain-hardening-tracker-1.md)
 - Operational index: [`docs/implement-index.md`](../implement-index.md)
 - API spec: [`docs/specifications/api-specifications.md`](./api-specifications.md) — Text-Mode Extraction section added
 
