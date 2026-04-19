@@ -84,6 +84,7 @@ export function ProjectDialog({
                 <button
                   key={project.id}
                   onClick={() => handleProjectClick(project.id)}
+                   type="button"
                   className={`w-full cursor-pointer px-3 py-2 text-left rounded-lg border transition-colors ${
                     selectedProjectId === project.id
                       ? 'border-blue-500 bg-blue-50 text-blue-900'

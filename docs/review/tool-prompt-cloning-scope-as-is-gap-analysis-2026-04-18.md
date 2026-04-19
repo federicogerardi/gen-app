@@ -21,6 +21,7 @@ Perimetro file verificato:
 - Stato finale: perimetro `docs/prompts/tools/**` riallineato al runtime as-is.
 - I file precedentemente divergenti (HL Funnel optin/quiz/vsl) sono stati aggiornati sul contenuto operativo corrente.
 - `meta_ads` risulta allineato e confermato.
+- `meta_ads` risulta allineato a livello documentale, ma è **fuori dal perimetro runtime** da questa release (decommissionato da `TOOL_PROMPT_REGISTRY`/`templates.ts`). Mantenuto come reference storica/documentale.
 
 ## Gap Matrix
 
@@ -30,6 +31,7 @@ Perimetro file verificato:
 | `docs/prompts/tools/hl_funnel/quiz-generation-prompt-spec.md` | `src/lib/tool-prompts/prompts/tools/hl_funnel/prompt_quiz_generator.md` | Allineato | Gap precedenti chiusi con aggiornamento delle sezioni output richieste |
 | `docs/prompts/tools/hl_funnel/vsl-generation-prompt-spec.md` | `src/lib/tool-prompts/prompts/tools/hl_funnel/prompt_vsl_generator.md` | Allineato | Gap precedenti chiusi con update regole/quality checks runtime |
 | `docs/prompts/tools/meta_ads/meta-ads-generation-prompt-spec.md` | `src/lib/tool-prompts/prompts/tools/meta_ads/prompt_generation.md` | Allineato | Nessun gap rilevato |
+| `docs/prompts/tools/meta_ads/meta-ads-generation-prompt-spec.md` | `src/lib/tool-prompts/prompts/tools/meta_ads/prompt_generation.md` | **Historical — Out of runtime** | Meta Ads decommissionato in questa release: non incluso in `templates.ts` né nel registry runtime |
 
 ## Evidenze sintetiche
 

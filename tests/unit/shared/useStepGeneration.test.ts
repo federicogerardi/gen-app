@@ -73,6 +73,60 @@ describe('useStepGeneration', () => {
     expect(result.current.retryNotice).toContain('Step landing: tentativo 2/3');
   });
 
+    it('gestisce replay stream (start+complete senza token) usando complete.content', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        body: makeStreamBody([
+          'data: {"type":"start","artifactId":"art_replay"}\n\n',
+          'data: {"type":"complete","content":"contenuto normalizzato","artifactId":"art_replay"}\n\n',
+        ]),
+      } as unknown as Response);
+
+      const { result } = renderHook(() => useStepGeneration({ generateEndpoint: '/api/tools/test/generate' }));
+
+      let output: { content: string; artifactId: string | null } | null = null;
+
+      await act(async () => {
+        output = await result.current.generateStepWithRetry({
+          projectId: 'proj_1',
+          model: 'openai/gpt-4.1',
+          tone: 'professional',
+          step: 'landing',
+          extractionContext: 'contesto',
+        }, 'landing');
+      });
+
+      expect(output).toEqual({ content: 'contenuto normalizzato', artifactId: 'art_replay' });
+    });
+
+    it('complete.content sovrascrive i token accumulati (server normalizes output)', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        body: makeStreamBody([
+          'data: {"type":"start","artifactId":"art_norm"}\n\n',
+          'data: {"type":"token","token":"raw "}\n\n',
+          'data: {"type":"token","token":"token"}\n\n',
+          'data: {"type":"complete","content":"contenuto finale normalizzato","artifactId":"art_norm"}\n\n',
+        ]),
+      } as unknown as Response);
+
+      const { result } = renderHook(() => useStepGeneration({ generateEndpoint: '/api/tools/test/generate' }));
+
+      let output: { content: string; artifactId: string | null } | null = null;
+
+      await act(async () => {
+        output = await result.current.generateStepWithRetry({
+          projectId: 'proj_1',
+          model: 'openai/gpt-4.1',
+          tone: 'professional',
+          step: 'landing',
+          extractionContext: 'contesto',
+        }, 'landing');
+      });
+
+      expect(output).toEqual({ content: 'contenuto finale normalizzato', artifactId: 'art_norm' });
+    });
+
   it('updateStep aggiorna lo step target e reset pulisce stato', () => {
     const { result } = renderHook(() => useStepGeneration({ generateEndpoint: '/api/tools/test/generate' }));
 
