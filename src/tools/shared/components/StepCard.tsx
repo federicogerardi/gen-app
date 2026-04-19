@@ -34,7 +34,7 @@ export function StepCard<TStatus extends string = string>({
   isGenerating = false,
   showActions = true,
 }: StepCardProps<TStatus>) {
-  const hasContent = step.content?.trim().length ?? 0 > 0;
+  const hasContent = (step.content?.trim().length ?? 0) > 0;
   const hasError = Boolean(step.error);
 
   return (

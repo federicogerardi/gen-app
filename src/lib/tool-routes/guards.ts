@@ -150,7 +150,7 @@ export async function enforceUsageGuards(
       });
       return {
         ok: false,
-        response: apiError('RATE_LIMIT_EXCEEDED', 'Monthly quota exhausted', 429),
+        response: apiError('RATE_LIMIT_EXCEEDED', 'Monthly quota exhausted', 429, { reason: 'quota_exhausted' }),
       };
     }
     if ((err as Error).message === 'BUDGET_EXHAUSTED') {

@@ -20,6 +20,8 @@ export async function streamToText(response: Response): Promise<string> {
       if (!line.startsWith('data: ')) continue;
       const payload = JSON.parse(line.slice(6)) as Record<string, unknown>;
       if (payload.type === 'token') content += (payload.token as string) ?? '';
+      if (payload.type === 'complete' && payload.content)
+        content = payload.content as string;
       if (payload.type === 'error')
         throw new Error((payload.message as string) ?? 'Errore di stream');
     }

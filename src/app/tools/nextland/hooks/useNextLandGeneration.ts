@@ -76,6 +76,10 @@ async function generateStream(request: GenerateStreamRequest): Promise<StreamRes
       if (payload.type === 'token') {
         content += (payload.token as string) ?? '';
       }
+      if (payload.type === 'complete') {
+        if (payload.content) content = payload.content as string;
+        if (payload.artifactId) artifactId = payload.artifactId as string;
+      }
       if (payload.type === 'error') {
         throw new Error((payload.message as string) ?? 'Errore di stream');
       }

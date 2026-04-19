@@ -71,7 +71,7 @@ export function ProjectDialog({
           <div className="flex items-center justify-between gap-3">
             <Dialog.Title className="text-lg font-semibold">Scegli un progetto</Dialog.Title>
             <Dialog.Close asChild>
-              <button className="cursor-pointer text-muted-foreground hover:text-foreground text-lg">✕</button>
+              <button type="button" aria-label="Chiudi" className="cursor-pointer text-muted-foreground hover:text-foreground text-lg">✕</button>
             </Dialog.Close>
           </div>
           <Dialog.Description className="sr-only">Elenco progetti disponibili</Dialog.Description>

@@ -13,11 +13,14 @@ export function getRetryMeta(
   payload: ApiErrorPayload | null,
 ): RetryMeta {
   const code = payload?.error?.code;
+  const reason = payload?.error?.details?.reason;
+  const isQuotaExhausted = responseStatus === 429 && reason === 'quota_exhausted';
   const retryable =
-    responseStatus >= 500 ||
-    responseStatus === 429 ||
-    code === 'INTERNAL_ERROR' ||
-    code === 'RATE_LIMIT_EXCEEDED';
+    !isQuotaExhausted &&
+    (responseStatus >= 500 ||
+      responseStatus === 429 ||
+      code === 'INTERNAL_ERROR' ||
+      code === 'RATE_LIMIT_EXCEEDED');
 
   return { retryable };
 }

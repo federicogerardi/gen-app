@@ -19,7 +19,7 @@ You WILL create or update [../implementation/feature-native-login-credentials-go
 
 ### Step 2: Execute Implementation
 
-You WILL follow [.github/instructions/task-implementation.instructions.md](../../.github/instructions/git-commit-style.instructions.md)
+You WILL follow [.github/instructions/git-commit-style.instructions.md](../../.github/instructions/git-commit-style.instructions.md)
 You WILL systematically implement [../implementation/feature-native-login-credentials-google-oauth-implementation-plan-1.md](../implementation/feature-native-login-credentials-google-oauth-implementation-plan-1.md) task-by-task
 You WILL follow ALL project standards and conventions
 
