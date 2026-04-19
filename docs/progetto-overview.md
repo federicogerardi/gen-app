@@ -1,8 +1,8 @@
 # Progetto Overview: LLM Artifact Generation Hub
 
-**Versione**: 1.1  
-**Status**: APP OPERATIVA SU DEV/PROD + TOOL MVP ATTIVI + HARDENING CONTINUO  
-**Data**: 2026-04-13  
+**Versione**: 1.2  
+**Status**: APP OPERATIVA SU DEV/PROD + TOOL STANDARD ATTIVI + HARDENING CONTINUO  
+**Data**: 2026-04-18  
 **Destinatario**: Stakeholder e Team di Progetto
 
 ---
@@ -57,13 +57,14 @@ Stiamo costruendo un **Hub di Generazione Artefatti con AI/LLM** che permette ai
 - **Google OAuth** aziendale (email @company.com)
 - **Ruoli**: Basic user o Admin
 
-### Tool Workflows Attivi (MVP)
-1. **Meta Ads**: varianti ad copy complete (hook, body, headline, CTA)
-2. **HotLead Funnel**: processo multi-step (optin page, quiz questions, VSL script)
+### Tool Workflows Attivi (as-is)
+1. **HotLead Funnel**: processo multi-step (optin page, quiz questions, VSL script)
+2. **NextLand**: workflow a 2 step (landing page + thank-you page)
 
 ### Evoluzione Tool
-- il perimetro MVP attivo include solo `Meta Ads` e `HotLead Funnel`
-- eventuali route/tool legacy fuori perimetro sono da considerare refusi e non fanno parte dell'applicazione pubblica
+- il perimetro tool standard attivo include `HotLead Funnel`, `NextLand` e `Extraction`
+- il runtime legacy `Meta Ads` e stato rimosso
+- gli artifact storici con `workflowType: meta_ads` restano disponibili nelle viste artifact/dashboard
 
 ### Modelli LLM
 - Registry modelli dinamico persistito in DB (`LlmModel`)

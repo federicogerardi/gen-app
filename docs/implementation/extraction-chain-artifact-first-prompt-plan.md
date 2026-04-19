@@ -150,7 +150,7 @@ Exit criteria:
 - [src/lib/tool-routes/guards.ts](../../src/lib/tool-routes/guards.ts)
 - [src/app/tools/funnel-pages/page.tsx](../../src/app/tools/funnel-pages/page.tsx)
 - [docs/review/extraction-model-policy-rollout-runbook-2026-04-12.md](../review/extraction-model-policy-rollout-runbook-2026-04-12.md)
-- [docs/implementation/feature-extraction-chain-hardening-plan-1.md](./feature-extraction-chain-hardening-plan-1.md)
+- [docs/archive/feature-extraction-chain-hardening-plan-1.md](../archive/feature-extraction-chain-hardening-plan-1.md)
 - [docs/implement-index.md](../implement-index.md)
 
 ### 11. Verification

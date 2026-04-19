@@ -6,7 +6,7 @@ import { TOOL_PROMPT_REGISTRY, type ToolPromptPath } from '@/lib/tool-prompts/re
 const PROMPTS_ROOT = path.join(process.cwd(), 'src/lib/tool-prompts/prompts');
 
 const PROMPT_PATHS: ToolPromptPath[] = [
-  TOOL_PROMPT_REGISTRY.metaAds.generation,
+  TOOL_PROMPT_REGISTRY.extraction.generation,
   TOOL_PROMPT_REGISTRY.funnel.optin,
   TOOL_PROMPT_REGISTRY.funnel.quiz,
   TOOL_PROMPT_REGISTRY.funnel.vsl,
@@ -50,20 +50,17 @@ describe('tool prompt parity', () => {
     expect(runtimeTemplate.length).toBeLessThanOrEqual(Math.ceil(markdownSource.length * 1.3));
   });
 
-  it('enforces markdown output contract for Meta Ads, Funnel and NextLand workflows', async () => {
-    const [meta, optin, quiz, nextlandLanding, nextlandThankYou] = await Promise.all([
-      loadPromptSource(TOOL_PROMPT_REGISTRY.metaAds.generation),
+  it('enforces markdown output contract for funnel and NextLand workflows', async () => {
+    const [optin, quiz, nextlandLanding, nextlandThankYou] = await Promise.all([
       loadPromptSource(TOOL_PROMPT_REGISTRY.funnel.optin),
       loadPromptSource(TOOL_PROMPT_REGISTRY.funnel.quiz),
       loadPromptSource(TOOL_PROMPT_REGISTRY.nextland.landing),
       loadPromptSource(TOOL_PROMPT_REGISTRY.nextland.thankYou),
     ]);
 
-    expect(meta).toContain('Restituisci solo markdown');
     expect(optin).toContain('Restituisci SOLO markdown');
     expect(quiz).toContain('Restituisci SOLO markdown');
 
-    expect(meta).toContain('Non includere code fences');
     expect(optin).toContain('Non includere code fences');
     expect(quiz).toContain('Non includere code fences');
     expect(nextlandLanding).toContain('Non includere code fences');

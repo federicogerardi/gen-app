@@ -1,11 +1,11 @@
 # API Specifications: LLM Artifact Generation Hub
 
-**Version**: 1.4  
+**Version**: 1.5  
 **Status**: IMPLEMENTED SUBSET + OPEN ITEMS  
 **Base URL**: `https://<your-vercel-domain>/api` (production from `main`; development/preview from PR flow on `dev`)  
 **Authentication**: NextAuth session cookie (browser). Bearer tokens solo per integrazioni server-to-server esplicite.  
 **Content-Type**: `application/json` (default), `multipart/form-data` per upload documenti funnel  
-**Last Updated**: 2026-04-14
+**Last Updated**: 2026-04-18
 
 ---
 
@@ -68,9 +68,9 @@ All errors follow this format:
 Implemented routes in the current codebase:
 - `POST /artifacts/generate`
 - `GET /artifacts`
-- `POST /tools/meta-ads/generate`
 - `POST /tools/extraction/generate`
 - `POST /tools/funnel-pages/generate`
+- `POST /tools/nextland/generate`
 - `POST /tools/funnel-pages/upload`
 - `GET /artifacts/{id}`
 - `PUT /artifacts/{id}`
@@ -155,36 +155,11 @@ POST /api/auth/signout
 
 ## Tool-Specific Generation
 
-### Generate Meta Ads (Streaming)
+### Meta Ads Runtime Decommission (as-is)
 
-**Endpoint**:
-```
-POST /tools/meta-ads/generate
-```
-
-**Request** (application/json):
-```json
-{
-  "projectId": "proj_123",
-  "model": "openai/gpt-4-turbo",
-  "tone": "professional",
-  "customerContext": {
-    "product": "Programma nutrizione 90 giorni",
-    "audience": "Donne 28-45 interessate a fitness",
-    "offer": "Call gratuita + piano personalizzato"
-  },
-  "objective": "lead generation",
-  "angle": "problem-solution con social proof"
-}
-```
-
-Nota compatibilita:
-- I campi legacy top-level (`product`, `audience`, `offer`) sono ancora accettati e normalizzati server-side in `customerContext`.
-
-**Response**:
-- Stream SSE con eventi standard (`start`, `token`, `complete`, `error`) e metadata additive (`workflowType`, `format`, `sequence`, `progress`, `code`)
-- Crea un artifact di tipo `content`
-- Formato output workflow: `markdown`
+- L'endpoint `POST /tools/meta-ads/generate` e stato rimosso dal runtime.
+- Il perimetro tool standard attivo espone solo `funnel-pages`, `nextland`, `extraction`.
+- Gli artifact storici con `workflowType: meta_ads` restano visualizzabili nelle viste artifact/dashboard.
 
 ### Upload Funnel Source Document
 
@@ -897,7 +872,6 @@ async function streamArtifact(request: ArtifactRequest) {
 }
 
 // Variante tool-specific:
-// /api/tools/meta-ads/generate
 // /api/tools/funnel-pages/generate
 ```
 

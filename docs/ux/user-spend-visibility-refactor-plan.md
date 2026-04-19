@@ -67,13 +67,13 @@ Conseguenze operative:
 
 - [src/app/dashboard/page.tsx](../../src/app/dashboard/page.tsx)
 - [src/app/artifacts/ArtifactsClientPage.tsx](../../src/app/artifacts/ArtifactsClientPage.tsx)
-- [src/app/artifacts/[id]/page.tsx](../../src/app/artifacts/%5Bid%5D/page.tsx)
+- [src/app/artifacts/[id]/page.tsx](../../src/app/artifacts/[id]/page.tsx)
 - [src/components/hooks/useQuota.ts](../../src/components/hooks/useQuota.ts)
 - [src/components/hooks/useArtifacts.ts](../../src/components/hooks/useArtifacts.ts)
 - [src/app/api/users/quota/route.ts](../../src/app/api/users/quota/route.ts)
 - [src/app/api/artifacts/route.ts](../../src/app/api/artifacts/route.ts)
-- [src/app/api/artifacts/[id]/route.ts](../../src/app/api/artifacts/%5Bid%5D/route.ts)
-- [src/app/api/projects/[id]/route.ts](../../src/app/api/projects/%5Bid%5D/route.ts)
+- [src/app/api/artifacts/[id]/route.ts](../../src/app/api/artifacts/[id]/route.ts)
+- [src/app/api/projects/[id]/route.ts](../../src/app/api/projects/[id]/route.ts)
 
 ### Perimetro admin da preservare
 
@@ -81,7 +81,7 @@ Conseguenze operative:
 - [src/app/admin/AdminClientPage.tsx](../../src/app/admin/AdminClientPage.tsx)
 - [src/app/admin/AdminQuotaForm.tsx](../../src/app/admin/AdminQuotaForm.tsx)
 - [src/app/api/admin/users/route.ts](../../src/app/api/admin/users/route.ts)
-- [src/app/api/admin/users/[userId]/quota/route.ts](../../src/app/api/admin/users/%5BuserId%5D/quota/route.ts)
+- [src/app/api/admin/users/[userId]/quota/route.ts](../../src/app/api/admin/users/[userId]/quota/route.ts)
 - [src/app/api/admin/metrics/route.ts](../../src/app/api/admin/metrics/route.ts)
 
 ---
@@ -94,13 +94,13 @@ Conseguenze operative:
 - [src/app/dashboard/page.tsx](../../src/app/dashboard/page.tsx) legge `monthlyBudget` e `monthlySpent` direttamente da query server-side su `db.user.findUnique`, mostra una card dedicata a budget speso e calcola `budgetPercent`.
 
 2. Dettaglio artefatto user
-- [src/app/artifacts/[id]/page.tsx](../../src/app/artifacts/%5Bid%5D/page.tsx) mostra il costo della singola generazione nella sidebar metadati.
+- [src/app/artifacts/[id]/page.tsx](../../src/app/artifacts/[id]/page.tsx) mostra il costo della singola generazione nella sidebar metadati.
 
 3. Contratti API user-facing
 - [src/app/api/users/quota/route.ts](../../src/app/api/users/quota/route.ts) restituisce `monthlyBudget` e `monthlySpent`.
 - [src/app/api/artifacts/route.ts](../../src/app/api/artifacts/route.ts) restituisce item con `costUSD`.
-- [src/app/api/artifacts/[id]/route.ts](../../src/app/api/artifacts/%5Bid%5D/route.ts) restituisce artifact con `costUSD`.
-- [src/app/api/projects/[id]/route.ts](../../src/app/api/projects/%5Bid%5D/route.ts) include `artifacts` completi nel payload progetto e puo quindi propagare indirettamente `costUSD`.
+- [src/app/api/artifacts/[id]/route.ts](../../src/app/api/artifacts/[id]/route.ts) restituisce artifact con `costUSD`.
+- [src/app/api/projects/[id]/route.ts](../../src/app/api/projects/[id]/route.ts) include `artifacts` completi nel payload progetto e puo quindi propagare indirettamente `costUSD`.
 
 4. Lista artefatti user
 - [src/app/artifacts/ArtifactsClientPage.tsx](../../src/app/artifacts/ArtifactsClientPage.tsx) non renderizza oggi il costo, ma dipende da un contratto client che continua a ricevere `costUSD`.
@@ -163,8 +163,8 @@ Interventi:
 
 - rimuovere `monthlyBudget` e `monthlySpent` dalla risposta di [src/app/api/users/quota/route.ts](../../src/app/api/users/quota/route.ts)
 - rimuovere `costUSD` dagli item restituiti da [src/app/api/artifacts/route.ts](../../src/app/api/artifacts/route.ts)
-- rimuovere `costUSD` dall artifact restituito da [src/app/api/artifacts/[id]/route.ts](../../src/app/api/artifacts/%5Bid%5D/route.ts)
-- sanitizzare anche gli artifact inclusi in [src/app/api/projects/[id]/route.ts](../../src/app/api/projects/%5Bid%5D/route.ts)
+- rimuovere `costUSD` dall artifact restituito da [src/app/api/artifacts/[id]/route.ts](../../src/app/api/artifacts/[id]/route.ts)
+- sanitizzare anche gli artifact inclusi in [src/app/api/projects/[id]/route.ts](../../src/app/api/projects/[id]/route.ts)
 - verificare eventuali altri endpoint user-facing che propagano artifact con costo oltre alle route gia identificate
 
 Note:
@@ -221,7 +221,7 @@ Obiettivo:
 
 Interventi:
 
-- rimuovere la riga costo dalla sidebar di [src/app/artifacts/[id]/page.tsx](../../src/app/artifacts/%5Bid%5D/page.tsx)
+- rimuovere la riga costo dalla sidebar di [src/app/artifacts/[id]/page.tsx](../../src/app/artifacts/[id]/page.tsx)
 - lasciare [src/app/artifacts/ArtifactsClientPage.tsx](../../src/app/artifacts/ArtifactsClientPage.tsx) priva di metrica economica anche dopo il riallineamento dei tipi e del payload
 - verificare che dettaglio progetto o altri consumer user-facing di artifact non reintroducano `costUSD`
 
@@ -316,8 +316,8 @@ Motivazione:
 
 - [x] Aggiornare [src/app/api/users/quota/route.ts](../../src/app/api/users/quota/route.ts) rimuovendo `monthlyBudget` e `monthlySpent`.
 - [x] Aggiornare [src/app/api/artifacts/route.ts](../../src/app/api/artifacts/route.ts) rimuovendo `costUSD` dal payload user-facing.
-- [x] Aggiornare [src/app/api/artifacts/[id]/route.ts](../../src/app/api/artifacts/%5Bid%5D/route.ts) rimuovendo `costUSD` dal payload user-facing.
-- [x] Aggiornare [src/app/api/projects/[id]/route.ts](../../src/app/api/projects/%5Bid%5D/route.ts) per non esporre `costUSD` negli artifact inclusi.
+- [x] Aggiornare [src/app/api/artifacts/[id]/route.ts](../../src/app/api/artifacts/[id]/route.ts) rimuovendo `costUSD` dal payload user-facing.
+- [x] Aggiornare [src/app/api/projects/[id]/route.ts](../../src/app/api/projects/[id]/route.ts) per non esporre `costUSD` negli artifact inclusi.
 - [x] Verificare eventuale esposizione indiretta di artifact con costo in altri payload collegati.
 
 ### Frontend user
@@ -325,7 +325,7 @@ Motivazione:
 - [x] Aggiornare [src/components/hooks/useQuota.ts](../../src/components/hooks/useQuota.ts).
 - [x] Aggiornare [src/components/hooks/useArtifacts.ts](../../src/components/hooks/useArtifacts.ts).
 - [x] Rifattorizzare [src/app/dashboard/page.tsx](../../src/app/dashboard/page.tsx) per mostrare solo metriche di generazione e rimuovere la select server-side dei campi economici.
-- [x] Rifattorizzare [src/app/artifacts/[id]/page.tsx](../../src/app/artifacts/%5Bid%5D/page.tsx) rimuovendo il costo.
+- [x] Rifattorizzare [src/app/artifacts/[id]/page.tsx](../../src/app/artifacts/[id]/page.tsx) rimuovendo il costo.
 - [x] Verificare che [src/app/artifacts/ArtifactsClientPage.tsx](../../src/app/artifacts/ArtifactsClientPage.tsx) non reintroduca dati economici via tipo o rendering futuro.
 - [x] Verificare che eventuali viste progetto user-facing non reintroducano costo tramite artifact inclusi.
 

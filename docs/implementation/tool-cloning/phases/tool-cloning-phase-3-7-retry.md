@@ -1,0 +1,48 @@
+---
+goal: Phase 3.7 (Opzionale) - Retry Strategy con Exponential Backoff
+version: 1.1
+date_created: 2026-04-17
+date_updated: 2026-04-17
+status: Active
+tags: [runbook, tool-cloning, phase-3-7, retry, optional]
+---
+
+# Phase 3.7: Retry Strategy (Opzionale)
+
+Questa fase implementa **exponential backoff retry logic** per transient error recovery.
+
+**Se il tool NON ha retry logic richiesto**, salta questa phase.
+
+---
+
+## Una Nota su Retry
+
+Se il tool deve gestire transient network errors (rate limits, timeouts), implementa:
+
+1. **withRetry Wrapper**: Exponential backoff logic con max attempts
+2. **Retryable Error Detection**: Distingui transient da permanent errors
+3. **User Feedback**: Notifica retry attempts in UI
+4. **Circuit Breaker**: Optional max failures before giving up
+
+---
+
+## Reference Documentazione
+
+Per implementazione completa di retry, consulta:
+
+- [tool-cloning-phase-3-7-retry-implementation.md](/docs/implementation/tool-cloning/phases/tool-cloning-phase-3-7-retry-implementation.md) (detailed guide)
+- [src/tools/shared/lib/retryLogic.ts](/src/tools/shared/lib/retryLogic.ts) (`withRetry`, `RetryableRequestError`, `getRetryMeta`, backoff)
+- [src/app/tools/funnel-pages/hooks/useFunnelGeneration.ts](/src/app/tools/funnel-pages/hooks/useFunnelGeneration.ts) (uso concreto retry in hook generation)
+- [tests/e2e/funnel-pages-retry-resume.spec.ts](/tests/e2e/funnel-pages-retry-resume.spec.ts) (coverage retry/backoff UX)
+
+---
+
+## If Tool è Very Complex (6+ questionnaire SI')
+
+Contatta Architecture Team per guidance su retry strategy avanzate.
+
+---
+
+## Next Step
+
+Procedi a **[tool-cloning-testing-strategy.md](/docs/implementation/tool-cloning/quality/tool-cloning-testing-strategy.md)** per creare i test.

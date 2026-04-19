@@ -119,5 +119,10 @@ Logica:
 
 ### Scope residuo
 
-- Verificare se applicare `streamDeadlineMs` anche a `meta-ads/generate` (stesso limite runtime Vercel 300s).
+- `meta-ads/generate`: non applicabile (route rimossa dal runtime in decommission 2026-04-18).
 - I finding originali di questa nota (TASK-001..013) rimangono aperti nel tracker operativo.
+
+### Allineamento as-is (2026-04-18)
+
+- Runtime Meta Ads decommissioned: endpoint e route page rimossi.
+- Questa nota resta uno snapshot storico del 2026-04-15; i riferimenti Meta Ads sono da interpretare come contesto pre-decommission.

@@ -1,6 +1,6 @@
 # PROMPT VSL GENERATOR
 
-Versione 4.2 - Rigor Markdown + Profondita Strategica
+Versione 4.3 - Rigor Markdown + Profondita Strategica
 
 ## Ruolo
 
@@ -141,6 +141,16 @@ Dove tagliare per ridurre la lunghezza (in questo ordine):
 
 **OBIETTIVO:** Promessa specifica, misurabile, credibile. NON generica.
 
+**CONTRATTO CON L'AGENTE (OBBLIGATORIO):**
+- Il transformation statement deve descrivere chiaramente CIO CHE LA SOLUZIONE PRODUCE come risultato.
+- Deve esplicitare un prima/dopo misurabile, con metrica e orizzonte temporale.
+
+❌ SBAGLIATO (descrive il prodotto):
+"Ti presento il Metodo Pipeline 360, un programma in 5 moduli con dashboard e template."
+
+✅ CORRETTO (descrive cio che la soluzione produce):
+"Ti mostro come aumentare del 25-35% i colloqui commerciali qualificati in 90 giorni, senza allargare il team vendite."
+
 **FORMULA:** "Ti mostro come [RISULTATO MISURABILE] in [TEMPO] senza [FRICTION]"
 
 Esempio: "Ti mostro come generare 15-20 lead qualificati al giorno in 90 giorni senza spendere più in advertising."
@@ -166,7 +176,7 @@ Esempio: "Ti mostro come generare 15-20 lead qualificati al giorno in 90 giorni 
 
 Esempi:
 - ✅ "Marco Rossi, CEO di TechStart, stava bruciando 6.000€ al mese in advertising con CAC impossibile. In 4 mesi, ridotto a €850 per client acquisito."
-- ✅ "Francesca, PMI con €2M fatturato, aveva 2 venditori bloccati su prospecting. Oggi generano 40 contatti qualificati al mese."
+- ✅ "Francesca, PMI con €2M fatturato, aveva 2 venditori bloccati sulla ricerca contatti. Oggi generano 40 contatti qualificati al mese."
 
 **⚠️ RICORDA:** Se hai video testimonianze, inserisci spezzone YouTube + suggerisci timestamp. Dopo lo spezzone, COMMENTA — non ripetere la citazione.
 
@@ -221,9 +231,9 @@ Perché funziona: Il 60% dei business usa messaging che convincerebbe LORO, non 
 
 **OPZIONE 2 — Fai-da-Te**
 - Scenario realistico: delega a risorse interne non qualificate
-- Descrivi l'imprenditore che delegh, il collaboratore che cerca su Google, presenta qualcosa dopo 2 settimane
+- Descrivi l'imprenditore che delega, il collaboratore che cerca su Google, presenta qualcosa dopo 2 settimane
 - Risultati mediocri o zero
-- Esempio: "Delegation al tuo junior: 'Studia performance marketing e genera lead qualificati.' Ritorno tra 2 settimane: approccio generico e pochi numeri."
+- Esempio: "Delega al tuo junior: 'Studia il marketing a performance e genera lead qualificati.' Ritorno tra 2 settimane: approccio generico e pochi numeri."
 
 **OPZIONE 3 — Non Fare Niente**
 - Conseguenze a breve termine (1-3 mesi)
@@ -257,7 +267,7 @@ Da parte tua, tutto ciò che devi fare è [AZIONE MINIMA — massimo 2 azioni]."
 Esempio:
 "STEP 1: Clicchi il bottone, calendly si apre, prenoti 30 minuti. Ricevi email con link Zoom.
 
-STEP 2: Entro 24 ore, io e il mio team abbiamo analizzato il tuo business. Arivi alla call e trovi una slide con i 3 problemi critici + il piano.
+STEP 2: Entro 24 ore, io e il mio team abbiamo analizzato il tuo business. Arrivi alla call e trovi una slide con i 3 problemi critici + il piano.
 
 STEP 3: Nella call decidiamo se collaborare. Se ha senso, definiamo il progetto. Se non ha senso, ti dai contatti utili.
 
@@ -293,7 +303,7 @@ Esempio:
 - Verrà definito nella call
 
 Esatto:
-"È il prezzo che pagherai tu? No. Pagherai un prezzo più basso rispetto al valore totale che ricevi. Il prezzo reale lo definiamo insieme nella call strategica, based sulla tua situazione specifica."
+"È il prezzo che pagherai tu? No. Pagherai un prezzo più basso rispetto al valore totale che ricevi. Il prezzo reale lo definiamo insieme nella call strategica, in base alla tua situazione specifica."
 
 **COMPONENTE 4: CALL GRATUITA + GARANZIE**
 - Enfatizza che NON costa niente e NON impegna
@@ -346,6 +356,7 @@ Prima di considerare lo script completo, verifica TUTTI questi punti:
 
 ✅ Pain point nei primi 15 secondi (zero intro)
 ✅ Transformation statement con numeri specifici + tempo
+✅ Transformation statement focalizzato su CIO CHE LA SOLUZIONE PRODUCE (non su prodotto/caratteristiche)
 ✅ Qualificazione aggressiva con esclusioni OGGETTIVE e motivate
 ✅ Almeno 3 casi cliente con numeri specifici
 ✅ Accolades + associations + social proof + PR strutturati in Elemento 4
@@ -396,8 +407,8 @@ Restituisci SOLO markdown, con script VSL completo e recitabile.
 Vincoli output rigidi:
 - Niente JSON
 - Niente code fences
-- Niente note meta, disclaimer o spiegazioni fuori script
 - Usa heading markdown per i 10 elementi
+- Niente commenti meta o spiegazioni fuori script, ad eccezione di una sezione finale ## Note Assunzioni per documentare i dati mancanti compilati con assunzioni conservative
 - Usa emoji leggere nei titoli se utili
 - Zero metafrasi tipo "[PAUSA]" – incorpora pause nel ritmo naturale
 - Mantieni testo pronto per telecamera, senza blocchi tecnici

@@ -2,7 +2,6 @@ import {
   extractionRequestSchema,
   funnelPagesRequestSchema,
   getLengthByFunnelStep,
-  metaAdsRequestSchema,
 } from '@/lib/tool-routes/schemas';
 
 describe('tool route schemas', () => {
@@ -11,40 +10,6 @@ describe('tool route schemas', () => {
     model: 'openai/gpt-4-turbo',
     tone: 'professional' as const,
   };
-
-  it('accepts legacy top-level customer fields for meta ads', () => {
-    const parsed = metaAdsRequestSchema.safeParse({
-      ...base,
-      product: 'CRM SaaS',
-      audience: 'Small business owners',
-      offer: 'Free 14-day trial',
-      objective: 'Lead generation',
-      angle: 'Problem-solution',
-    });
-
-    expect(parsed.success).toBe(true);
-    if (!parsed.success) return;
-
-    expect(parsed.data.customerContext).toEqual({
-      product: 'CRM SaaS',
-      audience: 'Small business owners',
-      offer: 'Free 14-day trial',
-    });
-  });
-
-  it('accepts explicit customerContext fields for meta ads', () => {
-    const parsed = metaAdsRequestSchema.safeParse({
-      ...base,
-      customerContext: {
-        product: 'CRM SaaS',
-        audience: 'Small business owners',
-        offer: 'Free 14-day trial',
-      },
-      objective: 'Lead generation',
-    });
-
-    expect(parsed.success).toBe(true);
-  });
 
   it('requires optinOutput for quiz funnel step', () => {
     const parsed = funnelPagesRequestSchema.safeParse({

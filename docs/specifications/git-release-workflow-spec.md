@@ -39,6 +39,14 @@ Nota operativa:
 - Nessun `TODO` introdotto senza issue associata
 - Vercel preview check verde
 
+## Regola di collegamento PR
+
+Ogni PR aperta da questo repository deve essere collegata al progetto GitHub condiviso:
+
+- https://github.com/users/federicogerardi/projects/1
+
+La regola vale sia per PR verso `dev` sia per PR `dev` → `main`, cosi il tracking operativo resta allineato nel board di progetto.
+
 ## Riferimenti
 
 - Workflow CI: `.github/workflows/ci.yml`

@@ -77,9 +77,9 @@ Recently completed (2026-04-11):
 
 ## Focused Execution Tracks
 
-- Deterministic Prisma deploy migrations
-  - Execution plan: docs/implementation/feature-prisma-deploy-migrations-1.md
-  - Tracker: docs/implementation/feature-prisma-deploy-migrations-tracker-1.md
+- Deterministic Prisma deploy migrations (completato)
+  - Execution plan: docs/archive/feature-prisma-deploy-migrations-1.md
+  - Tracker: docs/archive/feature-prisma-deploy-migrations-tracker-1.md
 
 - Quality and security audit resolution
   - Source roadmap: docs/archive/implement-quality-audit-closure-2026-04-11.md

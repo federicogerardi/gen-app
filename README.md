@@ -71,6 +71,17 @@ Questo rende il progetto utile non solo sul piano creativo, ma anche su quello o
 
 gen-app e gia operativo e viene usato come hub interno di generazione. Il perimetro pubblico attuale e focalizzato sui workflow NextLand e HotLead Funnel, con evoluzione continua della qualita dei flussi, dell'organizzazione per progetti e dell'esperienza di revisione.
 
+## Pattern composabile tool-pages
+
+I workflow NextLand e HotLead Funnel seguono una struttura composabile condivisa che separa:
+
+- wrapper pagina minimale
+- container di orchestrazione del tool
+- hook dominio-specific per extraction/generation/recovery/ui-state
+- componenti presentazionali riusabili
+
+Questo pattern riduce la duplicazione, mantiene i file entro soglie gestibili e rende piu veloce estendere nuovi tool mantenendo parita architetturale.
+
 ## Documentazione tecnica
 
 La documentazione tecnica, architetturale e operativa resta nella cartella [docs/README.md](docs/README.md). Questo README serve come presentazione del progetto e della sua idea, non come riferimento di implementazione.

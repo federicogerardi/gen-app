@@ -150,11 +150,11 @@ describe('useStreamGeneration', () => {
     const { result } = renderHook(() => useStreamGeneration());
 
     await act(async () => {
-      await result.current.generate(request, { endpoint: '/api/tools/meta-ads/generate' });
+      await result.current.generate(request, { endpoint: '/api/tools/funnel-pages/generate' });
     });
 
     expect(global.fetch).toHaveBeenCalledWith(
-      '/api/tools/meta-ads/generate',
+      '/api/tools/funnel-pages/generate',
       expect.any(Object),
     );
   });

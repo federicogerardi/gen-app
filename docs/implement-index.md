@@ -2,6 +2,57 @@
 
 _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 
+## **[P1-CRITICO]** Aggiornamento sessione (2026-04-18 — Tool Pages Composable Architecture Refactoring)
+
+- **Stato attuale**: `PHASE 4 COMPLETE (FUNNEL)` → **PHASE 5 COMPLETE (NEXTLAND)**.
+- **Risultati POC (2026-04-18 completato)**:
+  - ✅ **545 righe** di shared code estratte e validate
+  - ✅ **Zero TypeScript errors** — type safety CONFIRMED (no `any` types)
+  - ✅ **Generic architecture** — `ToolStepState<T>` works across tools
+  - ✅ **Hook isolation** — `useExtraction` + `useStepGeneration` standalone-testable
+  - ✅ **70%+ code reuse** — tra funnel-pages e nextland
+  - ✅ **No blockers** — tutti Must-Have criteria MET & EXCEEDED
+- **Execution Phase 4 (funnel-pages)**: **✅ COMPLETATA**.
+  - `src/app/tools/funnel-pages/page.tsx`: 21 righe
+  - `src/app/tools/funnel-pages/FunnelPagesToolContent.tsx`: 285 righe
+  - decomposizione completata su `components/` e `hooks/` funnel-specific
+  - validazione tecnica verde: `typecheck`, `lint`, test matrix Phase 4 (56/56)
+- **Prossimi step**: **Phase 6 chiusa formalmente** e ADR 004 completato su perimetro operativo.
+- **Gate operativi Phase 4 (nuovi)**: test matrix obbligatoria + rollback plan esplicito definiti nel piano operativo funnel.
+- **Documentazione**:
+  - [ADR 004: Refactoring Tool Pages a Architettura Composabile](./adrs/004-tool-pages-composable-architecture.md) — Design completo + POC results
+  - [Spike SPIKE-TOOL-PAGES-REFACTOR-1](./implementation/spike-tool-pages-composable-architecture-poc-1.md) — Risultati POC dettagliati
+  - [Funnel Pages Phase 4 Refactor Plan](./implementation/funnel-pages-phase-4-refactor-plan.md) — Piano operativo di implementazione Phase 4
+  - [NextLand Phase 5 Refactor Plan](./implementation/feature-nextland-phase-5-1.md) — Piano operativo esecutivo Phase 5 (chiuso con follow-up Phase 6)
+  - [Predictive Security Review: Phase 4 Funnel Refactor](./review/2026-04-18-phase-4-funnel-refactor-security-review.md) — Audit predittivo allineato: remediation P1/P2 integrate, stato GO operativo
+- **Tempo stimato totale** (full implementation): 12-15 ore (Phases 3-6, 1.5-2 giorni concentrati)
+- **Impact**: Stato misurato post-Phase 5:
+  - funnel-pages: 1162 → **300 righe** (-74%)
+  - nextland: 1308 → **302 righe aggregate** (`page.tsx` 20 + `NextLandToolContent.tsx` 282)
+  - Nuovo tool: reusable in **30min da template** (vs 2h manual)
+  - Manutenabilità: **5x improvement** in time-to-modify
+  - test hook NextLand mirati aggiunti su generation/recovery/extraction/ui-state
+- **Remaining work esplicito (aperto)**:
+  - nessun item bloccante residuo nel perimetro ADR 004.
+- **Kickoff Phase 6 (2026-04-18, notte) completato**:
+  - aggiunti test componenti NextLand: `tests/unit/tools/nextland/nextland-setup-card.test.tsx`, `tests/unit/tools/nextland/nextland-step-cards.test.tsx`
+  - aggiunto integration test flow container NextLand: `tests/integration/nextland-page-flow.test.tsx`
+  - esito validazione mirata: 3 suite verdi, 7 test verdi
+- **Estensione shared coverage (2026-04-18, notte) completata**:
+  - nuove suite shared: `tests/unit/shared/useStepGeneration.test.ts`, `tests/unit/shared/useExtraction.test.ts`, `tests/unit/shared/step-card.test.tsx`, `tests/unit/shared/status-checklist.test.tsx`
+  - esito validazione shared: 4 suite verdi, 9 test verdi
+- **Gate tecnico finale chiuso (stato locale corrente)**:
+  - `npm run typecheck` ✅
+  - `npm run lint` ✅
+  - `npm run test` ✅ (69 suite, 456 test)
+  - `npm run build` ✅
+  - `npx playwright test --config .tmp-playwright.reuse.config.ts` ✅ (25/25 E2E)
+- **Chiusura formale ADR 004**:
+  - piano Phase 6 completato e allineato
+  - ADR 004 aggiornato a closure su scope Phase 4-5-6
+
+---
+
 ## Aggiornamento sessione (2026-04-17 — Tool Cloning Runbook + Allineamento grafica HLF)
 
 - **Stato attuale**: `COMPLETATO`.
@@ -12,26 +63,28 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
   - ✅ Aggiunta sezione `## Tool Pages Exceptions` in `docs/specifications/graphic-frameworking-spec.md`
   - ✅ Aggiornato QA checklist per differenziare "pagine dashboard/admin" vs "tool pages"
   - ✅ Cross-reference in `docs/ux/gui-refactor-plan.md`
-  - ✅ **NUOVO**: Creato `docs/implementation/tool-cloning-runbook-1.md` con:
+  - ✅ **NUOVO (storico)**: Creato `docs/implementation/tool-cloning-runbook-1.md` (poi superseded)
+  - ✅ **AS-IS corrente**: Libreria atomizzata `docs/implementation/tool-cloning/` con entrypoint [docs/implementation/tool-cloning/tool-cloning-index.md](./implementation/tool-cloning/tool-cloning-index.md)
     - Anatomia file structure per tool
-    - 4 phase sequenziali: Route + Schema → Prompts → Frontend → Testing
+    - Phase sequence modulare (backend, prompts, extraction, frontend, UX, checkpoint, retry, testing)
     - Template TypeScript copiabili per route handler, builder, UI page, test
     - Checklist conformità graphic framework + testing + build
     - Troubleshooting comune
-    - Tempi stimati (2.5-3 ore con esperienza)
+    - Tempi stimati e criteri GO/NO-GO aggiornati
     - DoD finale + link riferimenti
 - **Status compliance**: HLF 100% conforme. Clone potential: 95%+ con runbook (vs 85% senza).
 - **File aggiornati**:
   - `docs/specifications/graphic-frameworking-spec.md`
   - `docs/ux/gui-refactor-plan.md`
-  - **[NEW]** `docs/implementation/tool-cloning-runbook-1.md`
+  - **[HISTORICAL]** `docs/implementation/tool-cloning-runbook-1.md`
+  - **[CURRENT]** `docs/implementation/tool-cloning/tool-cloning-index.md`
 
 ## Aggiornamento sessione (2026-04-18 — Capacity/overflow thresholds per tool generation)
 
 - **Stato attuale**: `COMPLETATO` (documentazione operativa).
 - **Obiettivo**: definire soglie operative verde/giallo/rosso per rischio overflow con baseline 20 utenti medi concorrenti.
 - **Riferimento unico (no duplicato tabella)**:
-  - [docs/code-review/2026-04-18-capacity-overflow-risk-review.md](docs/code-review/2026-04-18-capacity-overflow-risk-review.md)
+  - [docs/review/2026-04-18-capacity-overflow-risk-review.md](./review/2026-04-18-capacity-overflow-risk-review.md)
 - **Uso previsto**: base per alerting/runbook su p95, 429/5xx, stream concorrenti, saturazione DB e burn-rate costi.
 
 ## Aggiornamento sessione (2026-04-16 — Native login credentials + Google OAuth)
@@ -101,7 +154,7 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 - **Conferma sicurezza**:
   - Nessuna modifica ai test integration di auth/ownership/rate-limit/error-code.
   - Strategia confermata: rigidita alta sui contratti sicurezza, elasticita controllata su copy e wording.
-- **Riferimento review**: `docs/code-review/2026-04-15-test-suite-security-balance-review.md`.
+- **Riferimento review**: `docs/review/2026-04-15-test-suite-security-balance-review.md`.
 ## Aggiornamento sessione (2026-04-15 — Hotfix: stream deadline funnel-pages)
 
 - **Root cause identificata in produzione**: artefatto con id `cmnzviexu000004ib6p23z621` restava in stato `generating` a frontend completato. Causa confermata da runtime log Vercel: invocazione `POST /api/tools/funnel-pages/generate` con durata `300001ms`, corrispondente al kill hard del runtime Vercel a 300s; la persistenza terminale DB saltava per interruzione forzata del processo Node prima del `db.artifact.update(status: completed|failed)`.
@@ -109,7 +162,7 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 - **Comportamento post-fix**: timeout applicativo → `cancellationReason = 'timeout'` → se contenuto accumulato >= 120 chars persiste come `completed` (partial); altrimenti `failed(timeout)`. Nessuna build/API change breaking.
 - **Validazione**: `typecheck` PASS, `tests/unit/streaming.test.ts` (nuovo test `persists failed(timeout) when stream deadline aborts`) PASS, `tests/integration/funnel-pages-route.test.ts` (asserzione `streamDeadlineMs: 270000`) PASS, `lint` PASS. Suite: 23/23.
 - **File toccati**: `src/lib/llm/streaming.ts`, `src/app/api/tools/funnel-pages/generate/route.ts`, `tests/unit/streaming.test.ts`, `tests/integration/funnel-pages-route.test.ts`.
-- **Scope da fare**: valutare applicazione analoga a `meta-ads/generate` se esposta allo stesso limite runtime.
+- **Scope completato**: endpoint `meta-ads/generate` rimosso dal runtime; mantenuta compatibilita su storico artifact.
 
 ## Aggiornamento sessione (2026-04-15 — Operational Hardening Plan API/LLM Tooling)
 
@@ -160,7 +213,7 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
    - API spec enhanced: new "Text-Mode Extraction" section with response format, timeout behavior, log field differences
    - Hardening tracker updated: all 16 tasks marked complete
    - hl-funnel schema updated: new section documenting text-mode extraction stability and KPI measurement plan
-  - Completion evidence consolidated in `docs/implementation/feature-extraction-chain-hardening-tracker-1.md`
+  - Completion evidence consolidated in `docs/archive/feature-extraction-chain-hardening-tracker-1.md`
 
 **Validazione in produzione:**
 - Live extraction request (responseMode:text) succeeds on attempt 2 with gpt-4.1
@@ -186,7 +239,7 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 
 - **Extraction chain hardening (latenza/affidabilita/first-pass)**: snapshot storico 2026-04-14, allora in corso; implementazione tecnica completata (diagnostica consistency, timeout per-attempt, acceptance a soglie, prompt contract, abort propagation), con validazione KPI dev allora aperta.
 - **Extraction text-mode simplification (Funnel upload-first)**: attivata modalita `responseMode: "text"` con payload V3 `extractionContext`, riducendo dipendenza dal parsing strutturato; ultimo run dev positivo con successo al primo tentativo e latenza ~20s.
-- **Documenti attivati**: piano `docs/implementation/feature-extraction-chain-hardening-plan-1.md` e tracker `docs/implementation/feature-extraction-chain-hardening-tracker-1.md`.
+- **Documenti attivati**: piano `docs/archive/feature-extraction-chain-hardening-plan-1.md` e tracker `docs/archive/feature-extraction-chain-hardening-tracker-1.md`.
 - **Extraction chain artifact-first (nuovo track)**: Sprint 0 completato (outcome matrix, reason taxonomy, mapping terminale HTTP/artifact status), Sprint 1 completato (artifact stub, idempotency, single artifact chain), Sprint 2 tecnico completato (timeout classifier completo, partial timeout acceptance, single-finalize), Sprint 3 completato (finalizzazione atomica completion/failure, persistenza terminal reason, coerenza complete-event post-commit), Sprint 4 completato (`TASK-0401`, `TASK-0402`, `TASK-0403`), Sprint 5 completato (`TASK-0501..0504` con retry/resume UX + E2E dedicata) e Sprint 6 codice completato (`TASK-0601..0603`: feature flag route-level, rollout percentuale 10/30/100, rollback switch + drill runbook); monitoraggio KPI runtime e promozione progressiva restano attivi per chiusura gate finale (`docs/implementation/extraction-chain-artifact-first-prompt-plan.md`, `docs/implementation/feature-extraction-chain-artifact-first-tracker-1.md`, `docs/implementation/extraction-chain-artifact-first-sprint-operations-plan-2026-04-14.md`, `docs/review/extraction-model-policy-rollout-runbook-2026-04-12.md`).
 - **Funnel upload-first: testimonianze strutturate propagate al contesto generazione**: completato il passaggio dati da `extractedFields.testimonials_sources` verso `proof_context.testimonials_sources` con campi estesi (`quote`, `source`, `achieved_result`, `measurable_results`).
 - **Field map extraction funnel esteso**: aggiunta voce `testimonials_sources` in `FUNNEL_EXTRACTION_FIELD_MAP` per rendere esplicita l'estrazione della social proof dal documento sorgente.
@@ -234,9 +287,9 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
   - Merge eseguito su `dev` tramite PR #21.
   - Documentazione contrattuale allineata su `docs/specifications/api-specifications.md`.
 
-- **Tooling generation optimization (Meta Ads + HotLead Funnel)**: `COMPLETATO (PR-1..PR-6)`
+- **Tooling generation optimization (HotLead Funnel + framework shared)**: `COMPLETATO (PR-1..PR-6 + decommission Meta Ads runtime)`
   - Completati schema unificato input, prompt/runtime parity, normalizzazione output, SSE metadata additive, consolidamento route/error mapping e hardening finale.
-  - Standard output workflow tool allineato a `outputFormat: markdown` (Meta Ads + HotLead Funnel).
+  - Standard output workflow tool allineato a `outputFormat: markdown` (funnel pages + nextland).
   - Esteso il flow HotLead Funnel (workflow `funnel_pages`) a pipeline upload-first: upload documento inline -> extraction fields -> generazione sequenziale `optin -> quiz -> vsl`.
   - Follow-up 2026-04-14: arricchita la propagazione delle testimonianze estratte verso il briefing funnel con campi risultato e metriche misurabili.
   - Validazione finale locale aggiornata: `npm run lint`, `npm run typecheck`, `npm run test` (30/30 suite), `npm run build` tutti `PASS`.
@@ -246,12 +299,12 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
   - Completate tutte le 5 fasi: policy runtime statica su OpenRouter, fallback deterministico (`anthropic/claude-3.7-sonnet` -> `openai/gpt-4.1` -> `openai/o3`), validazione server-side parse/schema/coerenza, budget cap configurabile, telemetria tentativi, normalizzazione quota retry e bootstrap deploy idempotente del model registry.
   - Root cause runtime chiusa durante il track: mismatch sul campo `notes` tra prompt e schema route, corretto con riallineamento prompt e compatibilita `string | string[]` lato validazione.
   - Merge su `dev` completato; documentazione operativa e tracker chiusi come snapshot finale as-is.
-  - File: docs/implementation/funnel-extraction-model-policy-plan.md, docs/implementation/feature-funnel-extraction-model-policy-tracker-1.md, docs/review/extraction-model-policy-rollout-runbook-2026-04-12.md
+  - File: docs/archive/funnel-extraction-model-policy-plan.md, docs/archive/feature-funnel-extraction-model-policy-tracker-1.md, docs/review/extraction-model-policy-rollout-runbook-2026-04-12.md
 
 - **Extraction chain hardening (Funnel upload -> extraction)**: `COMPLETATO (2026-04-15)`
   - Implementazione hardening completata su route/policy/provider path: telemetria consistency, timeout differenziati per tentativo, acceptance engine `hard_accept/soft_accept/reject`, first-token + token-idle timeout, abort propagation end-to-end e rafforzamento prompt contract.
   - Stato operativo: monitoraggio KPI runtime prosegue nel track artifact-first/completeness-first per gate rollout finale.
-  - File: docs/implementation/feature-extraction-chain-hardening-plan-1.md, docs/implementation/feature-extraction-chain-hardening-tracker-1.md
+  - File: docs/archive/feature-extraction-chain-hardening-plan-1.md, docs/archive/feature-extraction-chain-hardening-tracker-1.md
 
 - **Deploy Vercel**: `COMPLETATO (baseline)`
   - Branch `main` in produzione.
@@ -331,7 +384,7 @@ _Estratto e sintetizzato dalla documentazione di progetto (aprile 2026)_
 - **Microtask GUI/UX low-impact (estrazione sprint 2026-04-14)**: `COMPLETATO`
   - Backlog MT-UX-01..08 chiuso con implementazioni incrementali su dashboard, storico artefatti, rilancio con prefill e hardening accessibilita.
   - Evidenza di validazione: suite test verde e verifica GUI locale registrate nel tracker sprint.
-  - File: docs/implementation/gui-ux-low-impact-microtasks-sprint-plan-2026-04-14.md
+  - File: docs/archive/gui-ux-low-impact-microtasks-sprint-plan-2026-04-14.md
 
 - **Projects-first navigation & IA**: `COMPLETATO (2026-04-13)`
   - Riallineata la gerarchia dell'app ai progetti come entita primaria con route indice dedicata `/dashboard/projects`, dashboard project-first e riposizionamento di Artefatti come storico trasversale personale.
@@ -402,7 +455,7 @@ Nota operativa: il track tooling generation e chiuso (`PR-1..PR-6` completate). 
   - Resta pending la validazione cross-device completa con checklist finale Sprint 2.
 
 #### Checklist finale Sprint 2 (pending)
-- Verifica viewport `320px`, `375px`, `768px`, `1024px`, `1280px` su pagine autenticate: dashboard progetto, lista artefatti, dettaglio artefatto, Meta Ads, HotLead Funnel, Admin.
+- Verifica viewport `320px`, `375px`, `768px`, `1024px`, `1280px` su pagine autenticate: dashboard progetto, lista artefatti, dettaglio artefatto, HotLead Funnel, NextLand, Admin.
 - Verifica keyboard flow completo (Tab/Shift+Tab/Enter/Escape) su pagine autenticate: filtri, CTA principali e drawer admin.
 - Verifica focus visible su controlli interattivi principali e nessuna trap non voluta fuori dal drawer.
 - Verifica contrasto testi/badge/stati in condizioni default e hover/focus.
@@ -445,7 +498,7 @@ Nota operativa: il track tooling generation e chiuso (`PR-1..PR-6` completate). 
 ---
 
 **Prossimi step consigliati:**
-- Mantenere monitoraggio runtime su stream/error-rate dei tool Meta Ads e HotLead Funnel dopo il refactor completato.
+- Mantenere monitoraggio runtime su stream/error-rate dei tool standard (HotLead Funnel, NextLand, Extraction).
 - Estendere test E2E sui flussi reali auth/db per consolidare il gate di regressione end-to-end.
 - Mantenere coverage >80% sul perimetro attuale e introdurre guardrail anti-regressione nei PR check.
 - Estendere coverage su flussi E2E critici (login reale, generazione completa, gestione quota/admin).
